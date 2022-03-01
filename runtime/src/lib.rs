@@ -23,6 +23,16 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+// Imports added whil install Frontier
+use sp_core::U256;
+use pallet_evm::{
+	EnsureAddressRoot, EnsureAddressNever, HashedAddressMapping, SubstrateBlockHashMapping,
+};
+// pub use this so we can import it in the chain spec.
+#[cfg(feature = "std")]
+pub use pallet_evm::GenesisAccount;
+
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
@@ -266,6 +276,33 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const LeetChainId: u64 = 1337;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
+impl pallet_evm::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+
+	type BlockGasLimit = BlockGasLimit;
+	type ChainId = LeetChainId;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+
+	type CallOrigin = EnsureAddressRoot<AccountId>;
+	type WithdrawOrigin = EnsureAddressNever<AccountId>;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+
+	type FeeCalculator = ();
+	type GasWeightMapping = ();
+	type OnChargeTransaction = ();
+	type FindAuthor = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
+}
+
+
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type Event = Event;
@@ -286,6 +323,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
+		EVM: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
 	}
