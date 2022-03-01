@@ -1,13 +1,13 @@
-use node_template_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY, GenesisAccount, EVMConfig,
+use aurora_testnet_runtime::{
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
+	PoolConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, Balance
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
+use sp_core::{H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use sp_core::{H160, U256};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -133,6 +133,11 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+	// Pool config
+	const POOL_FEE: Balance = 10000000000000000;
+	const MARK_BLOCK: u64 = 30;
+	const MAX_PLAYER: u32 = 1000;
+	
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -158,17 +163,20 @@ fn testnet_genesis(
 				// Prefund the "Gerald" account
 				let mut accounts = std::collections::BTreeMap::new();
 				accounts.insert(
-					H160::from_slice(&hex_literal::hex!("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b")),
-					GenesisAccount{
+					H160::from_slice(&hex_literal::hex!(
+						"6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"
+					)),
+					GenesisAccount {
 						nonce: U256::zero(),
 						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
-					}
+					},
 				);
 				accounts
-			}
+			},
 		},
+		pool: PoolConfig { mark_block: MARK_BLOCK, pool_fee: POOL_FEE, max_player: MAX_PLAYER },
 	}
 }

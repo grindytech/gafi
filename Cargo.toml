@@ -4,6 +4,7 @@ members = [
   'runtime',
   'pallets/template',
   'pallets/player',
+  'pallets/pool',
 ]
 [profile.release]
 panic = 'unwind'
