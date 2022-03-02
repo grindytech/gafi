@@ -18,6 +18,9 @@ scale-info = {version = "1.0", default-features = false, features = ["derive"]}
 
 # Frontier
 pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+
 
 # Substrate
 frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -100,4 +103,6 @@ std = [
   "sp-transaction-pool/std",
   "sp-version/std",
   'pallet-evm/std',
+  'pallet-ethereum/std',
+  'fp-self-contained/std',
 ]

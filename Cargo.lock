@@ -387,6 +387,7 @@ dependencies = [
 name = "aurora-testnet-runtime"
 version = "4.0.0-dev"
 dependencies = [
+ "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -396,6 +397,7 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-ethereum",
  "pallet-evm",
  "pallet-grandpa",
  "pallet-player",
@@ -1652,6 +1654,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fp-consensus"
+version = "2.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "ethereum",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
@@ -1661,6 +1675,47 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-std",
+]
+
+[[package]]
+name = "fp-rpc"
+version = "3.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fp-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "fp-self-contained"
+version = "1.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "ethereum",
+ "frame-support",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
+ "serde",
+ "sp-debug-derive",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fp-storage"
+version = "2.0.0"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -3995,6 +4050,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ethereum"
+version = "4.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-self-contained",
+ "fp-storage",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp",
+ "scale-info",
+ "serde",
+ "sha3 0.10.1",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
@@ -4202,6 +4285,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-tx-handler"
+version = "0.0.1-dev"
+dependencies = [
+ "fp-self-contained",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4273,8 +4375,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f4cb4e169446179cbc6b8b6320cc9fca49bd2e94e8db25f25f200a8ea774770"
 dependencies = [
  "cfg-if 1.0.0",
+ "ethereum-types",
  "hashbrown 0.11.2",
  "impl-trait-for-tuples",
+ "lru 0.6.6",
  "parity-util-mem-derive",
  "parking_lot",
  "primitive-types",
@@ -6221,6 +6325,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha3"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "881bf8156c87b6301fc5ca6b27f11eeb2761224c7081e69b409d5a1951a70c86"
+dependencies = [
+ "digest 0.10.3",
+ "keccak",
+]
+
+[[package]]
 name = "sharded-slab"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7523,7 +7637,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]
