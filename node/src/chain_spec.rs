@@ -1,13 +1,13 @@
 use aurora_testnet_runtime::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
-	PoolConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, Balance, EthereumConfig, BaseFee,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
-use sp_core::{H160, U256};
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use std::{collections::BTreeMap, str::FromStr};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -90,7 +90,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
+				vec![
+					authority_keys_from_seed("Alice"),
+					authority_keys_from_seed("Bob"),
+				],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
@@ -117,8 +120,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		None,
 		// Protocol ID
 		None,
-		// Properties
 		None,
+		// Properties
 		None,
 		// Extensions
 		None,
@@ -133,11 +136,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
-	// Pool config
-	const POOL_FEE: Balance = 10000000000000000;
-	const MARK_BLOCK: u64 = 30;
-	const MAX_PLAYER: u32 = 1000;
-	
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -145,40 +143,61 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		},
 		grandpa: GrandpaConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+			authorities: initial_authorities
+				.iter()
+				.map(|x| (x.1.clone(), 1))
+				.collect(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
-		transaction_payment: Default::default(),
 		evm: EVMConfig {
 			accounts: {
-				// Prefund the "Gerald" account
-				let mut accounts = std::collections::BTreeMap::new();
-				accounts.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"
-					)),
-					GenesisAccount {
-						nonce: U256::zero(),
-						// Using a larger number, so I can tell the accounts apart by balance.
-						balance: U256::from(1u64 << 61),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
+				let mut map = BTreeMap::new();
+				map.insert(
+					// H160 address of Alice dev account
+					// Derived from SS58 (42 prefix) address
+					// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+					// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+					// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
+					H160::from_str("d43593c715fdd31c61141abd04a99fd6822c8558")
+						.expect("internal H160 is valid; qed"),
+					pallet_evm::GenesisAccount {
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
 					},
 				);
-				accounts
+				map.insert(
+					// H160 address of CI test runner account
+					H160::from_str("f6de688415B8038814D116861d46A937Be60Df90")
+						.expect("internal H160 is valid; qed"),
+					pallet_evm::GenesisAccount {
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
+					},
+				);
+				map
 			},
 		},
-		pool: PoolConfig { mark_block: MARK_BLOCK, pool_fee: POOL_FEE, max_player: MAX_PLAYER },
-		ethereum: EthereumConfig{}, 
+		ethereum: EthereumConfig {},
+		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 	}
 }

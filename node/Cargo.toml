@@ -1,14 +1,14 @@
 [package]
-name = "aurora-node"
-version = "4.0.0-dev"
-description = "A fresh FRAME-based Substrate node, ready for hacking."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-homepage = "https://substrate.io/"
+build = "build.rs"
+description = "A fresh FRAME-based Substrate node, ready for hacking."
 edition = "2021"
+homepage = "https://substrate.io/"
 license = "Unlicense"
+name = "aurora-node"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
-build = "build.rs"
+version = "4.0.0-dev"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -17,54 +17,74 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "aurora-node"
 
 [dependencies]
-clap = { version = "3.0", features = ["derive"] }
-hex-literal = '0.3'
+clap = {version = "3.0", features = ["derive"]}
 futures = '0.3'
+hex-literal = '0.3'
+jsonrpc-pubsub = "18.0.0"
+jsonrpc-core = "18.0.0"
+async-trait = "0.1"
 
 # Frontier
-fc-mapping-sync = { git = "https://github.com/cryptoviet/frontier", branch = "aur-dot" }
-fc-db = { git = "https://github.com/cryptoviet/frontier", branch = "aur-dot" }
+fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fc-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-base-fee = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 
 # Substrate
-sc-cli = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"] }
-sp-core = { version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-executor = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]  }
-sc-service = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]  }
-sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-keystore = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-transaction-pool = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-transaction-pool-api = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-consensus-aura = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-consensus-aura = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-consensus = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-consensus = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-finality-grandpa = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-finality-grandpa = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-client-api = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-runtime = { version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+sc-cli = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]}
+sc-client-api = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-consensus = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-consensus-aura = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-consensus-manual-seal = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-executor = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]}
+sc-finality-grandpa = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-keystore = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-network = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-service = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]}
+sc-telemetry = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-transaction-pool = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-transaction-pool-api = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-consensus = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-consensus-aura = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-core = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-finality-grandpa = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-runtime = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-timestamp = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-inherents = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
 
 # These dependencies are used for the node template's RPCs
-jsonrpc-core = "18.0.0"
-sc-rpc = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-api = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-rpc-api = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-blockchain = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-block-builder = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sc-basic-authorship = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-substrate-frame-rpc-system = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-pallet-transaction-payment-rpc = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+pallet-transaction-payment-rpc = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-basic-authorship = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-rpc = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sc-rpc-api = {version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-api = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-block-builder = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-blockchain = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+substrate-frame-rpc-system = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # These dependencies are used for runtime benchmarking
-frame-benchmarking = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+frame-benchmarking = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local Dependencies
-aurora-testnet-runtime = { version = "4.0.0-dev", path = "../runtime" }
+aurora-testnet-runtime = {version = "4.0.0-dev", path = "../runtime"}
 
 [build-dependencies]
-substrate-build-script-utils = { version = "3.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 [features]
-default = []
-runtime-benchmarks = ["aurora-testnet-runtime/runtime-benchmarks"]
+default = ["aura"]
+aura = ["aurora-testnet-runtime/aura"]
+manual-seal = ["aurora-testnet-runtime/manual-seal"]
+rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
+runtime-benchmarks = [
+	"aurora-testnet-runtime/runtime-benchmarks",
+]
