@@ -1,6 +1,6 @@
 use aurora_testnet_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
-	PoolConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, Balance, EthereumConfig,
+	PoolConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, Balance, EthereumConfig, BaseFee,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -179,5 +179,6 @@ fn testnet_genesis(
 		},
 		pool: PoolConfig { mark_block: MARK_BLOCK, pool_fee: POOL_FEE, max_player: MAX_PLAYER },
 		ethereum: EthereumConfig{}, 
+		base_fee: Default::default(),
 	}
 }

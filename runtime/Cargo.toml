@@ -20,7 +20,8 @@ scale-info = {version = "1.0", default-features = false, features = ["derive"]}
 pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-
+fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 
 # Substrate
 frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -105,4 +106,6 @@ std = [
   'pallet-evm/std',
   'pallet-ethereum/std',
   'fp-self-contained/std',
+  'fp-rpc/std',
+  'pallet-base-fee/std',
 ]

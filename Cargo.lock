@@ -387,6 +387,7 @@ dependencies = [
 name = "aurora-testnet-runtime"
 version = "4.0.0-dev"
 dependencies = [
+ "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
@@ -397,6 +398,7 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-base-fee",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-grandpa",
@@ -4050,6 +4052,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-base-fee"
+version = "1.0.0"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
@@ -7637,7 +7654,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "rand 0.8.5",
  "static_assertions",
 ]
