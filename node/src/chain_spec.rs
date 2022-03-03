@@ -178,20 +178,28 @@ fn testnet_genesis(
 							.expect("internal U256 is valid; qed"),
 						code: Default::default(),
 						nonce: Default::default(),
-						storage: Default::default(),
+						storage: Default::default(), 
 					},
 				);
 				map.insert(
-					// H160 address of CI test runner account
-					H160::from_str("f6de688415B8038814D116861d46A937Be60Df90")
-						.expect("internal H160 is valid; qed"),
-					pallet_evm::GenesisAccount {
-						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
-							.expect("internal U256 is valid; qed"),
-						code: Default::default(),
-						nonce: Default::default(),
-						storage: Default::default(),
-					},
+					H160::from_slice(&hex_literal::hex!("dDda6430955c710cDD5BcBb65c7f32313e8b07c0")),
+					pallet_evm::GenesisAccount{
+						nonce: U256::zero(),
+						// Using a larger number, so I can tell the accounts apart by balance.
+						balance: U256::from(1u64 << 61),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
+					}
+				);
+				map.insert(
+					H160::from_slice(&hex_literal::hex!("f6de688415B8038814D116861d46A937Be60Df90")),
+					pallet_evm::GenesisAccount{
+						nonce: U256::zero(),
+						// Using a larger number, so I can tell the accounts apart by balance.
+						balance: U256::from(1u64 << 61),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
+					}
 				);
 				map
 			},
