@@ -19,7 +19,13 @@ name = "aurora-node"
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
 hex-literal = '0.3'
+futures = '0.3'
 
+# Frontier
+fc-mapping-sync = { git = "https://github.com/cryptoviet/frontier", branch = "aur-dot" }
+fc-db = { git = "https://github.com/cryptoviet/frontier", branch = "aur-dot" }
+
+# Substrate
 sc-cli = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"] }
 sp-core = { version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
 sc-executor = { version = "0.10.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", features = ["wasmtime"]  }

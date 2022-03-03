@@ -351,8 +351,11 @@ version = "4.0.0-dev"
 dependencies = [
  "aurora-testnet-runtime",
  "clap",
+ "fc-db",
+ "fc-mapping-sync",
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "futures 0.3.21",
  "hex-literal",
  "jsonrpc-core",
  "pallet-transaction-payment-rpc",
@@ -1563,6 +1566,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3fcf0cee53519c866c09b5de1f6c56ff9d647101f81c1964fa632e148896cdf"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "fc-db"
+version = "2.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "fp-storage",
+ "kvdb-rocksdb",
+ "parity-scale-codec",
+ "parking_lot",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-mapping-sync"
+version = "2.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=aur-dot#6ccc72e3011465a1fe767debd2a6a55a8660f42c"
+dependencies = [
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.21",
+ "futures-timer",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7654,7 +7688,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]
