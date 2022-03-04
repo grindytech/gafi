@@ -1,6 +1,6 @@
 use aurora_testnet_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY, PoolConfig, Balance,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -90,10 +90,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
-				vec![
-					authority_keys_from_seed("Alice"),
-					authority_keys_from_seed("Bob"),
-				],
+				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
@@ -136,6 +133,10 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+	// Pool config
+	const POOL_FEE: Balance = 10000000000000000;
+	const MARK_BLOCK: u64 = 30;
+	const MAX_PLAYER: u32 = 1000;
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -143,20 +144,13 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		},
 		grandpa: GrandpaConfig {
-			authorities: initial_authorities
-				.iter()
-				.map(|x| (x.1.clone(), 1))
-				.collect(),
+			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -165,41 +159,46 @@ fn testnet_genesis(
 		evm: EVMConfig {
 			accounts: {
 				let mut map = BTreeMap::new();
+				// H160 address of Alice dev account
+				// Derived from SS58 (42 prefix) address
+				// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+				// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+				// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
 				map.insert(
-					// H160 address of Alice dev account
-					// Derived from SS58 (42 prefix) address
-					// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
-					// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
-					// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
-					H160::from_str("d43593c715fdd31c61141abd04a99fd6822c8558")
-						.expect("internal H160 is valid; qed"),
+					H160::from_slice(&hex_literal::hex!(
+						"d43593c715fdd31c61141abd04a99fd6822c8558"
+					)),
 					pallet_evm::GenesisAccount {
-						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
-							.expect("internal U256 is valid; qed"),
-						code: Default::default(),
-						nonce: Default::default(),
-						storage: Default::default(), 
+						nonce: U256::zero(),
+						// Using a larger number, so I can tell the accounts apart by balance.
+						balance: U256::from(1u64 << 61),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
 					},
 				);
 				map.insert(
-					H160::from_slice(&hex_literal::hex!("dDda6430955c710cDD5BcBb65c7f32313e8b07c0")),
-					pallet_evm::GenesisAccount{
+					H160::from_slice(&hex_literal::hex!(
+						"dDda6430955c710cDD5BcBb65c7f32313e8b07c0"
+					)),
+					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
 						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
-					}
+					},
 				);
 				map.insert(
-					H160::from_slice(&hex_literal::hex!("f6de688415B8038814D116861d46A937Be60Df90")),
-					pallet_evm::GenesisAccount{
+					H160::from_slice(&hex_literal::hex!(
+						"f6de688415B8038814D116861d46A937Be60Df90"
+					)),
+					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
 						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
-					}
+					},
 				);
 				map
 			},
@@ -207,5 +206,6 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
+		pool: PoolConfig { mark_block: MARK_BLOCK, pool_fee: POOL_FEE, max_player: MAX_PLAYER },
 	}
 }

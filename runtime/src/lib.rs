@@ -52,6 +52,8 @@ use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+pub use pallet_player;
+pub use pallet_pool;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -107,8 +109,8 @@ pub mod opaque {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-frontier-template"),
-	impl_name: create_runtime_str!("node-frontier-template"),
+	spec_name: create_runtime_str!("aurora-testnet-runtime"),
+	impl_name: create_runtime_str!("aurora-testnet-runtime"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -363,6 +365,26 @@ impl pallet_base_fee::Config for Runtime {
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
+
+impl pallet_player::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+}
+
+parameter_types! {
+	pub const MaxNewPlayer: u32 = 600;
+	pub const MaxIngamePlayer: u32 = 600;
+}
+
+impl pallet_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type MaxNewPlayer = MaxNewPlayer;
+	type MaxIngamePlayer = MaxIngamePlayer;
+}
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -382,6 +404,9 @@ construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
+
+		Player: pallet_player,
+		Pool: pallet_pool,
 	}
 );
 

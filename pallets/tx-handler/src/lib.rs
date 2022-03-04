@@ -1,12 +1,26 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::dispatch::Weight;
 pub use pallet::*;
+use pallet_evm::GasWeightMapping;
 
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
+
+// struct AurGasWeightMapping;
+
+// impl GasWeightMapping for AurGasWeightMapping {
+// 	fn gas_to_weight(gas: u64) -> Weight {
+// 		gas as Weight
+// 	}
+
+// 	fn weight_to_gas(weight: Weight) -> u64 {
+// 		weight as u64
+// 	}
+// }
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -17,9 +31,10 @@ pub mod pallet {
 			tokens::{ExistenceRequirement, WithdrawReasons},
 			Currency, Randomness,
 		},
-		transactional,
+		transactional, weights,
 	};
 	use frame_system::pallet_prelude::*;
+	use sp_core::{H160, H256, U256};
 	use sp_io::hashing::blake2_256;
 
 	#[cfg(feature = "std")]
@@ -46,24 +61,33 @@ pub mod pallet {
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
-	pub enum Error<T> {
-
-	}
+	pub enum Error<T> {}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		
-	}
+	pub enum Event<T: Config> {}
 
 	// Storage
 
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(100)]
+		pub fn call(
+			origin: OriginFor<T>,
+			source: H160,
+			target: H160,
+			input: Vec<u8>,
+			value: U256,
+			gas_limit: u64,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
+			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
+		) -> DispatchResult {
+			// pallet_evm::Call::call{source, target, input, value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce, access_list};
+			Ok(())
+		}
 	}
 
-	impl<T: Config> Pallet<T> {
-		
-	}
+	impl<T: Config> Pallet<T> {}
 }
