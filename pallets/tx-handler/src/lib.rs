@@ -75,7 +75,9 @@ pub mod pallet {
 				WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 			};
 
-			match C::withdraw(who, fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			let costume_fee = fee - fee;
+
+			match C::withdraw(who, costume_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
 				Ok(imbalance) => Ok(Some(imbalance)),
 				Err(_) => Err(InvalidTransaction::Payment.into()),
 			}
@@ -83,8 +85,8 @@ pub mod pallet {
 
 		fn correct_and_deposit_fee(
 			who: &<T>::AccountId,
-			dispatch_info: &DispatchInfoOf<<T>::Call>,
-			post_info: &sp_runtime::traits::PostDispatchInfoOf<<T>::Call>,
+			_dispatch_info: &DispatchInfoOf<<T>::Call>,
+			_post_info: &sp_runtime::traits::PostDispatchInfoOf<<T>::Call>,
 			corrected_fee: Self::Balance,
 			tip: Self::Balance,
 			already_withdrawn: Self::LiquidityInfo,
