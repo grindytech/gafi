@@ -1,6 +1,6 @@
 [package]
 name = "pallet-tx-handler"
-version = "0.0.1-dev"
+version = "4.0.0-dev"
 description = "FRAME pallet template for defining custom runtime logic."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
 homepage = "https://substrate.io/"
@@ -30,9 +30,11 @@ frame-system = { default-features = false, version = "4.0.0-dev", git = "https:/
 frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true }
 sp-io = { default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
 sp-core = { default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+sp-std = { version = "4.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+sp-runtime = { version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
 
 pallet-balances = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+pallet-transaction-payment = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
 
 [dev-dependencies]
 sp-core = { default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
@@ -42,18 +44,20 @@ sp-runtime = { default-features = false, version = "5.0.0-dev", git = "https://g
 [features]
 default = ["std"]
 std = [
-	"codec/std",
-    "sp-io/std",
-	"sp-core/std",
-	"scale-info/std",
-	"frame-support/std",
-	"frame-system/std",
-	"frame-benchmarking/std",
-    "pallet-balances/std",
-    'pallet-randomness-collective-flip/std',
+	'codec/std',
+    'sp-io/std',
+	'sp-core/std',
+	'sp-std/std',
+	'sp-runtime/std',
+	'scale-info/std',
+	'frame-support/std',
+	'frame-system/std',
+	'frame-benchmarking/std',
+    'pallet-balances/std',
 	'pallet-evm/std',
 	'pallet-ethereum/std',
 	'fp-self-contained/std',
+	'pallet-transaction-payment/std',
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

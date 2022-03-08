@@ -52,8 +52,12 @@ use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+
+// import local pallets
 pub use pallet_player;
 pub use pallet_pool;
+pub use pallet_tx_handler;
+use pallet_tx_handler::AurCurrencyAdapter;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -275,7 +279,8 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	// type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
@@ -384,6 +389,15 @@ impl pallet_pool::Config for Runtime {
 	type MaxIngamePlayer = MaxIngamePlayer;
 }
 
+parameter_types! {
+
+}
+
+impl pallet_tx_handler::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -407,6 +421,7 @@ construct_runtime!(
 
 		Player: pallet_player,
 		Pool: pallet_pool,
+		TxHandler: pallet_tx_handler,
 	}
 );
 
