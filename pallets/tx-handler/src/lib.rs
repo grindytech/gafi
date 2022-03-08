@@ -1,6 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
+/*
+* tx-handler pallet handle transaction fee
+*
+*/
+
 // #[cfg(test)]
 // mod mock;
 
@@ -12,11 +17,11 @@ pub mod pallet {
 
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{Currency, Get, Imbalance, OnUnbalanced},
+		traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	};
 	use pallet_transaction_payment::{CurrencyAdapter, OnChargeTransaction};
-	use sp_runtime::traits::{ DispatchInfoOf};
-	use sp_std::{marker::PhantomData};
+	use sp_runtime::traits::{DispatchInfoOf, Saturating, Zero};
+	use sp_std::marker::PhantomData;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -26,8 +31,10 @@ pub mod pallet {
 
 	type NegativeImbalanceOf<C, T> =
 		<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-		type BalanceOf<T> =
-    <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	type Balance<C, T> = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	// type BalanceOf<T> =
+	// 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	pub struct AurCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
@@ -47,17 +54,31 @@ pub mod pallet {
 		>,
 		OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 	{
-		type Balance =  BalanceOf<T>;
+		type Balance = Balance<C, T>;
 		type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
 
 		fn withdraw_fee(
 			who: &<T>::AccountId,
-			call: &<T>::Call,
-			dispatch_info: &DispatchInfoOf<<T>::Call>,
+			_call: &<T>::Call,
+			_dispatch_info: &DispatchInfoOf<<T>::Call>,
 			fee: Self::Balance,
 			tip: Self::Balance,
 		) -> Result<Self::LiquidityInfo, frame_support::unsigned::TransactionValidityError> {
-			todo!()
+			// CurrencyAdapter::<T: Config>::withdraw_fee(who, call, dispatch_info, fee, tip)
+			if fee.is_zero() {
+				return Ok(None);
+			}
+
+			let withdraw_reason = if tip.is_zero() {
+				WithdrawReasons::TRANSACTION_PAYMENT
+			} else {
+				WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+			};
+
+			match C::withdraw(who, fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+				Ok(imbalance) => Ok(Some(imbalance)),
+				Err(_) => Err(InvalidTransaction::Payment.into()),
+			}
 		}
 
 		fn correct_and_deposit_fee(
@@ -68,7 +89,24 @@ pub mod pallet {
 			tip: Self::Balance,
 			already_withdrawn: Self::LiquidityInfo,
 		) -> Result<(), frame_support::unsigned::TransactionValidityError> {
-			todo!()
+			if let Some(paid) = already_withdrawn {
+				// Calculate how much refund we should return
+				let refund_amount = paid.peek().saturating_sub(corrected_fee);
+				// refund to the the account that paid the fees. If this fails, the
+				// account might have dropped below the existential balance. In
+				// that case we don't refund anything.
+				let refund_imbalance = C::deposit_into_existing(&who, refund_amount)
+					.unwrap_or_else(|_| C::PositiveImbalance::zero());
+				// merge the imbalance caused by paying the fees and refunding parts of it again.
+				let adjusted_paid = paid
+					.offset(refund_imbalance)
+					.same()
+					.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+				// Call someone else to handle the imbalance (fee and tip separately)
+				let (tip, fee) = adjusted_paid.split(tip);
+				OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+			}
+			Ok(())
 		}
 	}
 
@@ -78,6 +116,7 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// type EVM: pallet_evm::EvmConfig;
+		// type OnChargeTransaction: pallet_transaction_payment::OnChargeTransaction<Self>;
 
 		type Currency: Currency<Self::AccountId>;
 	}
@@ -94,8 +133,7 @@ pub mod pallet {
 	// Storage
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-	}
+	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> Pallet<T> {}
 }
