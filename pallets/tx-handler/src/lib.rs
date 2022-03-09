@@ -19,6 +19,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	};
+	use pallet_pool::AuroraZone;
 	use pallet_transaction_payment::{CurrencyAdapter, OnChargeTransaction};
 	use sp_runtime::traits::{DispatchInfoOf, Saturating, Zero};
 	use sp_std::marker::PhantomData;
@@ -75,7 +76,10 @@ pub mod pallet {
 				WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 			};
 
-			let costume_fee = fee - fee;
+			let mut costume_fee = fee;
+			if T::AuroraZone::is_in_aurora_zone(who) == true {
+				costume_fee = fee - fee;
+			}
 
 			match C::withdraw(who, costume_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
 				Ok(imbalance) => Ok(Some(imbalance)),
@@ -114,13 +118,12 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
+	pub trait Config: frame_system::Config + pallet_transaction_payment::Config + pallet_pool::Config{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		// type EVM: pallet_evm::EvmConfig;
-		// type OnChargeTransaction: pallet_transaction_payment::OnChargeTransaction<Self>;
-
 		type Currency: Currency<Self::AccountId>;
+		type AuroraZone: AuroraZone<Self>;
+		// type Pool: pallet_pool;
 	}
 
 	// Errors.

@@ -25,6 +25,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub trait AuroraZone<T: Config> {
+	fn is_in_aurora_zone(player: &T::AccountId) -> bool;
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -117,6 +121,7 @@ pub mod pallet {
 	#[pallet::getter(fn pool_fee)]
 	pub type PoolFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	// Store all players join the pool
 	#[pallet::storage]
 	#[pallet::getter(fn players)]
 	pub(super) type Players<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Player<T>>;
@@ -328,6 +333,15 @@ pub mod pallet {
 				return block;
 			}
 			return 0u64;
+		}
+	}
+
+	impl <T: Config> AuroraZone<T> for Pallet<T> {
+		fn is_in_aurora_zone(player: &T::AccountId) -> bool {
+			match Self::players(player) {
+				Some(_) => true,
+				None => false,
+			}
 		}
 	}
 }

@@ -396,6 +396,7 @@ parameter_types! {
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+	type AuroraZone = Pool;
 }
 
 
