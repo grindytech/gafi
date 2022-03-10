@@ -29,13 +29,10 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	//
-
 	type NegativeImbalanceOf<C, T> =
 		<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 	type Balance<C, T> = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-	// type BalanceOf<T> =
-	// 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	pub struct AurCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
@@ -76,9 +73,10 @@ pub mod pallet {
 				WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 			};
 
+			let discount: u8 = 90;
 			let mut costume_fee = fee;
-			if T::AuroraZone::is_in_aurora_zone(who) == true {
-				costume_fee = fee - fee;
+			if let Some(player) = T::AuroraZone::is_in_aurora_zone(who) {
+				costume_fee = fee / discount.into();
 			}
 
 			match C::withdraw(who, costume_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
@@ -123,7 +121,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type AuroraZone: AuroraZone<Self>;
-		// type Pool: pallet_pool;
 	}
 
 	// Errors.

@@ -9,11 +9,23 @@ use frame_support::{
 	},
 };
 
-use sp_runtime::{
-	RuntimeDebug,
-};
+use sp_runtime::RuntimeDebug;
 
 use frame_system::pallet_prelude::*;
+
+
+
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum PackService {
+	Basic,
+	Medium,
+	Max,
+}
+
+pub trait PackServiceProvider<T: Config> {
+	fn get_service(service: PackService) -> Service<T>;
+}
+
 
 #[cfg(feature = "std")]
 use frame_support::traits::GenesisBuild;
@@ -26,7 +38,7 @@ mod mock;
 mod tests;
 
 pub trait AuroraZone<T: Config> {
-	fn is_in_aurora_zone(player: &T::AccountId) -> bool;
+	fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>>;
 }
 
 #[frame_support::pallet]
@@ -36,15 +48,36 @@ pub mod pallet {
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
+	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
+	#[scale_info(skip_type_params(T))]
+	pub struct Service<T: Config> {
+		tx_limit: u8, // max number of transaction per minute
+		discount: u8,
+		service: BalanceOf<T>,
+	}
+
+	impl <T: Config> MaxEncodedLen for Service<T> {
+		fn max_encoded_len() -> usize {
+			1000
+		}
+	}
+
+	impl MaxEncodedLen for PackService {
+		fn max_encoded_len() -> usize {
+			1000
+		}
+	}
+
 	// Struct, Enum
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(skip_type_params(T))]
 	pub struct Player<T: Config> {
 		address: T::AccountId,
 		join_block: u64,
+		service: PackService,
 	}
 
-	impl <T: Config> MaxEncodedLen for Player<T> {
+	impl<T: Config> MaxEncodedLen for Player<T> {
 		fn max_encoded_len() -> usize {
 			1000
 		}
@@ -140,6 +173,11 @@ pub mod pallet {
 	pub type IngamePlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
 
+
+	#[pallet::storage]
+	#[pallet::getter(fn services)]
+	pub(super) type Services<T: Config> = StorageMap<_, Twox64Concat, PackService, Service<T>>;
+
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -167,9 +205,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(100)]
-		pub fn join(origin: OriginFor<T>) -> DispatchResult {
+		pub fn join(origin: OriginFor<T>, service: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::join_pool(sender.clone())?;
+			Self::join_pool(sender.clone(), service)?;
 			let pool_fee = Self::pool_fee();
 			let double_fee = pool_fee * 2u32.into();
 			Self::change_fee(&sender, double_fee)?;
@@ -187,7 +225,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn join_pool(sender: T::AccountId) -> Result<(), Error<T>> {
+		fn join_pool(sender: T::AccountId, service: PackService) -> Result<(), Error<T>> {
 			// make sure player not re-join
 			ensure!(Self::players(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
 			// make sure not exceed max players
@@ -198,7 +236,7 @@ pub mod pallet {
 			<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
 			let block_number = Self::get_block_number();
-			let player = Player::<T> { address: sender.clone(), join_block: block_number };
+			let player = Player::<T> { address: sender.clone(), join_block: block_number, service };
 			<Players<T>>::insert(sender, player);
 			<PlayerCount<T>>::put(new_player_count);
 			Ok(())
@@ -336,14 +374,12 @@ pub mod pallet {
 		}
 	}
 
-	impl <T: Config> AuroraZone<T> for Pallet<T> {
-		fn is_in_aurora_zone(player: &T::AccountId) -> bool {
-			match Self::players(player) {
-				Some(_) => true,
-				None => false,
-			}
+	impl<T: Config> AuroraZone<T> for Pallet<T> {
+		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>> {
+			Self::players(player)
 		}
 	}
+
 }
 
 #[cfg(feature = "std")]
