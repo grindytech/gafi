@@ -1,6 +1,7 @@
 use aurora_testnet_runtime::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY, PoolConfig, Balance,
+	pallet_pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, PoolConfig, Signature, SudoConfig, SystemConfig,
+	WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -32,13 +33,10 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-
 /// Generate an Aura authority key.
 pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
-
-
 
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
@@ -140,6 +138,12 @@ fn testnet_genesis(
 	const POOL_FEE: Balance = 10000000000000000;
 	const MARK_BLOCK: u64 = 30;
 	const MAX_PLAYER: u32 = 1000;
+	const SERVICES: [(PackService, u8, u8, Balance); 3] = [
+		(PackService::Basic, 4, 60, POOL_FEE),
+		(PackService::Medium, 8, 70, POOL_FEE * 2),
+		(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
+	];
+
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -209,6 +213,11 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		pool: PoolConfig { mark_block: MARK_BLOCK, pool_fee: POOL_FEE, max_player: MAX_PLAYER },
+		pool: PoolConfig {
+			mark_block: MARK_BLOCK,
+			pool_fee: POOL_FEE,
+			max_player: MAX_PLAYER,
+			services: SERVICES,
+		},
 	}
 }

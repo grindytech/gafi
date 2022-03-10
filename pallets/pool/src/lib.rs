@@ -1,34 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
-use frame_support::{
-	dispatch::{DispatchResult, Vec},
-	pallet_prelude::*,
-	traits::{
-		tokens::{ExistenceRequirement, WithdrawReasons},
-		Currency,
-	},
-};
-
-use sp_runtime::RuntimeDebug;
-
-use frame_system::pallet_prelude::*;
-
-
-
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum PackService {
-	Basic,
-	Medium,
-	Max,
-}
-
-pub trait PackServiceProvider<T: Config> {
-	fn get_service(service: PackService) -> Service<T>;
-}
-
-
-#[cfg(feature = "std")]
-use frame_support::traits::GenesisBuild;
 pub use pallet::*;
 
 #[cfg(test)]
@@ -37,6 +7,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub trait PackServiceProvider<T: Config> {
+	fn get_service(service: PackService) -> Service<T>;
+}
 pub trait AuroraZone<T: Config> {
 	fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>>;
 }
@@ -44,6 +17,19 @@ pub trait AuroraZone<T: Config> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	#[cfg(feature = "std")]
+	use frame_support::serde::{Deserialize, Serialize};
+	use frame_support::{
+		dispatch::{DispatchResult, Vec},
+		pallet_prelude::*,
+		traits::{
+			tokens::{ExistenceRequirement, WithdrawReasons},
+			Currency,
+		},
+	};
+	use frame_system::pallet_prelude::*;
+	use scale_info::TypeInfo;
+	use sp_runtime::RuntimeDebug;
 
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -56,10 +42,18 @@ pub mod pallet {
 		service: BalanceOf<T>,
 	}
 
-	impl <T: Config> MaxEncodedLen for Service<T> {
+	impl<T: Config> MaxEncodedLen for Service<T> {
 		fn max_encoded_len() -> usize {
 			1000
 		}
+	}
+
+	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+	pub enum PackService {
+		Basic,
+		Medium,
+		Max,
 	}
 
 	impl MaxEncodedLen for PackService {
@@ -173,7 +167,6 @@ pub mod pallet {
 	pub type IngamePlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
 
-
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
 	pub(super) type Services<T: Config> = StorageMap<_, Twox64Concat, PackService, Service<T>>;
@@ -184,12 +177,22 @@ pub mod pallet {
 		pub max_player: u32,
 		pub mark_block: u64,
 		pub pool_fee: BalanceOf<T>,
+		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { max_player: 1000, mark_block: 30, pool_fee: Default::default() }
+			Self {
+				max_player: 1000,
+				mark_block: 30,
+				pool_fee: Default::default(),
+				services: [
+					(PackService::Basic, 4, 60, Default::default()),
+					(PackService::Medium, 8, 70, Default::default()),
+					(PackService::Max, u8::MAX, 80, Default::default()),
+				],
+			}
 		}
 	}
 
@@ -199,6 +202,12 @@ pub mod pallet {
 			<MaxPlayer<T>>::put(self.max_player);
 			<MarkBlock<T>>::put(self.mark_block);
 			<PoolFee<T>>::put(self.pool_fee);
+
+			for service in self.services.iter() {
+				let new_service =
+					Service { tx_limit: service.1, discount: service.2, service: service.3 };
+				<Services<T>>::insert(service.0, new_service);
+			}
 		}
 	}
 
@@ -379,16 +388,15 @@ pub mod pallet {
 			Self::players(player)
 		}
 	}
-
 }
 
 #[cfg(feature = "std")]
 impl<T: Config> GenesisConfig<T> {
 	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-		<Self as GenesisBuild<T>>::build_storage(self)
+		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
 	}
 
 	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-		<Self as GenesisBuild<T>>::assimilate_storage(self, storage)
+		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
 	}
 }
