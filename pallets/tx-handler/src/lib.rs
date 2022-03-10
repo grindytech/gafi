@@ -19,7 +19,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	};
-	use pallet_pool::AuroraZone;
+	use pallet_pool::{AuroraZone, PackServiceProvider};
 	use pallet_transaction_payment::{CurrencyAdapter, OnChargeTransaction};
 	use sp_runtime::traits::{DispatchInfoOf, Saturating, Zero};
 	use sp_std::marker::PhantomData;
@@ -73,13 +73,14 @@ pub mod pallet {
 				WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 			};
 
-			let discount: u8 = 90;
-			let mut costume_fee = fee;
+			let mut service_fee = fee;
 			if let Some(player) = T::AuroraZone::is_in_aurora_zone(who) {
-				costume_fee = fee / discount.into();
+				if let Some(service) = T::PackServiceProvider::get_service(player.service) {
+					service_fee = fee / service.discount.into();
+				}
 			}
 
-			match C::withdraw(who, costume_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			match C::withdraw(who, service_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
 				Ok(imbalance) => Ok(Some(imbalance)),
 				Err(_) => Err(InvalidTransaction::Payment.into()),
 			}
@@ -121,6 +122,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type AuroraZone: AuroraZone<Self>;
+		type PackServiceProvider: PackServiceProvider<Self>;
 	}
 
 	// Errors.

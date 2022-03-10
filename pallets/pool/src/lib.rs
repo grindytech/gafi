@@ -8,7 +8,7 @@ mod mock;
 mod tests;
 
 pub trait PackServiceProvider<T: Config> {
-	fn get_service(service: PackService) -> Service<T>;
+	fn get_service(service: PackService) -> Option<Service<T>>;
 }
 pub trait AuroraZone<T: Config> {
 	fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>>;
@@ -37,9 +37,9 @@ pub mod pallet {
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(skip_type_params(T))]
 	pub struct Service<T: Config> {
-		tx_limit: u8, // max number of transaction per minute
-		discount: u8,
-		service: BalanceOf<T>,
+		pub tx_limit: u8, // max number of transaction per minute
+		pub discount: u8,
+		pub service: BalanceOf<T>,
 	}
 
 	impl<T: Config> MaxEncodedLen for Service<T> {
@@ -68,7 +68,7 @@ pub mod pallet {
 	pub struct Player<T: Config> {
 		address: T::AccountId,
 		join_block: u64,
-		service: PackService,
+		pub service: PackService,
 	}
 
 	impl<T: Config> MaxEncodedLen for Player<T> {
@@ -386,6 +386,12 @@ pub mod pallet {
 	impl<T: Config> AuroraZone<T> for Pallet<T> {
 		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>> {
 			Self::players(player)
+		}
+	}
+
+	impl<T: Config> PackServiceProvider<T> for Pallet<T> {
+		fn get_service(service: PackService) -> Option<Service<T>> {
+			Self::services(service)
 		}
 	}
 }
