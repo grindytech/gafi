@@ -1,3 +1,7 @@
+/*
+* This unittest should only test logic function and not related with Currency e.g. Balances, Transaction Payment
+*/
+
 use crate::{self as pallet_pool, pool::PackService};
 use frame_support::parameter_types;
 use frame_system as system;

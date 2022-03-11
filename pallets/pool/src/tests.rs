@@ -1,3 +1,7 @@
+/*
+* This unittest should only test logic function and not related with Currency e.g. Balances, Transaction Payment
+*/
+
 use crate::{mock::*, Config, Error};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use crate::pool::{PackService};
@@ -103,7 +107,7 @@ fn should_calculate_correct_refund_amount() {
 	ExtBuilder::default().build_and_execute(|| {
 		for refund in INGAME_REFUNDS {
 			let refund_amount =
-				PalletPool::calculate_ingame_refund_amount(refund.0, refund.1).unwrap();
+				PalletPool::calculate_ingame_refund_amount(refund.0, refund.1, PackService::Basic).unwrap();
 			assert_eq!(refund_amount, refund.2, "Calculate ingame refund fee not correct");
 		}
 	})
