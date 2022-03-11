@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+pub mod player;
 
 #[cfg(test)]
 mod mock;
@@ -12,30 +13,15 @@ mod tests;
 pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{
-			Currency, Randomness,
-		},
+		traits::{Currency, Randomness},
 	};
 	use frame_system::pallet_prelude::*;
+	use parity_scale_codec::{Decode, Encode};
 	use sp_io::hashing::blake2_256;
+	use crate::player::Player;
 
-	type ID = [u8; 32];
-	type NAME = [u8; 16];
-
-	// Struct, Enum
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
-	#[scale_info(skip_type_params(T))]
-	pub struct Player<T: Config> {
-		id: ID,
-		owner: T::AccountId,
-		name: NAME,
-	}
-
-	impl <T: Config> MaxEncodedLen for Player<T> {
-		fn max_encoded_len() -> usize {
-			1000
-		}
-	}
+	pub type ID = [u8; 32];
+	pub type NAME = [u8; 16];
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -68,13 +54,11 @@ pub mod pallet {
 
 	// Storage
 	#[pallet::storage]
-	#[pallet::getter(fn players)]
-	pub(super) type Players<T: Config> = StorageMap<_, Twox64Concat, ID, Player<T>>;
+	pub(super) type Players<T: Config> = StorageMap<_, Twox64Concat, ID, Player<T::AccountId>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn player_owned)]
 	pub type PlayerOwned<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -98,7 +82,7 @@ pub mod pallet {
 			ensure!(Self::is_player_available(&sender), <Error<T>>::PlayerExisted);
 			let id = Self::gen_id()?;
 			ensure!(Self::is_player_id_available(&id), <Error<T>>::PlayerIdUsed);
-			let player = Player::<T> { id, owner: sender.clone(), name: user_name };
+			let player = Player::<T::AccountId> { id, owner: sender.clone(), name: user_name };
 
 			<Players<T>>::insert(id, player);
 			<PlayerOwned<T>>::insert(sender, id);
@@ -106,7 +90,7 @@ pub mod pallet {
 		}
 
 		pub fn is_player_id_available(id: &ID) -> bool {
-			match Self::players(id) {
+			match Players::<T>::get(id) {
 				Some(_) => false,
 				None => true,
 			}
