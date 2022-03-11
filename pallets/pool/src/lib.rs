@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 pub mod pool;
 
@@ -115,9 +115,19 @@ pub mod pallet {
 	pub type IngamePlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
 
+	#[pallet::type_value]
+	pub(super) fn DefaultService<T: Config>() -> Service<BalanceOf<T>> {
+		Service { tx_limit: 4, discount: 60, service: PoolFee::<T>::get() }
+	}
 	#[pallet::storage]
-	pub(super) type Services<T: Config> =
-		StorageMap<_, Twox64Concat, PackService, Service<BalanceOf<T>>>;
+	pub(super) type Services<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		PackService,
+		Service<BalanceOf<T>>,
+		ValueQuery,
+		DefaultService<T>,
+	>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
@@ -165,10 +175,11 @@ pub mod pallet {
 		pub fn join(origin: OriginFor<T>, service: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::join_pool(sender.clone(), service)?;
-			let pool_fee = Self::pool_fee();
-			let double_fee = pool_fee * 2u32.into();
+			let pack_service = Services::<T>::get(service);
+			let double_fee = pack_service.service * 2u32.into();
 			Self::change_fee(&sender, double_fee)?;
 			Self::deposit_event(Event::PlayerJoinPool(sender));
+
 			Ok(())
 		}
 
@@ -225,8 +236,10 @@ pub mod pallet {
 			if let Some(player) = Players::<T>::get(sender) {
 				let join_block = player.join_block;
 				let block_number = Self::get_block_number();
-				let refund_fee: BalanceOf<T>;
 				let range_block = block_number - join_block;
+				let mut refund_fee: BalanceOf<T>;
+				let pack = Services::<T>::get(player.service);
+				refund_fee = pack.service;
 
 				if range_block < Self::mark_block() {
 					<NewPlayers<T>>::try_mutate(|players| {
@@ -236,7 +249,6 @@ pub mod pallet {
 						Ok(())
 					})
 					.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-					refund_fee = Self::pool_fee();
 				} else {
 					<IngamePlayers<T>>::try_mutate(|players| {
 						if let Some(ind) = players.iter().position(|id| id == sender) {
@@ -245,7 +257,12 @@ pub mod pallet {
 						Ok(())
 					})
 					.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-					refund_fee = Self::calculate_ingame_refund_amount(join_block, block_number)?;
+
+					refund_fee = Self::calculate_ingame_refund_amount(
+						join_block,
+						block_number,
+						player.service,
+					)?;
 				}
 				<Players<T>>::remove(sender);
 				let _ = T::Currency::deposit_into_existing(sender, refund_fee);
@@ -258,10 +275,12 @@ pub mod pallet {
 		pub fn calculate_ingame_refund_amount(
 			join_block: u64,
 			block_number: u64,
+			service: PackService,
 		) -> Result<BalanceOf<T>, Error<T>> {
 			let range_block = block_number - join_block;
 			let extra = range_block % Self::mark_block();
-			if let Some(fee) = Self::balance_to_u64(Self::pool_fee()) {
+			let service = Services::<T>::get(service);
+			if let Some(fee) = Self::balance_to_u64(service.service) {
 				let actual_fee = fee * (Self::mark_block() - extra) / Self::mark_block();
 				if let Some(result) = Self::u64_to_balance(actual_fee) {
 					return Ok(result);
@@ -287,11 +306,14 @@ pub mod pallet {
 		fn charge_ingame() -> Result<(), Error<T>> {
 			let ingame_players: Vec<T::AccountId> = Self::ingame_players().into_inner();
 			for player in ingame_players {
-				match Self::change_fee(&player, Self::pool_fee()) {
-					Ok(_) => {},
-					Err(_) => {
-						let _ = Self::kick_ingame_player(&player);
-					},
+				if let Some(ingame_player) = Players::<T>::get(&player) {
+					let pack = Services::<T>::get(ingame_player.service);
+					match Self::change_fee(&player, pack.service) {
+						Ok(_) => {},
+						Err(_) => {
+							let _ = Self::kick_ingame_player(&player);
+						},
+					}
 				}
 			}
 			Ok(())
@@ -343,7 +365,7 @@ pub mod pallet {
 
 	impl<T: Config> PackServiceProvider<BalanceOf<T>> for Pallet<T> {
 		fn get_service(service: PackService) -> Option<Service<BalanceOf<T>>> {
-			Services::<T>::get(service)
+			Some(Services::<T>::get(service))
 		}
 	}
 }

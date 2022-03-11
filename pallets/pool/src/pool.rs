@@ -7,16 +7,12 @@ use frame_support::{
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
-use crate::pallet::{Config, BalanceOf};
-
 pub trait PackServiceProvider<Balance> {
 	fn get_service(service: PackService) -> Option<Service<Balance>>;
 }
 pub trait AuroraZone<AccountId> {
 	fn is_in_aurora_zone(player: &AccountId) -> Option<Player<AccountId>>;
 }
-
-
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -28,12 +24,6 @@ pub struct Service<Balance> {
     pub service: Balance,
 }
 
-// impl<T: Config> MaxEncodedLen for Service<T> {
-//     fn max_encoded_len() -> usize {
-//         1000
-//     }
-// }
-
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum PackService {
@@ -41,8 +31,6 @@ pub enum PackService {
     Medium,
     Max,
 }
-
-
 
 // Struct, Enum
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
