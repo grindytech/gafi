@@ -44,7 +44,6 @@ pub mod pallet {
 		type MaxIngamePlayer: Get<u32>;
 	}
 
-	// Errors.
 	#[pallet::error]
 	pub enum Error<T> {
 		PlayerNotFound,
@@ -84,6 +83,7 @@ pub mod pallet {
 		}
 	}
 
+	//** Storage **//
 	#[pallet::storage]
 	#[pallet::getter(fn max_player)]
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
