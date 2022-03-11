@@ -7,18 +7,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait PackServiceProvider<T: Config> {
-	fn get_service(service: PackService) -> Option<Service<T>>;
-}
-pub trait AuroraZone<T: Config> {
-	fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>>;
-}
+pub mod pool;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-	#[cfg(feature = "std")]
-	use frame_support::serde::{Deserialize, Serialize};
 	use frame_support::{
 		dispatch::{DispatchResult, Vec},
 		pallet_prelude::*,
@@ -28,54 +20,10 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
-	use sp_runtime::RuntimeDebug;
+	use crate::pool::{AuroraZone, PackServiceProvider, PackService, Player, Service};
 
-	type BalanceOf<T> =
+	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
-	#[scale_info(skip_type_params(T))]
-	pub struct Service<T: Config> {
-		pub tx_limit: u8, // max number of transaction per minute
-		pub discount: u8,
-		pub service: BalanceOf<T>,
-	}
-
-	impl<T: Config> MaxEncodedLen for Service<T> {
-		fn max_encoded_len() -> usize {
-			1000
-		}
-	}
-
-	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo)]
-	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub enum PackService {
-		Basic,
-		Medium,
-		Max,
-	}
-
-	impl MaxEncodedLen for PackService {
-		fn max_encoded_len() -> usize {
-			1000
-		}
-	}
-
-	// Struct, Enum
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
-	#[scale_info(skip_type_params(T))]
-	pub struct Player<T: Config> {
-		address: T::AccountId,
-		join_block: u64,
-		pub service: PackService,
-	}
-
-	impl<T: Config> MaxEncodedLen for Player<T> {
-		fn max_encoded_len() -> usize {
-			1000
-		}
-	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]

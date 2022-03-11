@@ -1,10 +1,10 @@
-use crate as pallet_pool;
+use crate::{self as pallet_pool, pool::PackService};
 use frame_support::parameter_types;
 use frame_system as system;
 
 use frame_support::{
+	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
-	dispatch::{Vec},
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -24,6 +24,12 @@ pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 const POOL_FEE: u64 = 10000000000000000;
 const MARK_BLOCK: u64 = 30;
 const MAX_PLAYER: u32 = 1000;
+
+const SERVICES: [(PackService, u8, u8, u64); 3] = [
+	(PackService::Basic, 4, 60, POOL_FEE),
+	(PackService::Medium, 8, 70, POOL_FEE * 2),
+	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
+];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -90,7 +96,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
 parameter_types! {
 	pub const MaxNewPlayer: u32 = 600;
 	pub const MaxIngamePlayer: u32 = 600;
@@ -142,15 +147,16 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> {
-			balances: self.balances,
-		}.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
+			.assimilate_storage(&mut storage);
 
 		let _ = pallet_pool::GenesisConfig::<Test> {
 			mark_block: self.mark_block,
 			pool_fee: self.pool_fee,
 			max_player: self.max_player,
-		}.assimilate_storage(&mut storage);
+			services: SERVICES,
+		}
+		.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

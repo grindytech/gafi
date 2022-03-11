@@ -1,6 +1,6 @@
 use crate::{mock::*, Config, Error};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-
+use crate::pool::{PackService};
 const POOL_FEE: u64 = 10000000000000000;
 const MARK_BLOCK: u64 = 30;
 const MAX_PLAYER: u32 = 1000;
@@ -10,7 +10,7 @@ fn player_join_pool_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-		assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+		assert_ok!(PalletPool::join(Origin::signed(ALICE), PackService::Basic));
 		let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 		assert_eq!(balance_before, balance_after + POOL_FEE * 2, "charge pool fee not correct");
 	});
@@ -22,14 +22,14 @@ fn player_join_pool_should_fail() {
 		run_to_block(10);
 		{
 			let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-			assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+			assert_ok!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)));
 			let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 			assert_eq!(balance_before, balance_after + POOL_FEE * 2, "charge pool fee not correct");
 		}
 
 		{
 			let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-			assert_err!(PalletPool::join(Origin::signed(ALICE)), <Error<Test>>::PlayerAlreadyJoin);
+			assert_err!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)), <Error<Test>>::PlayerAlreadyJoin);
 			let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 			assert_eq!(balance_before, balance_after, "charge pool fee when fail not correct");
 		}
@@ -42,7 +42,7 @@ fn should_move_newplayers_to_ingame() {
 		run_to_block(10);
 		{
 			let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-			assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+			assert_ok!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)));
 			let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 			assert_eq!(balance_before, balance_after + POOL_FEE * 2, "charge pool fee not correct");
 		}
@@ -81,7 +81,7 @@ fn newplayer_refund_should_refund_correct() {
 	ExtBuilder::default().build_and_execute(|| {
 		{
 			let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-			assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+			assert_ok!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)));
 			let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 			assert_eq!(balance_before, balance_after + POOL_FEE * 2, "charge pool fee not correct");
 		}
@@ -116,7 +116,7 @@ fn leave_pool_should_work() {
 			run_to_block(refund_map.0);
 			{
 				let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-				assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+				assert_ok!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)));
 				let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 				assert_eq!(
 					balance_before,
@@ -145,7 +145,7 @@ fn leave_pool_should_fail() {
 		run_to_block(10);
 		{
 			let balance_before = <Test as Config>::Currency::free_balance(&ALICE);
-			assert_ok!(PalletPool::join(Origin::signed(ALICE)));
+			assert_ok!((PalletPool::join(Origin::signed(ALICE), PackService::Basic)));
 			let balance_after = <Test as Config>::Currency::free_balance(&ALICE);
 			assert_eq!(balance_before, balance_after + POOL_FEE * 2, "charge pool fee not correct");
 		}

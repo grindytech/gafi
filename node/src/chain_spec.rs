@@ -1,5 +1,5 @@
 use aurora_testnet_runtime::{
-	pallet_pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	pallet_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, PoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };

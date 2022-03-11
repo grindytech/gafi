@@ -19,8 +19,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	};
-	use pallet_pool::{AuroraZone, PackServiceProvider};
-	use pallet_transaction_payment::{CurrencyAdapter, OnChargeTransaction};
+	use pallet_pool::pool::{AuroraZone, PackServiceProvider};
+	use pallet_transaction_payment::{OnChargeTransaction};
 	use sp_runtime::traits::{DispatchInfoOf, Saturating, Zero};
 	use sp_std::marker::PhantomData;
 
