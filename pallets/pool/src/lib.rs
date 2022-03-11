@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 pub mod pool;
 
@@ -92,9 +92,12 @@ pub mod pallet {
 	#[pallet::getter(fn mark_block)]
 	pub type MarkBlock<T: Config> = StorageValue<_, u64, ValueQuery>;
 
+	#[pallet::type_value]
+	pub(super) fn DefaultServiceFee<T: Config>() -> BalanceOf<T> {
+		1000_000u64.try_into().ok().unwrap()
+	}
 	#[pallet::storage]
-	#[pallet::getter(fn pool_fee)]
-	pub type PoolFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub(super) type ServiceFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery, DefaultServiceFee<T>>;
 
 	// Store all players join the pool
 	#[pallet::storage]
@@ -117,7 +120,7 @@ pub mod pallet {
 
 	#[pallet::type_value]
 	pub(super) fn DefaultService<T: Config>() -> Service<BalanceOf<T>> {
-		Service { tx_limit: 4, discount: 60, service: PoolFee::<T>::get() }
+		Service { tx_limit: 4, discount: 60, service: ServiceFee::<T>::get() }
 	}
 	#[pallet::storage]
 	pub(super) type Services<T: Config> = StorageMap<
@@ -141,14 +144,16 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
+			const BASE_FEE: u64 = 1000_000;
+			let convert_default_fee = |fee: u64| -> BalanceOf<T> {fee.try_into().ok().unwrap()};
 			Self {
 				max_player: 1000,
 				mark_block: 30,
-				pool_fee: Default::default(),
+				pool_fee: convert_default_fee(BASE_FEE),
 				services: [
-					(PackService::Basic, 4, 60, Default::default()),
-					(PackService::Medium, 8, 70, Default::default()),
-					(PackService::Max, u8::MAX, 80, Default::default()),
+					(PackService::Basic, 4, 60, convert_default_fee(BASE_FEE)),
+					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE*2)),
+					(PackService::Max, u8::MAX, 80, convert_default_fee(BASE_FEE*3)),
 				],
 			}
 		}
@@ -159,7 +164,7 @@ pub mod pallet {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
 			<MarkBlock<T>>::put(self.mark_block);
-			<PoolFee<T>>::put(self.pool_fee);
+			<ServiceFee<T>>::put(self.pool_fee);
 
 			for service in self.services.iter() {
 				let new_service =
