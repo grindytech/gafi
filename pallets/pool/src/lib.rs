@@ -11,6 +11,7 @@ pub mod pool;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
 	use frame_support::{
 		dispatch::{DispatchResult, Vec},
 		pallet_prelude::*,
@@ -20,7 +21,6 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
-	use crate::pool::{AuroraZone, PackServiceProvider, PackService, Player, Service};
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -98,8 +98,8 @@ pub mod pallet {
 
 	// Store all players join the pool
 	#[pallet::storage]
-	#[pallet::getter(fn players)]
-	pub(super) type Players<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Player<T>>;
+	pub(super) type Players<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, Player<T::AccountId>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
@@ -116,8 +116,8 @@ pub mod pallet {
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn services)]
-	pub(super) type Services<T: Config> = StorageMap<_, Twox64Concat, PackService, Service<T>>;
+	pub(super) type Services<T: Config> =
+		StorageMap<_, Twox64Concat, PackService, Service<BalanceOf<T>>>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
@@ -184,7 +184,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn join_pool(sender: T::AccountId, service: PackService) -> Result<(), Error<T>> {
 			// make sure player not re-join
-			ensure!(Self::players(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
+			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
 			// make sure not exceed max players
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
@@ -193,7 +193,11 @@ pub mod pallet {
 			<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
 			let block_number = Self::get_block_number();
-			let player = Player::<T> { address: sender.clone(), join_block: block_number, service };
+			let player = Player::<T::AccountId> {
+				address: sender.clone(),
+				join_block: block_number,
+				service,
+			};
 			<Players<T>>::insert(sender, player);
 			<PlayerCount<T>>::put(new_player_count);
 			Ok(())
@@ -218,7 +222,7 @@ pub mod pallet {
 			2. Remove sender from Players and NewPlayers/IngamePlayers
 		*/
 		fn leave_pool(sender: &T::AccountId) -> Result<(), Error<T>> {
-			if let Some(player) = Self::players(sender) {
+			if let Some(player) = Players::<T>::get(sender) {
 				let join_block = player.join_block;
 				let block_number = Self::get_block_number();
 				let refund_fee: BalanceOf<T>;
@@ -331,15 +335,15 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> AuroraZone<T> for Pallet<T> {
-		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T>> {
-			Self::players(player)
+	impl<T: Config> AuroraZone<T::AccountId> for Pallet<T> {
+		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T::AccountId>> {
+			Players::<T>::get(player)
 		}
 	}
 
-	impl<T: Config> PackServiceProvider<T> for Pallet<T> {
-		fn get_service(service: PackService) -> Option<Service<T>> {
-			Self::services(service)
+	impl<T: Config> PackServiceProvider<BalanceOf<T>> for Pallet<T> {
+		fn get_service(service: PackService) -> Option<Service<BalanceOf<T>>> {
+			Services::<T>::get(service)
 		}
 	}
 }

@@ -33,6 +33,8 @@ pub mod pallet {
 		<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 	type Balance<C, T> = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	pub type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance; 
 
 	pub struct AurCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
@@ -121,8 +123,8 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
-		type AuroraZone: AuroraZone<Self>;
-		type PackServiceProvider: PackServiceProvider<Self>;
+		type AuroraZone: AuroraZone<Self::AccountId>;
+		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 	}
 
 	// Errors.

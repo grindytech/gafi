@@ -7,7 +7,6 @@ use crate::pallet::{ID, NAME};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-// Struct, Enum
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
