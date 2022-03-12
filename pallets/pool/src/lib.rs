@@ -177,6 +177,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(100)]
+		/*
+		* player join the pool
+		* 1. Add new player to NewPlayer
+		* 2. charge double service fee when they join
+		*/
 		pub fn join(origin: OriginFor<T>, service: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::join_pool(sender.clone(), service)?;
@@ -188,6 +193,11 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/*
+		* player leave the pool
+		* 1. remove player from storages
+		* 2. refund appropriate amount (the maximum amount they receive is 'service_fee'/2)
+		*/
 		#[pallet::weight(100)]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -196,11 +206,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/*
+		* Set new MaxPlayer for the pool, MaxPlayer must be <= MaxNewPlayer and <= MaxIngamePlayer
+		*/
 		#[pallet::weight(0)]
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
-
-			println!("max_player: {:?}", T::MaxNewPlayer::get());
 			// make sure new max_player not exceed the capacity of NewPlayers and IngamePlayers
 			ensure!(max_player <=  T::MaxNewPlayer::get(), <Error<T>>::ExceedMaxNewPlayer);
 			ensure!(max_player <= T::MaxIngamePlayer::get(), <Error<T>>::ExceedMaxIngamePlayer);

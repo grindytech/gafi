@@ -4,8 +4,7 @@
 */
 
 use crate::pool::PackService;
-use crate::{mock::*, Config, Error, MaxPlayer};
-use frame_support::traits::OriginTrait;
+use crate::{mock::*, Error};
 use frame_support::{assert_err, assert_ok};
 
 #[test]
