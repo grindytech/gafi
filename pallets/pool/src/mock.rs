@@ -25,17 +25,17 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const TEST_ACCOUNTS: [(AccountId32, u64); 7] = [
 	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
+	(AccountId32::new([2u8; 32]), 1000000000000000000),
+	(AccountId32::new([3u8; 32]), 1000000000000000000),
+	(AccountId32::new([4u8; 32]), 1000000000000000000),
+	(AccountId32::new([5u8; 32]), 1000000000000000000),
+	(AccountId32::new([6u8; 32]), 1000000000000000000),
+	(AccountId32::new([7u8; 32]), 1000000000000000000),
 ];
 
 const POOL_FEE: u64 = 10000000000000000;
 const MARK_BLOCK: u64 = 30;
-const MAX_PLAYER: u32 = 5;
+pub const MAX_PLAYER: u32 = 5;
 
 const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
