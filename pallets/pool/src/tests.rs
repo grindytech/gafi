@@ -4,17 +4,29 @@
 */
 use crate::pool::PackService;
 use crate::{mock::*, Error};
-use crate::{IngamePlayers, NewPlayers};
+use crate::{IngamePlayers, NewPlayers, PlayerCount, Players};
 use frame_support::{assert_err, assert_ok};
 
 #[test]
 fn player_join_pool_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
-		));
+		for account in TEST_ACCOUNTS {
+			let count_before = PlayerCount::<Test>::get();
+			assert_ok!(PalletPool::join(Origin::signed(account.0.clone()), PackService::Basic));
+			let new_players = NewPlayers::<Test>::get();
+			assert_eq!(
+				new_players.contains(&account.0.clone()),
+				true,
+				"NewPlayers must contains new player"
+			);
+
+			let player = Players::<Test>::get(account.0.clone());
+			assert_eq!(player == None, false, "new player should be added to Players");
+
+			let count_after = PlayerCount::<Test>::get();
+			assert_eq!(count_before, count_after - 1, "player count not correct");
+		}
 	});
 }
 
@@ -126,9 +138,11 @@ fn set_pack_service_should_fail() {
 fn should_restrict_max_player() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
+		let max_player = 5u32;
+		assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
 		let mut count = 0;
 		for account in TEST_ACCOUNTS {
-			if count == MAX_PLAYER {
+			if count == max_player {
 				assert_err!(
 					PalletPool::join(Origin::signed(account.0.clone()), PackService::Basic),
 					<Error<Test>>::ExceedMaxPlayer
@@ -184,9 +198,10 @@ fn leave_pool_should_work() {
 fn leave_pool_should_fail() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		assert_ok!(
-			(PalletPool::join(Origin::signed(TEST_ACCOUNTS[0].0.clone()), PackService::Basic))
-		);
+		assert_ok!(PalletPool::join(
+			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
+			PackService::Basic
+		));
 		run_to_block(15);
 		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
 		run_to_block(20);

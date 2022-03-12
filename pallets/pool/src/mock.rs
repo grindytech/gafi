@@ -38,7 +38,7 @@ pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
 
 const POOL_FEE: u64 = 10000000000000000;
 const MARK_BLOCK: u64 = 30;
-pub const MAX_PLAYER: u32 = 5;
+pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
 

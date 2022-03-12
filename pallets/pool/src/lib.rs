@@ -136,14 +136,14 @@ pub mod pallet {
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			const BASE_FEE: u64 = 1000_000;
-			let convert_default_fee = |fee: u64| -> BalanceOf<T> {fee.try_into().ok().unwrap()};
+			let convert_default_fee = |fee: u64| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
 			Self {
 				max_player: 1000,
 				mark_block: 30,
 				services: [
 					(PackService::Basic, 4, 60, convert_default_fee(BASE_FEE)),
-					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE*2)),
-					(PackService::Max, u8::MAX, 80, convert_default_fee(BASE_FEE*3)),
+					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE * 2)),
+					(PackService::Max, u8::MAX, 80, convert_default_fee(BASE_FEE * 3)),
 				],
 			}
 		}
@@ -166,10 +166,10 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/*
-		* player join the pool
-		* 1. Add new player to NewPlayer
-		* 2. charge double service fee when they join
-		*/
+			* player join the pool
+			* 1. Add new player to NewPlayer
+			* 2. charge double service fee when they join
+			*/
 		#[pallet::weight(100)]
 		pub fn join(origin: OriginFor<T>, pack: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -183,10 +183,10 @@ pub mod pallet {
 		}
 
 		/*
-		* player leave the pool
-		* 1. remove player from storages
-		* 2. refund appropriate amount (the maximum amount they receive is 'service_fee'/2)
-		*/
+			* player leave the pool
+			* 1. remove player from storages
+			* 2. refund appropriate amount (the maximum amount they receive is 'service_fee'/2)
+			*/
 		#[pallet::weight(100)]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -196,30 +196,32 @@ pub mod pallet {
 		}
 
 		/*
-		* Set new MaxPlayer for the pool, MaxPlayer must be <= MaxNewPlayer and <= MaxIngamePlayer
-		*/
+			* Set new MaxPlayer for the pool, MaxPlayer must be <= MaxNewPlayer and <= MaxIngamePlayer
+			*/
 		#[pallet::weight(0)]
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			// make sure new max_player not exceed the capacity of NewPlayers and IngamePlayers
-			ensure!(max_player <=  T::MaxNewPlayer::get(), <Error<T>>::ExceedMaxNewPlayer);
+			ensure!(max_player <= T::MaxNewPlayer::get(), <Error<T>>::ExceedMaxNewPlayer);
 			ensure!(max_player <= T::MaxIngamePlayer::get(), <Error<T>>::ExceedMaxIngamePlayer);
 			<MaxPlayer<T>>::put(max_player);
 			Ok(())
 		}
 
 		/*
-		* Set new pack service		
-		*/
+			* Set new pack service
+			*/
 		#[pallet::weight(0)]
-		pub fn set_pack_service(origin: OriginFor<T>, pack: PackService, tx_limit: u8, discount: u8, service: BalanceOf<T>) -> DispatchResult {
+		pub fn set_pack_service(
+			origin: OriginFor<T>,
+			pack: PackService,
+			tx_limit: u8,
+			discount: u8,
+			service: BalanceOf<T>,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			let pack_service = Service {
-				tx_limit,
-				discount,
-				service,
-			};
+			let pack_service = Service { tx_limit, discount, service };
 			Services::<T>::insert(pack, pack_service);
 			Ok(())
 		}
