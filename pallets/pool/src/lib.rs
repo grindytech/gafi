@@ -97,7 +97,7 @@ pub mod pallet {
 		1000_000u64.try_into().ok().unwrap()
 	}
 	#[pallet::storage]
-	pub(super) type ServiceFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery, DefaultServiceFee<T>>;
+	pub(super) type BaseServiceFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery, DefaultServiceFee<T>>;
 
 	// Store all players join the pool
 	#[pallet::storage]
@@ -120,7 +120,7 @@ pub mod pallet {
 
 	#[pallet::type_value]
 	pub(super) fn DefaultService<T: Config>() -> Service<BalanceOf<T>> {
-		Service { tx_limit: 4, discount: 60, service: ServiceFee::<T>::get() }
+		Service { tx_limit: 4, discount: 60, service: BaseServiceFee::<T>::get() }
 	}
 	#[pallet::storage]
 	pub(super) type Services<T: Config> = StorageMap<
@@ -164,7 +164,7 @@ pub mod pallet {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
 			<MarkBlock<T>>::put(self.mark_block);
-			<ServiceFee<T>>::put(self.pool_fee);
+			<BaseServiceFee<T>>::put(self.pool_fee);
 
 			for service in self.services.iter() {
 				let new_service =
@@ -193,6 +193,18 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			Self::leave_pool(&sender)?;
 			Self::deposit_event(Event::PlayerLeavePool(sender));
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
+			ensure_root(origin)?;
+
+			println!("max_player: {:?}", T::MaxNewPlayer::get());
+			// make sure new max_player not exceed the capacity of NewPlayers and IngamePlayers
+			ensure!(max_player <=  T::MaxNewPlayer::get(), <Error<T>>::ExceedMaxNewPlayer);
+			ensure!(max_player <= T::MaxIngamePlayer::get(), <Error<T>>::ExceedMaxIngamePlayer);
+			<MaxPlayer<T>>::put(max_player);
 			Ok(())
 		}
 	}

@@ -23,7 +23,8 @@ pub use pallet_balances::Call as BalancesCall;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-pub const TEST_ACCOUNTS: [(AccountId32, u64); 7] = [
+pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
+	(AccountId32::new([0u8; 32]), 1000000000000000000),
 	(AccountId32::new([1u8; 32]), 1000000000000000000),
 	(AccountId32::new([2u8; 32]), 1000000000000000000),
 	(AccountId32::new([3u8; 32]), 1000000000000000000),
@@ -31,11 +32,15 @@ pub const TEST_ACCOUNTS: [(AccountId32, u64); 7] = [
 	(AccountId32::new([5u8; 32]), 1000000000000000000),
 	(AccountId32::new([6u8; 32]), 1000000000000000000),
 	(AccountId32::new([7u8; 32]), 1000000000000000000),
+	(AccountId32::new([8u8; 32]), 1000000000000000000),
+	(AccountId32::new([9u8; 32]), 1000000000000000000),
 ];
 
 const POOL_FEE: u64 = 10000000000000000;
 const MARK_BLOCK: u64 = 30;
 pub const MAX_PLAYER: u32 = 5;
+pub const MAX_NEW_PLAYER: u32 = 20;
+pub const MAX_INGAME_PLAYER: u32 = 20;
 
 const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
@@ -109,8 +114,8 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-	pub const MaxNewPlayer: u32 = 600;
-	pub const MaxIngamePlayer: u32 = 600;
+	pub const MaxNewPlayer: u32 = MAX_NEW_PLAYER;
+	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
 }
 
 impl pallet_pool::Config for Test {

@@ -5,6 +5,7 @@
 
 use crate::pool::PackService;
 use crate::{mock::*, Config, Error, MaxPlayer};
+use frame_support::traits::OriginTrait;
 use frame_support::{assert_err, assert_ok};
 
 #[test]
@@ -30,6 +31,57 @@ fn player_join_pool_should_fail() {
 			(PalletPool::join(Origin::signed(TEST_ACCOUNTS[0].0.clone()), PackService::Basic)),
 			<Error<Test>>::PlayerAlreadyJoin
 		);
+	})
+}
+
+#[test]
+fn set_max_player_should_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		{
+			run_to_block(1);
+			let max_player = 10;
+			assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
+			assert_eq!(PalletPool::max_player(), max_player, "max_player after set not correct");
+		}
+
+		{
+			run_to_block(10);
+			let max_player = MAX_INGAME_PLAYER;
+			assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
+			assert_eq!(PalletPool::max_player(), max_player, "max_player after set not correct");
+		}
+
+		{
+			run_to_block(20);
+			let max_player = MAX_NEW_PLAYER;
+			assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
+			assert_eq!(PalletPool::max_player(), max_player, "max_player after set not correct");
+		}
+	})
+}
+
+#[test]
+fn set_max_player_should_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		// bad origin
+		{
+			run_to_block(10);
+			let max_player = MAX_NEW_PLAYER + 1;
+			assert_err!(
+				PalletPool::set_max_player(Origin::signed(TEST_ACCOUNTS[0].0.clone()), max_player),
+				frame_support::error::BadOrigin
+			);
+		}
+
+		// incorrect max_player value
+		{
+			run_to_block(10);
+			let max_player = MAX_NEW_PLAYER + 1;
+			assert_err!(
+				PalletPool::set_max_player(Origin::root(), max_player),
+				<Error<Test>>::ExceedMaxNewPlayer
+			);
+		}
 	})
 }
 
