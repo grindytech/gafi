@@ -2,9 +2,9 @@
 * This unittest should only test logic function e.g. Storage, Computation
 * and not related with Currency e.g. Balances, Transaction Payment
 */
-
 use crate::pool::PackService;
 use crate::{mock::*, Error};
+use crate::{IngamePlayers, NewPlayers};
 use frame_support::{assert_err, assert_ok};
 
 #[test]
@@ -85,6 +85,44 @@ fn set_max_player_should_fail() {
 }
 
 #[test]
+fn set_pack_service_should_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		for service in SERVICES {
+			assert_ok!(PalletPool::set_pack_service(
+				Origin::root(),
+				service.0,
+				service.1,
+				service.2,
+				service.3
+			));
+		}
+	})
+}
+
+#[test]
+fn set_pack_service_should_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		// bad origin
+		{
+			run_to_block(1);
+			for service in SERVICES {
+				assert_err!(
+					PalletPool::set_pack_service(
+						Origin::signed(TEST_ACCOUNTS[0].0.clone()),
+						service.0,
+						service.1,
+						service.2,
+						service.3
+					),
+					frame_support::error::BadOrigin
+				);
+			}
+		}
+	})
+}
+
+#[test]
 fn should_restrict_max_player() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
@@ -113,16 +151,16 @@ fn should_move_newplayers_to_ingame() {
 		));
 
 		{
-			let new_players_before = PalletPool::new_players();
-			let ingame_players_before = PalletPool::ingame_players();
+			let new_players_before = NewPlayers::<Test>::get();
+			let ingame_players_before = IngamePlayers::<Test>::get();
 			assert_eq!(new_players_before.len(), 1, "new_players_before length not correct");
 			assert_eq!(ingame_players_before.len(), 0, "ingame_players_before length not correct");
 		}
 
 		run_to_block(100);
 		{
-			let new_players_after = PalletPool::new_players();
-			let ingame_players_after = PalletPool::ingame_players();
+			let new_players_after = NewPlayers::<Test>::get();
+			let ingame_players_after = IngamePlayers::<Test>::get();
 			assert_eq!(new_players_after.len(), 0, "new_players_after length not correct");
 			assert_eq!(ingame_players_after.len(), 1, "ingame_players_after length not correct");
 		}
@@ -133,9 +171,10 @@ fn should_move_newplayers_to_ingame() {
 fn leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
-		assert_ok!(
-			(PalletPool::join(Origin::signed(TEST_ACCOUNTS[0].0.clone()), PackService::Basic))
-		);
+		assert_ok!(PalletPool::join(
+			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
+			PackService::Basic
+		));
 		run_to_block(10);
 		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
 	})

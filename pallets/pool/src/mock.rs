@@ -42,7 +42,7 @@ pub const MAX_PLAYER: u32 = 5;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
 
-const SERVICES: [(PackService, u8, u8, u64); 3] = [
+pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
 	(PackService::Medium, 8, 70, POOL_FEE * 2),
 	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
@@ -144,7 +144,6 @@ pub fn run_to_block(n: u64) {
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u64)>,
-	pool_fee: u64,
 	mark_block: u64,
 	max_player: u32,
 }
@@ -153,7 +152,6 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: TEST_ACCOUNTS.to_vec(),
-			pool_fee: POOL_FEE,
 			mark_block: MARK_BLOCK,
 			max_player: MAX_PLAYER,
 		}
@@ -169,7 +167,6 @@ impl ExtBuilder {
 
 		let _ = pallet_pool::GenesisConfig::<Test> {
 			mark_block: self.mark_block,
-			pool_fee: self.pool_fee,
 			max_player: self.max_player,
 			services: SERVICES,
 		}

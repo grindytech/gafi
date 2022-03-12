@@ -215,7 +215,6 @@ fn testnet_genesis(
 		base_fee: Default::default(),
 		pool: PoolConfig {
 			mark_block: MARK_BLOCK,
-			pool_fee: POOL_FEE,
 			max_player: MAX_PLAYER,
 			services: SERVICES,
 		},

@@ -24,6 +24,18 @@ pub struct Service<Balance> {
     pub service: Balance,
 }
 
+// impl<Balance> Service<Balance>
+// where Balance: std::convert::From<u128>
+// {
+//     pub fn new(tx_limit: u8, discount: u8, service: u128) -> Self{
+//         Service {
+//             tx_limit,
+//             discount,
+//             service: service.try_into().ok().unwrap(),
+//         }
+//     }
+// }
+
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum PackService {

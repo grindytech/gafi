@@ -377,8 +377,8 @@ impl pallet_player::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxNewPlayer: u32 = 600;
-	pub const MaxIngamePlayer: u32 = 600;
+	pub const MaxNewPlayer: u32 = 10000;
+	pub const MaxIngamePlayer: u32 = 10000;
 }
 
 impl pallet_pool::Config for Runtime {

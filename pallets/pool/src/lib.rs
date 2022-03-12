@@ -92,13 +92,6 @@ pub mod pallet {
 	#[pallet::getter(fn mark_block)]
 	pub type MarkBlock<T: Config> = StorageValue<_, u64, ValueQuery>;
 
-	#[pallet::type_value]
-	pub(super) fn DefaultServiceFee<T: Config>() -> BalanceOf<T> {
-		1000_000u64.try_into().ok().unwrap()
-	}
-	#[pallet::storage]
-	pub(super) type BaseServiceFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery, DefaultServiceFee<T>>;
-
 	// Store all players join the pool
 	#[pallet::storage]
 	pub(super) type Players<T: Config> =
@@ -109,20 +102,19 @@ pub mod pallet {
 	pub(super) type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn new_players)]
 	pub(super) type NewPlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxNewPlayer>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn ingame_players)]
 	pub type IngamePlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
 
 	#[pallet::type_value]
 	pub(super) fn DefaultService<T: Config>() -> Service<BalanceOf<T>> {
-		Service { tx_limit: 4, discount: 60, service: BaseServiceFee::<T>::get() }
+		Service { tx_limit: 4, discount: 60, service: 1000_000_000u128.try_into().ok().unwrap() }
 	}
 	#[pallet::storage]
+	#[pallet::getter(fn services)]
 	pub(super) type Services<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -137,7 +129,6 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub max_player: u32,
 		pub mark_block: u64,
-		pub pool_fee: BalanceOf<T>,
 		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
 	}
 
@@ -149,7 +140,6 @@ pub mod pallet {
 			Self {
 				max_player: 1000,
 				mark_block: 30,
-				pool_fee: convert_default_fee(BASE_FEE),
 				services: [
 					(PackService::Basic, 4, 60, convert_default_fee(BASE_FEE)),
 					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE*2)),
@@ -164,7 +154,6 @@ pub mod pallet {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
 			<MarkBlock<T>>::put(self.mark_block);
-			<BaseServiceFee<T>>::put(self.pool_fee);
 
 			for service in self.services.iter() {
 				let new_service =
@@ -176,16 +165,16 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(100)]
 		/*
 		* player join the pool
 		* 1. Add new player to NewPlayer
 		* 2. charge double service fee when they join
 		*/
-		pub fn join(origin: OriginFor<T>, service: PackService) -> DispatchResult {
+		#[pallet::weight(100)]
+		pub fn join(origin: OriginFor<T>, pack: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::join_pool(sender.clone(), service)?;
-			let pack_service = Services::<T>::get(service);
+			Self::join_pool(sender.clone(), pack)?;
+			let pack_service = Services::<T>::get(pack);
 			let double_fee = pack_service.service * 2u32.into();
 			Self::change_fee(&sender, double_fee)?;
 			Self::deposit_event(Event::PlayerJoinPool(sender));
@@ -218,10 +207,26 @@ pub mod pallet {
 			<MaxPlayer<T>>::put(max_player);
 			Ok(())
 		}
+
+		/*
+		* Set new pack service		
+		*/
+		#[pallet::weight(0)]
+		pub fn set_pack_service(origin: OriginFor<T>, pack: PackService, tx_limit: u8, discount: u8, service: BalanceOf<T>) -> DispatchResult {
+			ensure_root(origin)?;
+
+			let pack_service = Service {
+				tx_limit,
+				discount,
+				service,
+			};
+			Services::<T>::insert(pack, pack_service);
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn join_pool(sender: T::AccountId, service: PackService) -> Result<(), Error<T>> {
+		fn join_pool(sender: T::AccountId, pack: PackService) -> Result<(), Error<T>> {
 			// make sure player not re-join
 			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
 			// make sure not exceed max players
@@ -235,7 +240,7 @@ pub mod pallet {
 			let player = Player::<T::AccountId> {
 				address: sender.clone(),
 				join_block: block_number,
-				service,
+				service: pack,
 			};
 			<Players<T>>::insert(sender, player);
 			<PlayerCount<T>>::put(new_player_count);
@@ -332,7 +337,7 @@ pub mod pallet {
 		}
 
 		fn charge_ingame() -> Result<(), Error<T>> {
-			let ingame_players: Vec<T::AccountId> = Self::ingame_players().into_inner();
+			let ingame_players: Vec<T::AccountId> = IngamePlayers::<T>::get().into_inner();
 			for player in ingame_players {
 				if let Some(ingame_player) = Players::<T>::get(&player) {
 					let pack = Services::<T>::get(ingame_player.service);
@@ -348,7 +353,7 @@ pub mod pallet {
 		}
 
 		fn move_newplayer_to_ingame() -> Result<(), Error<T>> {
-			let new_players: Vec<T::AccountId> = Self::new_players().into_inner();
+			let new_players: Vec<T::AccountId> = NewPlayers::<T>::get().into_inner();
 			for new_player in new_players {
 				<IngamePlayers<T>>::try_append(new_player)
 					.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
