@@ -21,6 +21,7 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
+	use pallet_timestamp::{self as timestamp};
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -31,7 +32,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + timestamp::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -62,6 +63,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		PlayerJoinPool(T::AccountId),
 		PlayerLeavePool(T::AccountId),
+		ChargePoolService,
 	}
 
 	/*
@@ -71,14 +73,14 @@ pub mod pallet {
 	*/
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(block_number: BlockNumberFor<T>) {
-			let mark_block = Self::mark_block();
+		fn on_finalize(_block_number: BlockNumberFor<T>) {
+			let _now = <timestamp::Pallet<T>>::get();
 
-			if let Some(block) = Self::block_to_u64(block_number) {
-				if block % mark_block == 0 {
-					let _ = Self::charge_ingame();
-					let _ = Self::move_newplayer_to_ingame();
-				}
+			if _now - Self::mark_time() >=  Self::time_service().try_into().ok().unwrap() {
+				let _ = Self::charge_ingame();
+				let _ = Self::move_newplayer_to_ingame();
+				MarkTime::<T>::put(_now);
+				Self::deposit_event(<Event<T>>::ChargePoolService);
 			}
 		}
 	}
@@ -91,6 +93,23 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn mark_block)]
 	pub type MarkBlock<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	#[pallet::type_value]
+	pub fn DefaultMarkTime<T: Config>() -> T::Moment {
+		<timestamp::Pallet<T>>::get()
+	}
+	#[pallet::storage]
+	#[pallet::getter(fn mark_time)]
+	pub type MarkTime<T: Config> = StorageValue<_, T::Moment, ValueQuery, DefaultMarkTime<T>>;
+
+	#[pallet::type_value]
+	pub fn DefaultTimeService() -> u128 {
+		// 1 hour
+		3_600_000u128
+	}
+	#[pallet::storage]
+	#[pallet::getter(fn time_service)]
+	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
 
 	// Store all players join the pool
 	#[pallet::storage]
@@ -130,6 +149,8 @@ pub mod pallet {
 		pub max_player: u32,
 		pub mark_block: u64,
 		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
+
+		pub time_service: u128,
 	}
 
 	#[cfg(feature = "std")]
@@ -145,6 +166,8 @@ pub mod pallet {
 					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE * 2)),
 					(PackService::Max, u8::MAX, 80, convert_default_fee(BASE_FEE * 3)),
 				],
+
+				time_service: 3_600_000u128,
 			}
 		}
 	}
@@ -160,6 +183,9 @@ pub mod pallet {
 					Service { tx_limit: service.1, discount: service.2, service: service.3 };
 				<Services<T>>::insert(service.0, new_service);
 			}
+
+			<MarkTime<T>>::put(<timestamp::Pallet<T>>::get());
+			<TimeService<T>>::put(self.time_service);
 		}
 	}
 

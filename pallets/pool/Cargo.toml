@@ -30,6 +30,7 @@ sp-std= {default-features = false, version = "4.0.0-dev", git = "https://github.
 
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -50,6 +51,7 @@ std = [
   'frame-benchmarking/std',
   'pallet-balances/std',
   'pallet-randomness-collective-flip/std',
+  'pallet-timestamp/std',
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

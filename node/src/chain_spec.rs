@@ -217,6 +217,7 @@ fn testnet_genesis(
 			mark_block: MARK_BLOCK,
 			max_player: MAX_PLAYER,
 			services: SERVICES,
+			time_service: 60_000u128,
 		},
 	}
 }
