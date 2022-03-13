@@ -41,6 +41,7 @@ const MARK_BLOCK: u64 = 30;
 pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
+pub const TIME_SERVICE: u128 =  60_000u128; // 10 second
 
 pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
@@ -59,6 +60,7 @@ frame_support::construct_runtime!(
 		PalletPool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		// Event: Event,
 	}
 );
@@ -80,6 +82,22 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -139,6 +157,8 @@ pub fn run_to_block(n: u64) {
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		PalletPool::on_initialize(System::block_number());
+		Timestamp::on_initialize(System::block_number());
+		//Timestamp::on_finalize(System::block_number());  // Got error 'Timestamp must be updated once in the block'
 	}
 }
 
@@ -146,6 +166,8 @@ pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u64)>,
 	mark_block: u64,
 	max_player: u32,
+	services: [(PackService, u8, u8, u64); 3],
+	time_service: u128,
 }
 
 impl Default for ExtBuilder {
@@ -154,6 +176,8 @@ impl Default for ExtBuilder {
 			balances: TEST_ACCOUNTS.to_vec(),
 			mark_block: MARK_BLOCK,
 			max_player: MAX_PLAYER,
+			services: SERVICES,
+			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -168,7 +192,8 @@ impl ExtBuilder {
 		let _ = pallet_pool::GenesisConfig::<Test> {
 			mark_block: self.mark_block,
 			max_player: self.max_player,
-			services: SERVICES,
+			services: self.services,
+			time_service: self.time_service,
 		}
 		.assimilate_storage(&mut storage);
 

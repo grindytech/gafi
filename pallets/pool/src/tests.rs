@@ -158,7 +158,7 @@ fn should_restrict_max_player() {
 #[test]
 fn should_move_newplayers_to_ingame() {
 	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
+		run_to_block(1);
 		assert_ok!(PalletPool::join(
 			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
 			PackService::Basic
@@ -171,12 +171,12 @@ fn should_move_newplayers_to_ingame() {
 			assert_eq!(ingame_players_before.len(), 0, "ingame_players_before length not correct");
 		}
 
-		run_to_block(100);
+		run_to_block(10);
 		{
 			let new_players_after = NewPlayers::<Test>::get();
 			let ingame_players_after = IngamePlayers::<Test>::get();
-			assert_eq!(new_players_after.len(), 0, "new_players_after length not correct");
 			assert_eq!(ingame_players_after.len(), 1, "ingame_players_after length not correct");
+			assert_eq!(new_players_after.len(), 0, "new_players_after length not correct");
 		}
 	})
 }
