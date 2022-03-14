@@ -84,7 +84,7 @@ impl pallet_balances::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-
+pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 parameter_types! {
@@ -157,8 +157,7 @@ pub fn run_to_block(n: u64) {
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		PalletPool::on_initialize(System::block_number());
-		Timestamp::on_initialize(System::block_number());
-		//Timestamp::on_finalize(System::block_number());  // Got error 'Timestamp must be updated once in the block'
+		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
 	}
 }
 
