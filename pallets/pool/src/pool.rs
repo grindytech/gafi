@@ -51,7 +51,7 @@ pub enum PackService {
 )]
 pub struct Player<AccountId> {
     pub address: AccountId,
-    pub join_block: u64,
+    pub join_time: u128,
     pub service: PackService,
 }
 

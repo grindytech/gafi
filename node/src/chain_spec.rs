@@ -136,7 +136,6 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	// Pool config
 	const POOL_FEE: Balance = 10000000000000000;
-	const MARK_BLOCK: u64 = 30;
 	const MAX_PLAYER: u32 = 1000;
 	const SERVICES: [(PackService, u8, u8, Balance); 3] = [
 		(PackService::Basic, 4, 60, POOL_FEE),
@@ -214,7 +213,6 @@ fn testnet_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		pool: PoolConfig {
-			mark_block: MARK_BLOCK,
 			max_player: MAX_PLAYER,
 			services: SERVICES,
 			time_service: 60_000u128,

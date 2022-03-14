@@ -90,10 +90,6 @@ pub mod pallet {
 	#[pallet::getter(fn max_player)]
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn mark_block)]
-	pub type MarkBlock<T: Config> = StorageValue<_, u64, ValueQuery>;
-
 	#[pallet::type_value]
 	pub fn DefaultMarkTime<T: Config>() -> T::Moment {
 		<timestamp::Pallet<T>>::get()
@@ -147,7 +143,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub max_player: u32,
-		pub mark_block: u64,
 		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
 
 		pub time_service: u128,
@@ -160,7 +155,6 @@ pub mod pallet {
 			let convert_default_fee = |fee: u64| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
 			Self {
 				max_player: 1000,
-				mark_block: 30,
 				services: [
 					(PackService::Basic, 4, 60, convert_default_fee(BASE_FEE)),
 					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE * 2)),
@@ -176,7 +170,6 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
-			<MarkBlock<T>>::put(self.mark_block);
 
 			for service in self.services.iter() {
 				let new_service =
@@ -264,10 +257,10 @@ pub mod pallet {
 			// make sure not exceed max new players
 			<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
-			let block_number = Self::get_block_number();
+			let _now = <timestamp::Pallet<T>>::get();
 			let player = Player::<T::AccountId> {
 				address: sender.clone(),
-				join_block: block_number,
+				join_time: Self::moment_to_u128(_now),
 				service: pack,
 			};
 			<Players<T>>::insert(sender, player);
@@ -295,14 +288,12 @@ pub mod pallet {
 		*/
 		fn leave_pool(sender: &T::AccountId) -> Result<(), Error<T>> {
 			if let Some(player) = Players::<T>::get(sender) {
-				let join_block = player.join_block;
-				let block_number = Self::get_block_number();
-				let range_block = block_number - join_block;
+				let join_time = player.join_time;
 				let mut refund_fee: BalanceOf<T>;
 				let pack = Services::<T>::get(player.service);
 				refund_fee = pack.service;
 
-				if range_block < Self::mark_block() {
+				if join_time < Self::time_service() {
 					<NewPlayers<T>>::try_mutate(|players| {
 						if let Some(ind) = players.iter().position(|id| id == sender) {
 							players.swap_remove(ind);
@@ -320,8 +311,7 @@ pub mod pallet {
 					.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
 
 					refund_fee = Self::calculate_ingame_refund_amount(
-						join_block,
-						block_number,
+						join_time,
 						player.service,
 					)?;
 				}
@@ -334,15 +324,16 @@ pub mod pallet {
 		}
 
 		pub fn calculate_ingame_refund_amount(
-			join_block: u64,
-			block_number: u64,
+			join_time: u128,
 			service: PackService,
 		) -> Result<BalanceOf<T>, Error<T>> {
-			let range_block = block_number - join_block;
-			let extra = range_block % Self::mark_block();
+			let _now = <timestamp::Pallet<T>>::get();
+			let range_block = Self::moment_to_u128(_now) - join_time;
+			let extra = range_block % Self::time_service();
 			let service = Services::<T>::get(service);
 			if let Some(fee) = Self::balance_to_u64(service.service) {
-				let actual_fee = fee * (Self::mark_block() - extra) / Self::mark_block();
+				let fee_change = (Self::time_service() - extra) / Self::time_service();
+				let actual_fee = fee * (fee_change as u64 );
 				if let Some(result) = Self::u64_to_balance(actual_fee) {
 					return Ok(result);
 				}
@@ -405,6 +396,11 @@ pub mod pallet {
 		pub fn u64_to_block(input: u64) -> Option<T::BlockNumber> {
 			input.try_into().ok()
 		}
+
+		pub fn moment_to_u128(input: T::Moment) -> u128 {
+			sp_runtime::SaturatedConversion::saturated_into(input)
+		}
+
 
 		/*
 			Return current block number otherwise return 0
