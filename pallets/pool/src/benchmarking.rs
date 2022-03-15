@@ -1,22 +1,20 @@
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::*;
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use crate::pool::*;
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
-use crate::mock::{SERVICES};
+use crate::{Call, Config, Pallet};
 
-benchmarks!{
+const PACKS: [PackService; 3] = [PackService::Basic, PackService::Medium, PackService::Max];
 
-    join_pool {
-        let b in SERVICES;
-        let caller = account("caller", 0, 0);
-    }: join(RawOrigin::Signed(caller), b);
+benchmarks! {
+	join_pool {
+		let i in 0..3;
+		let caller = account("caller", 0, 0);
+	}: {
+		Pallet::<T>::join(RawOrigin::Signed(caller).into(), PACKS[i as usize]);
+	}
 
 }
 
-
-impl_benchmark_test_suite!(
-    PalletPool,
-    crate::mock::new_test_ext(),
-    crate::mock::Test,
-);
+impl_benchmark_test_suite!(PalletPool, crate::mock::new_test_ext(), crate::mock::Test,);

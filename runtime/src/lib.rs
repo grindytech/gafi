@@ -811,9 +811,11 @@ impl_runtime_apis! {
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use pallet_pool::Pallet as PoolBench;
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -825,6 +827,7 @@ impl_runtime_apis! {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
+			use pallet_pool::Pallet as PoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -832,6 +835,8 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
+
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
