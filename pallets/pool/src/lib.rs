@@ -76,7 +76,7 @@ pub mod pallet {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now = <timestamp::Pallet<T>>::get();
 
-			if _now - Self::mark_time() >=  Self::time_service().try_into().ok().unwrap() {
+			if _now - Self::mark_time() >= Self::time_service().try_into().ok().unwrap() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
 				MarkTime::<T>::put(_now);
@@ -289,32 +289,24 @@ pub mod pallet {
 		fn leave_pool(sender: &T::AccountId) -> Result<(), Error<T>> {
 			if let Some(player) = Players::<T>::get(sender) {
 				let join_time = player.join_time;
-				let mut refund_fee: BalanceOf<T>;
-				let pack = Services::<T>::get(player.service);
-				refund_fee = pack.service;
+				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+				let refund_fee =  Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
 
-				if join_time < Self::time_service() {
-					<NewPlayers<T>>::try_mutate(|players| {
-						if let Some(ind) = players.iter().position(|id| id == sender) {
-							players.swap_remove(ind);
-						}
-						Ok(())
-					})
-					.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				} else {
-					<IngamePlayers<T>>::try_mutate(|players| {
-						if let Some(ind) = players.iter().position(|id| id == sender) {
-							players.swap_remove(ind);
-						}
-						Ok(())
-					})
-					.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+				<NewPlayers<T>>::try_mutate(|players| {
+					if let Some(ind) = players.iter().position(|id| id == sender) {
+						players.swap_remove(ind);
+					}
+					Ok(())
+				})
+				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+				<IngamePlayers<T>>::try_mutate(|players| {
+					if let Some(ind) = players.iter().position(|id| id == sender) {
+						players.swap_remove(ind);
+					}
+					Ok(())
+				})
+				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
 
-					refund_fee = Self::calculate_ingame_refund_amount(
-						join_time,
-						player.service,
-					)?;
-				}
 				<Players<T>>::remove(sender);
 				let _ = T::Currency::deposit_into_existing(sender, refund_fee);
 			} else {
@@ -324,16 +316,20 @@ pub mod pallet {
 		}
 
 		pub fn calculate_ingame_refund_amount(
+			_now: u128,
 			join_time: u128,
 			service: PackService,
 		) -> Result<BalanceOf<T>, Error<T>> {
-			let _now = <timestamp::Pallet<T>>::get();
-			let range_block = Self::moment_to_u128(_now) - join_time;
+			let range_block = _now - join_time;
+			if range_block < Self::time_service() {
+				let pack = Services::<T>::get(service);
+				return Ok(pack.service);
+			}
 			let extra = range_block % Self::time_service();
 			let service = Services::<T>::get(service);
 			if let Some(fee) = Self::balance_to_u64(service.service) {
 				let fee_change = (Self::time_service() - extra) / Self::time_service();
-				let actual_fee = fee * (fee_change as u64 );
+				let actual_fee = fee * (fee_change as u64);
 				if let Some(result) = Self::u64_to_balance(actual_fee) {
 					return Ok(result);
 				}
@@ -400,7 +396,6 @@ pub mod pallet {
 		pub fn moment_to_u128(input: T::Moment) -> u128 {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
-
 
 		/*
 			Return current block number otherwise return 0

@@ -182,15 +182,64 @@ fn should_move_newplayers_to_ingame() {
 }
 
 #[test]
-fn leave_pool_should_work() {
+fn new_player_leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		assert_ok!(PalletPool::join(
 			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
 			PackService::Basic
 		));
-		run_to_block(10);
+		run_to_block(2);
 		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
+		assert_eq!(
+			Players::<Test>::get(TEST_ACCOUNTS[0].0.clone()),
+			None,
+			"player must not found in Players when leaved"
+		);
+		let new_players = NewPlayers::<Test>::get();
+		assert_eq!(
+			new_players.contains(&TEST_ACCOUNTS[0].0.clone()),
+			false,
+			"player must not found in NewPlayers when leaved"
+		);
+
+		let ingame_players = IngamePlayers::<Test>::get();
+		assert_eq!(
+			ingame_players.contains(&TEST_ACCOUNTS[0].0.clone()),
+			false,
+			"player must not found in IngamePlayers when leaved",
+		)
+	})
+}
+
+#[test]
+fn ingame_player_leave_pool_should_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		assert_ok!(PalletPool::join(
+			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
+			PackService::Basic
+		));
+		run_to_block(100);
+		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
+		assert_eq!(
+			Players::<Test>::get(TEST_ACCOUNTS[0].0.clone()),
+			None,
+			"player must not found in Players when leaved"
+		);
+		let new_players = NewPlayers::<Test>::get();
+		assert_eq!(
+			new_players.contains(&TEST_ACCOUNTS[0].0.clone()),
+			false,
+			"player must not found in NewPlayers when leaved"
+		);
+
+		let ingame_players = IngamePlayers::<Test>::get();
+		assert_eq!(
+			ingame_players.contains(&TEST_ACCOUNTS[0].0.clone()),
+			false,
+			"player must not found in IngamePlayers when leaved",
+		)
 	})
 }
 
