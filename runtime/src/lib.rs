@@ -46,7 +46,10 @@ pub use frame_support::{
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner};
+use pallet_evm::{
+	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, EnsureAddressTruncated,
+	HashedAddressMapping, Runner,
+};
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -134,10 +137,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -315,8 +315,8 @@ impl pallet_evm::Config for Runtime {
 	type FeeCalculator = BaseFee;
 	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressRoot<AccountId>;
+	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
 	type Event = Event;
@@ -369,7 +369,6 @@ impl pallet_base_fee::Config for Runtime {
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
-
 impl pallet_player::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -388,9 +387,7 @@ impl pallet_pool::Config for Runtime {
 	type MaxIngamePlayer = MaxIngamePlayer;
 }
 
-parameter_types! {
-
-}
+parameter_types! {}
 
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
@@ -398,7 +395,6 @@ impl pallet_tx_handler::Config for Runtime {
 	type AuroraZone = Pool;
 	type PackServiceProvider = Pool;
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -523,9 +519,9 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
+				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
+			),
 			_ => None,
 		}
 	}
@@ -807,6 +803,22 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+			use frame_system_benchmarking::Pallet as SystemBench;
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
@@ -819,7 +831,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
