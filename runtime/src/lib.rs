@@ -59,6 +59,9 @@ pub use sp_runtime::{Perbill, Permill};
 pub use pallet_player;
 pub use pallet_pool;
 pub use pallet_tx_handler;
+pub use pallet_template;
+
+// custom traits
 use pallet_tx_handler::AurCurrencyAdapter;
 
 mod precompiles;
@@ -396,6 +399,10 @@ impl pallet_tx_handler::Config for Runtime {
 	type PackServiceProvider = Pool;
 }
 
+impl pallet_template::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -419,6 +426,7 @@ construct_runtime!(
 		Player: pallet_player,
 		Pool: pallet_pool,
 		TxHandler: pallet_tx_handler,
+		Template: pallet_template,
 	}
 );
 
@@ -812,10 +820,12 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_pool::Pallet as PoolBench;
-			let mut list = Vec::<BenchmarkList>::new();
+			use pallet_template::Pallet as TemplateBench;
 
+			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -828,6 +838,7 @@ impl_runtime_apis! {
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_template::Pallet as TemplateBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -836,7 +847,7 @@ impl_runtime_apis! {
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
-
+			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

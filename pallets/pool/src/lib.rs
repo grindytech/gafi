@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
+pub mod pool;
 
 #[cfg(test)]
 mod mock;
@@ -7,10 +8,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
-pub mod pool;
-
 
 #[frame_support::pallet]
 pub mod pallet {
