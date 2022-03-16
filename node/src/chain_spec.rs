@@ -135,7 +135,7 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 	// Pool config
-	const POOL_FEE: Balance = 10000000000000000;
+	const POOL_FEE: Balance = 10_000_000;
 	const MAX_PLAYER: u32 = 1000;
 	const SERVICES: [(PackService, u8, u8, Balance); 3] = [
 		(PackService::Basic, 4, 60, POOL_FEE),

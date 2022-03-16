@@ -24,8 +24,8 @@ benchmark_pool:
     --wasm-execution compiled \
     --pallet pallet_pool \
     --extrinsic 'join' \
-    --steps 1 \
-    --repeat 0 \
+     --steps 20 \
+    --repeat 10 \
     --json-file=raw.json \
     --output ./pallets/pool/src/weights.rs
 

@@ -51,7 +51,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		PlayerNotFound,
 		PlayerAlreadyJoin,
-
 		PlayerCountOverflow,
 		ExceedMaxPlayer,
 		ExceedMaxNewPlayer,
