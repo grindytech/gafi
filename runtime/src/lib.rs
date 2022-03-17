@@ -388,6 +388,7 @@ impl pallet_pool::Config for Runtime {
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
+	type WeightInfo = pallet_pool::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {}

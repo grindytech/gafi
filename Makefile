@@ -4,6 +4,13 @@
 build:
 	cargo build --release
 
+.PHONY: run
+run:
+	./target/release/aurora-node \
+    --tmp \
+    --dev \
+    --rpc-port 9933
+
 .PHONY: build_benchmark
 build_benchmark:
 	cargo build --release --features runtime-benchmarks

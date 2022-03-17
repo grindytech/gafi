@@ -140,6 +140,7 @@ impl pallet_pool::Config for Test {
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

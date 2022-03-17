@@ -30,12 +30,16 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
+pub trait WeightInfo {
+	fn join(s: u32,) -> Weight;
+}
+
 /// Weight functions for `pallet_pool`.
-pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_pool::WeightInfo for WeightInfo<T> {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: System Number (r:1 w:0)
 	// Storage: System ExecutionPhase (r:1 w:0)
@@ -52,5 +56,13 @@ impl<T: frame_system::Config> pallet_pool::WeightInfo for WeightInfo<T> {
 		(58_222_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+}
+
+impl WeightInfo for () {
+	fn join(_s: u32, ) -> Weight {
+		(58_222_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 }

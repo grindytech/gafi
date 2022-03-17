@@ -11,9 +11,13 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+pub mod weights;
+pub use weights::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
+	use crate::weights::WeightInfo;
 	use frame_support::{
 		dispatch::{DispatchResult, Vec},
 		pallet_prelude::*,
@@ -24,6 +28,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_timestamp::{self as timestamp};
+	use super::*;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -39,6 +44,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type Currency: Currency<Self::AccountId>;
+		type WeightInfo: WeightInfo;
 
 		#[pallet::constant]
 		type MaxNewPlayer: Get<u32>;
@@ -190,7 +196,7 @@ pub mod pallet {
 			* 1. Add new player to NewPlayer
 			* 2. charge double service fee when they join
 			*/
-		#[pallet::weight(100)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(1))]
 		pub fn join(origin: OriginFor<T>, pack: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::join_pool(sender.clone(), pack)?;
@@ -291,7 +297,8 @@ pub mod pallet {
 			if let Some(player) = Players::<T>::get(sender) {
 				let join_time = player.join_time;
 				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-				let refund_fee =  Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
+				let refund_fee =
+					Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
 
 				<NewPlayers<T>>::try_mutate(|players| {
 					if let Some(ind) = players.iter().position(|id| id == sender) {
