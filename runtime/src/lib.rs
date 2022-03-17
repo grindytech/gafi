@@ -47,13 +47,14 @@ pub use frame_support::{
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, EnsureAddressTruncated,
-	HashedAddressMapping, Runner,
+	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot,
+	HashedAddressMapping, Runner, OnChargeEVMTransaction
 };
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+pub use pallet_transaction_payment::CurrencyAdapter;
 
 // import local pallets
 pub use pallet_player;
@@ -281,8 +282,8 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	// type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	// type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
@@ -328,7 +329,8 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = ();
+	// type OnChargeTransaction = ();
+	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
@@ -398,6 +400,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type Currency = Balances;
 	type AuroraZone = Pool;
 	type PackServiceProvider = Pool;
+	type OnChargeEVMTxHandler = ();
 }
 
 impl pallet_template::Config for Runtime {
