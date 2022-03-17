@@ -5,7 +5,7 @@ use crate::pool::PackService;
 #[allow(unused)]
 use crate::Pallet as Pool;
 use crate::{Call, Config};
-use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks};
 use frame_benchmarking::Box;
 use frame_system::RawOrigin;
 use frame_support::traits::Currency;
@@ -32,6 +32,14 @@ const PACKS: [PackService; 3] = [PackService::Basic, PackService::Medium, PackSe
 benchmarks! {
 	join {
 		let s in 0 .. 2;
-	}: _(RawOrigin::Signed(new_funded_account::<T>(s, s, 1000_000_000u64)), PACKS[s as usize])
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u64);
+	}: _(RawOrigin::Signed(caller), PACKS[s as usize])
+
+	leave {
+		let s in 0 .. 2;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u64);
+		Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), PACKS[s as usize]);
+	}: _(RawOrigin::Signed(caller))
+
 }
 

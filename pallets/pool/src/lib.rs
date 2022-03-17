@@ -213,7 +213,7 @@ pub mod pallet {
 			* 1. remove player from storages
 			* 2. refund appropriate amount (the maximum amount they receive is 'service_fee'/2)
 			*/
-		#[pallet::weight(100)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(1))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::leave_pool(&sender)?;

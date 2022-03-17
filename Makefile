@@ -30,11 +30,11 @@ benchmark_pool:
     --execution wasm \
     --wasm-execution compiled \
     --pallet pallet_pool \
-    --extrinsic 'join' \
+    --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
     --json-file=raw.json \
-    --output ./pallets/pool/src/weights.rs
+    --output ./pallets/src/pool/weights.rs
 
 
 .PHONY: benchmark_template
@@ -48,7 +48,7 @@ benchmark_template:
     --steps 20 \
     --repeat 10 \
     --json-file=raw.json \
-    --output ./pallets/template/src/weights.rs
+    --output ./pallets/src/template/weights.rs
 
 
 
