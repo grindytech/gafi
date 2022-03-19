@@ -2,10 +2,12 @@
 members = [
   'node',
   'runtime',
+  'utils',
   'pallets/template',
   'pallets/player',
   'pallets/pool',
   'pallets/tx-handler',
+
 ]
 [profile.release]
 panic = 'unwind'
