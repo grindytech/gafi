@@ -48,7 +48,8 @@ pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot,
-	HashedAddressMapping, Runner, OnChargeEVMTransaction
+	HashedAddressMapping, Runner, OnChargeEVMTransaction, EnsureAddressSame,
+	EnsureAddressTruncated
 };
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
@@ -316,10 +317,10 @@ parameter_types! {
 }
 
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = BaseFee;
+	type FeeCalculator = pallet_dynamic_fee::Pallet<Self>;
 	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressRoot<AccountId>;
+	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
@@ -401,6 +402,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type AuroraZone = Pool;
 	type PackServiceProvider = Pool;
 	type OnChargeEVMTxHandler = ();
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 }
 
 impl pallet_template::Config for Runtime {
