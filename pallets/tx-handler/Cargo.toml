@@ -37,6 +37,7 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 
 # Local
 pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
+utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -61,7 +62,7 @@ std = [
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
   'pallet-pool/std',
-
+  'utils/std',
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

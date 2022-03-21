@@ -4562,6 +4562,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "utils",
 ]
 
 [[package]]
@@ -8187,7 +8188,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "0.1.0"
+version = "4.0.0-dev"
 dependencies = [
  "hex-literal 0.2.2",
  "parity-secp256k1",

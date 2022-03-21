@@ -14,24 +14,26 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
+	use frame_system::pallet_prelude::*;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
 			Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, SignedImbalance,
 			StoredMap, WithdrawReasons,
 		},
-		Twox64Concat,
+		Twox64Concat, dispatch::DispatchResult,
 	};
 	use pallet_evm::AddressMapping;
 	use pallet_evm::OnChargeEVMTransaction;
 	use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 	use sp_core::{H160, U256};
 	use sp_runtime::{
-		traits::{DispatchInfoOf, Saturating, Zero},
-		AccountId32,
+		traits::{DispatchInfoOf, Saturating, Zero, BlakeTwo256},
 	};
+	use pallet_evm::{HashedAddressMapping};
+	use utils::{recover_signer};
+	use sp_core::crypto::AccountId32;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -59,7 +61,11 @@ pub mod pallet {
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		CanNotRecoverSigner,
+		AddressNotCorrect,
+		MessageNotCorrect,
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -70,7 +76,28 @@ pub mod pallet {
 	pub type Mapping<T: Config> = StorageMap<_, Twox64Concat, H160, AccountId32>;
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> 
+	where [u8; 32]: From<<T as frame_system::Config>::AccountId>
+	{
+
+		#[pallet::weight(100)]
+		pub fn mapping(origin: OriginFor<T>, signature: [u8; 65], message: [u8; 32], address: H160) -> DispatchResult {
+			let sender: T::AccountId = ensure_signed(origin)?;
+
+			let account_bytes: [u8; 32] = sender.into();
+			let hash_message = sp_io::hashing::keccak_256(&account_bytes);
+			ensure!(message == hash_message, <Error<T>>::MessageNotCorrect);
+			let signer = recover_signer(signature, message);
+			ensure!(signer != None, <Error<T>>::CanNotRecoverSigner);
+			ensure!(address == signer.unwrap(), <Error<T>>::AddressNotCorrect);
+
+			let account_id = AccountId32::decode(&mut &hash_message[..]).unwrap();
+			<Mapping<T>>::insert(address, account_id);
+
+			Ok(())
+		}
+
+	}
 
 	pub struct AurCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
 
@@ -117,10 +144,17 @@ pub mod pallet {
 		}
 	}
 
-	// pub struct ProofAddressMapping<H>(sp_std::marker::PhantomData<H>);
+	pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
 
-	// impl<H: sp_core::Hasher<Out=sp_core::H256>> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<H> {
-	// 	fn into_account_id(address: H160) -> AccountId32 {
-	// 	}
-	// }
+	impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T> 
+	where T: Config,
+	{
+		fn into_account_id(address: H160) -> AccountId32 {
+			if let Some(account_id) = Mapping::<T>::get(address) {
+				account_id
+			} else {
+				HashedAddressMapping::<BlakeTwo256>::into_account_id(address)
+			}
+		}
+	}
 }

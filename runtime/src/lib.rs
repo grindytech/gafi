@@ -64,7 +64,7 @@ pub use pallet_tx_handler;
 pub use pallet_template;
 
 // custom traits
-use pallet_tx_handler::AurCurrencyAdapter;
+use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping};
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -322,7 +322,9 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = ProofAddressMapping<Self>;
+
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -402,7 +404,8 @@ impl pallet_tx_handler::Config for Runtime {
 	type AuroraZone = Pool;
 	type PackServiceProvider = Pool;
 	type OnChargeEVMTxHandler = ();
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = ProofAddressMapping<Self>;
 }
 
 impl pallet_template::Config for Runtime {

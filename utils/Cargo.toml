@@ -1,6 +1,6 @@
 [package]
 name = "utils"
-version = "0.1.0"
+version = "4.0.0-dev"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,11 +8,20 @@ edition = "2021"
 [dependencies]
 sha3 = { version = "0.10", default-features = false }
 
-parity-secp256k1 = { version = "0.7.0", default-features = false, git = "https://github.com/cryptoviet/rust-secp256k1" }
-sp-runtime = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-io = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-core = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-runtime = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-io = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-core = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 [dev-dependencies]
 hex-literal = "0.2.1"
+parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 
+
+[features]
+default = ["std"]
+std = [
+    "sp-runtime/std",
+    "sp-io/std",
+    "sp-core/std",
+    "sha3/std",
+]
