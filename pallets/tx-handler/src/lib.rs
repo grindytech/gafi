@@ -6,34 +6,33 @@ pub use pallet::*;
 *
 */
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_system::pallet_prelude::*;
 	use frame_support::{
+		dispatch::DispatchResult,
 		pallet_prelude::*,
 		traits::{
 			Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, SignedImbalance,
 			StoredMap, WithdrawReasons,
 		},
-		Twox64Concat, dispatch::DispatchResult,
+		Twox64Concat,
 	};
+	use frame_system::pallet_prelude::*;
 	use pallet_evm::AddressMapping;
+	use pallet_evm::HashedAddressMapping;
 	use pallet_evm::OnChargeEVMTransaction;
 	use pallet_pool::pool::{AuroraZone, PackServiceProvider};
-	use sp_core::{H160, U256};
-	use sp_runtime::{
-		traits::{DispatchInfoOf, Saturating, Zero, BlakeTwo256},
-	};
-	use pallet_evm::{HashedAddressMapping};
-	use utils::{recover_signer};
 	use sp_core::crypto::AccountId32;
+	use sp_core::{H160, U256};
+	use sp_runtime::traits::{BlakeTwo256, DispatchInfoOf, Saturating, Zero};
+	use utils::recover_signer;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -77,26 +76,50 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> 
-	where [u8; 32]: From<<T as frame_system::Config>::AccountId>
+	where
+	 [u8; 32]: From<<T as frame_system::Config>::AccountId>,
+	 AccountId32: From<<T as frame_system::Config>::AccountId>,
+	{
+		#[pallet::weight(100)]
+		pub fn mapping(
+			origin: OriginFor<T>,
+			signature: [u8; 65],
+			message: [u8; 32],
+			address: H160,
+		) -> DispatchResult {
+			let sender: T::AccountId = ensure_signed(origin)?;
+			Self::verify_owner(sender.clone(), signature, message, address)?;
+			
+			let account_id: AccountId32 = sender.into();
+			<Mapping<T>>::insert(address, account_id);
+			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T>
+	where
+		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 	{
 
-		#[pallet::weight(100)]
-		pub fn mapping(origin: OriginFor<T>, signature: [u8; 65], message: [u8; 32], address: H160) -> DispatchResult {
-			let sender: T::AccountId = ensure_signed(origin)?;
-
+		/*
+			make sure the signature belong to the address
+			make sure the message is the keccak_256 of sender
+		*/
+		pub fn verify_owner(
+			sender: T::AccountId,
+			signature: [u8; 65],
+			message: [u8; 32],
+			address: H160,
+		) -> Result<(), Error<T>> {
 			let account_bytes: [u8; 32] = sender.into();
 			let hash_message = sp_io::hashing::keccak_256(&account_bytes);
 			ensure!(message == hash_message, <Error<T>>::MessageNotCorrect);
 			let signer = recover_signer(signature, message);
 			ensure!(signer != None, <Error<T>>::CanNotRecoverSigner);
 			ensure!(address == signer.unwrap(), <Error<T>>::AddressNotCorrect);
-
-			let account_id = AccountId32::decode(&mut &hash_message[..]).unwrap();
-			<Mapping<T>>::insert(address, account_id);
-
+			// let account_id = AccountId32::decode(&mut &hash_message[..]).unwrap();
 			Ok(())
 		}
-
 	}
 
 	pub struct AurCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
@@ -127,7 +150,6 @@ pub mod pallet {
 					service_fee = fee / service.discount;
 				}
 			}
-
 			T::OnChargeEVMTxHandler::withdraw_fee(who, service_fee)
 		}
 
@@ -146,8 +168,9 @@ pub mod pallet {
 
 	pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
 
-	impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T> 
-	where T: Config,
+	impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T>
+	where
+		T: Config,
 	{
 		fn into_account_id(address: H160) -> AccountId32 {
 			if let Some(account_id) = Mapping::<T>::get(address) {
