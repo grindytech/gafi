@@ -1,0 +1,23 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec src/*"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ethersproject/bignumber": "^5.5.0",
+    "abi-decoder": "^2.4.0",
+    "axios": "^0.26.0",
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "crypto-js": "^4.1.1",
+    "dotenv": "^16.0.0",
+    "randombytes": "^2.1.0",
+    "truffle": "^5.5.5",
+    "web3": "^1.7.0"
+  }
+}
