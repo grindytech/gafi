@@ -14,3 +14,14 @@
 
 # direnv cache
 .direnv
+
+# ignore weights
+raw.json
+pallets/src/
+
+# nodejs ignore
+node_modules
+**/tests/build/
+package-lock.json
+
+
