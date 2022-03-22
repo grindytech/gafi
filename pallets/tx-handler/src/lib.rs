@@ -41,7 +41,6 @@ pub mod pallet {
 	type NegativeImbalanceOf<C, T> =
 		<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
-	type Balance<C, T> = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -64,6 +63,7 @@ pub mod pallet {
 		CanNotRecoverSigner,
 		AddressNotCorrect,
 		MessageNotCorrect,
+		AccountAlreadyBind,
 	}
 
 	#[pallet::event]
@@ -75,13 +75,13 @@ pub mod pallet {
 	pub type Mapping<T: Config> = StorageMap<_, Twox64Concat, H160, AccountId32>;
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> 
+	impl<T: Config> Pallet<T>
 	where
-	 [u8; 32]: From<<T as frame_system::Config>::AccountId>,
-	 AccountId32: From<<T as frame_system::Config>::AccountId>,
+		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
+		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
 		#[pallet::weight(100)]
-		pub fn mapping(
+		pub fn bind(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
 			message: [u8; 32],
@@ -89,7 +89,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender: T::AccountId = ensure_signed(origin)?;
 			Self::verify_owner(sender.clone(), signature, message, address)?;
-			
 			let account_id: AccountId32 = sender.into();
 			<Mapping<T>>::insert(address, account_id);
 			Ok(())
@@ -100,7 +99,6 @@ pub mod pallet {
 	where
 		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 	{
-
 		/*
 			make sure the signature belong to the address
 			make sure the message is the keccak_256 of sender
@@ -111,13 +109,13 @@ pub mod pallet {
 			message: [u8; 32],
 			address: H160,
 		) -> Result<(), Error<T>> {
+			ensure!(Mapping::<T>::get(address) == None, <Error<T>>::AccountAlreadyBind);
 			let account_bytes: [u8; 32] = sender.into();
 			let hash_message = sp_io::hashing::keccak_256(&account_bytes);
 			ensure!(message == hash_message, <Error<T>>::MessageNotCorrect);
 			let signer = recover_signer(signature, message);
 			ensure!(signer != None, <Error<T>>::CanNotRecoverSigner);
 			ensure!(address == signer.unwrap(), <Error<T>>::AddressNotCorrect);
-			// let account_id = AccountId32::decode(&mut &hash_message[..]).unwrap();
 			Ok(())
 		}
 	}
