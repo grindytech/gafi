@@ -7,6 +7,7 @@ use frame_support::{assert_err, assert_ok};
 use sp_core::H160;
 
 use hex_literal::hex;
+use sp_runtime::AccountId32;
 use std::str::FromStr;
 
 #[test]
@@ -14,7 +15,7 @@ fn verify_owner_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 
-		let sender = TEST_ACCOUNTS[0].0.clone();
+		let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let account_bytes: [u8; 32] = sender.clone().into();
 		let signature: [u8; 65];
 		let message: [u8; 32];
@@ -28,14 +29,16 @@ fn verify_owner_should_works() {
 			message = msg;
 			let msg = secp256k1::Message::from_slice(&msg).unwrap();
 			let sig = s.sign_recoverable(&msg, &sk).unwrap();
-			let (recover_id, sig_data) = sig.serialize_compact(&s);
 
+			
+			let (recover_id, sig_data) = sig.serialize_compact(&s);
+			
 			let mut sig: [u8; 65] = [0u8; 65];
 			sig[0..64].copy_from_slice(&sig_data[..]);
 			sig[64] = recover_id.to_i32() as u8;
 			signature = sig;
 		}
-		assert_ok!(PalletTxHandler::verify_owner(sender.clone(), signature, message, address));
+		assert_ok!(PalletTxHandler::verify_owner(sender.clone(), signature, address));
 	});
 }
 
@@ -68,7 +71,6 @@ fn bind_should_works() {
 		assert_ok!(PalletTxHandler::bind(
 			Origin::signed(sender.clone()),
 			signature,
-			message,
 			address
 		));
 
@@ -105,15 +107,15 @@ fn bind_should_fail() {
 				signature = sig;
 			}
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, message, address),
+				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, address),
 				<Error<Test>>::AddressNotCorrect
 			);
 		}
 
-		// incorrect message
+		// incorrect sender
 		{
 			let sender = TEST_ACCOUNTS[0].0.clone();
-			let account_bytes: [u8; 32] = TEST_ACCOUNTS[1].0.clone().into();
+			let account_bytes: [u8; 32] = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap().into();
 			let signature: [u8; 65];
 			let message: [u8; 32];
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
@@ -124,6 +126,7 @@ fn bind_should_fail() {
 				let sk = secp256k1::key::SecretKey::from_slice(&s, &sk).unwrap();
 				let msg = sp_core::keccak_256(&account_bytes);
 				message = msg;
+
 				let msg = secp256k1::Message::from_slice(&msg).unwrap();
 				let sig = s.sign_recoverable(&msg, &sk).unwrap();
 				let (recover_id, sig_data) = sig.serialize_compact(&s);
@@ -134,8 +137,8 @@ fn bind_should_fail() {
 				signature = sig;
 			}
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, message, address),
-				<Error<Test>>::MessageNotCorrect
+				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, address),
+				<Error<Test>>::AddressNotCorrect
 			);
 		}
 
@@ -154,7 +157,7 @@ fn bind_should_fail() {
 				signature = sig;
 			}
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, message, address),
+				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, address),
 				<Error<Test>>::CanNotRecoverSigner
 			);
 		}
@@ -186,12 +189,11 @@ fn bind_should_fail() {
 			assert_ok!(PalletTxHandler::bind(
 				Origin::signed(sender.clone()),
 				signature,
-				message,
 				address
 			));
 
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, message, address),
+				PalletTxHandler::bind(Origin::signed(sender.clone()), signature, address),
 				<Error<Test>>::AccountAlreadyBind
 			);
 		}

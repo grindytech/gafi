@@ -7,7 +7,7 @@ members = [
   'pallets/player',
   'pallets/pool',
   'pallets/tx-handler',
-
+  'tests',
 ]
 [profile.release]
 panic = 'unwind'

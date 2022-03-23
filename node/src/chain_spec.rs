@@ -206,16 +206,24 @@ fn testnet_genesis(
 						storage: std::collections::BTreeMap::new(),
 					},
 				);
+				map.insert(
+					H160::from_slice(&hex_literal::hex!(
+						"b28049C6EE4F90AE804C70F860e55459E837E84b"
+					)),
+					pallet_evm::GenesisAccount {
+						nonce: U256::zero(),
+						// Using a larger number, so I can tell the accounts apart by balance.
+						balance: U256::from(1u64 << 61),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
+					},
+				);
 				map
 			},
 		},
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		pool: PoolConfig {
-			max_player: MAX_PLAYER,
-			services: SERVICES,
-			time_service: 60_000u128,
-		},
+		pool: PoolConfig { max_player: MAX_PLAYER, services: SERVICES, time_service: 60_000u128 },
 	}
 }

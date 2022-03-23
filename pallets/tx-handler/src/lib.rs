@@ -84,11 +84,10 @@ pub mod pallet {
 		pub fn bind(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
-			message: [u8; 32],
 			address: H160,
 		) -> DispatchResult {
 			let sender: T::AccountId = ensure_signed(origin)?;
-			Self::verify_owner(sender.clone(), signature, message, address)?;
+			Self::verify_owner(sender.clone(), signature, address)?;
 			let account_id: AccountId32 = sender.into();
 			<Mapping<T>>::insert(address, account_id);
 			Ok(())
@@ -106,14 +105,12 @@ pub mod pallet {
 		pub fn verify_owner(
 			sender: T::AccountId,
 			signature: [u8; 65],
-			message: [u8; 32],
 			address: H160,
 		) -> Result<(), Error<T>> {
 			ensure!(Mapping::<T>::get(address) == None, <Error<T>>::AccountAlreadyBind);
 			let account_bytes: [u8; 32] = sender.into();
 			let hash_message = sp_io::hashing::keccak_256(&account_bytes);
-			ensure!(message == hash_message, <Error<T>>::MessageNotCorrect);
-			let signer = recover_signer(signature, message);
+			let signer = recover_signer(signature, hash_message);
 			ensure!(signer != None, <Error<T>>::CanNotRecoverSigner);
 			ensure!(address == signer.unwrap(), <Error<T>>::AddressNotCorrect);
 			Ok(())

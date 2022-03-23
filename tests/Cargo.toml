@@ -1,0 +1,37 @@
+[package]
+name = "test"
+version = "4.0.0-dev"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sha3 = { version = "0.10", default-features = false }
+scale-info = {version = "1.0", default-features = false, features = ["derive"]}
+parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
+serde = {version = "1.0.119"}
+rustc-hex = { version = "2.1.0", default-features = false }
+
+sp-runtime = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-io = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-core = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-std = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+
+[dev-dependencies]
+hex-literal = "0.3.4"
+parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
+
+
+[features]
+default = ["std"]
+std = [
+    "sha3/std",
+    "scale-info/std",
+    "parity-scale-codec/std",
+    "serde/std",
+    "rustc-hex/std",
+    "sp-runtime/std",
+    "sp-io/std",
+    "sp-core/std",
+    "sp-std/std",
+]
