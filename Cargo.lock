@@ -4577,6 +4577,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
+ "parity-scale-codec 3.1.2",
  "parity-secp256k1",
  "scale-info",
  "sp-core",
@@ -8261,11 +8262,16 @@ name = "utils"
 version = "4.0.0-dev"
 dependencies = [
  "hex-literal 0.2.2",
+ "parity-scale-codec 3.1.2",
  "parity-secp256k1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
  "sha3 0.10.1",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

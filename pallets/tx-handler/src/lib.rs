@@ -32,7 +32,7 @@ pub mod pallet {
 	use sp_core::crypto::AccountId32;
 	use sp_core::{H160, U256};
 	use sp_runtime::traits::{BlakeTwo256, DispatchInfoOf, Saturating, Zero};
-	use utils::recover_signer;
+	use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -54,15 +54,16 @@ pub mod pallet {
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
+		
+		#[pallet::constant]
+		type MessagePrefix: Get<&'static [u8]>;
 	}
 
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
 	pub enum Error<T> {
-		CanNotRecoverSigner,
-		AddressNotCorrect,
-		MessageNotCorrect,
+		SignatureOrAddressNotCorrect,
 		AccountAlreadyBind,
 	}
 
@@ -81,13 +82,10 @@ pub mod pallet {
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
 		#[pallet::weight(100)]
-		pub fn bind(
-			origin: OriginFor<T>,
-			signature: [u8; 65],
-			address: H160,
-		) -> DispatchResult {
-			let sender: T::AccountId = ensure_signed(origin)?;
-			Self::verify_owner(sender.clone(), signature, address)?;
+		pub fn bind(origin: OriginFor<T>, signature: [u8; 65], address: H160) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(Mapping::<T>::get(address) == None, <Error<T>>::AccountAlreadyBind);
+			Self::verify_bind(sender.clone(), signature, address.to_fixed_bytes())?;
 			let account_id: AccountId32 = sender.into();
 			<Mapping<T>>::insert(address, account_id);
 			Ok(())
@@ -98,21 +96,16 @@ pub mod pallet {
 	where
 		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 	{
-		/*
-			make sure the signature belong to the address
-			make sure the message is the keccak_256 of sender
-		*/
-		pub fn verify_owner(
+		pub fn verify_bind(
 			sender: T::AccountId,
-			signature: [u8; 65],
-			address: H160,
+			sig: [u8; 65],
+			address: [u8; 20],
 		) -> Result<(), Error<T>> {
-			ensure!(Mapping::<T>::get(address) == None, <Error<T>>::AccountAlreadyBind);
-			let account_bytes: [u8; 32] = sender.into();
-			let hash_message = sp_io::hashing::keccak_256(&account_bytes);
-			let signer = recover_signer(signature, hash_message);
-			ensure!(signer != None, <Error<T>>::CanNotRecoverSigner);
-			ensure!(address == signer.unwrap(), <Error<T>>::AddressNotCorrect);
+			let sig_converter = EcdsaSignature(sig);
+			let address_convert = EthereumAddress(address);
+			let who = sender.using_encoded(to_ascii_hex);
+			let signer = eth_recover(&sig_converter, &who, &[][..], T::MessagePrefix::get());
+			ensure!(signer == Some(address_convert), <Error<T>>::SignatureOrAddressNotCorrect);
 			Ok(())
 		}
 	}

@@ -395,7 +395,9 @@ impl pallet_pool::Config for Runtime {
 	type WeightInfo = pallet_pool::weights::SubstrateWeight<Runtime>;
 }
 
-parameter_types! {}
+parameter_types! {
+	pub Prefix: &'static [u8] =  b"Bind Aurora Network account:";
+}
 
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
@@ -405,6 +407,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type OnChargeEVMTxHandler = ();
 	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type AddressMapping = ProofAddressMapping<Self>;
+	type MessagePrefix  = Prefix;
 }
 
 impl pallet_template::Config for Runtime {

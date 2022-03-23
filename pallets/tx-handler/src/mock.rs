@@ -3,10 +3,12 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as pallet_tx_handler, ProofAddressMapping, AurCurrencyAdapter};
+use std::str::FromStr;
+
+use crate::{self as pallet_tx_handler, AurCurrencyAdapter, ProofAddressMapping};
 use frame_support::parameter_types;
 use frame_system as system;
-use pallet_evm::{EnsureAddressTruncated, EnsureAddressNever};
+use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated};
 use pallet_pool::pool::PackService;
 use pallet_timestamp;
 
@@ -45,6 +47,7 @@ pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
 ];
 
+pub const PREFIX: &[u8] = b"Bind Aurora Network account:";
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -55,10 +58,10 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletPool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
-        Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
@@ -99,7 +102,7 @@ const POOL_FEE: u64 = 10000000000000000;
 pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
-pub const TIME_SERVICE: u128 =  60_000u128; // 10 second
+pub const TIME_SERVICE: u128 = 60_000u128; // 10 second
 
 parameter_types! {
 	pub const MaxNewPlayer: u32 = MAX_NEW_PLAYER;
@@ -129,7 +132,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
@@ -145,7 +147,6 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -179,6 +180,10 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub Prefix: &'static [u8] = PREFIX;
+}
+
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
@@ -186,6 +191,7 @@ impl pallet_tx_handler::Config for Test {
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
+	type MessagePrefix = Prefix;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -204,7 +210,6 @@ pub fn run_to_block(n: u64) {
 		PalletPool::on_initialize(System::block_number());
 	}
 }
-
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u64)>,

@@ -7,10 +7,16 @@ edition = "2021"
 
 [dependencies]
 sha3 = { version = "0.10", default-features = false }
+parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 
 sp-runtime = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-io = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-core = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+scale-info = {version = "1.0", default-features = false, features = ["derive"]}
+serde = {version = "1.0.119"}
+rustc-hex = { version = "2.1.0", default-features = false }
+sp-std = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+
 
 [dev-dependencies]
 hex-literal = "0.2.1"
@@ -24,4 +30,9 @@ std = [
     "sp-io/std",
     "sp-core/std",
     "sha3/std",
+    "scale-info/std",
+    "parity-scale-codec/std",
+    "serde/std",
+    "rustc-hex/std",
+    "sp-std/std",
 ]
