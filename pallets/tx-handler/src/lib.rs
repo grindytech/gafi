@@ -54,7 +54,7 @@ pub mod pallet {
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
-
+		type DefaultAddressMapping: AddressMapping<Self::AccountId>;
 		#[pallet::constant]
 		type MessagePrefix: Get<&'static [u8]>;
 	}
@@ -94,6 +94,10 @@ pub mod pallet {
 				Self::verify_bind(sender.clone(), signature, address.to_fixed_bytes()),
 				<Error<T>>::SignatureOrAddressNotCorrect,
 			);
+
+			if withdraw {
+				Self::transfer_all(address, sender.clone());
+			}
 			let account_id: AccountId32 = sender.into();
 			<Mapping<T>>::insert(address, account_id);
 			Ok(())
@@ -112,7 +116,17 @@ where
 		let signer = eth_recover(&sig_converter, &who, &[][..], T::MessagePrefix::get());
 		signer == Some(address_convert)
 	}
-	pub fn withdraw() {}
+
+	pub fn transfer_all(from: H160, to: T::AccountId) {
+		let from_account: T::AccountId = T::DefaultAddressMapping::into_account_id(from);
+		let total_free: BalanceOf<T> = <T as pallet::Config>::Currency::free_balance(&from_account);
+		let _ = <T as pallet::Config>::Currency::transfer(
+			&from_account,
+			&to,
+			total_free,
+			ExistenceRequirement::AllowDeath,
+		);
+	}
 }
 
 pub struct AurCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
@@ -156,18 +170,18 @@ where
 		T::OnChargeEVMTxHandler::pay_priority_fee(tip)
 	}
 }
-
 pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
 
 impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T>
 where
 	T: Config,
+	AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn into_account_id(address: H160) -> AccountId32 {
 		if let Some(account_id) = Mapping::<T>::get(address) {
 			account_id
 		} else {
-			HashedAddressMapping::<BlakeTwo256>::into_account_id(address)
+			T::DefaultAddressMapping::into_account_id(address).into()
 		}
 	}
 }

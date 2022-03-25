@@ -3,7 +3,7 @@ use std::{str::FromStr, collections::BTreeMap};
 use crate::{self as pallet_tx_handler, AurCurrencyAdapter, ProofAddressMapping};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated};
+use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
 use pallet_pool::pool::PackService;
 use pallet_timestamp;
 use hex_literal::hex;
@@ -177,6 +177,7 @@ impl pallet_tx_handler::Config for Test {
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
+	type DefaultAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type MessagePrefix = Prefix;
 }
 
