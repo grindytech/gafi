@@ -323,7 +323,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type AddressMapping = ProofAddressMapping<Self>;
-
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;

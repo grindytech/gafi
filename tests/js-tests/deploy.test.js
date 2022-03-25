@@ -24,6 +24,7 @@ async function add_additional_gas(contract, address) {
 }
 const ALICE = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
 const ALICE_ENCODED = "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+
 describe('Contract', () => {
 
     it("it should get bind arguments data", async () => {
@@ -32,33 +33,36 @@ describe('Contract', () => {
         let signature; // signature of sign the message
         let address; // user address
         {
-          let signature = admin.sign(test_message);
-          console.log("signature: ", signature);
+            let sign_data = admin.sign(test_message);
+            console.log("signature: ", sign_data.signature);
         }
 
     })
 
     it('it should create new ERC20 token', async () => {
-        const arguments = [
 
-        ];
-        const stake_contract = new web3.eth.Contract(ERC20ABI.abi);
-        const contract_data = await stake_contract.deploy({
-            data: ERC20ABI.bytecode,
-            arguments: arguments
-        });
+        for (let i = 0; i < 10; i++) {
+            const arguments = [
 
-        const options = {
-            data: contract_data.encodeABI(),
-            gas: await add_additional_gas(contract_data, admin.address),
-            gasPrice: await web3.eth.getGasPrice()
-        };
-        const signed = await web3.eth.accounts.signTransaction(options, admin.privateKey);
-        const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            ];
+            const stake_contract = new web3.eth.Contract(ERC20ABI.abi);
+            const contract_data = await stake_contract.deploy({
+                data: ERC20ABI.bytecode,
+                arguments: arguments
+            });
 
-        // console.log("receipt: ", receipt);
+            const options = {
+                data: contract_data.encodeABI(),
+                gas: await add_additional_gas(contract_data, admin.address),
+                gasPrice: await web3.eth.getGasPrice()
+            };
+            const signed = await web3.eth.accounts.signTransaction(options, admin.privateKey);
+            const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-    }).timeout(30000);
+            // console.log("receipt: ", receipt);
+
+        }
+    }).timeout(500000);
 
 
 

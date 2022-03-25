@@ -1,22 +1,18 @@
-/*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
-
-use std::str::FromStr;
+use std::{str::FromStr, collections::BTreeMap};
 
 use crate::{self as pallet_tx_handler, AurCurrencyAdapter, ProofAddressMapping};
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated};
 use pallet_pool::pool::PackService;
 use pallet_timestamp;
+use hex_literal::hex;
 
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
-use sp_core::{H256, U256};
+use sp_core::{H256, U256, H160};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -28,18 +24,9 @@ pub use pallet_balances::Call as BalancesCall;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
-	(AccountId32::new([0u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([2u8; 32]), 1000000000000000000),
-	(AccountId32::new([3u8; 32]), 1000000000000000000),
-	(AccountId32::new([4u8; 32]), 1000000000000000000),
-	(AccountId32::new([5u8; 32]), 1000000000000000000),
-	(AccountId32::new([6u8; 32]), 1000000000000000000),
-	(AccountId32::new([7u8; 32]), 1000000000000000000),
-	(AccountId32::new([8u8; 32]), 1000000000000000000),
-	(AccountId32::new([9u8; 32]), 1000000000000000000),
-];
+fn get_accountid32(addr: &str) -> AccountId32 {
+	AccountId32::from_str(addr).unwrap()
+}
 
 pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
@@ -78,9 +65,7 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
-	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type AddressMapping = ProofAddressMapping<Self>;
-
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -88,7 +73,6 @@ impl pallet_evm::Config for Test {
 	type PrecompilesValue = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	// type OnChargeTransaction = ();
 	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
 }
@@ -132,8 +116,10 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
+
 parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
 }
 
 impl pallet_balances::Config for Test {
@@ -212,7 +198,6 @@ pub fn run_to_block(n: u64) {
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId32, u64)>,
 	max_player: u32,
 	services: [(PackService, u8, u8, u64); 3],
 	time_service: u128,
@@ -221,7 +206,6 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			balances: TEST_ACCOUNTS.to_vec(),
 			max_player: MAX_PLAYER,
 			services: SERVICES,
 			time_service: TIME_SERVICE,
@@ -232,9 +216,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
 
 		let _ = pallet_pool::GenesisConfig::<Test> {
 			max_player: self.max_player,
