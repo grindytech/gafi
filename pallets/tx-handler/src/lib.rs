@@ -3,18 +3,18 @@ use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
 	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, SignedImbalance, StoredMap,
-		WithdrawReasons,
+		fungible::Inspect, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
+		OriginTrait, SignedImbalance, StoredMap, WithdrawReasons,
 	},
 	Twox64Concat,
 };
-use frame_system::pallet_prelude::*;
+use frame_system::{pallet_prelude::*, Origin, RawOrigin};
 pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::HashedAddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
-use sp_runtime::traits::{BlakeTwo256, DispatchInfoOf, Saturating, Zero};
+use sp_runtime::traits::{BlakeTwo256, DispatchInfoOf, Saturating, StaticLookup, Zero};
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
@@ -46,7 +46,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm::Config {
+	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
@@ -96,7 +96,7 @@ pub mod pallet {
 			);
 
 			if withdraw {
-				Self::transfer_all(address, sender.clone());
+				Self::transfer_all(address, sender.clone(), true)?;
 			}
 			let account_id: AccountId32 = sender.into();
 			<Mapping<T>>::insert(address, account_id);
@@ -117,15 +117,24 @@ where
 		signer == Some(address_convert)
 	}
 
-	pub fn transfer_all(from: H160, to: T::AccountId) {
+	pub fn transfer_all(from: H160, to: T::AccountId, keep_alive: bool) -> DispatchResult {
 		let from_account: T::AccountId = T::DefaultAddressMapping::into_account_id(from);
-		let total_free: BalanceOf<T> = <T as pallet::Config>::Currency::free_balance(&from_account);
-		let _ = <T as pallet::Config>::Currency::transfer(
+		let reducible_balance: u128 =
+			pallet_balances::pallet::Pallet::<T>::reducible_balance(&from_account, keep_alive)
+				.try_into()
+				.ok()
+				.unwrap();
+		let existence = if keep_alive {
+			ExistenceRequirement::KeepAlive
+		} else {
+			ExistenceRequirement::AllowDeath
+		};
+		<T as pallet::Config>::Currency::transfer(
 			&from_account,
 			&to,
-			total_free,
-			ExistenceRequirement::AllowDeath,
-		);
+			reducible_balance.try_into().ok().unwrap(),
+			existence,
+		)
 	}
 }
 
