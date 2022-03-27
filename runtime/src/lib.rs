@@ -395,7 +395,7 @@ impl pallet_pool::Config for Runtime {
 }
 
 parameter_types! {
-	pub Prefix: &'static [u8] =  b"Bind Aurora Network account:";
+	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
 }
 
 impl pallet_tx_handler::Config for Runtime {
@@ -404,9 +404,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type AuroraZone = Pool;
 	type PackServiceProvider = Pool;
 	type OnChargeEVMTxHandler = ();
-	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type AddressMapping = ProofAddressMapping<Self>;
-	type DefaultAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type MessagePrefix  = Prefix;
 }
 

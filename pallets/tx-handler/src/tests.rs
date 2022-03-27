@@ -1,21 +1,19 @@
-use crate::{mock::*, Error, Mapping, Config};
+use crate::{mock::*, Error, H160Mapping, Config, AddressMapping, pallet};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use pallet_evm::{AddressMapping};
 use hex_literal::hex;
 use parity_scale_codec::{Decode, Encode};
 use sp_core::H160;
-use sp_runtime::AccountId32;
+use sp_runtime::{AccountId32, traits::BlakeTwo256};
 use std::str::FromStr;
-use frame_support::traits::ExistenceRequirement;
 
 #[test]
 fn verify_owner_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_eq!(PalletTxHandler::verify_bind(ALICE, signature, address.to_fixed_bytes()), true, "verify should works");
+		assert_eq!(PalletTxHandler::verify_bond(ALICE, signature, address.to_fixed_bytes()), true, "verify should works");
 	});
 }
 
@@ -25,11 +23,11 @@ fn bind_should_works() {
 		run_to_block(10);
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_ok!(PalletTxHandler::bind(Origin::signed(ALICE.clone()), signature, address, false));
+		assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, address, false));
 
-		let account_id = Mapping::<Test>::get(address).unwrap();
+		let account_id = H160Mapping::<Test>::get(address).unwrap();
 		assert_eq!(account_id, ALICE, "AccountId not correct");
 	});
 }
@@ -42,11 +40,11 @@ fn bind_should_fail() {
 		{
 			run_to_block(10);
 			let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-			let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84c").unwrap(); //incorrect address
 
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(ALICE), signature, address, true),
+				PalletTxHandler::bond(Origin::signed(ALICE), signature, address, true),
 				<Error<Test>>::SignatureOrAddressNotCorrect
 			);
 		}
@@ -55,11 +53,11 @@ fn bind_should_fail() {
 		{
 			run_to_block(10);
 		let BOB = AccountId32::from_str("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty").unwrap();
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 
 		assert_err!(
-			PalletTxHandler::bind(Origin::signed(BOB), signature, address, true),
+			PalletTxHandler::bond(Origin::signed(BOB), signature, address, true),
 			<Error<Test>>::SignatureOrAddressNotCorrect
 		);
 		}
@@ -72,7 +70,7 @@ fn bind_should_fail() {
 		let signature: [u8; 65] = hex!("2cda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 		assert_err!(
-			PalletTxHandler::bind(Origin::signed(ALICE), signature, address, true),
+			PalletTxHandler::bond(Origin::signed(ALICE), signature, address, true),
 			<Error<Test>>::SignatureOrAddressNotCorrect
 		);
 		}
@@ -82,10 +80,10 @@ fn bind_should_fail() {
 			run_to_block(10);
 			let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 	
-			let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 	
-			assert_ok!(PalletTxHandler::bind(
+			assert_ok!(PalletTxHandler::bond(
 				Origin::signed(ALICE.clone()),
 				signature,
 				address,
@@ -93,8 +91,8 @@ fn bind_should_fail() {
 			));
 
 			assert_err!(
-				PalletTxHandler::bind(Origin::signed(ALICE.clone()), signature, address, true),
-				<Error<Test>>::AccountAlreadyBind
+				PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, address, true),
+				<Error<Test>>::EVMAccountAlreadyBond
 			);
 		}
 	})
@@ -107,7 +105,7 @@ fn transfer_all_keep_alive_works() {
 		run_to_block(10);
 		const EVM_BALANCE: u64 = 1_000_000_000;
 		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		{
 			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
@@ -141,7 +139,7 @@ fn transfer_all_allow_death_works() {
 		run_to_block(10);
 		const EVM_BALANCE: u64 = 1_000_000_000;
 		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		{
 			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
@@ -175,7 +173,7 @@ fn bind_account_balances() {
 		run_to_block(10);
 		const EVM_BALANCE: u64 = 1_000_000_000;
 		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("2bda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		{
 			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
@@ -193,7 +191,7 @@ fn bind_account_balances() {
 		}
 
 
-		assert_ok!(PalletTxHandler::bind(Origin::signed(ALICE.clone()), signature, evm_address, true));
+		assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
 
 		// evm_address balance should  
 		{
@@ -201,5 +199,42 @@ fn bind_account_balances() {
 			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
 			assert_eq!(mapping_address_balance, (EVM_BALANCE + ALICE_BALANCE - 2*EXISTENTIAL_DEPOSIT).into());
 		}
+	});
+}
+
+#[test]
+fn unbond_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(10);
+		const EVM_BALANCE: u64 = 1_000_000_000;
+		const ALICE_BALANCE: u64 = 1_000_000_000;
+		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
+		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		{
+			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+			assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
+		}
+		
+		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
+		let mapping_address = <Test as Config>::AddressMapping::into_account_id(evm_address);
+		{
+			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
+			assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
+
+			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
+		}
+
+		assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
+		assert_ok!(PalletTxHandler::unbond(Origin::signed(ALICE.clone())));
+	});
+}
+
+#[test]
+fn unbond_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(10);
+		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		assert_err!(PalletTxHandler::unbond(Origin::signed(ALICE.clone())), <Error<Test>>::NonbondAccount);
 	});
 }

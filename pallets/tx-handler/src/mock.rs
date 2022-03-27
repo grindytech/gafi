@@ -34,7 +34,7 @@ pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
 ];
 
-pub const PREFIX: &[u8] = b"Bind Aurora Network account:";
+pub const PREFIX: &[u8] = b"Bond Aurora Network account:";
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -177,7 +177,6 @@ impl pallet_tx_handler::Config for Test {
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
-	type DefaultAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type MessagePrefix = Prefix;
 }
 

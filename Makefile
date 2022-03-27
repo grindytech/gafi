@@ -11,6 +11,10 @@ run:
     --dev \
     --rpc-port 9933
 
+.PHONY: test
+test:
+	cargo test
+
 .PHONY: build_benchmark
 build_benchmark:
 	cargo build --release --features runtime-benchmarks

@@ -28,7 +28,7 @@ const ALICE_ENCODED = "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a
 describe('Contract', () => {
 
     it("it should get bind arguments data", async () => {
-        const test_message = `Bind Aurora Network account:${ALICE_ENCODED}`;
+        const test_message = `Bond Aurora Network account:${ALICE_ENCODED}`;
         let message; // keccak256 of ALICE address
         let signature; // signature of sign the message
         let address; // user address

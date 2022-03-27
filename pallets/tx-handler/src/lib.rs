@@ -54,7 +54,6 @@ pub mod pallet {
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
-		type DefaultAddressMapping: AddressMapping<Self::AccountId>;
 		#[pallet::constant]
 		type MessagePrefix: Get<&'static [u8]>;
 	}
@@ -64,7 +63,10 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		SignatureOrAddressNotCorrect,
-		AccountAlreadyBind,
+		EVMAccountAlreadyBond,
+		AuroraAccountAlreadyBond,
+
+		NonbondAccount,
 	}
 
 	#[pallet::event]
@@ -73,7 +75,10 @@ pub mod pallet {
 
 	// Storage
 	#[pallet::storage]
-	pub type Mapping<T: Config> = StorageMap<_, Twox64Concat, H160, AccountId32>;
+	pub type H160Mapping<T: Config> = StorageMap<_, Twox64Concat, H160, AccountId32>;
+
+	#[pallet::storage]
+	pub type Id32Mapping<T: Config> = StorageMap<_, Twox64Concat, AccountId32, H160>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
@@ -82,24 +87,42 @@ pub mod pallet {
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
 		#[pallet::weight(100)]
-		pub fn bind(
+		pub fn bond(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
 			address: H160,
 			withdraw: bool,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			ensure!(Mapping::<T>::get(address) == None, <Error<T>>::AccountAlreadyBind);
+			let account_id: AccountId32 = sender.clone().into();
+
+			ensure!(H160Mapping::<T>::get(address) == None, <Error<T>>::EVMAccountAlreadyBond);
+			ensure!(Id32Mapping::<T>::get(account_id.clone()) == None, <Error<T>>::AuroraAccountAlreadyBond);
 			ensure!(
-				Self::verify_bind(sender.clone(), signature, address.to_fixed_bytes()),
+				Self::verify_bond(sender.clone(), signature, address.to_fixed_bytes()),
 				<Error<T>>::SignatureOrAddressNotCorrect,
 			);
-
 			if withdraw {
 				Self::transfer_all(address, sender.clone(), true)?;
 			}
+
+			Self::insert_pair_bond(address, account_id);
+			Ok(())
+		}
+
+		#[pallet::weight(100)]
+		pub fn unbond(
+			origin: OriginFor<T>
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 			let account_id: AccountId32 = sender.into();
-			<Mapping<T>>::insert(address, account_id);
+
+			let evm_address = <Id32Mapping<T>>::get(account_id);
+			ensure!(evm_address != None, <Error<T>>::NonbondAccount);
+			let id32_address = <H160Mapping<T>>::get(evm_address.unwrap());
+			ensure!(id32_address != None, <Error<T>>::NonbondAccount);
+
+			Self::remove_pair_bond(evm_address.unwrap(), id32_address.unwrap());
 			Ok(())
 		}
 	}
@@ -109,7 +132,7 @@ impl<T: Config> Pallet<T>
 where
 	[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 {
-	pub fn verify_bind(sender: T::AccountId, sig: [u8; 65], address: [u8; 20]) -> bool {
+	pub fn verify_bond(sender: T::AccountId, sig: [u8; 65], address: [u8; 20]) -> bool {
 		let sig_converter = EcdsaSignature(sig);
 		let address_convert = EthereumAddress(address);
 		let who = sender.using_encoded(to_ascii_hex);
@@ -118,7 +141,7 @@ where
 	}
 
 	pub fn transfer_all(from: H160, to: T::AccountId, keep_alive: bool) -> DispatchResult {
-		let from_account: T::AccountId = T::DefaultAddressMapping::into_account_id(from);
+		let from_account: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(from);
 		let reducible_balance: u128 =
 			pallet_balances::pallet::Pallet::<T>::reducible_balance(&from_account, keep_alive)
 				.try_into()
@@ -135,6 +158,16 @@ where
 			reducible_balance.try_into().ok().unwrap(),
 			existence,
 		)
+	}
+
+	fn insert_pair_bond(address: H160, account_id: AccountId32) {
+		<H160Mapping<T>>::insert(address, account_id.clone());
+		<Id32Mapping<T>>::insert(account_id, address);
+	}
+
+	fn remove_pair_bond(address: H160, account_id: AccountId32) {
+		<H160Mapping<T>>::remove(address);
+		<Id32Mapping<T>>::remove(account_id);
 	}
 }
 
@@ -187,10 +220,10 @@ where
 	AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn into_account_id(address: H160) -> AccountId32 {
-		if let Some(account_id) = Mapping::<T>::get(address) {
+		if let Some(account_id) = H160Mapping::<T>::get(address) {
 			account_id
 		} else {
-			T::DefaultAddressMapping::into_account_id(address).into()
+			HashedAddressMapping::<BlakeTwo256>::into_account_id(address).into()
 		}
 	}
 }
