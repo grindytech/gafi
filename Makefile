@@ -15,8 +15,8 @@ run:
 test:
 	cargo test
 
-.PHONY: build_benchmark
-build_benchmark:
+.PHONY: benchmark
+benchmark:
 	cargo build --release --features runtime-benchmarks
 
 .PHONY: build_benchmark_pool
@@ -39,6 +39,19 @@ benchmark_pool:
     --repeat 10 \
     --json-file=raw.json \
     --output ./pallets/src/pool/weights.rs
+
+    .PHONY: benchmark_tx_handler
+benchmark_tx_handler:
+	./target/release/aurora-node benchmark \
+    --chain dev \
+    --execution wasm \
+    --wasm-execution compiled \
+    --pallet pallet_tx_handler \
+    --extrinsic 'bond' \
+     --steps 20 \
+    --repeat 10 \
+    --json-file=raw.json \
+    --output ./pallets/src/tx-handler/weights.rs
 
 
 .PHONY: benchmark_template

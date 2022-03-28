@@ -21,6 +21,7 @@ codec = {package = "parity-scale-codec", version = "2.0.0", default-features = f
 fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+hex-literal = { version = "0.3.4", optional = true }
 
 # Substrate
 frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
@@ -44,7 +45,7 @@ sp-core = {default-features = false, version = "5.0.0-dev", git = "https://githu
 sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-hex-literal = "0.2.1"
+# hex-literal = "0.2.1"
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 
@@ -71,6 +72,5 @@ std = [
 ]
 
 
-
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "hex-literal"]
 try-runtime = ["frame-support/try-runtime"]

@@ -15,20 +15,29 @@ const { arrayify, BytesLike } = require("@ethersproject/bytes");
 
 var ERC20ABI = require('../build/contracts/ERC20.json');
 
-const admin = web3.eth.accounts.privateKeyToAccount("5240c93f837385e95742426ebc0dc49bbbeded5a9aaec129ac9de1754ca98ccb");
+const test1 = web3.eth.accounts.privateKeyToAccount("5240c93f837385e95742426ebc0dc49bbbeded5a9aaec129ac9de1754ca98ccb");
+const test2 = web3.eth.accounts.privateKeyToAccount("b109fbfdbb77af91889ff90fa79aa8b15fd39a18b4f761253ab4e4ab4faa1717");
+
+let admin = test2;
+
 
 async function add_additional_gas(contract, address) {
     const gas_limit = await contract.estimateGas({ from: address });
     const additional_gas = BigNumber.from(gas_limit.toString()).mul("50").div("100");
     return BigNumber.from(gas_limit.toString()).add(additional_gas).toString();
 }
+
 const ALICE = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
 const ALICE_ENCODED = "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+
+const BEN1 = "4dffba8214fbcc626ea93064efddbbb1a6c2ca36fdae1c165d7626ffd6b53ad2";
+const BEN2 = "32dffb31e24d8bdeb615dea72936c7ac730ebcd1690c485c16cf0e65200e71bd";
+const ACCOUNT_ENCODED = BEN2;
 
 describe('Contract', () => {
 
     it("it should get bind arguments data", async () => {
-        const test_message = `Bond Aurora Network account:${ALICE_ENCODED}`;
+        const test_message = `Bond Aurora Network account:${ACCOUNT_ENCODED}`;
         let message; // keccak256 of ALICE address
         let signature; // signature of sign the message
         let address; // user address

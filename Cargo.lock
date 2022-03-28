@@ -4569,7 +4569,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.2.2",
+ "hex-literal 0.3.4",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",

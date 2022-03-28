@@ -88,6 +88,7 @@ runtime-benchmarks = [
   "sp-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
   "pallet-pool/runtime-benchmarks",
+  "pallet-tx-handler/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -125,4 +126,5 @@ std = [
   "pallet-evm-precompile-simple/std",
   "pallet-evm-precompile-sha3fips/std",
   "pallet-pool/std",
+  "pallet-tx-handler/std",
 ]

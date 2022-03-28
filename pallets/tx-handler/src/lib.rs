@@ -19,10 +19,6 @@ use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 use sp_core::crypto::AccountId32;
-/*
-* tx-handler pallet handle transaction fee
-*
-*/
 
 #[cfg(test)]
 mod mock;
@@ -30,9 +26,16 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use crate::weights::WeightInfo;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -50,6 +53,7 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
+		type WeightInfo: WeightInfo;
 		type AuroraZone: AuroraZone<Self::AccountId>;
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
@@ -86,7 +90,7 @@ pub mod pallet {
 		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
-		#[pallet::weight(100)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(1))]
 		pub fn bond(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
