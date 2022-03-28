@@ -4,17 +4,16 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		fungible::Inspect, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
-		OriginTrait, SignedImbalance, StoredMap, WithdrawReasons,
 	},
 	Twox64Concat,
 };
-use frame_system::{pallet_prelude::*, Origin, RawOrigin};
+use frame_system::{pallet_prelude::*};
 pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::HashedAddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
-use sp_runtime::traits::{BlakeTwo256, DispatchInfoOf, Saturating, StaticLookup, Zero};
+use sp_runtime::traits::{BlakeTwo256};
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};

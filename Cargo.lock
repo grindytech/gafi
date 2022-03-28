@@ -4569,6 +4569,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-balances",
  "pallet-ethereum",
@@ -7764,7 +7765,6 @@ name = "test"
 version = "4.0.0-dev"
 dependencies = [
  "hex-literal 0.3.4",
- "parity-scale-codec 3.1.2",
  "parity-secp256k1",
  "rustc-hex",
  "scale-info",
@@ -7774,6 +7774,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "utils",
 ]
 
 [[package]]

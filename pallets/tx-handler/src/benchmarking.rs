@@ -33,7 +33,7 @@ fn get_address(index: u32) -> H160 {
 }
 
 fn get_withdraw(index: u32) -> bool {
-	let options = [true, false];
+	let options = [true, true];
 	return options[index as usize];
 }
 
@@ -42,13 +42,19 @@ fn string_to_static_str(s: String) -> &'static str {
 }
 
 fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u64) -> T::AccountId {
-    // info!("seed: {:?}", seed);
 	let balance_amount = amount.try_into().ok().unwrap();
 	let name: String = format!("{}{}", index, seed);
 	let user = account(string_to_static_str(name), index, seed);
 	<T as pallet::Config>::Currency::make_free_balance_be(&user, balance_amount);
 	<T as pallet::Config>::Currency::issue(balance_amount);
 	return user;
+}
+
+fn init_funded_h160<T: Config>(address: H160) {
+	let account_id = <T as pallet::Config>::AddressMapping::into_account_id(address);
+	let balance_amount = 1000_000_000u64.try_into().ok().unwrap();
+	<T as pallet::Config>::Currency::make_free_balance_be(&account_id, balance_amount);
+	<T as pallet::Config>::Currency::issue(balance_amount);
 }
 
 benchmarks! {
@@ -62,7 +68,7 @@ benchmarks! {
         let who = caller.using_encoded(to_ascii_hex);
 	    let address = String::from_utf8(who);
 
-        // info!("address: {:?}", address);
+        info!("address: {:?}", address);
 
 		let signature: [u8; 65] = get_signature(s);
 		let address: H160 = get_address(s);
@@ -74,6 +80,7 @@ benchmarks! {
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u64);
 		let signature: [u8; 65] = get_signature(s);
 		let address: H160 = get_address(s);
+		init_funded_h160::<T>(address);
 		let withdraw = get_withdraw(s);
 		Pallet::<T>::bond(RawOrigin::Signed(caller.clone()).into(), signature, address, withdraw);
 	}: _(RawOrigin::Signed(caller))

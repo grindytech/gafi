@@ -172,11 +172,10 @@ fn testnet_genesis(
 				// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
 				map.insert(
 					H160::from_slice(&hex_literal::hex!(
-						"d43593c715fdd31c61141abd04a99fd6822c8558"
+						"d43593c715fdd31c61141abd04a99fd6822c8558" //base
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
@@ -184,11 +183,10 @@ fn testnet_genesis(
 				);
 				map.insert(
 					H160::from_slice(&hex_literal::hex!(
-						"dDda6430955c710cDD5BcBb65c7f32313e8b07c0"
+						"b28049C6EE4F90AE804C70F860e55459E837E84b" //test 1
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
@@ -196,11 +194,10 @@ fn testnet_genesis(
 				);
 				map.insert(
 					H160::from_slice(&hex_literal::hex!(
-						"f6de688415B8038814D116861d46A937Be60Df90"
+						"427491884a4baCA9a9a337e919f3aC96A0b88E64" //test 2
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
@@ -208,11 +205,10 @@ fn testnet_genesis(
 				);
 				map.insert(
 					H160::from_slice(&hex_literal::hex!(
-						"b28049C6EE4F90AE804C70F860e55459E837E84b"
+						"2f47229E4ef93ffdf8B6Fe7C5Df390C89e745314" //test 3
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						// Using a larger number, so I can tell the accounts apart by balance.
 						balance: U256::from(1u64 << 61),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),

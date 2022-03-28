@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --reporter spec js-tests/*"
+    "test": "mocha --reporter spec js-tests/*",
+    "test-sig": "mocha --reporter spec js-tests/get-signature.test.js",
+    "test-fee": "mocha --reporter spec js-tests/diff-fee.test.js"
   },
   "author": "",
   "license": "ISC",

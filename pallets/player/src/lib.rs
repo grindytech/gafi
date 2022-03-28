@@ -16,7 +16,7 @@ pub mod pallet {
 		traits::{Currency, Randomness},
 	};
 	use frame_system::pallet_prelude::*;
-	use parity_scale_codec::{Decode, Encode};
+	use parity_scale_codec::{Encode};
 	use sp_io::hashing::blake2_256;
 	use crate::player::Player;
 

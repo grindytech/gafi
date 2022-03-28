@@ -178,6 +178,7 @@ impl pallet_tx_handler::Config for Test {
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
 	type MessagePrefix = Prefix;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
