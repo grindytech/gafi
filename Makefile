@@ -47,7 +47,7 @@ benchmark_tx_handler:
     --execution wasm \
     --wasm-execution compiled \
     --pallet pallet_tx_handler \
-    --extrinsic 'bond' \
+    --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
     --json-file=raw.json \

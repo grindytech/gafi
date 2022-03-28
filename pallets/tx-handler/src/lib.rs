@@ -101,7 +101,10 @@ pub mod pallet {
 			let account_id: AccountId32 = sender.clone().into();
 
 			ensure!(H160Mapping::<T>::get(address) == None, <Error<T>>::EVMAccountAlreadyBond);
-			ensure!(Id32Mapping::<T>::get(account_id.clone()) == None, <Error<T>>::AuroraAccountAlreadyBond);
+			ensure!(
+				Id32Mapping::<T>::get(account_id.clone()) == None,
+				<Error<T>>::AuroraAccountAlreadyBond
+			);
 			ensure!(
 				Self::verify_bond(sender.clone(), signature, address.to_fixed_bytes()),
 				<Error<T>>::SignatureOrAddressNotCorrect,
@@ -114,10 +117,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(100)]
-		pub fn unbond(
-			origin: OriginFor<T>
-		) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(1))]
+		pub fn unbond(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let account_id: AccountId32 = sender.into();
 
@@ -145,7 +146,8 @@ where
 	}
 
 	pub fn transfer_all(from: H160, to: T::AccountId, keep_alive: bool) -> DispatchResult {
-		let from_account: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(from);
+		let from_account: T::AccountId =
+			<T as pallet::Config>::AddressMapping::into_account_id(from);
 		let reducible_balance: u128 =
 			pallet_balances::pallet::Pallet::<T>::reducible_balance(&from_account, keep_alive)
 				.try_into()

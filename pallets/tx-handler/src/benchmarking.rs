@@ -32,6 +32,11 @@ fn get_address(index: u32) -> H160 {
 	return addresses[index as usize];
 }
 
+fn get_withdraw(index: u32) -> bool {
+	let options = [true, false];
+	return options[index as usize];
+}
+
 fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
 }
@@ -53,7 +58,6 @@ benchmarks! {
 	bond {
 		let s in 0 .. 1;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u64);
-        // let caller: T::AccountId = whitelisted_caller();
 
         let who = caller.using_encoded(to_ascii_hex);
 	    let address = String::from_utf8(who);
@@ -62,6 +66,15 @@ benchmarks! {
 
 		let signature: [u8; 65] = get_signature(s);
 		let address: H160 = get_address(s);
-		let withdraw = true;
+		let withdraw = get_withdraw(s);
 	}: _(RawOrigin::Signed(caller), signature, address, withdraw)
+
+	unbond {
+		let s in 0 .. 1;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u64);
+		let signature: [u8; 65] = get_signature(s);
+		let address: H160 = get_address(s);
+		let withdraw = get_withdraw(s);
+		Pallet::<T>::bond(RawOrigin::Signed(caller.clone()).into(), signature, address, withdraw);
+	}: _(RawOrigin::Signed(caller))
 }
