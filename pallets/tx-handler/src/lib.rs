@@ -2,22 +2,21 @@
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
-	traits::{
-		fungible::Inspect, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
-	},
+	traits::{fungible::Inspect, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced},
 	Twox64Concat,
 };
-use frame_system::{pallet_prelude::*};
+use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use pallet_evm::AddressMapping;
 use pallet_evm::HashedAddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
+use pallet_evm::{AddressMapping, GasWeightMapping};
 use sp_core::{H160, U256};
-use sp_runtime::traits::{BlakeTwo256};
+use sp_runtime::traits::BlakeTwo256;
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 use sp_core::crypto::AccountId32;
+use sp_std::if_std;
 
 #[cfg(test)]
 mod mock;
@@ -89,7 +88,7 @@ pub mod pallet {
 		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(1))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(100u32))]
 		pub fn bond(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
@@ -116,7 +115,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(1))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(100u32))]
 		pub fn unbond(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let account_id: AccountId32 = sender.into();
@@ -195,14 +194,7 @@ where
 	type LiquidityInfo =
 		<<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
-		let mut service_fee = fee;
-		if let Some(player) = T::AuroraZone::is_in_aurora_zone(&account_id) {
-			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
-				service_fee = fee / service.discount;
-			}
-		}
-		T::OnChargeEVMTxHandler::withdraw_fee(who, service_fee)
+		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
 	}
 
 	fn correct_and_deposit_fee(
@@ -210,7 +202,21 @@ where
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
-		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, corrected_fee, already_withdrawn)
+		let mut service_fee = corrected_fee;
+		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
+		if let Some(player) = T::AuroraZone::is_in_aurora_zone(&account_id) {
+			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
+				service_fee = corrected_fee - (corrected_fee * service.discount / 100);
+			}
+		}
+
+		if_std! {
+			// This code is only being compiled and executed when the `std` feature is enabled.
+			println!("Origin Fee: {:?}", corrected_fee);
+			println!("Service Fee: {:?}", service_fee);
+		}
+
+		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}
 
 	fn pay_priority_fee(tip: U256) {

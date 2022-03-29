@@ -196,7 +196,7 @@ pub mod pallet {
 			* 1. Add new player to NewPlayer
 			* 2. charge double service fee when they join
 			*/
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(1))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(100u32))]
 		pub fn join(origin: OriginFor<T>, pack: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -225,7 +225,7 @@ pub mod pallet {
 			* 1. remove player from storages
 			* 2. refund appropriate amount (the maximum amount they receive is 'service_fee'/2)
 			*/
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(1))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(100u32))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 

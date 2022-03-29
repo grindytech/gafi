@@ -44,7 +44,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Pool PlayerCount (r:1 w:1)
 	// Storage: Pool MaxPlayer (r:1 w:0)
 	// Storage: Pool NewPlayers (r:1 w:1)
-	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Pool Services (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: System Number (r:1 w:0)
@@ -52,8 +51,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
 	// Storage: Balances TotalIssuance (r:1 w:1)
-	fn join(_s: u32, ) -> Weight {
-		(58_222_000 as Weight)
+	// Storage: Timestamp Now (r:1 w:0)
+	fn join(s: u32, ) -> Weight {
+		(39_722_000 as Weight)
+			// Standard Error: 244_000
+			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -71,9 +73,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: Balances TotalIssuance (r:1 w:1)
 	fn leave(s: u32, ) -> Weight {
-		(41_694_000 as Weight)
-			// Standard Error: 147_000
-			.saturating_add((250_000 as Weight).saturating_mul(s as Weight))
+		(40_667_000 as Weight)
+			// Standard Error: 169_000
+			.saturating_add((500_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -81,16 +83,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 impl WeightInfo for () {
 	
-	fn join(_s: u32, ) -> Weight {
-		(58_222_000 as Weight)
+	fn join(s: u32, ) -> Weight {
+		(39_722_000 as Weight)
+			// Standard Error: 244_000
+			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 
 	fn leave(s: u32, ) -> Weight {
-		(41_694_000 as Weight)
-			// Standard Error: 147_000
-			.saturating_add((250_000 as Weight).saturating_mul(s as Weight))
+		(40_667_000 as Weight)
+			// Standard Error: 169_000
+			.saturating_add((500_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}

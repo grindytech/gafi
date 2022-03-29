@@ -138,9 +138,9 @@ fn testnet_genesis(
 	const POOL_FEE: Balance = 10_000_000;
 	const MAX_PLAYER: u32 = 1000;
 	const SERVICES: [(PackService, u8, u8, Balance); 3] = [
-		(PackService::Basic, 4, 60, POOL_FEE),
+		(PackService::Basic, 4, 40, POOL_FEE),
 		(PackService::Medium, 8, 70, POOL_FEE * 2),
-		(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
+		(PackService::Max, u8::MAX, 90, POOL_FEE * 3),
 	];
 
 	GenesisConfig {

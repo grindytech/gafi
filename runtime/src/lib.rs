@@ -46,8 +46,8 @@ pub use frame_support::{
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, EnsureAddressSame,
-	EnsureAddressTruncated, HashedAddressMapping, OnChargeEVMTransaction, Runner,
+	Account as EVMAccount, EnsureAddressNever,
+	EnsureAddressTruncated, Runner,
 };
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
@@ -62,7 +62,7 @@ pub use pallet_template;
 pub use pallet_tx_handler;
 
 // custom traits
-use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping};
+use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping };
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -128,7 +128,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 1000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -319,7 +319,6 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	// type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type AddressMapping = ProofAddressMapping<Self>;
 	type Currency = Balances;
 	type Event = Event;
@@ -328,7 +327,6 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	// type OnChargeTransaction = ();
 	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
@@ -348,7 +346,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = U256::from(1_000_000_000);
+	pub DefaultBaseFeePerGas: U256 = U256::from(10_000_000_000u128);
 }
 
 pub struct BaseFeeThreshold;
@@ -357,10 +355,10 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 		Permill::zero()
 	}
 	fn ideal() -> Permill {
-		Permill::from_parts(500_000)
+		Permill::from_parts(5000_000)
 	}
 	fn upper() -> Permill {
-		Permill::from_parts(1_000_000)
+		Permill::from_parts(10_000_000)
 	}
 }
 

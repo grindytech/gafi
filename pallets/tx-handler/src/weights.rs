@@ -47,15 +47,19 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn bond(_s: u32, ) -> Weight {
-		(173_500_000 as Weight)
+	fn bond(s: u32, ) -> Weight {
+		(172_333_000 as Weight)
+			// Standard Error: 636_000
+			.saturating_add((3_833_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 	// Storage: TxHandler Id32Mapping (r:1 w:1)
 	// Storage: TxHandler H160Mapping (r:1 w:1)
-	fn unbond(_s: u32, ) -> Weight {
-		(8_667_000 as Weight)
+	fn unbond(s: u32, ) -> Weight {
+		(8_000_000 as Weight)
+			// Standard Error: 166_000
+			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -63,14 +67,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 impl WeightInfo for () {
 	
-	fn bond(_s: u32, ) -> Weight {
-		(171_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	fn bond(s: u32, ) -> Weight {
+		(172_333_000 as Weight)
+		// Standard Error: 636_000
+		.saturating_add((3_833_000 as Weight).saturating_mul(s as Weight))
+		.saturating_add(RocksDbWeight::get().reads(8 as Weight))
+		.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
 
-	fn unbond(_s: u32, ) -> Weight {
-		(8_667_000 as Weight)
+	fn unbond(s: u32, ) -> Weight {
+		(8_000_000 as Weight)
+			// Standard Error: 166_000
+			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
