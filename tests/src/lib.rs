@@ -15,6 +15,13 @@ pub fn get_account_encoded(sub_address: &str) -> Option<String> {
 }
 
 #[test]
+fn test() {
+    let acc = "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty";
+    let encode = get_account_encoded(acc).unwrap();
+    println!("encode: {:?}", encode);
+}
+
+#[test]
 fn get_account_encoded_works() {
     let ALICE = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
     let encode = get_account_encoded(ALICE).unwrap();

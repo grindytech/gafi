@@ -13,12 +13,14 @@ const ACCOUNTS = [
     web3.eth.accounts.privateKeyToAccount("5240c93f837385e95742426ebc0dc49bbbeded5a9aaec129ac9de1754ca98ccb"), // test 1
     web3.eth.accounts.privateKeyToAccount("b109fbfdbb77af91889ff90fa79aa8b15fd39a18b4f761253ab4e4ab4faa1717"), // test 2
     web3.eth.accounts.privateKeyToAccount("db971a6ab5242bc883f958f8098e2497b2b6d670a02c175a66a74c162f77596b"), // test 3
+    web3.eth.accounts.privateKeyToAccount("b109fbfdbb77af91889ff90fa79aa8b15fd39a18b4f761253ab4e4ab4faa1717"), // test 2
 ]
 
 const ENCODEDS = [
     "4dffba8214fbcc626ea93064efddbbb1a6c2ca36fdae1c165d7626ffd6b53ad2", // ben 1
     "32dffb31e24d8bdeb615dea72936c7ac730ebcd1690c485c16cf0e65200e71bd", // bench 2
     "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d", // alice
+    "8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48", // bob
 ]
 
 describe('Contract', () => {
