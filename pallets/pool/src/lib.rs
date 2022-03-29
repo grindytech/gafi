@@ -1,6 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 pub mod pool;
+use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
+use crate::weights::WeightInfo;
+use frame_support::{
+	dispatch::{DispatchResult, Vec},
+	pallet_prelude::*,
+	traits::{
+		tokens::{ExistenceRequirement, WithdrawReasons},
+		Currency,
+	},
+};
+use frame_system::pallet_prelude::*;
+use pallet_timestamp::{self as timestamp};
 
 #[cfg(test)]
 mod mock;
@@ -16,18 +28,6 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
-	use crate::weights::WeightInfo;
-	use frame_support::{
-		dispatch::{DispatchResult, Vec},
-		pallet_prelude::*,
-		traits::{
-			tokens::{ExistenceRequirement, WithdrawReasons},
-			Currency,
-		},
-	};
-	use frame_system::pallet_prelude::*;
-	use pallet_timestamp::{self as timestamp};
 	use super::*;
 
 	pub type BalanceOf<T> =
@@ -199,10 +199,22 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(1))]
 		pub fn join(origin: OriginFor<T>, pack: PackService) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::join_pool(sender.clone(), pack)?;
-			let pack_service = Services::<T>::get(pack);
-			let double_fee = pack_service.service * 2u32.into();
-			Self::change_fee(&sender, double_fee)?;
+
+			// make sure player not re-join
+			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
+			// make sure not exceed max players
+			let new_player_count =
+				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
+			{
+				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
+					.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
+				let pack_service = Services::<T>::get(pack);
+				let double_fee = pack_service.service * 2u32.into();
+				Self::change_fee(&sender, double_fee)?;
+			}
+
+			Self::join_pool(sender.clone(), pack, new_player_count);
 			Self::deposit_event(Event::PlayerJoinPool(sender));
 
 			Ok(())
@@ -216,7 +228,34 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(1))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::leave_pool(&sender)?;
+
+			let player = Players::<T>::get(sender.clone());
+			ensure!(player != None, <Error<T>>::PlayerNotFound);
+			let player = player.unwrap();
+
+			{
+				let join_time = player.join_time;
+				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+				let refund_fee =
+					Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
+
+				<NewPlayers<T>>::try_mutate(|players| {
+					if let Some(ind) = players.iter().position(|id| id == &sender) {
+						players.swap_remove(ind);
+					}
+					Ok(())
+				})
+				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+				<IngamePlayers<T>>::try_mutate(|players| {
+					if let Some(ind) = players.iter().position(|id| id == &sender) {
+						players.swap_remove(ind);
+					}
+					Ok(())
+				})
+				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+				Self::leave_pool(&sender, refund_fee);
+			}
+
 			Self::deposit_event(Event::PlayerLeavePool(sender));
 			Ok(())
 		}
@@ -253,170 +292,6 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Pallet<T> {
-		fn join_pool(sender: T::AccountId, pack: PackService) -> Result<(), Error<T>> {
-			// make sure player not re-join
-			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
-			// make sure not exceed max players
-			let new_player_count =
-				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
-			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
-			// make sure not exceed max new players
-			<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
-				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
-			let _now = <timestamp::Pallet<T>>::get();
-			let player = Player::<T::AccountId> {
-				address: sender.clone(),
-				join_time: Self::moment_to_u128(_now),
-				service: pack,
-			};
-			<Players<T>>::insert(sender, player);
-			<PlayerCount<T>>::put(new_player_count);
-			Ok(())
-		}
-
-		pub fn change_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
-			let withdraw = T::Currency::withdraw(
-				&sender,
-				fee,
-				WithdrawReasons::RESERVE,
-				ExistenceRequirement::KeepAlive,
-			);
-
-			match withdraw {
-				Ok(_) => Ok(()),
-				Err(err) => Err(err),
-			}
-		}
-
-		/*
-			1. Calculate fee to refund
-			2. Remove sender from Players and NewPlayers/IngamePlayers
-		*/
-		fn leave_pool(sender: &T::AccountId) -> Result<(), Error<T>> {
-			if let Some(player) = Players::<T>::get(sender) {
-				let join_time = player.join_time;
-				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-				let refund_fee =
-					Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
-
-				<NewPlayers<T>>::try_mutate(|players| {
-					if let Some(ind) = players.iter().position(|id| id == sender) {
-						players.swap_remove(ind);
-					}
-					Ok(())
-				})
-				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				<IngamePlayers<T>>::try_mutate(|players| {
-					if let Some(ind) = players.iter().position(|id| id == sender) {
-						players.swap_remove(ind);
-					}
-					Ok(())
-				})
-				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-
-				<Players<T>>::remove(sender);
-				let _ = T::Currency::deposit_into_existing(sender, refund_fee);
-			} else {
-				return Err(<Error<T>>::PlayerNotFound);
-			}
-			Ok(())
-		}
-
-		pub fn calculate_ingame_refund_amount(
-			_now: u128,
-			join_time: u128,
-			service: PackService,
-		) -> Result<BalanceOf<T>, Error<T>> {
-			let range_block = _now - join_time;
-			if range_block < Self::time_service() {
-				let pack = Services::<T>::get(service);
-				return Ok(pack.service);
-			}
-			let extra = range_block % Self::time_service();
-			let service = Services::<T>::get(service);
-			if let Some(fee) = Self::balance_to_u64(service.service) {
-				let fee_change = (Self::time_service() - extra) / Self::time_service();
-				let actual_fee = fee * (fee_change as u64);
-				if let Some(result) = Self::u64_to_balance(actual_fee) {
-					return Ok(result);
-				}
-			}
-			return Err(<Error<T>>::CanNotCalculateRefundFee);
-		}
-
-		/*
-		 */
-		fn kick_ingame_player(player: &T::AccountId) -> Result<(), Error<T>> {
-			<Players<T>>::remove(player);
-			<IngamePlayers<T>>::try_mutate(|players| {
-				if let Some(ind) = players.iter().position(|id| id == player) {
-					players.swap_remove(ind);
-				}
-				Ok(())
-			})
-			.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-			Ok(())
-		}
-
-		fn charge_ingame() -> Result<(), Error<T>> {
-			let ingame_players: Vec<T::AccountId> = IngamePlayers::<T>::get().into_inner();
-			for player in ingame_players {
-				if let Some(ingame_player) = Players::<T>::get(&player) {
-					let pack = Services::<T>::get(ingame_player.service);
-					match Self::change_fee(&player, pack.service) {
-						Ok(_) => {},
-						Err(_) => {
-							let _ = Self::kick_ingame_player(&player);
-						},
-					}
-				}
-			}
-			Ok(())
-		}
-
-		fn move_newplayer_to_ingame() -> Result<(), Error<T>> {
-			let new_players: Vec<T::AccountId> = NewPlayers::<T>::get().into_inner();
-			for new_player in new_players {
-				<IngamePlayers<T>>::try_append(new_player)
-					.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
-			}
-			<NewPlayers<T>>::kill();
-			Ok(())
-		}
-
-		pub fn block_to_u64(input: T::BlockNumber) -> Option<u64> {
-			TryInto::<u64>::try_into(input).ok()
-		}
-
-		pub fn balance_to_u64(input: BalanceOf<T>) -> Option<u64> {
-			TryInto::<u64>::try_into(input).ok()
-		}
-
-		pub fn u64_to_balance(input: u64) -> Option<BalanceOf<T>> {
-			input.try_into().ok()
-		}
-
-		pub fn u64_to_block(input: u64) -> Option<T::BlockNumber> {
-			input.try_into().ok()
-		}
-
-		pub fn moment_to_u128(input: T::Moment) -> u128 {
-			sp_runtime::SaturatedConversion::saturated_into(input)
-		}
-
-		/*
-			Return current block number otherwise return 0
-		*/
-		pub fn get_block_number() -> u64 {
-			let block_number = <frame_system::Pallet<T>>::block_number();
-			if let Some(block) = Self::block_to_u64(block_number) {
-				return block;
-			}
-			return 0u64;
-		}
-	}
-
 	impl<T: Config> AuroraZone<T::AccountId> for Pallet<T> {
 		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T::AccountId>> {
 			Players::<T>::get(player)
@@ -427,6 +302,135 @@ pub mod pallet {
 		fn get_service(service: PackService) -> Option<Service<BalanceOf<T>>> {
 			Some(Services::<T>::get(service))
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn join_pool(sender: T::AccountId, pack: PackService, new_player_count: u32) {
+		let _now = <timestamp::Pallet<T>>::get();
+		let player = Player::<T::AccountId> {
+			address: sender.clone(),
+			join_time: Self::moment_to_u128(_now),
+			service: pack,
+		};
+		<Players<T>>::insert(sender, player);
+		<PlayerCount<T>>::put(new_player_count);
+	}
+
+	/*
+		1. Calculate fee to refund
+		2. Remove sender from Players and NewPlayers/IngamePlayers
+	*/
+	fn leave_pool(sender: &T::AccountId, refund_fee: BalanceOf<T>) {
+		<Players<T>>::remove(sender);
+		let _ = T::Currency::deposit_into_existing(sender, refund_fee);
+	}
+
+	pub fn change_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
+		let withdraw = T::Currency::withdraw(
+			&sender,
+			fee,
+			WithdrawReasons::RESERVE,
+			ExistenceRequirement::KeepAlive,
+		);
+
+		match withdraw {
+			Ok(_) => Ok(()),
+			Err(err) => Err(err),
+		}
+	}
+
+	pub fn calculate_ingame_refund_amount(
+		_now: u128,
+		join_time: u128,
+		service: PackService,
+	) -> Result<BalanceOf<T>, Error<T>> {
+		let range_block = _now - join_time;
+		if range_block < Self::time_service() {
+			let pack = Services::<T>::get(service);
+			return Ok(pack.service);
+		}
+		let extra = range_block % Self::time_service();
+		let service = Services::<T>::get(service);
+		if let Some(fee) = Self::balance_to_u64(service.service) {
+			let fee_change = (Self::time_service() - extra) / Self::time_service();
+			let actual_fee = fee * (fee_change as u64);
+			if let Some(result) = Self::u64_to_balance(actual_fee) {
+				return Ok(result);
+			}
+		}
+		return Err(<Error<T>>::CanNotCalculateRefundFee);
+	}
+
+	/*
+	 */
+	fn kick_ingame_player(player: &T::AccountId) -> Result<(), Error<T>> {
+		<Players<T>>::remove(player);
+		<IngamePlayers<T>>::try_mutate(|players| {
+			if let Some(ind) = players.iter().position(|id| id == player) {
+				players.swap_remove(ind);
+			}
+			Ok(())
+		})
+		.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+		Ok(())
+	}
+
+	fn charge_ingame() -> Result<(), Error<T>> {
+		let ingame_players: Vec<T::AccountId> = IngamePlayers::<T>::get().into_inner();
+		for player in ingame_players {
+			if let Some(ingame_player) = Players::<T>::get(&player) {
+				let pack = Services::<T>::get(ingame_player.service);
+				match Self::change_fee(&player, pack.service) {
+					Ok(_) => {},
+					Err(_) => {
+						let _ = Self::kick_ingame_player(&player);
+					},
+				}
+			}
+		}
+		Ok(())
+	}
+
+	fn move_newplayer_to_ingame() -> Result<(), Error<T>> {
+		let new_players: Vec<T::AccountId> = NewPlayers::<T>::get().into_inner();
+		for new_player in new_players {
+			<IngamePlayers<T>>::try_append(new_player)
+				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
+		}
+		<NewPlayers<T>>::kill();
+		Ok(())
+	}
+
+	pub fn block_to_u64(input: T::BlockNumber) -> Option<u64> {
+		TryInto::<u64>::try_into(input).ok()
+	}
+
+	pub fn balance_to_u64(input: BalanceOf<T>) -> Option<u64> {
+		TryInto::<u64>::try_into(input).ok()
+	}
+
+	pub fn u64_to_balance(input: u64) -> Option<BalanceOf<T>> {
+		input.try_into().ok()
+	}
+
+	pub fn u64_to_block(input: u64) -> Option<T::BlockNumber> {
+		input.try_into().ok()
+	}
+
+	pub fn moment_to_u128(input: T::Moment) -> u128 {
+		sp_runtime::SaturatedConversion::saturated_into(input)
+	}
+
+	/*
+		Return current block number otherwise return 0
+	*/
+	pub fn get_block_number() -> u64 {
+		let block_number = <frame_system::Pallet<T>>::block_number();
+		if let Some(block) = Self::block_to_u64(block_number) {
+			return block;
+		}
+		return 0u64;
 	}
 }
 
