@@ -2,6 +2,11 @@ use sp_core::{hexdisplay::HexDisplay};
 use sp_runtime::{AccountId32};
 use sp_std::str::{FromStr, Utf8Error};
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod determine;
 
 pub fn get_account_encoded(sub_address: &str) -> Option<String> {
     let account_id = AccountId32::from_str(sub_address);

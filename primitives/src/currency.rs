@@ -19,15 +19,6 @@ pub struct Token {
 
 pub trait TokenInfo {
     fn token_info(token: NativeToken) -> Token;
-    //  {
-    //     let aur: Token = Token { id: 1, name: b"Aurora".to_vec(), symbol: "AUR".as_bytes().to_vec(),  decimals: 12, };
-    //     let aux: Token = Token { id: 2, name: b"Aurora X".to_vec(), symbol: "AUX".as_bytes().to_vec(),  decimals: 12, };
-        
-    //     match currency {
-    //         Currency::AUR => Some(aur),
-    //         Currency::AUX => Some(aux),
-    //     }
-    // }
 }
 
 pub enum NativeToken {

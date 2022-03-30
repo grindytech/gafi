@@ -13,6 +13,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use pallet_timestamp::{self as timestamp};
+use aurora_primitives::{centi, currency::NativeToken::AUX};
 
 #[cfg(test)]
 mod mock;
@@ -158,14 +159,14 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			const BASE_FEE: u64 = 1000_000;
-			let convert_default_fee = |fee: u64| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
+			let base_fee: u128 = 75 * centi(AUX); // 0.75 AUX
+			let convert_default_fee = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
 			Self {
 				max_player: 1000,
 				services: [
-					(PackService::Basic, 4, 60, convert_default_fee(BASE_FEE)),
-					(PackService::Medium, 8, 70, convert_default_fee(BASE_FEE * 2)),
-					(PackService::Max, u8::MAX, 80, convert_default_fee(BASE_FEE * 3)),
+					(PackService::Basic, 4, 60, convert_default_fee(base_fee)),
+					(PackService::Medium, 8, 70, convert_default_fee(base_fee * 2)),
+					(PackService::Max, u8::MAX, 80, convert_default_fee(base_fee * 3)),
 				],
 
 				time_service: 3_600_000u128,

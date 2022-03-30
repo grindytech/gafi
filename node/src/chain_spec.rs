@@ -10,7 +10,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use aurora_primitives::{AuroraNetworkCurrency, unit, currency::{NativeToken::AUX, TokenInfo}};
+use aurora_primitives::{AuroraNetworkCurrency, unit, currency::{NativeToken::AUX, TokenInfo}, centi};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -48,8 +48,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let aux = AuroraNetworkCurrency::token_info(AUX);
 	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("AUX".to_string()));
 	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
+	let decimals  =json!(aux.decimals);
     props.insert("tokenSymbol".to_string(), symbol); 
     props.insert("tokenName".to_string(), name); 
+	props.insert("tokenDecimals".to_string(), decimals);
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -145,12 +147,12 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 	// Pool config
-	const POOL_FEE: Balance = 10_000_000;
+	let pool_fee: Balance =  75 * centi(AUX); // 0.75 AUX
 	const MAX_PLAYER: u32 = 1000;
-	const SERVICES: [(PackService, u8, u8, Balance); 3] = [
-		(PackService::Basic, 4, 40, POOL_FEE),
-		(PackService::Medium, 8, 70, POOL_FEE * 2),
-		(PackService::Max, u8::MAX, 90, POOL_FEE * 3),
+	let services: [(PackService, u8, u8, Balance); 3] = [
+		(PackService::Basic, 4, 40, pool_fee),
+		(PackService::Medium, 8, 70, pool_fee * 2),
+		(PackService::Max, u8::MAX, 90, pool_fee * 3),
 	];
 
 	GenesisConfig {
@@ -186,7 +188,7 @@ fn testnet_genesis(
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1u64 << 61),
+						balance: U256::from(1000 * unit(AUX)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
@@ -197,7 +199,7 @@ fn testnet_genesis(
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1u64 << 61),
+						balance: U256::from(1000 * unit(AUX)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
@@ -208,7 +210,7 @@ fn testnet_genesis(
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1u64 << 61),
+						balance: U256::from(1000 * unit(AUX)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
@@ -219,7 +221,7 @@ fn testnet_genesis(
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1u64 << 61),
+						balance: U256::from(1000 * unit(AUX)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
@@ -230,6 +232,6 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		pool: PoolConfig { max_player: MAX_PLAYER, services: SERVICES, time_service: 60_000u128 },
+		pool: PoolConfig { max_player: MAX_PLAYER, services, time_service: 60_000u128 },
 	}
 }

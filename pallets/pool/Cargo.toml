@@ -33,10 +33,14 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
+# Local
+aurora-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
+
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+
 
 [features]
 default = ["std"]
@@ -54,6 +58,7 @@ std = [
   'pallet-balances/std',
   'pallet-randomness-collective-flip/std',
   'pallet-timestamp/std',
+  'aurora-primitives/std',
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
