@@ -356,6 +356,7 @@ name = "aurora-node"
 version = "4.0.0-dev"
 dependencies = [
  "async-trait",
+ "aurora-primitives",
  "aurora-testnet-runtime",
  "clap",
  "fc-consensus",
@@ -393,6 +394,7 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -402,15 +404,30 @@ dependencies = [
  "sp-finality-grandpa",
  "sp-inherents",
  "sp-runtime",
+ "sp-std",
  "sp-timestamp",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
 ]
 
 [[package]]
+name = "aurora-primitives"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "aurora-testnet-runtime"
 version = "4.0.0-dev"
 dependencies = [
+ "aurora-primitives",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",

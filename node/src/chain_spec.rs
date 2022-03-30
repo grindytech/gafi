@@ -3,12 +3,15 @@ use aurora_testnet_runtime::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, PoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
-use sc_service::ChainType;
+use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
+use serde_json::json;
+use aurora_primitives::{AuroraNetworkCurrency, unit, currency::{NativeToken::AUX, TokenInfo}};
+use sp_std::*;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -40,6 +43,13 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    
+	let mut props : Properties = Properties::new();
+	let aux = AuroraNetworkCurrency::token_info(AUX);
+	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("AUX".to_string()));
+	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
+    props.insert("tokenSymbol".to_string(), symbol); 
+    props.insert("tokenName".to_string(), name); 
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -72,7 +82,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		None,
 		None,
 		// Properties
-		None,
+		Some(props),
 		// Extensions
 		None,
 	))
@@ -149,8 +159,8 @@ fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 		},
 		balances: BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 30)).collect(),
+			// each genesis account hold 1M AUX token
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1_000_000 * unit(AUX))).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),

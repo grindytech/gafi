@@ -9,14 +9,13 @@ use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use pallet_evm::HashedAddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
-use pallet_evm::{AddressMapping, GasWeightMapping};
+use pallet_evm::{AddressMapping};
 use sp_core::{H160, U256};
 use sp_runtime::traits::BlakeTwo256;
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 use sp_core::crypto::AccountId32;
-use sp_std::if_std;
 
 #[cfg(test)]
 mod mock;
@@ -208,12 +207,6 @@ where
 			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
 				service_fee = corrected_fee - (corrected_fee * service.discount / 100);
 			}
-		}
-
-		if_std! {
-			// This code is only being compiled and executed when the `std` feature is enabled.
-			println!("Origin Fee: {:?}", corrected_fee);
-			println!("Service Fee: {:?}", service_fee);
 		}
 
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)

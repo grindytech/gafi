@@ -55,6 +55,8 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use aurora_primitives::{currency::NativeToken::AUX, unit, centi, microcent, milli};
+
 // import local pallets
 pub use pallet_player;
 pub use pallet_pool;
@@ -256,7 +258,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub  NativeTokenExistentialDeposit: Balance = 1 * unit(AUX); // 1 AUX
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
@@ -271,13 +273,13 @@ impl pallet_balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = NativeTokenExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
+	pub TransactionByteFee: Balance = 2 * milli(AUX); // 0.002 AUX
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -346,7 +348,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = U256::from(10_000_000_000u128);
+	pub DefaultBaseFeePerGas: U256 = centi(AUX).into(); //0.01 AUX
 }
 
 pub struct BaseFeeThreshold;
@@ -355,7 +357,7 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 		Permill::zero()
 	}
 	fn ideal() -> Permill {
-		Permill::from_parts(5000_000)
+		Permill::from_parts(5_000_000)
 	}
 	fn upper() -> Permill {
 		Permill::from_parts(10_000_000)

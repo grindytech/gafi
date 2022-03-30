@@ -23,6 +23,7 @@ hex-literal = '0.3'
 jsonrpc-pubsub = "18.0.0"
 jsonrpc-core = "18.0.0"
 async-trait = "0.1"
+serde_json = "1.0.59"
 
 # Frontier
 fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
@@ -59,6 +60,7 @@ sp-finality-grandpa = {version = "4.0.0-dev", git = "https://github.com/cryptovi
 sp-runtime = {version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-timestamp = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-inherents = { version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # These dependencies are used for the node template's RPCs
 pallet-transaction-payment-rpc = {version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -76,6 +78,7 @@ frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/crypt
 
 # Local Dependencies
 aurora-testnet-runtime = {version = "4.0.0-dev", path = "../runtime"}
+aurora-primitives = { version = "4.0.0-dev", path = "../primitives" }
 
 [build-dependencies]
 substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
