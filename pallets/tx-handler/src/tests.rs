@@ -1,10 +1,19 @@
-use crate::{mock::*, Error, H160Mapping, Config, AddressMapping, pallet};
+use crate::{mock::*, Error, H160Mapping, Config, AddressMapping, pallet, ProofAddressMapping};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
-use parity_scale_codec::{Decode, Encode};
-use sp_core::H160;
-use sp_runtime::{AccountId32, traits::BlakeTwo256};
-use std::str::FromStr;
+use sp_core::{H160};
+use sp_runtime::{AccountId32};
+use std::{str::FromStr};
+
+#[test]
+fn default_into_account_id_works() {
+	ExtBuilder::default().build_and_execute(|| {
+	let address: H160 = H160::from_str("b28049c6ee4f90ae804c70f860e55459e837e84b").unwrap();
+	let account_id: AccountId32 = ProofAddressMapping::<Test>::into_account_id(address);
+	let origin_address: H160 = PalletTxHandler::into_h160(account_id);
+	assert_eq!(origin_address, address);
+	});
+}
 
 #[test]
 fn verify_owner_should_works() {

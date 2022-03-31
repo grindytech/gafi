@@ -1,12 +1,11 @@
 use std::{str::FromStr, collections::BTreeMap};
 
 use crate::{self as pallet_tx_handler, AurCurrencyAdapter, ProofAddressMapping};
-use frame_support::{parameter_types, traits::GenesisBuild};
+use frame_support::{parameter_types};
 use frame_system as system;
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
+use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated };
 use pallet_pool::pool::PackService;
 use pallet_timestamp;
-use hex_literal::hex;
 
 use frame_support::{
 	dispatch::Vec,
@@ -136,7 +135,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 5;
 }
 
 impl system::Config for Test {

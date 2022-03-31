@@ -7,11 +7,9 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use pallet_evm::HashedAddressMapping;
+use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
-use pallet_evm::{AddressMapping};
 use sp_core::{H160, U256};
-use sp_runtime::traits::BlakeTwo256;
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
@@ -110,7 +108,8 @@ pub mod pallet {
 				Self::transfer_all(address, sender.clone(), true)?;
 			}
 
-			Self::insert_pair_bond(address, account_id);
+			Self::insert_pair_bond(address, account_id.clone());
+			Self::insert_origin_pair_bond(address, account_id);
 			Ok(())
 		}
 
@@ -161,6 +160,29 @@ where
 			reducible_balance.try_into().ok().unwrap(),
 			existence,
 		)
+	}
+
+	fn into_h160(account_id: AccountId32) -> H160 {
+		let mut origin_address = H160::default();
+		let data: [u8; 32] = account_id.into();
+		if data.starts_with(b"evm:") {
+			origin_address = H160::from_slice(&data[4..24]);
+		} else {
+			origin_address = H160::from_slice(&data[0..20]);
+		}
+		origin_address
+	}
+
+	fn insert_origin_pair_bond(address: H160, account_id: AccountId32)
+	where
+		sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+	{
+		let origin_account: T::AccountId =
+			<T as pallet::Config>::AddressMapping::into_account_id(address);
+		let origin_account_id: AccountId32 = origin_account.into();
+		let origin_address: H160 = Self::into_h160(account_id);
+		<H160Mapping<T>>::insert(origin_address, origin_account_id.clone());
+		<Id32Mapping<T>>::insert(origin_account_id, origin_address);
 	}
 
 	fn insert_pair_bond(address: H160, account_id: AccountId32) {
@@ -217,17 +239,26 @@ where
 	}
 }
 pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
+pub struct DefaultAddressMapping;
+
+impl pallet_evm::AddressMapping<AccountId32> for DefaultAddressMapping {
+	fn into_account_id(address: H160) -> AccountId32 {
+		let mut data: [u8; 32] = [0u8; 32];
+		data[0..4].copy_from_slice(b"evm:");
+		data[4..24].copy_from_slice(&address[..]);
+		AccountId32::from(data)
+	}
+}
 
 impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T>
 where
 	T: Config,
-	AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn into_account_id(address: H160) -> AccountId32 {
 		if let Some(account_id) = H160Mapping::<T>::get(address) {
 			account_id
 		} else {
-			HashedAddressMapping::<BlakeTwo256>::into_account_id(address).into()
+			DefaultAddressMapping::into_account_id(address)
 		}
 	}
 }

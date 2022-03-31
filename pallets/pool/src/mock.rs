@@ -100,7 +100,7 @@ impl pallet_timestamp::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 5;
 }
 
 impl system::Config for Test {
