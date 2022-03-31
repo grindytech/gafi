@@ -14,6 +14,7 @@ use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 use sp_core::crypto::AccountId32;
+use sp_std::{if_std};
 
 #[cfg(test)]
 mod mock;
@@ -108,8 +109,8 @@ pub mod pallet {
 				Self::transfer_all(address, sender.clone(), true)?;
 			}
 
-			Self::insert_pair_bond(address, account_id.clone());
-			Self::insert_origin_pair_bond(address, account_id);
+			Self::insert_origin_pair_bond(address, account_id.clone());
+			Self::insert_pair_bond(address, account_id);
 			Ok(())
 		}
 
@@ -181,6 +182,7 @@ where
 			<T as pallet::Config>::AddressMapping::into_account_id(address);
 		let origin_account_id: AccountId32 = origin_account.into();
 		let origin_address: H160 = Self::into_h160(account_id);
+
 		<H160Mapping<T>>::insert(origin_address, origin_account_id.clone());
 		<Id32Mapping<T>>::insert(origin_account_id, origin_address);
 	}
@@ -229,6 +231,10 @@ where
 			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
 				service_fee = corrected_fee - (corrected_fee * service.discount / 100);
 			}
+		}
+
+		if_std! {
+			println!("service_fee: {:?}", service_fee);
 		}
 
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)

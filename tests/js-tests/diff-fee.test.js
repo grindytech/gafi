@@ -53,7 +53,7 @@ describe('Contract', () => {
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
 
-        console.log("total_cost: ", before_balance - after_balance);
+        console.log("total_cost: ", BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString());
     }).timeout(3600000);
 
     it('show total fee spent when inside the pool', async () => {
@@ -83,7 +83,7 @@ describe('Contract', () => {
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
 
-        console.log("total_cost: ", before_balance - after_balance);
+        console.log("total_cost: ", BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString());
     }).timeout(3600000);
 })
 

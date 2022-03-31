@@ -1,18 +1,20 @@
-use std::{str::FromStr, collections::BTreeMap};
+use std::{collections::BTreeMap, str::FromStr};
 
-use pallet_tx_handler::{ProofAddressMapping, AurCurrencyAdapter};
-use frame_support::{parameter_types, traits::GenesisBuild};
+use aurora_primitives::{centi, currency::NativeToken::AUX, milli};
+use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
+use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
 use pallet_pool::pool::PackService;
 use pallet_timestamp;
-use hex_literal::hex;
+use pallet_transaction_payment::CurrencyAdapter;
+use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping};
 
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
-use sp_core::{H256, U256, H160};
+use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -27,12 +29,6 @@ type Block = frame_system::mocking::MockBlock<Test>;
 fn get_accountid32(addr: &str) -> AccountId32 {
 	AccountId32::from_str(addr).unwrap()
 }
-
-pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
-	(PackService::Basic, 4, 60, POOL_FEE),
-	(PackService::Medium, 8, 70, POOL_FEE * 2),
-	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
-];
 
 pub const PREFIX: &[u8] = b"Bond Aurora Network account:";
 
@@ -50,8 +46,21 @@ frame_support::construct_runtime!(
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 	}
 );
+
+parameter_types! {
+	pub TransactionByteFee: u128 = 2 * milli(AUX); // 0.002 AUX
+}
+
+impl pallet_transaction_payment::Config for Test {
+	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	type TransactionByteFee = TransactionByteFee;
+	type OperationalFeeMultiplier = ConstU8<5>;
+	type WeightToFee = IdentityFee<u128>;
+	type FeeMultiplierUpdate = ();
+}
 
 parameter_types! {
 	pub const ChainId: u64 = 1337;
@@ -82,11 +91,9 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
-const POOL_FEE: u64 = 10000000000000000;
 pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
-pub const TIME_SERVICE: u128 = 60_000u128; // 10 second
 
 parameter_types! {
 	pub const MaxNewPlayer: u32 = MAX_NEW_PLAYER;
@@ -102,8 +109,10 @@ impl pallet_pool::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
+
+pub const INIT_TIMESTAMP: u64 = 30_000;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -126,7 +135,7 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type Balance = u64;
+	type Balance = u128;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -151,7 +160,7 @@ impl system::Config for Test {
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -200,17 +209,20 @@ pub fn run_to_block(n: u64) {
 
 pub struct ExtBuilder {
 	max_player: u32,
-	services: [(PackService, u8, u8, u64); 3],
+	services: [(PackService, u8, u8, u128); 3],
 	time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			max_player: MAX_PLAYER,
-			services: SERVICES,
-			time_service: TIME_SERVICE,
-		}
+		let pool_fee: u128 = 75 * centi(AUX); // 0.75 AUX
+		let services: [(PackService, u8, u8, u128); 3] = [
+			(PackService::Basic, 4, 40, pool_fee),
+			(PackService::Medium, 8, 70, pool_fee * 2),
+			(PackService::Max, u8::MAX, 90, pool_fee * 3),
+		];
+
+		Self { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE }
 	}
 }
 

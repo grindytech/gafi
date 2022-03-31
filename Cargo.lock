@@ -7782,6 +7782,7 @@ dependencies = [
 name = "test"
 version = "4.0.0-dev"
 dependencies = [
+ "aurora-primitives",
  "fp-self-contained",
  "frame-support",
  "frame-system",

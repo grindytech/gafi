@@ -11,13 +11,13 @@ impl TokenInfo for AuroraNetworkCurrency {
 			id: 1,
 			name: b"Aurora".to_vec(),
 			symbol: "AUR".as_bytes().to_vec(),
-			decimals: 12,
+			decimals: 18,
 		};
 		let aux: Token = Token {
 			id: 2,
 			name: b"Aurora X".to_vec(),
 			symbol: "AUX".as_bytes().to_vec(),
-			decimals: 12,
+			decimals: 18,
 		};
 
 		match token {

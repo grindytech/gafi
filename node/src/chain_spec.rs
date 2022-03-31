@@ -154,6 +154,7 @@ fn testnet_genesis(
 		(PackService::Medium, 8, 70, pool_fee * 2),
 		(PackService::Max, u8::MAX, 90, pool_fee * 3),
 	];
+	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -232,6 +233,6 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		pool: PoolConfig { max_player: MAX_PLAYER, services, time_service: 60_000u128 },
+		pool: PoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
 	}
 }

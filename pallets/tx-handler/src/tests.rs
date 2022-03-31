@@ -30,14 +30,18 @@ fn verify_owner_should_works() {
 fn bind_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-
+		let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		let origin_sender: H160 = PalletTxHandler::into_h160(sender.clone());
 		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
+		
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, address, false));
+		let origin_address: AccountId32 = ProofAddressMapping::<Test>::into_account_id(address);
+		assert_ok!(PalletTxHandler::bond(Origin::signed(sender.clone()), signature, address, false));
 
-		let account_id = H160Mapping::<Test>::get(address).unwrap();
-		assert_eq!(account_id, ALICE, "AccountId not correct");
+		let new_sender = ProofAddressMapping::<Test>::into_account_id(address);
+		assert_eq!(new_sender, sender);
+		let new_origin_sender = ProofAddressMapping::<Test>::into_account_id(origin_sender);
+		assert_eq!(new_origin_sender, origin_address);
 	});
 }
 
