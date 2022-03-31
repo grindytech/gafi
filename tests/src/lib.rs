@@ -6,7 +6,7 @@ use sp_std::str::{FromStr, Utf8Error};
 mod mock;
 
 #[cfg(test)]
-mod determine;
+mod services;
 
 pub fn get_account_encoded(sub_address: &str) -> Option<String> {
     let account_id = AccountId32::from_str(sub_address);

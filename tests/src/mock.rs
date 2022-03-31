@@ -109,7 +109,7 @@ impl pallet_pool::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
@@ -204,6 +204,7 @@ pub fn run_to_block(n: u64) {
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		PalletPool::on_initialize(System::block_number());
+		Timestamp::set_timestamp((System::block_number() as u64 * SLOT_DURATION) + INIT_TIMESTAMP);
 	}
 }
 
