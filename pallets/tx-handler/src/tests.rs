@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, H160Mapping, Config, AddressMapping, pallet, ProofAddressMapping};
+use crate::{mock::*, Error, H160Mapping, Config, AddressMapping, pallet, ProofAddressMapping, OriginAddressMapping, Id32Mapping};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{H160};
@@ -10,8 +10,13 @@ fn default_into_account_id_works() {
 	ExtBuilder::default().build_and_execute(|| {
 	let address: H160 = H160::from_str("b28049c6ee4f90ae804c70f860e55459e837e84b").unwrap();
 	let account_id: AccountId32 = ProofAddressMapping::<Test>::into_account_id(address);
-	let origin_address: H160 = PalletTxHandler::into_h160(account_id);
+	let origin_address: H160 = PalletTxHandler::get_or_create_evm_address(account_id);
 	assert_eq!(origin_address, address);
+
+	let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+	let origin_address = PalletTxHandler::get_evm_address(ALICE.clone());
+	assert_eq!(origin_address, None);
+
 	});
 }
 
@@ -27,26 +32,28 @@ fn verify_owner_should_works() {
 }
 
 #[test]
-fn bind_should_works() {
+fn bond_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-		let origin_sender: H160 = PalletTxHandler::into_h160(sender.clone());
+		let origin_sender: H160 = PalletTxHandler::get_or_create_evm_address(sender.clone());
 		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 		let origin_address: AccountId32 = ProofAddressMapping::<Test>::into_account_id(address);
 		assert_ok!(PalletTxHandler::bond(Origin::signed(sender.clone()), signature, address, false));
 
-		let new_sender = ProofAddressMapping::<Test>::into_account_id(address);
-		assert_eq!(new_sender, sender);
-		let new_origin_sender = ProofAddressMapping::<Test>::into_account_id(origin_sender);
-		assert_eq!(new_origin_sender, origin_address);
+		assert_eq!(H160Mapping::<Test>::get(address), Some(sender.clone()));
+		assert_eq!(Id32Mapping::<Test>::get(sender), Some(address));
+
+		assert_eq!(H160Mapping::<Test>::get(origin_sender), Some(origin_address.clone()));
+		assert_eq!(Id32Mapping::<Test>::get(origin_address), Some(origin_sender));
+
 	});
 }
 
 #[test]
-fn bind_should_fail() {
+fn bond_should_fail() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		// incorrect address
@@ -88,7 +95,7 @@ fn bind_should_fail() {
 		);
 		}
 
-		// account already bind
+		// account already bond
 		{
 			run_to_block(10);
 			let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
@@ -181,7 +188,7 @@ fn transfer_all_allow_death_works() {
 
 
 #[test]
-fn bind_account_balances() {
+fn bond_account_balances() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		const EVM_BALANCE: u64 = 1_000_000_000;
@@ -219,27 +226,130 @@ fn bind_account_balances() {
 fn unbond_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		const EVM_BALANCE: u64 = 1_000_000_000;
-		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-			assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
-		}
-		
 		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		let mapping_address = <Test as Config>::AddressMapping::into_account_id(evm_address);
+	
 		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
-			assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
-
-			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
-			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
+			const EVM_BALANCE: u64 = 1_000_000_000;
+			const ALICE_BALANCE: u64 = 1_000_000_000;
+			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+				assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
+			}
+			
+			let mapping_address = <Test as Config>::AddressMapping::into_account_id(evm_address);
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
+				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
+	
+				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
+			}
+	
+			assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
+			assert_ok!(PalletTxHandler::unbond(Origin::signed(ALICE.clone())));
 		}
 
-		assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
-		assert_ok!(PalletTxHandler::unbond(Origin::signed(ALICE.clone())));
+		run_to_block(100);
+		// address mapping should mapping back to original addresses
+		let origin_id: AccountId32 = OriginAddressMapping::into_account_id(evm_address);
+		let origin_address: H160 = PalletTxHandler::get_or_create_evm_address(ALICE.clone());
+
+		assert_eq!(H160Mapping::<Test>::get(evm_address), None);
+		assert_eq!(Id32Mapping::<Test>::get(ALICE.clone()), None);
+		
+		assert_eq!(H160Mapping::<Test>::get(origin_address), None);
+		assert_eq!(Id32Mapping::<Test>::get(origin_id.clone()), None);
+		
+	
+		// let mapping_address: AccountId32 = ProofAddressMapping::<Test>::into_account_id(evm_address);
+		// assert_eq!(mapping_address, origin_id);
+		
+		// let mapping_account: AccountId32 = ProofAddressMapping::<Test>::into_account_id(origin_address);
+		// assert_eq!(mapping_account, ALICE.clone());
+
+	});
+}
+
+#[test]
+fn proof_address_mapping_when_bond_works() {
+	ExtBuilder::default().build_and_execute(|| {
+	run_to_block(10);
+		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
+	
+		{
+			const EVM_BALANCE: u64 = 1_000_000_000;
+			const ALICE_BALANCE: u64 = 1_000_000_000;
+			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+				assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
+			}
+			
+			let mapping_address = <Test as Config>::AddressMapping::into_account_id(evm_address);
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
+				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
+	
+				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
+			}
+	
+			assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
+		}
+
+		let origin_id: AccountId32 = OriginAddressMapping::into_account_id(evm_address);
+		let origin_address: H160 = PalletTxHandler::get_or_create_evm_address(ALICE.clone());
+
+		let mapping_account = ProofAddressMapping::<Test>::into_account_id(evm_address);
+		assert_eq!(mapping_account, ALICE);
+
+		let mapping_sender = ProofAddressMapping::<Test>::into_account_id(origin_address);
+		assert_eq!(mapping_sender, origin_id);
+	});
+}
+
+#[test]
+fn proof_address_mapping_when_unbond_works() {
+	ExtBuilder::default().build_and_execute(|| {
+	run_to_block(10);
+		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
+	
+		{
+			const EVM_BALANCE: u64 = 1_000_000_000;
+			const ALICE_BALANCE: u64 = 1_000_000_000;
+			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+				assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
+			}
+			
+			let mapping_address = <Test as Config>::AddressMapping::into_account_id(evm_address);
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
+				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
+	
+				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
+			}
+	
+			assert_ok!(PalletTxHandler::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
+			assert_ok!(PalletTxHandler::unbond(Origin::signed(ALICE.clone())));
+		}
+
+		let origin_id: AccountId32 = OriginAddressMapping::into_account_id(evm_address);
+		let origin_address: H160 = PalletTxHandler::get_or_create_evm_address(ALICE.clone());
+
+		// let mapping_sender = ProofAddressMapping::<Test>::into_account_id(origin_address);
+		// assert_eq!(mapping_sender, ALICE);
+
+
+		let mapping_account = ProofAddressMapping::<Test>::into_account_id(evm_address);
+		assert_eq!(mapping_account, origin_id);
+
 	});
 }
 

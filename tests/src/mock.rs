@@ -145,7 +145,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 5;
+	pub const SS58Prefix: u8 = 24;
 }
 
 impl system::Config for Test {

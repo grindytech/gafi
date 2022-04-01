@@ -10,11 +10,11 @@ pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
+use sp_io::{hashing::blake2_256};
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 use pallet_pool::pool::{AuroraZone, PackServiceProvider};
 use sp_core::crypto::AccountId32;
-use sp_std::{if_std};
 
 #[cfg(test)]
 mod mock;
@@ -109,7 +109,6 @@ pub mod pallet {
 				Self::transfer_all(address, sender.clone(), true)?;
 			}
 
-			Self::insert_origin_pair_bond(address, account_id.clone());
 			Self::insert_pair_bond(address, account_id);
 			Ok(())
 		}
@@ -163,38 +162,55 @@ where
 		)
 	}
 
-	fn into_h160(account_id: AccountId32) -> H160 {
-		let mut origin_address = H160::default();
+	fn get_evm_address(account_id: AccountId32) -> Option<H160> {
 		let data: [u8; 32] = account_id.into();
 		if data.starts_with(b"evm:") {
-			origin_address = H160::from_slice(&data[4..24]);
+			return Some(H160::from_slice(&data[4..24]));
 		} else {
-			origin_address = H160::from_slice(&data[0..20]);
+			return None
 		}
-		origin_address
 	}
 
-	fn insert_origin_pair_bond(address: H160, account_id: AccountId32)
+	pub fn get_default_evm_address(account_id: AccountId32) -> H160{
+		let payload = (b"evm:", account_id);
+		H160::from_slice(&payload.using_encoded(blake2_256)[0..20])
+	}
+
+	fn get_or_create_evm_address(account_id: AccountId32) -> H160 {
+		Self::get_evm_address(account_id.clone()).unwrap_or(
+			Self::get_default_evm_address(account_id)
+		)
+	}
+
+
+	fn insert_pair_bond(address: H160, account_id: AccountId32)
 	where
 		sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
-		let origin_account: T::AccountId =
-			<T as pallet::Config>::AddressMapping::into_account_id(address);
-		let origin_account_id: AccountId32 = origin_account.into();
-		let origin_address: H160 = Self::into_h160(account_id);
+		let origin_account_id: AccountId32 = OriginAddressMapping::into_account_id(address);
+		let origin_address: H160 = Self::get_or_create_evm_address(account_id.clone());
+
+		<H160Mapping<T>>::insert(address, account_id.clone());
+		<Id32Mapping<T>>::insert(account_id, address);
 
 		<H160Mapping<T>>::insert(origin_address, origin_account_id.clone());
 		<Id32Mapping<T>>::insert(origin_account_id, origin_address);
 	}
 
-	fn insert_pair_bond(address: H160, account_id: AccountId32) {
-		<H160Mapping<T>>::insert(address, account_id.clone());
-		<Id32Mapping<T>>::insert(account_id, address);
-	}
-
-	fn remove_pair_bond(address: H160, account_id: AccountId32) {
+	fn remove_pair_bond(address: H160, account_id: AccountId32)
+	where
+		sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+	{
 		<H160Mapping<T>>::remove(address);
-		<Id32Mapping<T>>::remove(account_id);
+		<Id32Mapping<T>>::remove(account_id.clone());
+
+		let origin_address: H160 = Self::get_or_create_evm_address(account_id.clone());
+		let origin_account_id = H160Mapping::<T>::get(origin_address).unwrap_or(
+			OriginAddressMapping::into_account_id(address)
+		);
+
+		<H160Mapping<T>>::remove(origin_address);
+		<Id32Mapping<T>>::remove(origin_account_id);
 	}
 }
 
@@ -233,10 +249,6 @@ where
 			}
 		}
 
-		if_std! {
-			println!("service_fee: {:?}", service_fee);
-		}
-
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}
 
@@ -245,9 +257,9 @@ where
 	}
 }
 pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
-pub struct DefaultAddressMapping;
+pub struct OriginAddressMapping;
 
-impl pallet_evm::AddressMapping<AccountId32> for DefaultAddressMapping {
+impl pallet_evm::AddressMapping<AccountId32> for OriginAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data: [u8; 32] = [0u8; 32];
 		data[0..4].copy_from_slice(b"evm:");
@@ -264,7 +276,7 @@ where
 		if let Some(account_id) = H160Mapping::<T>::get(address) {
 			account_id
 		} else {
-			DefaultAddressMapping::into_account_id(address)
+			OriginAddressMapping::into_account_id(address)
 		}
 	}
 }
