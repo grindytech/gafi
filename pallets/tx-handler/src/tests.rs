@@ -346,7 +346,6 @@ fn proof_address_mapping_when_unbond_works() {
 		// let mapping_sender = ProofAddressMapping::<Test>::into_account_id(origin_address);
 		// assert_eq!(mapping_sender, ALICE);
 
-
 		let mapping_account = ProofAddressMapping::<Test>::into_account_id(evm_address);
 		assert_eq!(mapping_account, origin_id);
 

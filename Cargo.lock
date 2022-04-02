@@ -7798,6 +7798,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-scale-codec 3.1.2",
  "parity-secp256k1",
+ "rand 0.8.5",
  "scale-info",
  "sp-core",
  "sp-io",

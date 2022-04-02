@@ -14,6 +14,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use pallet_timestamp::{self as timestamp};
 use aurora_primitives::{centi, currency::NativeToken::AUX};
+use sp_runtime::{Perbill};
 
 #[cfg(test)]
 mod mock;
@@ -240,6 +241,8 @@ pub mod pallet {
 				let refund_fee =
 					Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
 
+				println!("refund_fee: {:?}", refund_fee);
+
 				<NewPlayers<T>>::try_mutate(|players| {
 					if let Some(ind) = players.iter().position(|id| id == &sender) {
 						players.swap_remove(ind);
@@ -346,15 +349,27 @@ impl<T: Config> Pallet<T> {
 		join_time: u128,
 		service: PackService,
 	) -> Result<BalanceOf<T>, Error<T>> {
-		let range_block = _now - join_time;
-		if range_block < Self::time_service() {
+		let period_time = _now.saturating_sub(join_time);
+		if period_time < Self::time_service() {
 			let pack = Services::<T>::get(service);
 			return Ok(pack.service);
 		}
-		let extra = range_block % Self::time_service();
+		let extra = period_time % Self::time_service();
+
+		println!("extra: {:?}", extra);
+
 		let service = Services::<T>::get(service);
 		if let Some(fee) = Self::balance_to_u64(service.service) {
-			let fee_change = (Self::time_service() - extra) / Self::time_service();
+			println!("time_service: {:?}", Self::time_service());
+
+
+			let fee_change = Self::time_service().saturating_sub(extra);
+			println!("fee_change: {:?}", fee_change);
+
+			let fee_change: f64 = fee_change.saturating_div(Self::time_service()) as f64;
+			println!("fee_change: {:?}", fee_change);
+
+
 			let actual_fee = fee * (fee_change as u64);
 			if let Some(result) = Self::u64_to_balance(actual_fee) {
 				return Ok(result);
