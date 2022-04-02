@@ -73,7 +73,13 @@ fn charge_join_max_pool_work() {
 	})
 }
 
-fn init_leave_pool(pool_fee: u128, pack: PackService, is_bond: bool, leave_block: u64) {
+fn init_leave_pool(
+	pool_fee: u128,
+	pack: PackService,
+	is_bond: bool,
+	start_block: u64,
+	leave_block: u64,
+) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
 	let base_balance = 1_000_000 * unit(AUX);
@@ -92,7 +98,7 @@ fn init_leave_pool(pool_fee: u128, pack: PackService, is_bond: bool, leave_block
 			false
 		));
 	}
-
+	run_to_block(start_block);
 	assert_ok!(PalletPool::join(Origin::signed(sender.clone()), pack));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
@@ -108,32 +114,39 @@ fn init_leave_pool(pool_fee: u128, pack: PackService, is_bond: bool, leave_block
 
 		let refund_balance = after_balance - before_balance;
 
-		println!("refund_balance: {:?}", refund_balance);
-		println!("block: {:?}", leave_block);
-		if leave_block < CIRCLE_BLOCK {
+		let block_range = leave_block - start_block;
+
+		if block_range < CIRCLE_BLOCK {
 			assert_eq!(refund_balance, pool_fee);
 		} else {
+			let block_remain = CIRCLE_BLOCK - block_range % CIRCLE_BLOCK;
+			let block_rate = (block_remain as u128).saturating_mul(pool_fee);
+			let fee_rate = (CIRCLE_BLOCK as u128).saturating_mul(refund_balance);
+			assert_eq!(block_rate, fee_rate);
 		}
 	}
 }
 
-// #[test]
-// fn leave_basic_pool_early_works() {
-// 	ExtBuilder::default().build_and_execute(|| {
-// 		let mut rng = thread_rng();
-// 		let block = rng.gen_range(1..CIRCLE_BLOCK);
-
-// 		init_leave_pool(BASIC, PackService::Basic, true, block);
-// 	});
-// }
+#[test]
+fn leave_basic_pool_early_works() {
+	for _ in 0..50 {
+		ExtBuilder::default().build_and_execute(|| {
+			let mut rng = thread_rng();
+			let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
+			init_leave_pool(BASIC, PackService::Basic, true, 1, leave_block);
+		});
+	}
+}
 
 #[test]
 fn leave_basic_pool_over_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		let mut rng = thread_rng();
-		let block = rng.gen_range(CIRCLE_BLOCK..CIRCLE_BLOCK * 3);
+	for _ in 0..50 {
+		ExtBuilder::default().build_and_execute(|| {
+			let mut rng = thread_rng();
+			let start_block = rng.gen_range(1..CIRCLE_BLOCK);
+			let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));
 
-		println!("CIRCLE_BLOCK: {:?}", CIRCLE_BLOCK) ;
-		init_leave_pool(BASIC, PackService::Basic, true, block);
-	});
+			init_leave_pool(BASIC, PackService::Basic, true, start_block, leave_block);
+		});
+	}
 }

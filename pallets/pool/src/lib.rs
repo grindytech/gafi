@@ -241,8 +241,6 @@ pub mod pallet {
 				let refund_fee =
 					Self::calculate_ingame_refund_amount(_now, join_time, player.service)?;
 
-				println!("refund_fee: {:?}", refund_fee);
-
 				<NewPlayers<T>>::try_mutate(|players| {
 					if let Some(ind) = players.iter().position(|id| id == &sender) {
 						players.swap_remove(ind);
@@ -356,22 +354,10 @@ impl<T: Config> Pallet<T> {
 		}
 		let extra = period_time % Self::time_service();
 
-		println!("extra: {:?}", extra);
-
 		let service = Services::<T>::get(service);
-		if let Some(fee) = Self::balance_to_u64(service.service) {
-			println!("time_service: {:?}", Self::time_service());
-
-
-			let fee_change = Self::time_service().saturating_sub(extra);
-			println!("fee_change: {:?}", fee_change);
-
-			let fee_change: f64 = fee_change.saturating_div(Self::time_service()) as f64;
-			println!("fee_change: {:?}", fee_change);
-
-
-			let actual_fee = fee * (fee_change as u64);
-			if let Some(result) = Self::u64_to_balance(actual_fee) {
+		if let Some(fee) = Self::balance_to_u128(service.service) {
+			let actual_fee = fee.saturating_mul(Self::time_service().saturating_sub(extra)).saturating_div(Self::time_service());
+			if let Some(result) = Self::u128_to_balance(actual_fee) {
 				return Ok(result);
 			}
 		}
@@ -426,7 +412,15 @@ impl<T: Config> Pallet<T> {
 		TryInto::<u64>::try_into(input).ok()
 	}
 
+	pub fn balance_to_u128(input: BalanceOf<T>) -> Option<u128> {
+		TryInto::<u128>::try_into(input).ok()
+	}
+
 	pub fn u64_to_balance(input: u64) -> Option<BalanceOf<T>> {
+		input.try_into().ok()
+	}
+
+	pub fn u128_to_balance(input: u128) -> Option<BalanceOf<T>> {
 		input.try_into().ok()
 	}
 
