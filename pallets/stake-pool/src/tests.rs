@@ -1,20 +1,20 @@
 use crate::{mock::*, Error};
-use frame_support::{assert_noop, assert_ok};
+use aurora_primitives::{unit, currency::NativeToken::AUX};
+use frame_support::{assert_noop, assert_ok, traits::Currency};
+use sp_runtime::AccountId32;
+use sp_std::{str::FromStr};
+
+
 
 #[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(TemplateModule::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(TemplateModule::something(), Some(42));
-	});
+fn stake_pool_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE: AccountId32 = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+		assert_ok!(StakePool::stake(Origin::signed(ALICE.clone())));
+		assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE - STAKE_AMOUNT );
+		assert_eq!(Balances::reserved_balance(&ALICE), STAKE_AMOUNT );
+	})
 }
 
-#[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(TemplateModule::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
-	});
-}

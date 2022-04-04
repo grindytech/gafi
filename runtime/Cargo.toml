@@ -64,10 +64,11 @@ aurora-primitives = { version = "4.0.0-dev", default-features = false, path = ".
 
 # Local pallets
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../pallets/player"}
-pallet-option-pool = {version = "4.0.0-dev", default-features = false, path = "../pallets/option-pool"}
+pallet-option-pool =  {version = "4.0.0-dev", default-features = false, path = "../pallets/option-pool"}
 pallet-template = {version = "4.0.0-dev", default-features = false, path = "../pallets/template"}
 pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "../pallets/tx-handler"}
 pallet-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../pallets/address-mapping" }
+pallet-stake-pool = {version = "4.0.0-dev", default-features = false, path = "../pallets/stake-pool"}
 
 # unit test
 [dev.dependencies]
@@ -131,6 +132,7 @@ std = [
   "pallet-evm-precompile-simple/std",
   "pallet-evm-precompile-sha3fips/std",
   "pallet-option-pool/std",
+  "pallet-stake-pool/std",
   "pallet-tx-handler/std",
   "aurora-primitives/std",
   "pallet-address-mapping/std",

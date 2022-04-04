@@ -1,6 +1,6 @@
 use aurora_testnet_runtime::{
 	pallet_option_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, Signature, SudoConfig, SystemConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakePoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
@@ -155,6 +155,7 @@ fn testnet_genesis(
 		(PackService::Max, u8::MAX, 90, pool_fee * 3),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
+	let stake_amount = 1000 * unit(AUX);
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -201,5 +202,6 @@ fn testnet_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
+		stake_pool: StakePoolConfig { stake_amount },
 	}
 }

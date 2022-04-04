@@ -62,6 +62,7 @@ pub use pallet_player;
 pub use pallet_option_pool;
 pub use pallet_template;
 pub use pallet_tx_handler;
+pub use pallet_stake_pool;
 
 // custom traits
 use pallet_tx_handler::{AurCurrencyAdapter };
@@ -393,6 +394,11 @@ impl pallet_option_pool::Config for Runtime {
 	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_stake_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+}
+
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
 }
@@ -439,6 +445,7 @@ construct_runtime!(
 
 		Player: pallet_player,
 		OptionPool: pallet_option_pool,
+		StakePool: pallet_stake_pool,
 		TxHandler: pallet_tx_handler,
 		AddressMapping: pallet_address_mapping,
 		Template: pallet_template,

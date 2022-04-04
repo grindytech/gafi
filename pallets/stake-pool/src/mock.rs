@@ -1,10 +1,10 @@
-use crate as pallet_template;
-use frame_support::traits::{ConstU16, ConstU64};
+use crate as pallet_stake_pool;
+use frame_support::{traits::{ConstU16, ConstU64, Hooks, GenesisBuild}, parameter_types};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup}, AccountId32,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -18,7 +18,9 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		StakePool: pallet_stake_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -33,14 +35,14 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -49,11 +51,94 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_template::Config for Test {
-	type Event = Event;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const INIT_TIMESTAMP: u64 = 30_000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+impl pallet_stake_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+}
+
+pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
+
+parameter_types! {
+	pub const ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
+}
+
+impl pallet_balances::Config for Test {
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type Balance = u128;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+}
+
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
+
+
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		if System::block_number() > 1 {
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		StakePool::on_initialize(System::block_number());
+	}
+}
+
+pub const STAKE_AMOUNT: u128 = 100_000_000_000_000_000_000; // 100 AUX
+
+pub struct ExtBuilder {
+	stake_amount: u128,
+}
+
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			stake_amount: STAKE_AMOUNT,
+		}
+	}
+}
+
+impl ExtBuilder {
+	fn build(self) -> sp_io::TestExternalities {
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+
+		let _ = pallet_balances::GenesisConfig::<Test> { balances: [].to_vec() }
+			.assimilate_storage(&mut storage);
+
+		let _ = pallet_stake_pool::GenesisConfig::<Test> {
+			stake_amount: self.stake_amount,
+		}.assimilate_storage(&mut storage);
+
+		let mut ext = sp_io::TestExternalities::from(storage);
+		ext
+	}
+
+	pub fn build_and_execute(self, test: impl FnOnce() -> ()) {
+		let mut ext = self.build();
+		ext.execute_with(test);
+		ext.execute_with(|| System::set_block_number(1));
+	}
 }
