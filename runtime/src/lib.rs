@@ -414,6 +414,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type AuroraZone = OptionPool;
+	type IsStakingPool = StakePool;
 	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;

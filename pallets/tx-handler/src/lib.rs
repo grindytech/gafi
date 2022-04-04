@@ -7,7 +7,7 @@ pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
-
+use pallet_stake_pool::StakingPool;
 use pallet_option_pool::pool::{AuroraZone, PackServiceProvider};
 
 #[cfg(test)]
@@ -43,6 +43,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type AuroraZone: AuroraZone<Self::AccountId>;
+		type IsStakingPool: StakingPool<Self::AccountId>;
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
@@ -97,8 +98,12 @@ where
 		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		if let Some(player) = T::AuroraZone::is_in_aurora_zone(&account_id) {
 			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
-				service_fee = corrected_fee - (corrected_fee * service.discount / 100);
+				service_fee = service_fee - (service_fee * service.discount / 100);
 			}
+		}
+
+		if let Some(player) = T::IsStakingPool::is_staking_pool(&account_id) {
+				service_fee = service_fee - (service_fee * 50 / 100);
 		}
 
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)

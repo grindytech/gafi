@@ -27,6 +27,7 @@ frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "h
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
 aurora-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
@@ -52,6 +53,7 @@ std = [
 	"sp-runtime/std",
 	"aurora-primitives/std",
 	"pallet-balances/std",
+	"sp-std/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

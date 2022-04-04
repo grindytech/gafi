@@ -38,6 +38,7 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 
 # Local
 pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../option-pool" }
+pallet-stake-pool = { default-features = false, version = "4.0.0-dev", path = "../stake-pool" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
 
 [dev-dependencies]

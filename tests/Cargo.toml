@@ -37,6 +37,7 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 
 # Local
 pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/option-pool" }
+pallet-stake-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/stake-pool" }
 pallet-tx-handler = { default-features = false, version = "4.0.0-dev", path = "../pallets/tx-handler" }
 pallet-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
@@ -70,6 +71,7 @@ std = [
   'pallet-transaction-payment/std',
   'pallet-address-mapping/std',
   'pallet-option-pool/std',
+  'pallet-stake-pool/std',
   'pallet-tx-handler/std',
   'utils/std',
   'aurora-primitives/std',

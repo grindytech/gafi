@@ -44,6 +44,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		StakePool: pallet_stake_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
@@ -121,6 +122,11 @@ impl pallet_option_pool::Config for Test {
 	type WeightInfo = ();
 }
 
+impl pallet_stake_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+}
+
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
@@ -192,6 +198,7 @@ impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type AuroraZone = PalletPool;
+	type IsStakingPool = StakePool;
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
