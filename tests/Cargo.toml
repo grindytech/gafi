@@ -6,7 +6,7 @@ homepage = "https://substrate.io/"
 license = "Unlicense"
 name = "test"
 publish = false
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+repository = "https://github.com/cryptoviet/aurora-node"
 version = "4.0.0-dev"
 
 [package.metadata.docs.rs]
