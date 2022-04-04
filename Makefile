@@ -21,7 +21,7 @@ benchmark:
 
 .PHONY: build_benchmark_pool
 build_benchmark_pool:
-	cargo build --release --features runtime-benchmarks -p pallet-pool
+	cargo build --release --features runtime-benchmarks -p pallet-option-pool
 
 .PHONY: build_benchmark_template
 build_benchmark_template:
@@ -33,7 +33,7 @@ benchmark_pool:
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
-    --pallet pallet_pool \
+    --pallet pallet_option_pool \
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \

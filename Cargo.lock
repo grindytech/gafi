@@ -437,6 +437,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal 0.3.4",
+ "pallet-address-mapping",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -447,8 +448,8 @@ dependencies = [
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-grandpa",
+ "pallet-option-pool",
  "pallet-player",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-template",
@@ -4232,6 +4233,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-address-mapping"
+version = "4.0.0-dev"
+dependencies = [
+ "fp-self-contained",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.2.2",
+ "hex-literal 0.3.4",
+ "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-option-pool",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec 2.3.1",
+ "parity-scale-codec 3.1.2",
+ "parity-secp256k1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "utils",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/substrate?branch=aur-dot#4bc2af13cd81007a2a340d0333062179420d5daf"
@@ -4416,24 +4444,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-player"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
-name = "pallet-pool"
+name = "pallet-option-pool"
 version = "4.0.0-dev"
 dependencies = [
  "aurora-primitives",
@@ -4451,6 +4462,23 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-player"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -4589,10 +4617,11 @@ dependencies = [
  "frame-system",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
+ "pallet-address-mapping",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-pool",
+ "pallet-option-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
@@ -7788,10 +7817,11 @@ dependencies = [
  "frame-system",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
+ "pallet-address-mapping",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-pool",
+ "pallet-option-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-tx-handler",

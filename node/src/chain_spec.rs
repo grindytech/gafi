@@ -1,6 +1,6 @@
 use aurora_testnet_runtime::{
-	pallet_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, PoolConfig, Signature, SudoConfig, SystemConfig,
+	pallet_option_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
@@ -200,6 +200,6 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		pool: PoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
+		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
 	}
 }

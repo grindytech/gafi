@@ -59,12 +59,13 @@ pub use aurora_primitives::{currency::NativeToken::AUX, unit, centi, microcent, 
 
 // import local pallets
 pub use pallet_player;
-pub use pallet_pool;
+pub use pallet_option_pool;
 pub use pallet_template;
 pub use pallet_tx_handler;
 
 // custom traits
-use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping };
+use pallet_tx_handler::{AurCurrencyAdapter };
+use pallet_address_mapping::{ProofAddressMapping};
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -384,27 +385,32 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = 10000;
 }
 
-impl pallet_pool::Config for Runtime {
+impl pallet_option_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
-	type WeightInfo = pallet_pool::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
 }
 
+impl pallet_address_mapping::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = pallet_address_mapping::weights::SubstrateWeight<Runtime>;
+	type MessagePrefix = Prefix;
+}
+
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type WeightInfo = pallet_tx_handler::weights::SubstrateWeight<Runtime>;
-	type AuroraZone = Pool;
-	type PackServiceProvider = Pool;
+	type AuroraZone = OptionPool;
+	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
-	type MessagePrefix = Prefix;
 }
 
 impl pallet_template::Config for Runtime {
@@ -432,8 +438,9 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 
 		Player: pallet_player,
-		Pool: pallet_pool,
+		OptionPool: pallet_option_pool,
 		TxHandler: pallet_tx_handler,
+		AddressMapping: pallet_address_mapping,
 		Template: pallet_template,
 	}
 );
@@ -828,13 +835,13 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_pool::Pallet as PoolBench;
+			use pallet_option_pool::Pallet as PoolBench;
 			use pallet_tx_handler::Pallet as TxHandlerBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_option_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_tx_handler, TxHandlerBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -848,7 +855,7 @@ impl_runtime_apis! {
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_pool::Pallet as PoolBench;
+			use pallet_option_pool::Pallet as PoolBench;
 			use pallet_tx_handler::Pallet as TxHandlerBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
@@ -858,7 +865,7 @@ impl_runtime_apis! {
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_option_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_tx_handler, TxHandlerBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

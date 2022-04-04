@@ -5,8 +5,9 @@ members = [
   'utils',
   'pallets/template',
   'pallets/player',
-  'pallets/pool',
+  'pallets/option-pool',
   'pallets/tx-handler',
+  'pallets/address-mapping',
   'tests',
   'primitives',
 ]

@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-pool
+//! Benchmarking setup for pallet-option-pool
 
 use super::*;
 use crate::pool::PackService;

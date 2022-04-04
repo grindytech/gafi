@@ -4,7 +4,7 @@ description = "FRAME pallet template for defining custom runtime logic."
 edition = "2021"
 homepage = "https://substrate.io/"
 license = "Unlicense"
-name = "test"
+name = "pallet-address-mapping"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
 version = "4.0.0-dev"
@@ -24,6 +24,7 @@ pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/fro
 hex-literal = { version = "0.3.4", optional = true }
 
 # Substrate
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
 frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 scale-info = {version = "1.0", default-features = false, features = ["derive"]}
@@ -36,11 +37,8 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/option-pool" }
-pallet-tx-handler = { default-features = false, version = "4.0.0-dev", path = "../pallets/tx-handler" }
-pallet-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
-utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
-aurora-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
+pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../option-pool" }
+utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -50,7 +48,6 @@ pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "http
 hex-literal = "0.2.1"
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
-rand = { version = "0.8.5" }
 
 [features]
 default = ["std"]
@@ -63,14 +60,16 @@ std = [
   'scale-info/std',
   'frame-support/std',
   'frame-system/std',
+  'frame-benchmarking/std',
   'pallet-balances/std',
   'pallet-evm/std',
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'pallet-address-mapping/std',
   'pallet-option-pool/std',
-  'pallet-tx-handler/std',
   'utils/std',
-  'aurora-primitives/std',
 ]
+
+
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "hex-literal"]
+try-runtime = ["frame-support/try-runtime"]

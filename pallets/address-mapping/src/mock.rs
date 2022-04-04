@@ -1,52 +1,20 @@
-/*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
-
-use crate::{self as pallet_pool, pool::PackService};
+use crate as pallet_address_mapping;
+use crate::{ProofAddressMapping};
 use frame_support::parameter_types;
 use frame_system as system;
 
-use frame_support::{
-	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
-};
-use sp_core::H256;
+use frame_support::traits::{Currency, OnFinalize, OnInitialize};
+use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-
+use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, EVMCurrencyAdapter};
 pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
-	(AccountId32::new([0u8; 32]), 1000000000000000000),
-	(AccountId32::new([1u8; 32]), 1000000000000000000),
-	(AccountId32::new([2u8; 32]), 1000000000000000000),
-	(AccountId32::new([3u8; 32]), 1000000000000000000),
-	(AccountId32::new([4u8; 32]), 1000000000000000000),
-	(AccountId32::new([5u8; 32]), 1000000000000000000),
-	(AccountId32::new([6u8; 32]), 1000000000000000000),
-	(AccountId32::new([7u8; 32]), 1000000000000000000),
-	(AccountId32::new([8u8; 32]), 1000000000000000000),
-	(AccountId32::new([9u8; 32]), 1000000000000000000),
-];
-
-const POOL_FEE: u64 = 10000000000000000;
-pub const MAX_PLAYER: u32 = 20;
-pub const MAX_NEW_PLAYER: u32 = 20;
-pub const MAX_INGAME_PLAYER: u32 = 20;
-pub const TIME_SERVICE: u128 =  60_000u128; // 10 second
-
-pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
-	(PackService::Basic, 4, 60, POOL_FEE),
-	(PackService::Medium, 8, 70, POOL_FEE * 2),
-	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
-];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -56,30 +24,36 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		PalletPool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		// Event: Event,
+		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
-impl pallet_randomness_collective_flip::Config for Test {}
-
 parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ChainId: u64 = 1337;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	// pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
-impl pallet_balances::Config for Test {
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = u64;
+impl pallet_evm::Config for Test {
+	type FeeCalculator = ();
+	type GasWeightMapping = ();
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
+	type AddressMapping = ProofAddressMapping<Self>;
+	type Currency = Balances;
 	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
+	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
+	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
+	type FindAuthor = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -97,6 +71,39 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+impl pallet_ethereum::Config for Test {
+	type Event = Event;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+}
+
+parameter_types! {
+	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
+}
+
+impl pallet_address_mapping::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type MessagePrefix = Prefix;
+}
+
+pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
+
+parameter_types! {
+	pub ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
+}
+
+impl pallet_balances::Config for Test {
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type Balance = u64;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -130,18 +137,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const MaxNewPlayer: u32 = MAX_NEW_PLAYER;
-	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
-}
-
-impl pallet_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type MaxNewPlayer = MaxNewPlayer;
-	type MaxIngamePlayer = MaxIngamePlayer;
-	type WeightInfo = ();
-}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -151,30 +146,19 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
-			PalletPool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		PalletPool::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
 	}
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId32, u64)>,
-	max_player: u32,
-	services: [(PackService, u8, u8, u64); 3],
-	time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			balances: TEST_ACCOUNTS.to_vec(),
-			max_player: MAX_PLAYER,
-			services: SERVICES,
-			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -182,16 +166,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
-
-		let _ = pallet_pool::GenesisConfig::<Test> {
-			max_player: self.max_player,
-			services: self.services,
-			time_service: self.time_service,
-		}
-		.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

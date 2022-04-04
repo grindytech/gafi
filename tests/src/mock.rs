@@ -5,10 +5,11 @@ use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::I
 use frame_system as system;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
-use pallet_pool::pool::PackService;
+use pallet_option_pool::pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
-use pallet_tx_handler::{AurCurrencyAdapter, ProofAddressMapping};
+use pallet_tx_handler::{AurCurrencyAdapter};
+use pallet_address_mapping::{ProofAddressMapping};
 
 use frame_support::{
 	dispatch::Vec,
@@ -42,13 +43,25 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletPool: pallet_pool::{Pallet, Call, Storage, Event<T>},
+		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
+		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 	}
 );
+
+parameter_types! {
+	pub Prefix: &'static [u8] =  PREFIX;
+}
+
+impl pallet_address_mapping::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type MessagePrefix = Prefix;
+}
 
 parameter_types! {
 	pub TransactionByteFee: u128 = 2 * milli(AUX); // 0.002 AUX
@@ -100,7 +113,7 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
 }
 
-impl pallet_pool::Config for Test {
+impl pallet_option_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
@@ -175,10 +188,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub Prefix: &'static [u8] = PREFIX;
-}
-
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
@@ -186,8 +195,6 @@ impl pallet_tx_handler::Config for Test {
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
-	type MessagePrefix = Prefix;
-	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
@@ -231,7 +238,7 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_pool::GenesisConfig::<Test> {
+		let _ = pallet_option_pool::GenesisConfig::<Test> {
 			max_player: self.max_player,
 			services: self.services,
 			time_service: self.time_service,

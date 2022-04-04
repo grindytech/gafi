@@ -2,7 +2,7 @@ use crate::mock::*;
 use aurora_primitives::{centi, currency::NativeToken::AUX, unit};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
-use pallet_pool::pool::PackService;
+use pallet_option_pool::pool::PackService;
 use pallet_tx_handler::Config;
 use rand::prelude::*;
 use sp_core::H160;
@@ -29,7 +29,7 @@ fn init_join_pool(pool_fee: u128, pack: PackService, is_bond: bool) {
 	if is_bond {
 		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_ok!(PalletTxHandler::bond(
+		assert_ok!(PalletAddressMapping::bond(
 			Origin::signed(sender.clone()),
 			signature,
 			address,
@@ -91,7 +91,7 @@ fn init_leave_pool(
 	if is_bond {
 		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_ok!(PalletTxHandler::bond(
+		assert_ok!(PalletAddressMapping::bond(
 			Origin::signed(sender.clone()),
 			signature,
 			address,
