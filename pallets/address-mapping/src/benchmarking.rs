@@ -2,8 +2,8 @@
 
 use super::*;
 #[allow(unused)]
-use crate::Pallet as TxHandler;
-use crate::{Call, Config};
+use crate::Pallet as Mapping;
+use crate::{Call, Config, ProofAddressMapping};
 use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::traits::Currency;
@@ -14,6 +14,7 @@ use scale_info::prelude::string::String;
 use sp_core::H160;
 use frame_support::log::info;
 use sp_std::{str::FromStr};
+use pallet_evm::AddressMapping;
 
 fn get_signature(index: u32) -> [u8; 65] {
 	let signatures: [[u8; 65]; 2] = [
@@ -41,6 +42,14 @@ fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
 }
 
+fn into_account<T: Config>(id: AccountId32) -> Option<T::AccountId> {
+	let bytes: [u8; 32] = id.into();
+	match T::AccountId::decode(&mut &bytes[..]) {
+		Ok(acc) => Some(acc),
+		Err(_) =>  None
+	}
+}
+
 fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u64) -> T::AccountId {
 	let balance_amount = amount.try_into().ok().unwrap();
 	let name: String = format!("{}{}", index, seed);
@@ -51,9 +60,10 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u64) -> T::Accou
 }
 
 fn init_funded_h160<T: Config>(address: H160) {
-	let account_id = <T as pallet::Config>::AddressMapping::into_account_id(address);
+	let account_id = ProofAddressMapping::<T>::into_account_id(address);
+	let account = into_account::<T>(account_id).unwrap();
 	let balance_amount = 1000_000_000u64.try_into().ok().unwrap();
-	<T as pallet::Config>::Currency::make_free_balance_be(&account_id, balance_amount);
+	<T as pallet::Config>::Currency::make_free_balance_be(&account, balance_amount);
 	<T as pallet::Config>::Currency::issue(balance_amount);
 }
 

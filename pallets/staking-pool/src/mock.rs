@@ -1,4 +1,4 @@
-use crate as pallet_stake_pool;
+use crate as pallet_staking_pool;
 use frame_support::{traits::{ConstU16, ConstU64, Hooks, GenesisBuild}, parameter_types};
 use frame_system as system;
 use sp_core::H256;
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		StakePool: pallet_stake_pool::{Pallet, Call, Storage, Event<T>},
+		StakePool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -66,9 +66,10 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_stake_pool::Config for Test {
+impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
+	type WeightInfo = ();
 }
 
 pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
@@ -128,7 +129,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: [].to_vec() }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_stake_pool::GenesisConfig::<Test> {
+		let _ = pallet_staking_pool::GenesisConfig::<Test> {
 			staking_amount: self.staking_amount,
 			staking_discount: 50u8,
 		}.assimilate_storage(&mut storage);

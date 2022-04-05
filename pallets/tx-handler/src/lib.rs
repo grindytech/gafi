@@ -7,7 +7,7 @@ pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
-use pallet_stake_pool::StakingPool;
+use pallet_staking_pool::StakingPool;
 use pallet_option_pool::pool::{AuroraZone, PackServiceProvider};
 
 #[cfg(test)]

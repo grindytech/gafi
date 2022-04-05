@@ -45,28 +45,25 @@ pub use frame_support::{
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{
-	Account as EVMAccount, EnsureAddressNever,
-	EnsureAddressTruncated, Runner,
-};
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressTruncated, Runner};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use aurora_primitives::{currency::NativeToken::AUX, unit, centi, microcent, milli};
+pub use aurora_primitives::{centi, currency::NativeToken::AUX, microcent, milli, unit};
 
 // import local pallets
-pub use pallet_player;
 pub use pallet_option_pool;
+pub use pallet_player;
+pub use pallet_staking_pool;
 pub use pallet_template;
 pub use pallet_tx_handler;
-pub use pallet_stake_pool;
 
 // custom traits
-use pallet_tx_handler::{AurCurrencyAdapter };
-use pallet_address_mapping::{ProofAddressMapping};
+use pallet_address_mapping::ProofAddressMapping;
+use pallet_tx_handler::AurCurrencyAdapter;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -394,9 +391,10 @@ impl pallet_option_pool::Config for Runtime {
 	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_stake_pool::Config for Runtime {
+impl pallet_staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+	type WeightInfo = pallet_staking_pool::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -446,7 +444,7 @@ construct_runtime!(
 
 		Player: pallet_player,
 		OptionPool: pallet_option_pool,
-		StakePool: pallet_stake_pool,
+		StakePool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
 		AddressMapping: pallet_address_mapping,
 		Template: pallet_template,
@@ -844,13 +842,15 @@ impl_runtime_apis! {
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
 			use pallet_option_pool::Pallet as PoolBench;
-			use pallet_tx_handler::Pallet as TxHandlerBench;
+			use pallet_address_mapping::Pallet as AddressMappingBench;
+			use pallet_staking_pool::Pallet as StakingPoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_option_pool, PoolBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_tx_handler, TxHandlerBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_tx_handler, AddressMappingBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_staking_pool, StakingPoolBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -864,7 +864,8 @@ impl_runtime_apis! {
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
 			use pallet_option_pool::Pallet as PoolBench;
-			use pallet_tx_handler::Pallet as TxHandlerBench;
+			use pallet_address_mapping::Pallet as AddressMappingBench;
+			use pallet_staking_pool::Pallet as StakingPoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -874,7 +875,8 @@ impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_option_pool, PoolBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_tx_handler, TxHandlerBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_tx_handler, AddressMappingBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_staking_pool, StakingPoolBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

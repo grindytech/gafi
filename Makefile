@@ -27,8 +27,8 @@ build_benchmark_pool:
 build_benchmark_template:
 	cargo build --release --features runtime-benchmarks -p pallet-template
 
-.PHONY: benchmark_pool
-benchmark_pool:
+.PHONY: benchmark_option_pool
+benchmark_option_pool:
 	./target/release/aurora-node benchmark \
     --chain dev \
     --execution wasm \
@@ -38,7 +38,20 @@ benchmark_pool:
      --steps 20 \
     --repeat 10 \
     --json-file=raw.json \
-    --output ./pallets/src/pool/weights.rs
+    --output ./pallets/src/option-pool/weights.rs
+
+.PHONY: benchmark_staking_pool
+benchmark_staking_pool:
+	./target/release/aurora-node benchmark \
+    --chain dev \
+    --execution wasm \
+    --wasm-execution compiled \
+    --pallet pallet_staking_pool \
+    --extrinsic '*' \
+     --steps 20 \
+    --repeat 10 \
+    --json-file=raw.json \
+    --output ./pallets/src/staking-pool/weights.rs
 
     .PHONY: benchmark_tx_handler
 benchmark_tx_handler:

@@ -451,7 +451,7 @@ dependencies = [
  "pallet-option-pool",
  "pallet-player",
  "pallet-randomness-collective-flip",
- "pallet-stake-pool",
+ "pallet-staking-pool",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -4518,7 +4518,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-stake-pool"
+name = "pallet-staking-pool"
 version = "4.0.0-dev"
 dependencies = [
  "aurora-primitives",
@@ -4643,7 +4643,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-option-pool",
- "pallet-stake-pool",
+ "pallet-staking-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
@@ -7844,7 +7844,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-option-pool",
- "pallet-stake-pool",
+ "pallet-staking-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-tx-handler",

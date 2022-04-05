@@ -209,7 +209,7 @@ where
 		<Id32Mapping<T>>::remove(origin_account_id);
 	}
 
-	fn into_account(id: AccountId32) -> Option<T::AccountId> {
+	pub fn into_account(id: AccountId32) -> Option<T::AccountId> {
 		let bytes: [u8; 32] = id.into();
 		match T::AccountId::decode(&mut &bytes[..]) {
 			Ok(acc) => Some(acc),
