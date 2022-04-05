@@ -1,4 +1,4 @@
-use aurora_testnet_runtime::{
+use devnet::{
 	pallet_option_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakePoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,

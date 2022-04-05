@@ -4,9 +4,9 @@
 build:
 	cargo build --release
 
-.PHONY: run
-run:
-	./target/release/aurora-node \
+.PHONY: run-dev
+run-dev:
+	./target/release/gafi-node \
     --tmp \
     --dev \
     --rpc-port 9933
@@ -29,7 +29,7 @@ build_benchmark_template:
 
 .PHONY: benchmark_option_pool
 benchmark_option_pool:
-	./target/release/aurora-node benchmark \
+	./target/release/gafi-node benchmark \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
@@ -42,7 +42,7 @@ benchmark_option_pool:
 
 .PHONY: benchmark_staking_pool
 benchmark_staking_pool:
-	./target/release/aurora-node benchmark \
+	./target/release/gafi-node benchmark \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
@@ -55,7 +55,7 @@ benchmark_staking_pool:
 
     .PHONY: benchmark_tx_handler
 benchmark_tx_handler:
-	./target/release/aurora-node benchmark \
+	./target/release/gafi-node benchmark \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
@@ -69,7 +69,7 @@ benchmark_tx_handler:
 
 .PHONY: benchmark_template
 benchmark_template:
-	./target/release/aurora-node benchmark \
+	./target/release/gafi-node benchmark \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \

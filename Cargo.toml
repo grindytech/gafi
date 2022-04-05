@@ -1,8 +1,8 @@
 [workspace]
 members = [
   'node',
-  'runtime',
   'utils',
+  'runtime/devnet',
   'pallets/template',
   'pallets/player',
   'pallets/option-pool',

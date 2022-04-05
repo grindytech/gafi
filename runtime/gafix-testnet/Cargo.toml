@@ -4,9 +4,9 @@ description = "A fresh FRAME-based Substrate runtime, ready for hacking."
 edition = "2021"
 homepage = "https://substrate.io/"
 license = "Unlicense"
-name = "aurora-testnet-runtime"
+name = "gafix-testnet"
 publish = false
-repository = "https://github.com/cryptoviet/aurora-node"
+repository = "https://github.com/cryptoviet/gafi"
 version = "4.0.0-dev"
 
 [package.metadata.docs.rs]
@@ -60,15 +60,15 @@ frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, gi
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
-aurora-primitives = { version = "4.0.0-dev", default-features = false, path = "../primitives" }
+aurora-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
 
 # Local pallets
-pallet-player = {version = "4.0.0-dev", default-features = false, path = "../pallets/player"}
-pallet-option-pool =  {version = "4.0.0-dev", default-features = false, path = "../pallets/option-pool"}
-pallet-template = {version = "4.0.0-dev", default-features = false, path = "../pallets/template"}
-pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "../pallets/tx-handler"}
-pallet-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../pallets/address-mapping" }
-pallet-staking-pool = {version = "4.0.0-dev", default-features = false, path = "../pallets/staking-pool"}
+pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
+pallet-option-pool =  {version = "4.0.0-dev", default-features = false, path = "../../pallets/option-pool"}
+pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
+pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "../../pallets/tx-handler"}
+pallet-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
+pallet-staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 
 # unit test
 [dev.dependencies]

@@ -8,7 +8,7 @@ use fc_rpc::{
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
-use aurora_testnet_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
+use devnet::{opaque::Block, AccountId, Balance, Hash, Index};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
@@ -159,7 +159,7 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		Some(aurora_testnet_runtime::TransactionConverter),
+		Some(devnet::TransactionConverter),
 		network.clone(),
 		signers,
 		overrides.clone(),

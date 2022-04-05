@@ -16,7 +16,7 @@
 // limitations under the License.
 
 use clap::Parser;
-use aurora_testnet_runtime::Block;
+use devnet::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 
@@ -62,7 +62,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&aurora_testnet_runtime::VERSION
+		&devnet::VERSION
 	}
 }
 
