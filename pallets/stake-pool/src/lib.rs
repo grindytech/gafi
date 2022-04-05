@@ -36,18 +36,19 @@ pub struct Player<AccountId> {
 
 pub trait StakingPool<AccountId> {
 	fn is_staking_pool(player: &AccountId) -> Option<Player<AccountId>>;
-}
 
+	fn staking_pool_discount() -> u8;
+}
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
-	
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-	
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -67,25 +68,30 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type StakeAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	pub type Discount<T: Config> = StorageValue<_, u8, ValueQuery>;
+
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub stake_amount: BalanceOf<T>,
+		pub staking_amount: BalanceOf<T>,
+		pub staking_discount: u8,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let stake_amount: u128 = 1000 * unit(AUX);
+			let staking_amount: u128 = 1000 * unit(AUX);
 			let into_balance = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
-			Self { stake_amount: into_balance(stake_amount) }
+			Self { staking_amount: into_balance(staking_amount), staking_discount: 50 }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			<StakeAmount<T>>::put(self.stake_amount);
+			<StakeAmount<T>>::put(self.staking_amount);
+			<Discount<T>>::put(self.staking_discount);
 		}
 	}
 
@@ -107,8 +113,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(<Players::<T>>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyStake);
 
-			let stake_amount = <StakeAmount<T>>::get();
-			<T as pallet::Config>::Currency::reserve(&sender, stake_amount)?;
+			let staking_amount = <StakeAmount<T>>::get();
+			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::StakeCountOverflow)?;
@@ -121,11 +127,11 @@ pub mod pallet {
 		pub fn unstake(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(<Players::<T>>::get(sender.clone()) != None, <Error<T>>::PlayerNotStake);
-			let stake_amount = <StakeAmount<T>>::get();
+			let staking_amount = <StakeAmount<T>>::get();
 			let new_player_count =
 				Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			<T as pallet::Config>::Currency::unreserve(&sender, stake_amount);
+			<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 			Self::unstake_pool(sender, new_player_count);
 			Ok(())
 		}
@@ -153,6 +159,10 @@ pub mod pallet {
 	impl<T: Config> StakingPool<T::AccountId> for Pallet<T> {
 		fn is_staking_pool(player: &T::AccountId) -> Option<Player<T::AccountId>> {
 			Players::<T>::get(player)
+		}
+
+		fn staking_pool_discount() -> u8 {
+			Discount::<T>::get()
 		}
 	}
 }

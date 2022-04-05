@@ -43,7 +43,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type AuroraZone: AuroraZone<Self::AccountId>;
-		type IsStakingPool: StakingPool<Self::AccountId>;
+		type StakingPool: StakingPool<Self::AccountId>;
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
@@ -102,8 +102,8 @@ where
 			}
 		}
 
-		if let Some(player) = T::IsStakingPool::is_staking_pool(&account_id) {
-				service_fee = service_fee - (service_fee * 50 / 100);
+		if let Some(player) = T::StakingPool::is_staking_pool(&account_id) {
+				service_fee = service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
 		}
 
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)

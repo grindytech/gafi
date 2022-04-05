@@ -191,7 +191,7 @@ impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type AuroraZone = PalletPool;
-	type IsStakingPool = StakePool;
+	type StakingPool = StakePool;
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;

@@ -155,7 +155,8 @@ fn testnet_genesis(
 		(PackService::Max, u8::MAX, 90, pool_fee * 3),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
-	let stake_amount = 1000 * unit(AUX);
+	let staking_amount = 1000 * unit(AUX);
+	const STAKING_DISCOUNT: u8 = 50;
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -202,6 +203,6 @@ fn testnet_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
-		stake_pool: StakePoolConfig { stake_amount },
+		stake_pool: StakePoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
 	}
 }

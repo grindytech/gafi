@@ -26,7 +26,7 @@ async function add_additional_gas(contract, address) {
     return BigNumber.from(gas_limit.toString()).add(additional_gas).toString();
 }
 
-const TX_COUNT = 1;
+const TX_COUNT = 20;
 
 describe('Contract', () => {
     it('show total fee spent when ouside the pool', async () => {

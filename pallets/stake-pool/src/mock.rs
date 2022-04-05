@@ -110,13 +110,13 @@ pub fn run_to_block(n: u64) {
 pub const STAKE_AMOUNT: u128 = 100_000_000_000_000_000_000; // 100 AUX
 
 pub struct ExtBuilder {
-	stake_amount: u128,
+	staking_amount: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			stake_amount: STAKE_AMOUNT,
+			staking_amount: STAKE_AMOUNT,
 		}
 	}
 }
@@ -129,7 +129,8 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 
 		let _ = pallet_stake_pool::GenesisConfig::<Test> {
-			stake_amount: self.stake_amount,
+			staking_amount: self.staking_amount,
+			staking_discount: 50u8,
 		}.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
