@@ -255,7 +255,10 @@ pub mod pallet {
 					Ok(())
 				})
 				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				Self::leave_pool(&sender, refund_fee);
+				
+				let new_player_count =
+				Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+				Self::leave_pool(&sender, refund_fee, new_player_count);
 			}
 
 			Self::deposit_event(Event::PlayerLeavePool(sender));
@@ -323,9 +326,10 @@ impl<T: Config> Pallet<T> {
 		1. Calculate fee to refund
 		2. Remove sender from Players and NewPlayers/IngamePlayers
 	*/
-	fn leave_pool(sender: &T::AccountId, refund_fee: BalanceOf<T>) {
+	fn leave_pool(sender: &T::AccountId, refund_fee: BalanceOf<T>, new_player_count: u32) {
 		<Players<T>>::remove(sender);
 		let _ = T::Currency::deposit_into_existing(sender, refund_fee);
+		<PlayerCount<T>>::put(new_player_count);
 	}
 
 	pub fn change_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
@@ -375,6 +379,10 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})
 		.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+
+		let new_player_count =
+				Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+		<PlayerCount<T>>::put(new_player_count);
 		Ok(())
 	}
 
