@@ -10,31 +10,20 @@ use sp_runtime::RuntimeDebug;
 pub trait PackServiceProvider<Balance> {
 	fn get_service(service: PackService) -> Option<Service<Balance>>;
 }
-pub trait AuroraZone<AccountId> {
-	fn is_in_aurora_zone(player: &AccountId) -> Option<Player<AccountId>>;
+
+pub trait OptionPoolPlayer<AccountId> {
+	fn get_option_pool_player(player: &AccountId) -> Option<OptionPlayer<AccountId>>;
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+    Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
 pub struct Service<Balance> {
     pub tx_limit: u8, // max number of transaction per minute
     pub discount: u8,
     pub service: Balance,
 }
-
-// impl<Balance> Service<Balance>
-// where Balance: std::convert::From<u128>
-// {
-//     pub fn new(tx_limit: u8, discount: u8, service: u128) -> Self{
-//         Service {
-//             tx_limit,
-//             discount,
-//             service: service.try_into().ok().unwrap(),
-//         }
-//     }
-// }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -47,11 +36,10 @@ pub enum PackService {
 // Struct, Enum
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
+    Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct Player<AccountId> {
+pub struct OptionPlayer<AccountId> {
     pub address: AccountId,
     pub join_time: u128,
     pub service: PackService,
 }
-

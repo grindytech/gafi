@@ -1,7 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-pub use pallet::*;
-pub mod pool;
-use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
 use crate::weights::WeightInfo;
 use frame_support::{
 	dispatch::{DispatchResult, Vec},
@@ -12,9 +9,13 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
+use gafi_primitives::currency::{centi, NativeToken::AUX};
+use gafi_primitives::{
+	option_pool::{OptionPlayer, OptionPoolPlayer, PackService, PackServiceProvider, Service},
+	staking_pool::StakingPool,
+};
+pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use aurora_primitives::{centi, currency::NativeToken::AUX};
-use sp_runtime::{Perbill};
 
 #[cfg(test)]
 mod mock;
@@ -44,15 +45,13 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + timestamp::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		type Currency: Currency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
-
 		#[pallet::constant]
 		type MaxNewPlayer: Get<u32>;
-
 		#[pallet::constant]
 		type MaxIngamePlayer: Get<u32>;
+		type StakingPool: StakingPool<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -65,6 +64,7 @@ pub mod pallet {
 		CanNotClearNewPlayers,
 		ExceedMaxIngamePlayer,
 		CanNotCalculateRefundFee,
+		AlreadyOnStakingPool,
 	}
 
 	#[pallet::event]
@@ -119,7 +119,7 @@ pub mod pallet {
 	// Store all players join the pool
 	#[pallet::storage]
 	pub(super) type Players<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, Player<T::AccountId>>;
+		StorageMap<_, Twox64Concat, T::AccountId, OptionPlayer<T::AccountId>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
@@ -153,7 +153,6 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub max_player: u32,
 		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
-
 		pub time_service: u128,
 	}
 
@@ -204,6 +203,8 @@ pub mod pallet {
 
 			// make sure player not re-join
 			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
+			// make sure player not join another pool
+			ensure!(T::StakingPool::is_staking_pool(&sender) == None, <Error<T>>::AlreadyOnStakingPool);
 			// make sure not exceed max players
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
@@ -255,7 +256,10 @@ pub mod pallet {
 					Ok(())
 				})
 				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				Self::leave_pool(&sender, refund_fee);
+
+				let new_player_count =
+					Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+				Self::leave_pool(&sender, refund_fee, new_player_count);
 			}
 
 			Self::deposit_event(Event::PlayerLeavePool(sender));
@@ -294,8 +298,8 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> AuroraZone<T::AccountId> for Pallet<T> {
-		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T::AccountId>> {
+	impl<T: Config> OptionPoolPlayer<T::AccountId> for Pallet<T> {
+		fn get_option_pool_player(player: &T::AccountId) -> Option<OptionPlayer<T::AccountId>> {
 			Players::<T>::get(player)
 		}
 	}
@@ -310,7 +314,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	fn join_pool(sender: T::AccountId, pack: PackService, new_player_count: u32) {
 		let _now = <timestamp::Pallet<T>>::get();
-		let player = Player::<T::AccountId> {
+		let player = OptionPlayer::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
 			service: pack,
@@ -323,9 +327,10 @@ impl<T: Config> Pallet<T> {
 		1. Calculate fee to refund
 		2. Remove sender from Players and NewPlayers/IngamePlayers
 	*/
-	fn leave_pool(sender: &T::AccountId, refund_fee: BalanceOf<T>) {
+	fn leave_pool(sender: &T::AccountId, refund_fee: BalanceOf<T>, new_player_count: u32) {
 		<Players<T>>::remove(sender);
 		let _ = T::Currency::deposit_into_existing(sender, refund_fee);
+		<PlayerCount<T>>::put(new_player_count);
 	}
 
 	pub fn change_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
@@ -356,7 +361,9 @@ impl<T: Config> Pallet<T> {
 
 		let service = Services::<T>::get(service);
 		if let Some(fee) = Self::balance_to_u128(service.service) {
-			let actual_fee = fee.saturating_mul(Self::time_service().saturating_sub(extra)).saturating_div(Self::time_service());
+			let actual_fee = fee
+				.saturating_mul(Self::time_service().saturating_sub(extra))
+				.saturating_div(Self::time_service());
 			if let Some(result) = Self::u128_to_balance(actual_fee) {
 				return Ok(result);
 			}
@@ -375,6 +382,10 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})
 		.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
+
+		let new_player_count =
+			Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+		<PlayerCount<T>>::put(new_player_count);
 		Ok(())
 	}
 

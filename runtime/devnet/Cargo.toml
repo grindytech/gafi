@@ -60,7 +60,7 @@ frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, gi
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
-aurora-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
+gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
 
 # Local pallets
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
@@ -135,6 +135,6 @@ std = [
   "pallet-option-pool/std",
   "pallet-staking-pool/std",
   "pallet-tx-handler/std",
-  "aurora-primitives/std",
+  "gafi-primitives/std",
   "pallet-address-mapping/std",
 ]

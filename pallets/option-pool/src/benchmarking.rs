@@ -1,7 +1,7 @@
 //! Benchmarking setup for pallet-option-pool
 
 use super::*;
-use crate::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 #[allow(unused)]
 use crate::Pallet as Pool;
 use crate::{Call, Config};

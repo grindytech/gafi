@@ -1,6 +1,7 @@
 use crate as pallet_staking_pool;
 use frame_support::{traits::{ConstU16, ConstU64, Hooks, GenesisBuild}, parameter_types};
 use frame_system as system;
+use gafi_primitives::option_pool::PackService;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -20,7 +21,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		StakePool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
+		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -70,6 +72,22 @@ impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type OptionPool = PalletPool;
+}
+
+
+parameter_types! {
+	pub const MaxNewPlayer: u32 = 1000;
+	pub const MaxIngamePlayer: u32 = 1000;
+}
+
+impl pallet_option_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type MaxNewPlayer = MaxNewPlayer;
+	type MaxIngamePlayer = MaxIngamePlayer;
+	type WeightInfo = ();
+	type StakingPool = StakingPool;
 }
 
 pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
@@ -104,7 +122,7 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		StakePool::on_initialize(System::block_number());
+		StakingPool::on_initialize(System::block_number());
 	}
 }
 
@@ -133,6 +151,17 @@ impl ExtBuilder {
 			staking_amount: self.staking_amount,
 			staking_discount: 50u8,
 		}.assimilate_storage(&mut storage);
+
+		// let _ = OtherGenesisConfig::<Test> {
+		// 	max_player: 1000,
+		// 	services: [
+		// 		(PackService::Basic, 4, 60, 1),
+		// 		(PackService::Medium, 8, 70, 1 * 2),
+		// 		(PackService::Max, u8::MAX, 80, 1 * 3),
+		// 	],
+		// 	time_service: 3600,
+		// }
+		// .assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

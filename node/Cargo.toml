@@ -78,7 +78,7 @@ frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/crypt
 
 # Local Dependencies
 devnet = {version = "4.0.0-dev", path = "../runtime/devnet"}
-aurora-primitives = { version = "4.0.0-dev", path = "../primitives" }
+gafi-primitives = { version = "4.0.0-dev", path = "../primitives" }
 
 [build-dependencies]
 substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}

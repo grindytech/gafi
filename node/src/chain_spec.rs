@@ -1,8 +1,9 @@
 use devnet::{
-	pallet_option_pool::pool::PackService, AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakePoolConfig, Signature, SudoConfig, SystemConfig,
+	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
+use gafi_primitives::option_pool::PackService;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
@@ -10,7 +11,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use aurora_primitives::{AuroraNetworkCurrency, unit, currency::{NativeToken::AUX, TokenInfo}, centi};
+use gafi_primitives::{currency::{NativeToken::AUX, unit, centi, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -45,7 +46,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
     
 	let mut props : Properties = Properties::new();
-	let aux = AuroraNetworkCurrency::token_info(AUX);
+	let aux = GafiCurrency::token_info(AUX);
 	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("AUX".to_string()));
 	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
 	let decimals  =json!(aux.decimals);
@@ -203,6 +204,6 @@ fn testnet_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
-		stake_pool: StakePoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
+		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
 	}
 }

@@ -34,31 +34,31 @@ pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-aurora-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
+gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-
+pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 
 [features]
 default = ["std"]
 std = [
-  'log/std',
-  'codec/std',
-  'serde/std',
-  'sp-io/std',
-  'sp-core/std',
-  'sp-std/std',
-  'scale-info/std',
-  'frame-support/std',
-  'frame-system/std',
-  'frame-benchmarking/std',
-  'pallet-balances/std',
-  'pallet-randomness-collective-flip/std',
-  'pallet-timestamp/std',
-  'aurora-primitives/std',
+  "log/std",
+  "codec/std",
+  "serde/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "pallet-balances/std",
+  "pallet-randomness-collective-flip/std",
+  "pallet-timestamp/std",
+  "gafi-primitives/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

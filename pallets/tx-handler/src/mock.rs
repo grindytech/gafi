@@ -1,10 +1,10 @@
 use std::{str::FromStr, collections::BTreeMap};
 
-use crate::{self as pallet_tx_handler, AurCurrencyAdapter};
+use crate::{self as pallet_tx_handler, GafiEVMCurrencyAdapter};
 use frame_support::{parameter_types};
 use frame_system as system;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated };
-use pallet_option_pool::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_address_mapping::{ProofAddressMapping};
 
@@ -46,8 +46,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
-		StakePool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
+		OptionPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
@@ -76,7 +76,7 @@ impl pallet_evm::Config for Test {
 	type PrecompilesValue = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
 }
 
@@ -113,12 +113,14 @@ impl pallet_option_pool::Config for Test {
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = ();
+	type StakingPool = StakingPool;
 }
 
 impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type OptionPool = OptionPool;
 }
 
 
@@ -191,9 +193,9 @@ impl system::Config for Test {
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type AuroraZone = PalletPool;
-	type StakingPool = StakePool;
-	type PackServiceProvider = PalletPool;
+	type OptionPoolPlayer = OptionPool;
+	type StakingPool = StakingPool;
+	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
 }
@@ -206,12 +208,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
-			PalletPool::on_finalize(System::block_number());
+			OptionPool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		PalletPool::on_initialize(System::block_number());
+		OptionPool::on_initialize(System::block_number());
 	}
 }
 

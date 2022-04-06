@@ -1,18 +1,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use aurora_primitives::{currency::NativeToken::AUX, unit};
 use frame_support::{
-	dispatch::{DispatchResult, Vec},
 	pallet_prelude::*,
-	traits::{
-		tokens::{ExistenceRequirement, WithdrawReasons},
-		Currency, ReservableCurrency,
-	},
+	traits::{Currency, ReservableCurrency},
 };
 use frame_system::pallet_prelude::*;
+use gafi_primitives::{
+	currency::{unit, NativeToken::AUX},
+	staking_pool::{Player, StakingPool},
+	option_pool::OptionPoolPlayer,
+};
 pub use pallet::*;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use sp_runtime::Perbill;
 
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
@@ -29,20 +28,6 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
-// Struct, Enum
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct Player<AccountId> {
-	pub address: AccountId,
-	pub join_time: u128,
-}
-
-pub trait StakingPool<AccountId> {
-	fn is_staking_pool(player: &AccountId) -> Option<Player<AccountId>>;
-
-	fn staking_pool_discount() -> u8;
-}
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -57,6 +42,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
+		type OptionPool: OptionPoolPlayer<Self::AccountId>;
 	}
 
 	pub type BalanceOf<T> =
@@ -70,7 +56,7 @@ pub mod pallet {
 	pub type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
-	pub type StakeAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub type StakingAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	pub type Discount<T: Config> = StorageValue<_, u8, ValueQuery>;
@@ -94,7 +80,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			<StakeAmount<T>>::put(self.staking_amount);
+			<StakingAmount<T>>::put(self.staking_amount);
 			<Discount<T>>::put(self.staking_discount);
 		}
 	}
@@ -108,6 +94,8 @@ pub mod pallet {
 		PlayerAlreadyStake,
 		PlayerNotStake,
 		StakeCountOverflow,
+		DiscountNotCorrect,
+		AlreadyOnOptionPool,
 	}
 
 	#[pallet::call]
@@ -115,9 +103,11 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stake(100u32))]
 		pub fn stake(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			// make sure player no re-stake
 			ensure!(<Players::<T>>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyStake);
-
-			let staking_amount = <StakeAmount<T>>::get();
+			// make sure player not join another pool
+			ensure!(T::OptionPool::get_option_pool_player(&sender) == None, <Error<T>>::AlreadyOnOptionPool);
+			let staking_amount = <StakingAmount<T>>::get();
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
@@ -131,12 +121,20 @@ pub mod pallet {
 		pub fn unstake(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(<Players::<T>>::get(sender.clone()) != None, <Error<T>>::PlayerNotStake);
-			let staking_amount = <StakeAmount<T>>::get();
+			let staking_amount = <StakingAmount<T>>::get();
 			let new_player_count =
 				Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
 			<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 			Self::unstake_pool(sender, new_player_count);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_discount(origin: OriginFor<T>, new_discount: u8) -> DispatchResult {
+			ensure_root(origin)?;
+			ensure!(new_discount <= 100, <Error<T>>::DiscountNotCorrect);
+			<Discount<T>>::put(new_discount);
 			Ok(())
 		}
 	}
@@ -168,5 +166,16 @@ pub mod pallet {
 		fn staking_pool_discount() -> u8 {
 			Discount::<T>::get()
 		}
+	}
+}
+
+#[cfg(feature = "std")]
+impl<T: Config> GenesisConfig<T> {
+	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
+		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
+	}
+
+	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
+		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
 	}
 }

@@ -41,14 +41,14 @@ pub trait WeightInfo {
 /// Weight functions for `pallet_staking_pool`.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	// Storage: StakePool Players (r:1 w:1)
-	// Storage: StakePool StakeAmount (r:1 w:0)
+	// Storage: StakingPool Players (r:1 w:1)
+	// Storage: StakingPool StakeAmount (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: System Number (r:1 w:0)
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	// Storage: StakePool PlayerCount (r:1 w:1)
+	// Storage: StakingPool PlayerCount (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn stake(s: u32, ) -> Weight {
 		(26_806_000 as Weight)
@@ -57,9 +57,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
-	// Storage: StakePool Players (r:1 w:1)
-	// Storage: StakePool StakeAmount (r:1 w:0)
-	// Storage: StakePool PlayerCount (r:1 w:1)
+	// Storage: StakingPool Players (r:1 w:1)
+	// Storage: StakingPool StakeAmount (r:1 w:0)
+	// Storage: StakingPool PlayerCount (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: System Number (r:1 w:0)
 	// Storage: System ExecutionPhase (r:1 w:0)

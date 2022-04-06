@@ -1,14 +1,14 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use aurora_primitives::{centi, currency::NativeToken::AUX, milli};
+use gafi_primitives::{currency::{NativeToken::AUX, milli, centi}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
-use pallet_option_pool::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
-use pallet_tx_handler::{AurCurrencyAdapter};
+use pallet_tx_handler::{GafiEVMCurrencyAdapter};
 use pallet_address_mapping::{ProofAddressMapping};
 
 use frame_support::{
@@ -44,7 +44,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
-		StakePool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
@@ -96,7 +96,7 @@ impl pallet_evm::Config for Test {
 	type PrecompilesValue = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
 }
 
@@ -120,12 +120,14 @@ impl pallet_option_pool::Config for Test {
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = ();
+	type StakingPool = StakingPool;
 }
 
 impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type OptionPool = PalletPool;
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -198,8 +200,8 @@ impl system::Config for Test {
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type AuroraZone = PalletPool;
-	type StakingPool = StakePool;
+	type OptionPoolPlayer = PalletPool;
+	type StakingPool = StakingPool;
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
