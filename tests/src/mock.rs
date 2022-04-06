@@ -1,11 +1,11 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use aurora_primitives::{currency::{NativeToken::AUX, milli, centi}};
+use gafi_primitives::{currency::{NativeToken::AUX, milli, centi}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
-use pallet_option_pool::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_tx_handler::{AurCurrencyAdapter};

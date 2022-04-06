@@ -1,9 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-pub use pallet::*;
-pub mod pool;
-use crate::pool::{OptionPoolPlayer, PackService, PackServiceProvider, Player, Service};
 use crate::weights::WeightInfo;
-use aurora_primitives::{currency::{NativeToken::AUX, centi}};
+use gafi_primitives::currency::{centi, NativeToken::AUX};
+use gafi_primitives::option_pool::{
+	OptionPlayer, OptionPoolPlayer, PackService, PackServiceProvider, Service,
+};
 use frame_support::{
 	dispatch::{DispatchResult, Vec},
 	pallet_prelude::*,
@@ -13,6 +13,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
+pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 
 #[cfg(test)]
@@ -115,7 +116,7 @@ pub mod pallet {
 	// Store all players join the pool
 	#[pallet::storage]
 	pub(super) type Players<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, Player<T::AccountId>>;
+		StorageMap<_, Twox64Concat, T::AccountId, OptionPlayer<T::AccountId>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
@@ -293,7 +294,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> OptionPoolPlayer<T::AccountId> for Pallet<T> {
-		fn get_option_pool_player(player: &T::AccountId) -> Option<Player<T::AccountId>> {
+		fn get_option_pool_player(player: &T::AccountId) -> Option<OptionPlayer<T::AccountId>> {
 			Players::<T>::get(player)
 		}
 	}
@@ -308,7 +309,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	fn join_pool(sender: T::AccountId, pack: PackService, new_player_count: u32) {
 		let _now = <timestamp::Pallet<T>>::get();
-		let player = Player::<T::AccountId> {
+		let player = OptionPlayer::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
 			service: pack,

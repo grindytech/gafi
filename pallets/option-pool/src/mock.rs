@@ -3,7 +3,8 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as pallet_option_pool, pool::PackService};
+use crate::{self as pallet_option_pool};
+use gafi_primitives::option_pool::PackService;
 use frame_support::parameter_types;
 use frame_system as system;
 

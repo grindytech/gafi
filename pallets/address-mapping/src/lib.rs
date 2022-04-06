@@ -13,7 +13,7 @@ use sp_core::{H160, U256};
 use sp_io::hashing::blake2_256;
 use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
-use pallet_option_pool::pool::{OptionPoolPlayer, PackServiceProvider};
+use  gafi_primitives::option_pool::{OptionPoolPlayer, PackServiceProvider};
 use sp_core::crypto::AccountId32;
 
 #[cfg(test)]

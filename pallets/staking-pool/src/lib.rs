@@ -1,10 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use aurora_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, ReservableCurrency},
 };
 use frame_system::pallet_prelude::*;
+use gafi_primitives::{
+	currency::{unit, NativeToken::AUX},
+	staking_pool::{Player, StakingPool},
+};
 pub use pallet::*;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -23,20 +26,6 @@ mod benchmarking;
 
 pub mod weights;
 pub use weights::*;
-
-// Struct, Enum
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct Player<AccountId> {
-	pub address: AccountId,
-	pub join_time: u128,
-}
-
-pub trait StakingPool<AccountId> {
-	fn is_staking_pool(player: &AccountId) -> Option<Player<AccountId>>;
-
-	fn staking_pool_discount() -> u8;
-}
 
 #[frame_support::pallet]
 pub mod pallet {

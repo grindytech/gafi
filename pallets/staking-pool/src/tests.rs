@@ -1,5 +1,5 @@
 use crate::{mock::*, Error};
-use aurora_primitives::{currency::{NativeToken::AUX, unit}};
+use gafi_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;

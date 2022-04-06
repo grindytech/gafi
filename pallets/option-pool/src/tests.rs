@@ -2,7 +2,7 @@
 * This unittest should only test logic function e.g. Storage, Computation
 * and not related with Currency e.g. Balances, Transaction Payment
 */
-use crate::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use crate::{mock::*, Error};
 use crate::{IngamePlayers, NewPlayers, PlayerCount, Players};
 use frame_support::{assert_err, assert_ok};

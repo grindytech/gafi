@@ -10,13 +10,14 @@ use sp_runtime::RuntimeDebug;
 pub trait PackServiceProvider<Balance> {
 	fn get_service(service: PackService) -> Option<Service<Balance>>;
 }
+
 pub trait OptionPoolPlayer<AccountId> {
-	fn get_option_pool_player(player: &AccountId) -> Option<Player<AccountId>>;
+	fn get_option_pool_player(player: &AccountId) -> Option<OptionPlayer<AccountId>>;
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+    Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
 pub struct Service<Balance> {
     pub tx_limit: u8, // max number of transaction per minute
@@ -35,11 +36,10 @@ pub enum PackService {
 // Struct, Enum
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
+    Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct Player<AccountId> {
+pub struct OptionPlayer<AccountId> {
     pub address: AccountId,
     pub join_time: u128,
     pub service: PackService,
 }
-

@@ -3,11 +3,13 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
+use gafi_primitives::{
+	option_pool::{OptionPoolPlayer, PackServiceProvider},
+	staking_pool::StakingPool,
+};
 pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
-use pallet_option_pool::pool::{OptionPoolPlayer, PackServiceProvider};
-use pallet_staking_pool::StakingPool;
 use sp_core::{H160, U256};
 
 #[cfg(test)]

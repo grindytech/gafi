@@ -37,8 +37,7 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../option-pool" }
-pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
+gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
 
 [dev-dependencies]
@@ -50,6 +49,8 @@ hex-literal = "0.2.1"
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 pallet-address-mapping = {default-feature = false, version = "4.0.0-dev", path = "../address-mapping"}
+pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../option-pool" }
+pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 
 [features]
 default = ["std"]
@@ -68,7 +69,7 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'pallet-option-pool/std',
+  'gafi-primitives/std',
   'utils/std',
 ]
 

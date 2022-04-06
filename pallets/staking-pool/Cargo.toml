@@ -30,7 +30,7 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-aurora-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
+gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
 
 [dev-dependencies]
 sp-core = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
@@ -51,7 +51,7 @@ std = [
 	"frame-benchmarking/std",
 	"pallet-timestamp/std",
 	"sp-runtime/std",
-	"aurora-primitives/std",
+	"gafi-primitives/std",
 	"pallet-balances/std",
 	"sp-std/std",
 ]

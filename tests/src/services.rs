@@ -1,8 +1,8 @@
 use crate::mock::*;
-use aurora_primitives::{currency::{NativeToken::AUX, unit}};
+use gafi_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
-use pallet_option_pool::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use pallet_tx_handler::Config;
 use rand::prelude::*;
 use sp_core::H160;

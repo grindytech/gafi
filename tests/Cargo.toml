@@ -41,7 +41,7 @@ pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = 
 pallet-tx-handler = { default-features = false, version = "4.0.0-dev", path = "../pallets/tx-handler" }
 pallet-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
-aurora-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
+gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -74,5 +74,5 @@ std = [
   'pallet-staking-pool/std',
   'pallet-tx-handler/std',
   'utils/std',
-  'aurora-primitives/std',
+  'gafi-primitives/std',
 ]

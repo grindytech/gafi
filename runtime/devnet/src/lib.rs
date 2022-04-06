@@ -52,7 +52,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use aurora_primitives::currency::{centi, microcent, milli, unit, NativeToken::AUX};
+pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::AUX};
 
 // import local pallets
 pub use pallet_option_pool;

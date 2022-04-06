@@ -4,7 +4,7 @@ use crate::{self as pallet_tx_handler, AurCurrencyAdapter};
 use frame_support::{parameter_types};
 use frame_system as system;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated };
-use pallet_option_pool::pool::PackService;
+use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_address_mapping::{ProofAddressMapping};
 

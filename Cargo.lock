@@ -352,19 +352,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aurora-primitives"
-version = "4.0.0-dev"
-dependencies = [
- "frame-support",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "auto_impl"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1177,7 +1164,6 @@ dependencies = [
 name = "devnet"
 version = "4.0.0-dev"
 dependencies = [
- "aurora-primitives",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -1186,6 +1172,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "gafi-primitives",
  "hex-literal 0.3.4",
  "pallet-address-mapping",
  "pallet-aura",
@@ -2192,7 +2179,6 @@ name = "gafi-node"
 version = "4.0.0-dev"
 dependencies = [
  "async-trait",
- "aurora-primitives",
  "clap",
  "devnet",
  "fc-consensus",
@@ -2206,6 +2192,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures 0.3.21",
+ "gafi-primitives",
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "jsonrpc-pubsub",
@@ -2244,6 +2231,19 @@ dependencies = [
  "sp-timestamp",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
+]
+
+[[package]]
+name = "gafi-primitives"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4241,12 +4241,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-option-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
@@ -4448,10 +4448,10 @@ dependencies = [
 name = "pallet-option-pool"
 version = "4.0.0-dev"
 dependencies = [
- "aurora-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "log",
  "pallet-balances",
  "pallet-randomness-collective-flip",
@@ -4521,10 +4521,10 @@ dependencies = [
 name = "pallet-staking-pool"
 version = "4.0.0-dev"
 dependencies = [
- "aurora-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "log",
  "pallet-balances",
  "pallet-timestamp",
@@ -4636,6 +4636,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-address-mapping",
@@ -7833,10 +7834,10 @@ dependencies = [
 name = "test"
 version = "4.0.0-dev"
 dependencies = [
- "aurora-primitives",
  "fp-self-contained",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-address-mapping",
