@@ -191,7 +191,7 @@ impl system::Config for Test {
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type AuroraZone = PalletPool;
+	type OptionPoolPlayer = PalletPool;
 	type StakingPool = StakePool;
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();

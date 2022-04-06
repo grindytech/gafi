@@ -6,9 +6,9 @@ use frame_support::{
 pub use pallet::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::OnChargeEVMTransaction;
-use sp_core::{H160, U256};
+use pallet_option_pool::pool::{OptionPoolPlayer, PackServiceProvider};
 use pallet_staking_pool::StakingPool;
-use pallet_option_pool::pool::{AuroraZone, PackServiceProvider};
+use sp_core::{H160, U256};
 
 #[cfg(test)]
 mod mock;
@@ -42,7 +42,7 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
-		type AuroraZone: AuroraZone<Self::AccountId>;
+		type OptionPoolPlayer: OptionPoolPlayer<Self::AccountId>;
 		type StakingPool: StakingPool<Self::AccountId>;
 		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
@@ -52,8 +52,7 @@ pub mod pallet {
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -62,10 +61,8 @@ pub mod pallet {
 	// Storage
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-	}
+	impl<T: Config> Pallet<T> {}
 }
-
 
 pub struct AurCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
 
@@ -96,16 +93,14 @@ where
 	) {
 		let mut service_fee = corrected_fee;
 		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
-		if let Some(player) = T::AuroraZone::is_in_aurora_zone(&account_id) {
+		if let Some(_) = T::StakingPool::is_staking_pool(&account_id) {
+			service_fee =
+				service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
+		} else if let Some(player) = T::OptionPoolPlayer::get_option_pool_player(&account_id) {
 			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
 				service_fee = service_fee - (service_fee * service.discount / 100);
 			}
 		}
-
-		if let Some(player) = T::StakingPool::is_staking_pool(&account_id) {
-				service_fee = service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
-		}
-
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}
 

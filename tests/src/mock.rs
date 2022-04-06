@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use aurora_primitives::{centi, currency::NativeToken::AUX, milli};
+use aurora_primitives::{currency::{NativeToken::AUX, milli, centi}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
@@ -198,7 +198,7 @@ impl system::Config for Test {
 impl pallet_tx_handler::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type AuroraZone = PalletPool;
+	type OptionPoolPlayer = PalletPool;
 	type StakingPool = StakePool;
 	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();

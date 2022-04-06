@@ -1,8 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 pub mod pool;
-use crate::pool::{AuroraZone, PackService, PackServiceProvider, Player, Service};
+use crate::pool::{OptionPoolPlayer, PackService, PackServiceProvider, Player, Service};
 use crate::weights::WeightInfo;
+use aurora_primitives::{currency::{NativeToken::AUX, centi}};
 use frame_support::{
 	dispatch::{DispatchResult, Vec},
 	pallet_prelude::*,
@@ -13,8 +14,6 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use pallet_timestamp::{self as timestamp};
-use aurora_primitives::{centi, currency::NativeToken::AUX};
-use sp_runtime::{Perbill};
 
 #[cfg(test)]
 mod mock;
@@ -44,13 +43,10 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + timestamp::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		type Currency: Currency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
-
 		#[pallet::constant]
 		type MaxNewPlayer: Get<u32>;
-
 		#[pallet::constant]
 		type MaxIngamePlayer: Get<u32>;
 	}
@@ -153,7 +149,6 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub max_player: u32,
 		pub services: [(PackService, u8, u8, BalanceOf<T>); 3],
-
 		pub time_service: u128,
 	}
 
@@ -255,9 +250,9 @@ pub mod pallet {
 					Ok(())
 				})
 				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				
+
 				let new_player_count =
-				Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+					Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 				Self::leave_pool(&sender, refund_fee, new_player_count);
 			}
 
@@ -297,8 +292,8 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> AuroraZone<T::AccountId> for Pallet<T> {
-		fn is_in_aurora_zone(player: &T::AccountId) -> Option<Player<T::AccountId>> {
+	impl<T: Config> OptionPoolPlayer<T::AccountId> for Pallet<T> {
+		fn get_option_pool_player(player: &T::AccountId) -> Option<Player<T::AccountId>> {
 			Players::<T>::get(player)
 		}
 	}
@@ -360,7 +355,9 @@ impl<T: Config> Pallet<T> {
 
 		let service = Services::<T>::get(service);
 		if let Some(fee) = Self::balance_to_u128(service.service) {
-			let actual_fee = fee.saturating_mul(Self::time_service().saturating_sub(extra)).saturating_div(Self::time_service());
+			let actual_fee = fee
+				.saturating_mul(Self::time_service().saturating_sub(extra))
+				.saturating_div(Self::time_service());
 			if let Some(result) = Self::u128_to_balance(actual_fee) {
 				return Ok(result);
 			}
@@ -381,7 +378,7 @@ impl<T: Config> Pallet<T> {
 		.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
 
 		let new_player_count =
-				Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
+			Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 		<PlayerCount<T>>::put(new_player_count);
 		Ok(())
 	}

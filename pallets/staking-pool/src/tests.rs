@@ -1,5 +1,5 @@
 use crate::{mock::*, Error};
-use aurora_primitives::{currency::NativeToken::AUX, unit};
+use aurora_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
@@ -61,5 +61,24 @@ fn unstake_pool_fail() {
 			StakePool::unstake(Origin::signed(ALICE.clone())),
 			<Error<Test>>::PlayerNotStake
 		);
+	})
+}
+
+#[test]
+fn set_discount_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		assert_ok!(StakePool::set_discount(Origin::root(), 2));
+	})
+}
+
+#[test]
+fn set_discount_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		let ALICE: AccountId32 =
+			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		// bad origin
+		assert_err!(StakePool::set_discount(Origin::signed(ALICE), 2), frame_support::error::BadOrigin);
+		// incorrect discount value
+		assert_err!(StakePool::set_discount(Origin::root(), 101), <Error<Test>>::DiscountNotCorrect);
 	})
 }

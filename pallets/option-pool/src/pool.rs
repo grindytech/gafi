@@ -10,8 +10,8 @@ use sp_runtime::RuntimeDebug;
 pub trait PackServiceProvider<Balance> {
 	fn get_service(service: PackService) -> Option<Service<Balance>>;
 }
-pub trait AuroraZone<AccountId> {
-	fn is_in_aurora_zone(player: &AccountId) -> Option<Player<AccountId>>;
+pub trait OptionPoolPlayer<AccountId> {
+	fn get_option_pool_player(player: &AccountId) -> Option<Player<AccountId>>;
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -23,18 +23,6 @@ pub struct Service<Balance> {
     pub discount: u8,
     pub service: Balance,
 }
-
-// impl<Balance> Service<Balance>
-// where Balance: std::convert::From<u128>
-// {
-//     pub fn new(tx_limit: u8, discount: u8, service: u128) -> Self{
-//         Service {
-//             tx_limit,
-//             discount,
-//             service: service.try_into().ok().unwrap(),
-//         }
-//     }
-// }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

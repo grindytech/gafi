@@ -1,5 +1,5 @@
 use crate::mock::*;
-use aurora_primitives::{centi, currency::NativeToken::AUX, unit};
+use aurora_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use pallet_option_pool::pool::PackService;

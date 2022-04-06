@@ -1,18 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use aurora_primitives::{currency::NativeToken::AUX, unit};
+use aurora_primitives::{currency::{NativeToken::AUX, unit}};
 use frame_support::{
-	dispatch::{DispatchResult, Vec},
 	pallet_prelude::*,
-	traits::{
-		tokens::{ExistenceRequirement, WithdrawReasons},
-		Currency, ReservableCurrency,
-	},
+	traits::{Currency, ReservableCurrency},
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use sp_runtime::Perbill;
 
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
@@ -70,7 +65,7 @@ pub mod pallet {
 	pub type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
-	pub type StakeAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub type StakingAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	pub type Discount<T: Config> = StorageValue<_, u8, ValueQuery>;
@@ -94,7 +89,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			<StakeAmount<T>>::put(self.staking_amount);
+			<StakingAmount<T>>::put(self.staking_amount);
 			<Discount<T>>::put(self.staking_discount);
 		}
 	}
@@ -108,6 +103,7 @@ pub mod pallet {
 		PlayerAlreadyStake,
 		PlayerNotStake,
 		StakeCountOverflow,
+		DiscountNotCorrect,
 	}
 
 	#[pallet::call]
@@ -117,7 +113,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(<Players::<T>>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyStake);
 
-			let staking_amount = <StakeAmount<T>>::get();
+			let staking_amount = <StakingAmount<T>>::get();
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
@@ -131,12 +127,20 @@ pub mod pallet {
 		pub fn unstake(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(<Players::<T>>::get(sender.clone()) != None, <Error<T>>::PlayerNotStake);
-			let staking_amount = <StakeAmount<T>>::get();
+			let staking_amount = <StakingAmount<T>>::get();
 			let new_player_count =
 				Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
 			<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 			Self::unstake_pool(sender, new_player_count);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_discount(origin: OriginFor<T>, new_discount: u8) -> DispatchResult {
+			ensure_root(origin)?;
+			ensure!(new_discount <= 100, <Error<T>>::DiscountNotCorrect);
+			<Discount<T>>::put(new_discount);
 			Ok(())
 		}
 	}

@@ -10,7 +10,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use aurora_primitives::{AuroraNetworkCurrency, unit, currency::{NativeToken::AUX, TokenInfo}, centi};
+use aurora_primitives::{currency::{NativeToken::AUX, unit, centi, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -45,7 +45,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
     
 	let mut props : Properties = Properties::new();
-	let aux = AuroraNetworkCurrency::token_info(AUX);
+	let aux = GafiCurrency::token_info(AUX);
 	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("AUX".to_string()));
 	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
 	let decimals  =json!(aux.decimals);

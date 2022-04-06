@@ -52,7 +52,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use aurora_primitives::{centi, currency::NativeToken::AUX, microcent, milli, unit};
+pub use aurora_primitives::currency::{centi, microcent, milli, unit, NativeToken::AUX};
 
 // import local pallets
 pub use pallet_option_pool;
@@ -411,7 +411,7 @@ impl pallet_address_mapping::Config for Runtime {
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type AuroraZone = OptionPool;
+	type OptionPoolPlayer = OptionPool;
 	type StakingPool = StakePool;
 	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();

@@ -45,20 +45,20 @@ sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://gi
 [features]
 default = ["std"]
 std = [
-  'log/std',
-  'codec/std',
-  'serde/std',
-  'sp-io/std',
-  'sp-core/std',
-  'sp-std/std',
-  'scale-info/std',
-  'frame-support/std',
-  'frame-system/std',
-  'frame-benchmarking/std',
-  'pallet-balances/std',
-  'pallet-randomness-collective-flip/std',
-  'pallet-timestamp/std',
-  'aurora-primitives/std',
+  "log/std",
+  "codec/std",
+  "serde/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "pallet-balances/std",
+  "pallet-randomness-collective-flip/std",
+  "pallet-timestamp/std",
+  "aurora-primitives/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
