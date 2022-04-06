@@ -62,7 +62,7 @@ fn player_join_another_pool_should_fail() {
 		// rejoin
 		assert_err!(
 			PalletPool::join(Origin::signed(sender.clone()), PackService::Basic),
-			<Error<Test>>::LeaveStakingPoolBeforeJoining
+			<Error<Test>>::AlreadyOnStakingPool
 		);
 	})
 }

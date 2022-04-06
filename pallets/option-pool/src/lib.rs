@@ -64,7 +64,7 @@ pub mod pallet {
 		CanNotClearNewPlayers,
 		ExceedMaxIngamePlayer,
 		CanNotCalculateRefundFee,
-		LeaveStakingPoolBeforeJoining,
+		AlreadyOnStakingPool,
 	}
 
 	#[pallet::event]
@@ -204,7 +204,7 @@ pub mod pallet {
 			// make sure player not re-join
 			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
 			// make sure player not join another pool
-			ensure!(T::StakingPool::is_staking_pool(&sender) == None, <Error<T>>::LeaveStakingPoolBeforeJoining);
+			ensure!(T::StakingPool::is_staking_pool(&sender) == None, <Error<T>>::AlreadyOnStakingPool);
 			// make sure not exceed max players
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;

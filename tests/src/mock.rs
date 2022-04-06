@@ -127,6 +127,7 @@ impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type OptionPool = PalletPool;
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

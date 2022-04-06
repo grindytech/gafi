@@ -1,5 +1,5 @@
 use crate::{mock::*, Error};
-use gafi_primitives::{currency::{NativeToken::AUX, unit}};
+use gafi_primitives::{currency::{NativeToken::AUX, unit}, option_pool::PackService};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
@@ -33,6 +33,23 @@ fn stake_pool_fail() {
 			StakingPool::stake(Origin::signed(ALICE.clone())),
 			<Error<Test>>::PlayerAlreadyStake
 		);
+	})
+}
+
+#[test]
+fn stake_another_pool_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		let ALICE: AccountId32 =
+			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		assert_err!(
+			StakingPool::stake(Origin::signed(ALICE.clone())),
+			pallet_balances::Error::<Test>::InsufficientBalance
+		);
+		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
+		assert_ok!(PalletPool::set_max_player(Origin::root(), 100));
+		assert_ok!(PalletPool::join(Origin::signed(ALICE.clone()), PackService::Basic));
+		assert_err!(StakingPool::stake(Origin::signed(ALICE.clone())), <Error<Test>>::AlreadyOnOptionPool);
 	})
 }
 

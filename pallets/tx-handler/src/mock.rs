@@ -120,6 +120,7 @@ impl pallet_staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type OptionPool = OptionPool;
 }
 
 

@@ -1,59 +1,60 @@
 [package]
-name = "pallet-staking-pool"
-version = "4.0.0-dev"
-description = "FRAME pallet template for defining custom runtime logic."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-homepage = "https://substrate.io/"
+description = "FRAME pallet template for defining custom runtime logic."
 edition = "2021"
+homepage = "https://substrate.io/"
 license = "Unlicense"
+name = "pallet-staking-pool"
 publish = false
 repository = "https://github.com/cryptoviet/gafi"
+version = "4.0.0-dev"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
-	"derive",
-] }
+codec = {package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+  "derive",
+]}
+log = {version = "0.4.14", default-features = false}
 scale-info = {version = "1.0", default-features = false, features = ["derive"]}
 serde = {version = "1.0.119"}
-log = {version = "0.4.14", default-features = false}
 
 # Substrate
-frame-support = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-frame-system = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true }
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
+gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
 
 [dev-dependencies]
-sp-core = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-io = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
-sp-runtime = { default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot" }
+pallet-option-pool = {default-features = false, version = "4.0.0-dev", path = "../option-pool"}
+sp-core = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-io = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-runtime = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 [features]
 default = ["std"]
 std = [
-	"codec/std",
-	"scale-info/std",
-	"serde/std",
-	"log/std",
-	"scale-info/std",
-	"frame-support/std",
-	"frame-system/std",
-	"frame-benchmarking/std",
-	"pallet-timestamp/std",
-	"sp-runtime/std",
-	"gafi-primitives/std",
-	"pallet-balances/std",
-	"sp-std/std",
+  "codec/std",
+  "scale-info/std",
+  "serde/std",
+  "log/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "pallet-timestamp/std",
+  "sp-runtime/std",
+  "gafi-primitives/std",
+  "pallet-balances/std",
+  "sp-std/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

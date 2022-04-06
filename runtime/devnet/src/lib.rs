@@ -396,6 +396,7 @@ impl pallet_staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = pallet_staking_pool::weights::SubstrateWeight<Runtime>;
+	type OptionPool = OptionPool;
 }
 
 parameter_types! {
