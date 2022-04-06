@@ -63,7 +63,7 @@ pub use pallet_tx_handler;
 
 // custom traits
 use pallet_address_mapping::ProofAddressMapping;
-use pallet_tx_handler::AurCurrencyAdapter;
+use pallet_tx_handler::GafiEVMCurrencyAdapter;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -328,7 +328,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = AurCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
@@ -389,6 +389,7 @@ impl pallet_option_pool::Config for Runtime {
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
+	type StakingPool = StakingPool;
 }
 
 impl pallet_staking_pool::Config for Runtime {
@@ -412,7 +413,7 @@ impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OptionPoolPlayer = OptionPool;
-	type StakingPool = StakePool;
+	type StakingPool = StakingPool;
 	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
@@ -444,7 +445,7 @@ construct_runtime!(
 
 		Player: pallet_player,
 		OptionPool: pallet_option_pool,
-		StakePool: pallet_staking_pool,
+		StakingPool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
 		AddressMapping: pallet_address_mapping,
 		Template: pallet_template,

@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		StakePool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -104,7 +104,7 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		StakePool::on_initialize(System::block_number());
+		StakingPool::on_initialize(System::block_number());
 	}
 }
 

@@ -11,7 +11,7 @@ fn stake_pool_works() {
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-		assert_ok!(StakePool::stake(Origin::signed(ALICE.clone())));
+		assert_ok!(StakingPool::stake(Origin::signed(ALICE.clone())));
 		assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE - STAKE_AMOUNT);
 		assert_eq!(Balances::reserved_balance(&ALICE), STAKE_AMOUNT);
 	})
@@ -23,14 +23,14 @@ fn stake_pool_fail() {
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		assert_err!(
-			StakePool::stake(Origin::signed(ALICE.clone())),
+			StakingPool::stake(Origin::signed(ALICE.clone())),
 			pallet_balances::Error::<Test>::InsufficientBalance
 		);
 		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-		assert_ok!(StakePool::stake(Origin::signed(ALICE.clone())));
+		assert_ok!(StakingPool::stake(Origin::signed(ALICE.clone())));
 		assert_err!(
-			StakePool::stake(Origin::signed(ALICE.clone())),
+			StakingPool::stake(Origin::signed(ALICE.clone())),
 			<Error<Test>>::PlayerAlreadyStake
 		);
 	})
@@ -43,8 +43,8 @@ fn unstake_pool_works() {
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-		assert_ok!(StakePool::stake(Origin::signed(ALICE.clone())));
-		assert_ok!(StakePool::unstake(Origin::signed(ALICE.clone())));
+		assert_ok!(StakingPool::stake(Origin::signed(ALICE.clone())));
+		assert_ok!(StakingPool::unstake(Origin::signed(ALICE.clone())));
 		assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
 		assert_eq!(Balances::reserved_balance(&ALICE), 0);
 	})
@@ -58,7 +58,7 @@ fn unstake_pool_fail() {
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
 		assert_err!(
-			StakePool::unstake(Origin::signed(ALICE.clone())),
+			StakingPool::unstake(Origin::signed(ALICE.clone())),
 			<Error<Test>>::PlayerNotStake
 		);
 	})
@@ -67,7 +67,7 @@ fn unstake_pool_fail() {
 #[test]
 fn set_discount_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		assert_ok!(StakePool::set_discount(Origin::root(), 2));
+		assert_ok!(StakingPool::set_discount(Origin::root(), 2));
 	})
 }
 
@@ -77,8 +77,8 @@ fn set_discount_fail() {
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		// bad origin
-		assert_err!(StakePool::set_discount(Origin::signed(ALICE), 2), frame_support::error::BadOrigin);
+		assert_err!(StakingPool::set_discount(Origin::signed(ALICE), 2), frame_support::error::BadOrigin);
 		// incorrect discount value
-		assert_err!(StakePool::set_discount(Origin::root(), 101), <Error<Test>>::DiscountNotCorrect);
+		assert_err!(StakingPool::set_discount(Origin::root(), 101), <Error<Test>>::DiscountNotCorrect);
 	})
 }

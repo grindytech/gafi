@@ -2,10 +2,13 @@
 * This unittest should only test logic function e.g. Storage, Computation
 * and not related with Currency e.g. Balances, Transaction Payment
 */
-use gafi_primitives::option_pool::PackService;
-use crate::{mock::*, Error};
+use crate::{mock::*, Config, Error};
 use crate::{IngamePlayers, NewPlayers, PlayerCount, Players};
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_ok, traits::Currency};
+use gafi_primitives::currency::{unit, NativeToken::AUX};
+use gafi_primitives::option_pool::PackService;
+use sp_runtime::AccountId32;
+use sp_std::str::FromStr;
 
 #[test]
 fn player_join_pool_should_works() {
@@ -38,9 +41,28 @@ fn player_join_pool_should_fail() {
 			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
 			PackService::Basic
 		));
+		// rejoin
 		assert_err!(
 			(PalletPool::join(Origin::signed(TEST_ACCOUNTS[0].0.clone()), PackService::Basic)),
 			<Error<Test>>::PlayerAlreadyJoin
+		);
+	})
+}
+
+#[test]
+fn player_join_another_pool_should_fail() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(10);
+		let sender =
+			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
+
+		let _ = <Test as Config>::Currency::deposit_creating(&sender, u64::MAX);
+
+		assert_ok!(PalletStakingPool::stake(Origin::signed(sender.clone())));
+		// rejoin
+		assert_err!(
+			PalletPool::join(Origin::signed(sender.clone()), PackService::Basic),
+			<Error<Test>>::LeaveStakingPoolBeforeJoining
 		);
 	})
 }

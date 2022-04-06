@@ -1,6 +1,6 @@
 use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakePoolConfig, Signature, SudoConfig, SystemConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
 use gafi_primitives::option_pool::PackService;
@@ -204,6 +204,6 @@ fn testnet_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
-		stake_pool: StakePoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
+		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
 	}
 }

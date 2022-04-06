@@ -66,9 +66,9 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 }
 
-pub struct AurCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
+pub struct GafiEVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
 
-impl<T, C, OU> OnChargeEVMTransaction<T> for AurCurrencyAdapter<C, OU>
+impl<T, C, OU> OnChargeEVMTransaction<T> for GafiEVMCurrencyAdapter<C, OU>
 where
 	T: Config,
 	C: Currency<<T as frame_system::Config>::AccountId>,

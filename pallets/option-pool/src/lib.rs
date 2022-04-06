@@ -1,9 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use crate::weights::WeightInfo;
-use gafi_primitives::currency::{centi, NativeToken::AUX};
-use gafi_primitives::option_pool::{
-	OptionPlayer, OptionPoolPlayer, PackService, PackServiceProvider, Service,
-};
 use frame_support::{
 	dispatch::{DispatchResult, Vec},
 	pallet_prelude::*,
@@ -13,6 +9,11 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
+use gafi_primitives::currency::{centi, NativeToken::AUX};
+use gafi_primitives::{
+	option_pool::{OptionPlayer, OptionPoolPlayer, PackService, PackServiceProvider, Service},
+	staking_pool::StakingPool,
+};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 
@@ -50,6 +51,7 @@ pub mod pallet {
 		type MaxNewPlayer: Get<u32>;
 		#[pallet::constant]
 		type MaxIngamePlayer: Get<u32>;
+		type StakingPool: StakingPool<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -62,6 +64,7 @@ pub mod pallet {
 		CanNotClearNewPlayers,
 		ExceedMaxIngamePlayer,
 		CanNotCalculateRefundFee,
+		LeaveStakingPoolBeforeJoining,
 	}
 
 	#[pallet::event]
@@ -200,6 +203,8 @@ pub mod pallet {
 
 			// make sure player not re-join
 			ensure!(Players::<T>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyJoin);
+			// make sure player not join another pool
+			ensure!(T::StakingPool::is_staking_pool(&sender) == None, <Error<T>>::LeaveStakingPoolBeforeJoining);
 			// make sure not exceed max players
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;

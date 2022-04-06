@@ -4,7 +4,7 @@
 */
 
 use crate::{self as pallet_option_pool};
-use gafi_primitives::option_pool::PackService;
+use gafi_primitives::{option_pool::PackService, staking_pool::StakingPool};
 use frame_support::parameter_types;
 use frame_system as system;
 
@@ -18,7 +18,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-
 pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -58,6 +57,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		PalletStakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
@@ -144,7 +144,15 @@ impl pallet_option_pool::Config for Test {
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = ();
+	type StakingPool = PalletStakingPool;
 }
+
+impl pallet_staking_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+}
+
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
