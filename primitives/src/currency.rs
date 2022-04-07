@@ -22,30 +22,30 @@ pub trait TokenInfo {
 }
 
 pub enum NativeToken {
-    AUR,
-    AUX,
+    GAFI,
+    GAKI,
 }
 
 pub struct GafiCurrency {}
 
 impl TokenInfo for GafiCurrency {
 	fn token_info(token: NativeToken) -> Token {
-		let aur: Token = Token {
+		let gaki: Token = Token {
 			id: 1,
-			name: b"Aurora".to_vec(),
-			symbol: "AUR".as_bytes().to_vec(),
+			name: b"Gafi Native Token".to_vec(),
+			symbol: "GAFI".as_bytes().to_vec(),
 			decimals: 18,
 		};
-		let aux: Token = Token {
+		let gafi: Token = Token {
 			id: 2,
-			name: b"Aurora X".to_vec(),
-			symbol: "AUX".as_bytes().to_vec(),
+			name: b"Gaki Native Token".to_vec(),
+			symbol: "GAKI".as_bytes().to_vec(),
 			decimals: 18,
 		};
 
 		match token {
-			NativeToken::AUX => aux,
-			NativeToken::AUR => aur,
+			NativeToken::GAKI => gaki,
+			NativeToken::GAFI => gafi,
 		}
 	}
 }

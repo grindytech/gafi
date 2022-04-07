@@ -1,6 +1,8 @@
 use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig, StakingPoolConfig, Signature, SudoConfig, SystemConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig,
+	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
+	AddressMappingConfig,
 	WASM_BINARY,
 };
 use gafi_primitives::option_pool::PackService;
@@ -11,7 +13,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use gafi_primitives::{currency::{NativeToken::AUX, unit, centi, GafiCurrency, TokenInfo}};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit, centi, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -46,8 +48,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
     
 	let mut props : Properties = Properties::new();
-	let aux = GafiCurrency::token_info(AUX);
-	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("AUX".to_string()));
+	let aux = GafiCurrency::token_info(GAKI);
+	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("GAKI".to_string()));
 	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
 	let decimals  =json!(aux.decimals);
     props.insert("tokenSymbol".to_string(), symbol); 
@@ -148,7 +150,7 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 	// Pool config
-	let pool_fee: Balance =  75 * centi(AUX); // 0.75 AUX
+	let pool_fee: Balance =  75 * centi(GAKI); // 0.75 GAKI
 	const MAX_PLAYER: u32 = 1000;
 	let services: [(PackService, u8, u8, Balance); 3] = [
 		(PackService::Basic, 4, 40, pool_fee),
@@ -156,8 +158,9 @@ fn testnet_genesis(
 		(PackService::Max, u8::MAX, 90, pool_fee * 3),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
-	let staking_amount = 1000 * unit(AUX);
+	let staking_amount = 1000 * unit(GAKI);
 	const STAKING_DISCOUNT: u8 = 50;
+	let bond_existential_deposit: u128 = unit(GAKI);
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -165,8 +168,8 @@ fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 		},
 		balances: BalancesConfig {
-			// each genesis account hold 1M AUX token
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1_000_000 * unit(AUX))).collect(),
+			// each genesis account hold 1M GAKI token
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1_000_000 * unit(GAKI))).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -192,7 +195,7 @@ fn testnet_genesis(
 					)),
 					pallet_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1000 * unit(AUX)),
+						balance: U256::from(1000 * unit(GAKI)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
@@ -205,5 +208,6 @@ fn testnet_genesis(
 		base_fee: Default::default(),
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
 		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
+		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 	}
 }

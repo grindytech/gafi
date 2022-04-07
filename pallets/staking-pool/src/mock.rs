@@ -126,7 +126,7 @@ pub fn run_to_block(n: u64) {
 	}
 }
 
-pub const STAKE_AMOUNT: u128 = 100_000_000_000_000_000_000; // 100 AUX
+pub const STAKE_AMOUNT: u128 = 100_000_000_000_000_000_000; // 100 GAKI
 
 pub struct ExtBuilder {
 	staking_amount: u128,

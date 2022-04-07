@@ -15,6 +15,10 @@ run-dev:
 test:
 	cargo test
 
+.PHONY: check
+check:
+	cargo check
+
 .PHONY: benchmark
 benchmark:
 	cargo build --release --features runtime-benchmarks

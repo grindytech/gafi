@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use gafi_primitives::{currency::{NativeToken::AUX, milli, centi}};
+use gafi_primitives::{currency::{NativeToken::GAKI, milli, centi}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
@@ -9,7 +9,7 @@ use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_tx_handler::{GafiEVMCurrencyAdapter};
-use pallet_address_mapping::{ProofAddressMapping};
+use proof_address_mapping::{ProofAddressMapping};
 
 use frame_support::{
 	dispatch::Vec,
@@ -46,7 +46,7 @@ frame_support::construct_runtime!(
 		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
-		PalletAddressMapping: pallet_address_mapping::{Pallet, Call, Storage, Event<T>},
+		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
@@ -57,7 +57,7 @@ parameter_types! {
 	pub Prefix: &'static [u8] =  PREFIX;
 }
 
-impl pallet_address_mapping::Config for Test {
+impl proof_address_mapping::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
@@ -65,7 +65,7 @@ impl pallet_address_mapping::Config for Test {
 }
 
 parameter_types! {
-	pub TransactionByteFee: u128 = 2 * milli(AUX); // 0.002 AUX
+	pub TransactionByteFee: u128 = 2 * milli(GAKI); // 0.002 GAKI
 }
 
 impl pallet_transaction_payment::Config for Test {
@@ -233,7 +233,7 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		let pool_fee: u128 = 75 * centi(AUX); // 0.75 AUX
+		let pool_fee: u128 = 75 * centi(GAKI); // 0.75 GAKI
 		let services: [(PackService, u8, u8, u128); 3] = [
 			(PackService::Basic, 4, 40, pool_fee),
 			(PackService::Medium, 8, 70, pool_fee * 2),

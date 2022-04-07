@@ -5,7 +5,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	currency::{unit, NativeToken::AUX},
+	currency::{unit, NativeToken::GAKI},
 	staking_pool::{Player, StakingPool},
 	option_pool::OptionPoolPlayer,
 };
@@ -71,7 +71,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let staking_amount: u128 = 1000 * unit(AUX);
+			let staking_amount: u128 = 1000 * unit(GAKI);
 			let into_balance = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
 			Self { staking_amount: into_balance(staking_amount), staking_discount: 50 }
 		}

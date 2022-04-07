@@ -36,6 +36,10 @@ fn bond_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+		{
+			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, 1_000_000);
+			assert_eq!(Balances::free_balance(&sender), 1_000_000);
+		}
 		let origin_sender: H160 = PalletAddressMapping::get_or_create_evm_address(sender.clone());
 		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 		
@@ -95,7 +99,7 @@ fn bond_should_fail() {
 		);
 		}
 
-		// account already bond
+		// insuffcient balance
 		{
 			run_to_block(10);
 			let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
@@ -103,16 +107,45 @@ fn bond_should_fail() {
 			let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 	
-			assert_ok!(PalletAddressMapping::bond(
+			assert_err!(PalletAddressMapping::bond(
 				Origin::signed(ALICE.clone()),
 				signature,
+				address,
+				false
+			), pallet_balances::Error::<Test>::InsufficientBalance);
+		}
+
+		// rebond
+		{
+			run_to_block(10);
+			let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+			let BOB  = AccountId32::from_str("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty").unwrap();
+			{
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000);
+				assert_eq!(Balances::free_balance(&ALICE), 1_000_000);
+
+				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&BOB, 1_000_000);
+				assert_eq!(Balances::free_balance(&BOB), 1_000_000);
+			}
+			let address: H160 = H160::from_str("4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+			let alice_signature: [u8; 65] = hex!("0e3464d0b76371a158fc35ee5be6dd5989f34d6d7008331aa0415de1bf3bad6d6f4af7dbbd788b180f28d798c3dd3f1aa994e9057113424f1073256a3480ab651c");
+			let bob_signature: [u8; 65] = hex!("e655cffe4ca3861c14dd36fe17fe2aaa37d4c2ea518dc27c788cfab1dfcb00c3065769c45d075218c881d1d39eaf72754c68dde05d2a5d80f271a8c67079d8a61c");
+			
+			assert_ok!(PalletAddressMapping::bond(
+				Origin::signed(ALICE.clone()),
+				alice_signature,
 				address,
 				false
 			));
 
 			assert_err!(
-				PalletAddressMapping::bond(Origin::signed(ALICE.clone()), signature, address, true),
-				<Error<Test>>::EVMAccountAlreadyBond
+				PalletAddressMapping::bond(Origin::signed(ALICE.clone()), alice_signature, address, true),
+				<Error<Test>>::AlreadyBond
+			);
+
+			assert_err!(
+				PalletAddressMapping::bond(Origin::signed(BOB.clone()), bob_signature, address, true),
+				<Error<Test>>::AlreadyBond
 			);
 		}
 	})
@@ -213,11 +246,11 @@ fn bond_account_balances() {
 
 		assert_ok!(PalletAddressMapping::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
 
-		// evm_address balance should  
+		// evm_address balance should  equal to ALICE
 		{
-			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT);
+			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT - EXISTENTIAL_BOND_DEPOSIT);
 			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
-			assert_eq!(mapping_address_balance, (EVM_BALANCE + ALICE_BALANCE - 2*EXISTENTIAL_DEPOSIT).into());
+			assert_eq!(mapping_address_balance, Balances::free_balance(&ALICE).into());
 		}
 	});
 }
@@ -248,7 +281,11 @@ fn unbond_works() {
 			}
 	
 			assert_ok!(PalletAddressMapping::bond(Origin::signed(ALICE.clone()), signature, evm_address, true));
+			
+			let before_balance = Balances::free_balance(&ALICE);
 			assert_ok!(PalletAddressMapping::unbond(Origin::signed(ALICE.clone())));
+			let after_balance = Balances::free_balance(&ALICE);
+			assert_eq!(before_balance, after_balance - EXISTENTIAL_BOND_DEPOSIT);
 		}
 
 		run_to_block(100);
@@ -261,14 +298,6 @@ fn unbond_works() {
 		
 		assert_eq!(H160Mapping::<Test>::get(origin_address), None);
 		assert_eq!(Id32Mapping::<Test>::get(origin_id.clone()), None);
-		
-	
-		// let mapping_address: AccountId32 = ProofAddressMapping::<Test>::into_account_id(evm_address);
-		// assert_eq!(mapping_address, origin_id);
-		
-		// let mapping_account: AccountId32 = ProofAddressMapping::<Test>::into_account_id(origin_address);
-		// assert_eq!(mapping_account, ALICE.clone());
-
 	});
 }
 

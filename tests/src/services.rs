@@ -1,5 +1,5 @@
 use crate::mock::*;
-use gafi_primitives::{currency::{NativeToken::AUX, unit}};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit}};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use gafi_primitives::option_pool::PackService;
@@ -20,7 +20,7 @@ static MAX: u128 = 75 * CENTI * 3;
 fn init_join_pool(pool_fee: u128, pack: PackService, is_bond: bool) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
-	let base_balance = 1_000_000 * unit(AUX);
+	let base_balance = 1_000_000 * unit(GAKI);
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
 	{
 		assert_eq!(<Test as Config>::Currency::free_balance(sender.clone()), base_balance);
@@ -82,7 +82,7 @@ fn init_leave_pool(
 ) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
-	let base_balance = 1_000_000 * unit(AUX);
+	let base_balance = 1_000_000 * unit(GAKI);
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
 	{
 		assert_eq!(<Test as Config>::Currency::free_balance(sender.clone()), base_balance);

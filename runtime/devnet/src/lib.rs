@@ -52,7 +52,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::AUX};
+pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
 
 // import local pallets
 pub use pallet_option_pool;
@@ -62,7 +62,7 @@ pub use pallet_template;
 pub use pallet_tx_handler;
 
 // custom traits
-use pallet_address_mapping::ProofAddressMapping;
+use proof_address_mapping::ProofAddressMapping;
 use pallet_tx_handler::GafiEVMCurrencyAdapter;
 
 mod precompiles;
@@ -257,7 +257,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub  NativeTokenExistentialDeposit: Balance = 1 * unit(AUX); // 1 AUX
+	pub  NativeTokenExistentialDeposit: Balance = 1 * unit(GAKI); // 1 GAKI
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
@@ -278,7 +278,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub TransactionByteFee: Balance = 2 * milli(AUX); // 0.002 AUX
+	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -347,7 +347,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = centi(AUX).into(); //0.01 AUX
+	pub DefaultBaseFeePerGas: U256 = centi(GAKI).into(); //0.01 GAKI
 }
 
 pub struct BaseFeeThreshold;
@@ -403,10 +403,10 @@ parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
 }
 
-impl pallet_address_mapping::Config for Runtime {
+impl proof_address_mapping::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type WeightInfo = pallet_address_mapping::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
 }
 
@@ -448,7 +448,7 @@ construct_runtime!(
 		OptionPool: pallet_option_pool,
 		StakingPool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
-		AddressMapping: pallet_address_mapping,
+		AddressMapping: proof_address_mapping,
 		Template: pallet_template,
 	}
 );
@@ -844,7 +844,7 @@ impl_runtime_apis! {
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
 			use pallet_option_pool::Pallet as PoolBench;
-			use pallet_address_mapping::Pallet as AddressMappingBench;
+			use proof_address_mapping::Pallet as AddressMappingBench;
 			use pallet_staking_pool::Pallet as StakingPoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -866,7 +866,7 @@ impl_runtime_apis! {
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
 			use pallet_option_pool::Pallet as PoolBench;
-			use pallet_address_mapping::Pallet as AddressMappingBench;
+			use proof_address_mapping::Pallet as AddressMappingBench;
 			use pallet_staking_pool::Pallet as StakingPoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];

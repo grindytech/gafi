@@ -8,7 +8,7 @@ contract ERC20 is IERC20 {
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
     string public name = "Aurora Network";
-    string public symbol = "AUR";
+    string public symbol = "GAFI";
     uint8 public decimals = 18;
 
     function transfer(address recipient, uint amount) external returns (bool) {
