@@ -1,3 +1,21 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	dispatch::DispatchResult,
@@ -6,7 +24,6 @@ use frame_support::{
 	Twox64Concat,
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::currency::{unit, NativeToken::GAKI};
 pub use pallet::*;
 use pallet_evm::AddressMapping;
 use sp_core::crypto::AccountId32;
@@ -44,35 +61,29 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// Message Prefix for signing messages using ecdsa signature
 		#[pallet::constant]
 		type MessagePrefix: Get<&'static [u8]>;
 	}
 
-	// Errors.
-	#[derive(PartialEq)]
-	#[pallet::error]
-	pub enum Error<T> {
-		SignatureOrAddressNotCorrect,
-		AlreadyBond,
-
-		NonbondAccount,
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
-
-	// Storage
+	// holding AccountId32 address that bonded for H160 address
 	#[pallet::storage]
 	pub type H160Mapping<T: Config> = StorageMap<_, Twox64Concat, H160, AccountId32>;
 
+	// holding H160 address that bonded for AccountId32 address
 	#[pallet::storage]
 	pub type Id32Mapping<T: Config> = StorageMap<_, Twox64Concat, AccountId32, H160>;
 
+	// holding the existential deposit amount needed to make the bonding
 	#[pallet::storage]
 	pub type BondExistentialDeposit<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
@@ -85,9 +96,9 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let bond_deposit: u128 = 1 * unit(GAKI);
-			let convert_default_fee = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
-			Self { bond_deposit: convert_default_fee(bond_deposit) }
+			// 1 unit with decimals = 18
+			let bond_deposit: BalanceOf<T> = 1_000_000_000_000_000_000u128.try_into().ok().unwrap();
+			Self { bond_deposit }
 		}
 	}
 
@@ -98,12 +109,45 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		Bonded { sender: T::AccountId, address: H160 },
+		Unbonded { sender: T::AccountId, address: H160 },
+	}
+
+	#[derive(PartialEq)]
+	#[pallet::error]
+	pub enum Error<T> {
+		// when can't verify the signature and message
+		SignatureOrAddressNotCorrect,
+		// Substrate address or EVM address already bond
+		AlreadyBond,
+		// Making unbond with non-bonding account
+		NonbondAccount,
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
 		[u8; 32]: From<<T as frame_system::Config>::AccountId>,
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 	{
+		/// Bond Substrate(H256) address with EVM(H160) address
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `signature`: signature of the address that signed the message contain hex format of origin
+		///
+		/// - `address`: EVM(H160) address that you want to bond
+		///
+		/// - `withdraw`: true/false withdraw all the balance of original account of address trasfer to
+		/// the origin, always KeepAlive original address
+		///
+		/// Emits `Bonded` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(100u32))]
 		pub fn bond(
 			origin: OriginFor<T>,
@@ -115,7 +159,8 @@ pub mod pallet {
 			let account_id: AccountId32 = sender.clone().into();
 
 			ensure!(
-				Id32Mapping::<T>::get(account_id.clone()) == None && H160Mapping::<T>::get(address) == None,
+				Id32Mapping::<T>::get(account_id.clone()) == None
+					&& H160Mapping::<T>::get(address) == None,
 				<Error<T>>::AlreadyBond
 			);
 			ensure!(
@@ -131,9 +176,18 @@ pub mod pallet {
 			}
 
 			Self::insert_pair_bond(address, account_id);
+			Self::deposit_event(Event::Bonded { sender, address });
 			Ok(())
 		}
 
+		/// Unbonded Substrate(H256) address to EVM(H160) address remove
+		/// the bond so both two accounts will be using the default AddressMapping
+		///
+		/// The origin must be Signed
+		///
+		/// Emits `Unbonded` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(100u32))]
 		pub fn unbond(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -146,6 +200,7 @@ pub mod pallet {
 			<T as pallet::Config>::Currency::unreserve(&sender, <BondExistentialDeposit<T>>::get());
 
 			Self::remove_pair_bond(evm_address.unwrap(), id32_address.unwrap());
+			Self::deposit_event(Event::Unbonded { sender, address: evm_address.unwrap() });
 			Ok(())
 		}
 	}
@@ -182,7 +237,7 @@ where
 		)
 	}
 
-	fn get_evm_address(account_id: AccountId32) -> Option<H160> {
+	pub fn get_evm_address(account_id: AccountId32) -> Option<H160> {
 		let data: [u8; 32] = account_id.into();
 		if data.starts_with(b"evm:") {
 			return Some(H160::from_slice(&data[4..24]));
@@ -196,7 +251,7 @@ where
 		H160::from_slice(&payload.using_encoded(blake2_256)[0..20])
 	}
 
-	fn get_or_create_evm_address(account_id: AccountId32) -> H160 {
+	pub fn get_or_create_evm_address(account_id: AccountId32) -> H160 {
 		Self::get_evm_address(account_id.clone())
 			.unwrap_or(Self::get_default_evm_address(account_id))
 	}

@@ -37,7 +37,6 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
 
 [dev-dependencies]
@@ -66,7 +65,6 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'gafi-primitives/std',
   'utils/std',
 ]
 
