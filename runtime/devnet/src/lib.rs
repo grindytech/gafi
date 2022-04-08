@@ -55,6 +55,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
 
 // import local pallets
+pub use pallet_faucet;
 pub use pallet_option_pool;
 pub use pallet_player;
 pub use pallet_staking_pool;
@@ -62,8 +63,8 @@ pub use pallet_template;
 pub use pallet_tx_handler;
 
 // custom traits
-use proof_address_mapping::ProofAddressMapping;
 use pallet_tx_handler::GafiEVMCurrencyAdapter;
+use proof_address_mapping::ProofAddressMapping;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -424,6 +425,20 @@ impl pallet_template::Config for Runtime {
 	type Event = Event;
 }
 
+parameter_types! {
+	pub MaxGenesisAccount: u32 = 5;
+	pub FaucetBalance: Balance = 10 * unit(GAKI); // 10 GAKI
+	pub MinFaucetBalance: Balance = 2 * unit(GAKI); // 2 GAKI
+}
+
+impl pallet_faucet::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type MaxGenesisAccount = MaxGenesisAccount;
+	type FaucetBalance = FaucetBalance;
+	type MinFaucetBalance = MinFaucetBalance;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -449,6 +464,7 @@ construct_runtime!(
 		StakingPool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
 		AddressMapping: proof_address_mapping,
+		Faucet: pallet_faucet,
 		Template: pallet_template,
 	}
 );

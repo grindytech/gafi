@@ -2,7 +2,7 @@ use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
-	AddressMappingConfig,
+	AddressMappingConfig, FaucetConfig,
 	WASM_BINARY,
 };
 use gafi_primitives::option_pool::PackService;
@@ -209,5 +209,13 @@ fn testnet_genesis(
 		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
 		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
 		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
+		faucet: FaucetConfig {
+			genesis_accounts: vec![
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			],
+		}
 	}
 }

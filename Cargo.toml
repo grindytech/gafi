@@ -9,6 +9,7 @@ members = [
   'pallets/staking-pool',
   'pallets/tx-handler',
   'pallets/address-mapping',
+  'pallets/pallet-faucet',
   'tests',
   'primitives',
 ]

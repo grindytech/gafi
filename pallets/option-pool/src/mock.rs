@@ -4,7 +4,7 @@
 */
 
 use crate::{self as pallet_option_pool};
-use gafi_primitives::{option_pool::PackService, staking_pool::StakingPool};
+use gafi_primitives::{option_pool::PackService};
 use frame_support::parameter_types;
 use frame_system as system;
 

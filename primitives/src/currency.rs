@@ -54,6 +54,7 @@ pub fn unit(token: NativeToken) -> u128 {
 	10u128.saturating_pow( GafiCurrency::token_info(token).decimals.into() )
 }
 
+/// 1 centi = 0.01 unit
 pub fn centi(token: NativeToken) -> u128 {
     unit(token) / 100
 }
