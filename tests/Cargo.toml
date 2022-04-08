@@ -39,7 +39,7 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/option-pool" }
 pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
 pallet-tx-handler = { default-features = false, version = "4.0.0-dev", path = "../pallets/tx-handler" }
-pallet-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
+proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
 gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
 
@@ -69,7 +69,7 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'pallet-address-mapping/std',
+  'proof-address-mapping/std',
   'pallet-option-pool/std',
   'pallet-staking-pool/std',
   'pallet-tx-handler/std',

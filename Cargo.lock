@@ -1174,7 +1174,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "gafi-primitives",
  "hex-literal 0.3.4",
- "pallet-address-mapping",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -1184,6 +1183,7 @@ dependencies = [
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-faucet",
  "pallet-grandpa",
  "pallet-option-pool",
  "pallet-player",
@@ -1196,6 +1196,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-tx-handler",
  "parity-scale-codec 2.3.1",
+ "proof-address-mapping",
  "scale-info",
  "sp-api",
  "sp-block-builder",
@@ -4234,33 +4235,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-address-mapping"
-version = "4.0.0-dev"
-dependencies = [
- "fp-self-contained",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "hex-literal 0.2.2",
- "hex-literal 0.3.4",
- "pallet-balances",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "parity-scale-codec 2.3.1",
- "parity-scale-codec 3.1.2",
- "parity-secp256k1",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "utils",
-]
-
-[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/substrate?branch=aur-dot#4bc2af13cd81007a2a340d0333062179420d5daf"
@@ -4419,6 +4393,21 @@ dependencies = [
  "fp-evm",
  "ripemd",
  "sp-io",
+]
+
+[[package]]
+name = "pallet-faucet"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -4641,7 +4630,6 @@ dependencies = [
  "gafi-primitives",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
- "pallet-address-mapping",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
@@ -4652,6 +4640,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-scale-codec 3.1.2",
  "parity-secp256k1",
+ "proof-address-mapping",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -5146,6 +5135,32 @@ dependencies = [
  "memchr",
  "parking_lot",
  "thiserror",
+]
+
+[[package]]
+name = "proof-address-mapping"
+version = "4.0.0-dev"
+dependencies = [
+ "fp-self-contained",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.2.2",
+ "hex-literal 0.3.4",
+ "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec 2.3.1",
+ "parity-scale-codec 3.1.2",
+ "parity-secp256k1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "utils",
 ]
 
 [[package]]
@@ -7842,7 +7857,6 @@ dependencies = [
  "gafi-primitives",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
- "pallet-address-mapping",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
@@ -7854,6 +7868,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-scale-codec 3.1.2",
  "parity-secp256k1",
+ "proof-address-mapping",
  "rand 0.8.5",
  "scale-info",
  "sp-core",

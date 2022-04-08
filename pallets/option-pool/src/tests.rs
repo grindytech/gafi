@@ -5,7 +5,7 @@
 use crate::{mock::*, Config, Error};
 use crate::{IngamePlayers, NewPlayers, PlayerCount, Players};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use gafi_primitives::currency::{unit, NativeToken::AUX};
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::option_pool::PackService;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;

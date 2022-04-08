@@ -9,7 +9,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::currency::{centi, NativeToken::AUX};
+use gafi_primitives::currency::{centi, NativeToken::GAKI};
 use gafi_primitives::{
 	option_pool::{OptionPlayer, OptionPoolPlayer, PackService, PackServiceProvider, Service},
 	staking_pool::StakingPool,
@@ -159,7 +159,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let base_fee: u128 = 75 * centi(AUX); // 0.75 AUX
+			let base_fee: u128 = 75 * centi(GAKI); // 0.75 GAKI
 			let convert_default_fee = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
 			Self {
 				max_player: 1000,

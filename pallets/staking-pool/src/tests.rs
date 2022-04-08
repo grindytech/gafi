@@ -1,5 +1,5 @@
 use crate::{mock::*, Error};
-use gafi_primitives::{currency::{NativeToken::AUX, unit}, option_pool::PackService};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit}, option_pool::PackService};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
@@ -7,7 +7,7 @@ use sp_std::str::FromStr;
 #[test]
 fn stake_pool_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE_BALANCE = 1_000_000_000 * unit(GAKI);
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
@@ -26,7 +26,7 @@ fn stake_pool_fail() {
 			StakingPool::stake(Origin::signed(ALICE.clone())),
 			pallet_balances::Error::<Test>::InsufficientBalance
 		);
-		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE_BALANCE = 1_000_000_000 * unit(GAKI);
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
 		assert_ok!(StakingPool::stake(Origin::signed(ALICE.clone())));
 		assert_err!(
@@ -45,7 +45,7 @@ fn stake_another_pool_fail() {
 			StakingPool::stake(Origin::signed(ALICE.clone())),
 			pallet_balances::Error::<Test>::InsufficientBalance
 		);
-		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE_BALANCE = 1_000_000_000 * unit(GAKI);
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
 		assert_ok!(PalletPool::set_max_player(Origin::root(), 100));
 		assert_ok!(PalletPool::join(Origin::signed(ALICE.clone()), PackService::Basic));
@@ -56,7 +56,7 @@ fn stake_another_pool_fail() {
 #[test]
 fn unstake_pool_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE_BALANCE = 1_000_000_000 * unit(GAKI);
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
@@ -70,7 +70,7 @@ fn unstake_pool_works() {
 #[test]
 fn unstake_pool_fail() {
 	ExtBuilder::default().build_and_execute(|| {
-		let ALICE_BALANCE = 1_000_000_000 * unit(AUX);
+		let ALICE_BALANCE = 1_000_000_000 * unit(GAKI);
 		let ALICE: AccountId32 =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);

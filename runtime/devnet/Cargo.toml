@@ -67,8 +67,9 @@ pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../
 pallet-option-pool =  {version = "4.0.0-dev", default-features = false, path = "../../pallets/option-pool"}
 pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
 pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "../../pallets/tx-handler"}
-pallet-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
+proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
 pallet-staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
+pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
 
 # unit test
 [dev.dependencies]
@@ -95,7 +96,7 @@ runtime-benchmarks = [
   "pallet-option-pool/runtime-benchmarks",
   "pallet-staking-pool/runtime-benchmarks",
   "pallet-tx-handler/runtime-benchmarks",
-  "pallet-address-mapping/runtime-benchmarks",
+  "proof-address-mapping/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -136,5 +137,6 @@ std = [
   "pallet-staking-pool/std",
   "pallet-tx-handler/std",
   "gafi-primitives/std",
-  "pallet-address-mapping/std",
+  "proof-address-mapping/std",
+  "pallet-faucet/std",
 ]
