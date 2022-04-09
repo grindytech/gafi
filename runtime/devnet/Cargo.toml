@@ -70,6 +70,7 @@ pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "..
 proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
 pallet-staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
+pallet-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pool" }
 
 # unit test
 [dev.dependencies]
@@ -139,4 +140,5 @@ std = [
   "gafi-primitives/std",
   "proof-address-mapping/std",
   "pallet-faucet/std",
+  "pallet-pool/std",
 ]
