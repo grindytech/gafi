@@ -58,6 +58,7 @@ pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::
 pub use pallet_faucet;
 pub use pallet_option_pool;
 pub use pallet_player;
+pub use pallet_pool;
 pub use pallet_staking_pool;
 pub use pallet_template;
 pub use pallet_tx_handler;
@@ -439,6 +440,10 @@ impl pallet_faucet::Config for Runtime {
 	type MinFaucetBalance = MinFaucetBalance;
 }
 
+impl pallet_pool::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -460,6 +465,7 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 
 		Player: pallet_player,
+		Pool: pallet_pool,
 		OptionPool: pallet_option_pool,
 		StakingPool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
