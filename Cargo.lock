@@ -1185,7 +1185,6 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-faucet",
  "pallet-grandpa",
- "pallet-option-pool",
  "pallet-player",
  "pallet-pool",
  "pallet-randomness-collective-flip",
@@ -1211,6 +1210,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "upfront-pool",
 ]
 
 [[package]]
@@ -4435,28 +4435,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-option-pool"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "log",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "pallet-staking-pool",
- "pallet-timestamp",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-player"
 version = "4.0.0-dev"
 dependencies = [
@@ -4533,7 +4511,6 @@ dependencies = [
  "gafi-primitives",
  "log",
  "pallet-balances",
- "pallet-option-pool",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -4542,6 +4519,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "upfront-pool",
 ]
 
 [[package]]
@@ -4649,7 +4627,6 @@ dependencies = [
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-option-pool",
  "pallet-staking-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -4662,6 +4639,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "upfront-pool",
  "utils",
 ]
 
@@ -7876,7 +7854,6 @@ dependencies = [
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-option-pool",
  "pallet-staking-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -7891,6 +7868,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "upfront-pool",
  "utils",
 ]
 
@@ -8351,6 +8329,28 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "upfront-pool"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "log",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "pallet-staking-pool",
+ "pallet-timestamp",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "url"

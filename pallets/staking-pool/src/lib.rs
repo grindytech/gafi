@@ -8,8 +8,8 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	staking_pool::{Player, StakingPool},
 	option_pool::OptionPoolPlayer,
+	pool::{GafiPool, Level},
 };
-pub use pallet::*;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 
@@ -97,6 +97,20 @@ pub mod pallet {
 		DiscountNotCorrect,
 		AlreadyOnOptionPool,
 	}
+
+	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
+    fn join(sender: T::AccountId, level: Level) -> DispatchResult {
+        todo!()
+    }
+
+    fn leave(sender: T::AccountId, level: Level) -> DispatchResult {
+        todo!()
+    }
+
+    fn get_service(level: Level) -> gafi_primitives::pool::Service {
+        todo!()
+    }
+}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

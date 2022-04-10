@@ -36,7 +36,7 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
-pallet-option-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/option-pool" }
+upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
 pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
 pallet-tx-handler = { default-features = false, version = "4.0.0-dev", path = "../pallets/tx-handler" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
@@ -70,7 +70,7 @@ std = [
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
   'proof-address-mapping/std',
-  'pallet-option-pool/std',
+  'upfront-pool/std',
   'pallet-staking-pool/std',
   'pallet-tx-handler/std',
   'utils/std',

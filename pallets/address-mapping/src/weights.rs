@@ -37,7 +37,7 @@ pub trait WeightInfo {
 	fn unbond(s: u32,) -> Weight;
 }
 
-/// Weight functions for `pallet_option_pool`.
+/// Weight functions for `upfront_pool`.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: TxHandler H160Mapping (r:1 w:1)

@@ -46,7 +46,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		OptionPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		OptionPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
@@ -107,7 +107,7 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
 }
 
-impl pallet_option_pool::Config for Test {
+impl upfront_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
@@ -237,7 +237,7 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_option_pool::GenesisConfig::<Test> {
+		let _ = upfront_pool::GenesisConfig::<Test> {
 			max_player: self.max_player,
 			services: self.services,
 			time_service: self.time_service,

@@ -17,7 +17,7 @@ pub struct Ticket<AccountId> {
 pub enum TicketType {
 	Upfront(Level),
 	Staking(Level),
-	Sponsored,
+	Sponsored(Level),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -32,8 +32,14 @@ pub enum Level {
 #[derive(
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct Service<Balance> {
+pub struct Service {
 	pub tx_limit: u32, // max number of transaction per minute
 	pub discount: u8,  // percentage of discount
-	pub value: Balance,
+	pub value: u128,
+}
+
+pub trait GafiPool<AccountId> {
+	fn join(sender: AccountId, level: Level) -> DispatchResult;
+	fn leave(sender: AccountId, level: Level) -> DispatchResult;
+	fn get_service(level: Level) -> Service;
 }
