@@ -1,6 +1,6 @@
 use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig,
 	WASM_BINARY,
@@ -152,10 +152,10 @@ fn testnet_genesis(
 	// Pool config
 	let pool_fee: Balance =  75 * centi(GAKI); // 0.75 GAKI
 	const MAX_PLAYER: u32 = 1000;
-	let services: [(PackService, u8, u8, Balance); 3] = [
+	let services: [(PackService, u32, u8, u128); 3] = [
 		(PackService::Basic, 4, 40, pool_fee),
 		(PackService::Medium, 8, 70, pool_fee * 2),
-		(PackService::Max, u8::MAX, 90, pool_fee * 3),
+		(PackService::Max, u32::MAX, 90, pool_fee * 3),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 	let staking_amount = 1000 * unit(GAKI);
@@ -206,7 +206,7 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
+		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
 		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
 		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 		faucet: FaucetConfig {

@@ -2,7 +2,7 @@
 
 pub use pallet::*;
 
-use gafi_primitives::pool::{Ticket, TicketType};
+use gafi_primitives::pool::{GafiPool, Ticket, TicketType};
 
 // #[cfg(test)]
 // mod mock;
@@ -22,6 +22,9 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type UpfrontPool: GafiPool<Self::AccountId>;
+		type StakingPool: GafiPool<Self::AccountId>;
+		// type SponsoredPool: GafiPool<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -29,25 +32,26 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
+	pub(super) type Tickets<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		SomethingStored(u32, T::AccountId),
-	}
+	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
-			
-			
-
+			let sender = ensure_signed(origin)?;
+			match ticket {
+				TicketType::Upfront(level) => T::UpfrontPool::join(sender, level)?,
+				TicketType::Staking(level) => T::StakingPool::join(sender, level)?,
+				TicketType::Sponsored(_) => (),
+			}
 			Ok(())
 		}
 	}

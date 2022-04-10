@@ -3,7 +3,7 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as pallet_option_pool};
+use crate::{self as upfront_pool};
 use gafi_primitives::{option_pool::PackService};
 use frame_support::parameter_types;
 use frame_system as system;
@@ -56,7 +56,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		PalletPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		PalletStakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
@@ -138,7 +138,7 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
 }
 
-impl pallet_option_pool::Config for Test {
+impl upfront_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
@@ -198,7 +198,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_option_pool::GenesisConfig::<Test> {
+		let _ = upfront_pool::GenesisConfig::<Test> {
 			max_player: self.max_player,
 			services: self.services,
 			time_service: self.time_service,

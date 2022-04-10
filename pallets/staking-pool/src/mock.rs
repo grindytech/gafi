@@ -21,7 +21,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
+		PalletPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -81,7 +81,7 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = 1000;
 }
 
-impl pallet_option_pool::Config for Test {
+impl upfront_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;

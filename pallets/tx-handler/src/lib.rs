@@ -45,8 +45,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type OptionPoolPlayer: OptionPoolPlayer<Self::AccountId>;
-		type StakingPool: StakingPool<Self::AccountId>;
-		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
 	}
@@ -94,15 +92,15 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		let mut service_fee = corrected_fee;
-		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
-		if let Some(_) = T::StakingPool::is_staking_pool(&account_id) {
-			service_fee =
-				service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
-		} else if let Some(player) = T::OptionPoolPlayer::get_option_pool_player(&account_id) {
-			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
-				service_fee = service_fee - (service_fee * service.discount / 100);
-			}
-		}
+		// let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
+		// if let Some(_) = T::StakingPool::is_staking_pool(&account_id) {
+		// 	service_fee =
+		// 		service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
+		// } else if let Some(player) = T::OptionPoolPlayer::get_option_pool_player(&account_id) {
+		// 	if let Some(service) = T::PackServiceProvider::get_service(player.service) {
+		// 		service_fee = service_fee - (service_fee * service.discount / 100);
+		// 	}
+		// }
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}
 

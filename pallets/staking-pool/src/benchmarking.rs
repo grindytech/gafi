@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-option-pool
+//! Benchmarking setup for upfront-pool
 
 use super::*;
 #[allow(unused)]

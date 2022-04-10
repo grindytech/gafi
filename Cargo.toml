@@ -5,7 +5,7 @@ members = [
   'runtime/devnet',
   'pallets/template',
   'pallets/player',
-  'pallets/option-pool',
+  'pallets/upfront-pool',
   'pallets/pool',
   'pallets/staking-pool',
   'pallets/tx-handler',

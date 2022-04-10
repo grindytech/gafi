@@ -56,7 +56,7 @@ pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::
 
 // import local pallets
 pub use pallet_faucet;
-pub use pallet_option_pool;
+pub use upfront_pool;
 pub use pallet_player;
 pub use pallet_pool;
 pub use pallet_staking_pool;
@@ -385,20 +385,19 @@ parameter_types! {
 	pub const MaxIngamePlayer: u32 = 10000;
 }
 
-impl pallet_option_pool::Config for Runtime {
+impl upfront_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
-	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
-	type StakingPool = StakingPool;
+	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = pallet_staking_pool::weights::SubstrateWeight<Runtime>;
-	type OptionPool = OptionPool;
+	type OptionPool = UpfrontPool;
 }
 
 parameter_types! {
@@ -415,9 +414,7 @@ impl proof_address_mapping::Config for Runtime {
 impl pallet_tx_handler::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type OptionPoolPlayer = OptionPool;
-	type StakingPool = StakingPool;
-	type PackServiceProvider = OptionPool;
+	type OptionPoolPlayer = UpfrontPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
 }
@@ -442,6 +439,8 @@ impl pallet_faucet::Config for Runtime {
 
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -466,7 +465,7 @@ construct_runtime!(
 
 		Player: pallet_player,
 		Pool: pallet_pool,
-		OptionPool: pallet_option_pool,
+		UpfrontPool: upfront_pool,
 		StakingPool: pallet_staking_pool,
 		TxHandler: pallet_tx_handler,
 		AddressMapping: proof_address_mapping,
@@ -865,14 +864,14 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_option_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as PoolBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use pallet_staking_pool::Pallet as StakingPoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_option_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, upfront_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_tx_handler, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_staking_pool, StakingPoolBench::<Runtime>);
 
@@ -887,7 +886,7 @@ impl_runtime_apis! {
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_option_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as PoolBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use pallet_staking_pool::Pallet as StakingPoolBench;
 
@@ -898,7 +897,7 @@ impl_runtime_apis! {
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_option_pool, PoolBench::<Runtime>);
+			add_benchmark!(params, batches, upfront_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_tx_handler, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_staking_pool, StakingPoolBench::<Runtime>);
 
