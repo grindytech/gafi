@@ -52,33 +52,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
-		#[pallet::constant]
-		type MaxNewPlayer: Get<u32>;
-		#[pallet::constant]
-		type MaxIngamePlayer: Get<u32>;
-	}
-
-	#[pallet::error]
-	pub enum Error<T> {
-		PlayerNotFound,
-		PlayerAlreadyJoin,
-		PlayerCountOverflow,
-		ExceedMaxPlayer,
-		ExceedMaxNewPlayer,
-		CanNotClearNewPlayers,
-		ExceedMaxIngamePlayer,
-		CanNotCalculateRefundFee,
-		AlreadyOnStakingPool,
-		IntoBalanceFail,
-		ServiceNotSupport,
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		Joined(T::AccountId),
-		Leaved(T::AccountId),
-		ChargePoolService,
 	}
 
 	/*
@@ -93,7 +66,6 @@ pub mod pallet {
 
 			if _now - Self::mark_time() >= Self::time_service().try_into().ok().unwrap() {
 				let _ = Self::charge_ingame();
-				let _ = Self::move_newplayer_to_ingame();
 				MarkTime::<T>::put(_now);
 				Self::deposit_event(<Event<T>>::ChargePoolService);
 			}
@@ -127,46 +99,30 @@ pub mod pallet {
 	pub(super) type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type NewPlayers<T: Config> =
-		StorageValue<_, BoundedVec<T::AccountId, T::MaxNewPlayer>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type IngamePlayers<T: Config> =
-		StorageValue<_, BoundedVec<T::AccountId, T::MaxIngamePlayer>, ValueQuery>;
-
-	#[pallet::type_value]
-	pub(super) fn DefaultService<T: Config>() -> Service {
-		Service { tx_limit: 4, discount: 60, value: 1000_000_000u128 }
-	}
-	#[pallet::storage]
-	#[pallet::getter(fn services)]
-	pub(super) type Services<T: Config> =
-		StorageMap<_, Twox64Concat, PackService, Service, ValueQuery, DefaultService<T>>;
-
-	#[pallet::storage]
 	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
+
+	#[pallet::storage]
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub max_player: u32,
-		pub services: [(PackService, u32, u8, u128); 3],
 		pub time_service: u128,
+		pub services: [(Level, Service); 3],
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			let base_fee: u128 = 75 * centi(GAKI); // 0.75 GAKI
 			Self {
 				max_player: 1000,
-				services: [
-					(PackService::Basic, 4, 60, (base_fee)),
-					(PackService::Medium, 8, 70, (base_fee * 2)),
-					(PackService::Max, u32::MAX, 80, (base_fee * 3)),
-				],
-
 				time_service: 3_600_000u128,
+				services: [
+					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
+					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
+					(Level::Max, Service::new(TicketType::Upfront(Level::Max))),
+				],
 			}
 		}
 	}
@@ -175,16 +131,31 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
-
-			for service in self.services.iter() {
-				let new_service =
-					Service { tx_limit: service.1, discount: service.2, value: service.3 };
-				<Services<T>>::insert(service.0, new_service);
-			}
-
 			<MarkTime<T>>::put(<timestamp::Pallet<T>>::get());
 			<TimeService<T>>::put(self.time_service);
+			for service in self.services {
+				Services::<T>::insert(service.0, service.1);
+			}
 		}
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		PlayerNotFound,
+		PlayerCountOverflow,
+		ExceedMaxPlayer,
+		ExceedMaxNewPlayer,
+		CanNotClearNewPlayers,
+		ExceedMaxIngamePlayer,
+		CanNotCalculateRefundFee,
+		IntoBalanceFail,
+		ServiceNotSupport,
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		ChargePoolService,
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
@@ -195,9 +166,6 @@ pub mod pallet {
 
 			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
 			{
-				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
-					.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
-
 				let service = Self::get_service(level);
 				let double_fee = Self::u128_try_to_balance(service.value * 2)?;
 				Self::change_fee(&sender, double_fee)?;
@@ -215,21 +183,6 @@ pub mod pallet {
 				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 				let refund_fee = Self::calculate_ingame_refund_amount(_now, join_time, level)?;
 
-				<NewPlayers<T>>::try_mutate(|players| {
-					if let Some(ind) = players.iter().position(|id| id == &sender) {
-						players.swap_remove(ind);
-					}
-					Ok(())
-				})
-				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-				<IngamePlayers<T>>::try_mutate(|players| {
-					if let Some(ind) = players.iter().position(|id| id == &sender) {
-						players.swap_remove(ind);
-					}
-					Ok(())
-				})
-				.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
-
 				let new_player_count =
 					Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 				Self::leave_pool(&sender, refund_fee, new_player_count);
@@ -238,10 +191,11 @@ pub mod pallet {
 		}
 
 		fn get_service(level: Level) -> Service {
+			let base_fee = 1000_000_000u128;
 			match level {
-				Level::Basic => todo!(),
-				Level::Medium => todo!(),
-				Level::Max => todo!(),
+				Level::Basic => Service { tx_limit: 4, discount: 30, value: base_fee },
+				Level::Medium => Service { tx_limit: 8, discount: 50, value: base_fee * 2 },
+				Level::Max => Service { tx_limit: u32::MIN, discount: 70, value: base_fee * 3 },
 			}
 		}
 	}
@@ -255,27 +209,7 @@ pub mod pallet {
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			// make sure new max_player not exceed the capacity of NewPlayers and IngamePlayers
-			ensure!(max_player <= T::MaxNewPlayer::get(), <Error<T>>::ExceedMaxNewPlayer);
-			ensure!(max_player <= T::MaxIngamePlayer::get(), <Error<T>>::ExceedMaxIngamePlayer);
 			<MaxPlayer<T>>::put(max_player);
-			Ok(())
-		}
-
-		/*
-			* Set new pack service
-			*/
-		#[pallet::weight(0)]
-		pub fn set_pack_service(
-			origin: OriginFor<T>,
-			pack: PackService,
-			tx_limit: u32,
-			discount: u8,
-			service: BalanceOf<T>,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-			let value = Self::balance_to_u128(service);
-			let pack_service = Service { tx_limit, discount, value: value.unwrap() };
-			Services::<T>::insert(pack, pack_service);
 			Ok(())
 		}
 	}
@@ -347,13 +281,6 @@ impl<T: Config> Pallet<T> {
 	 */
 	fn kick_ingame_player(player: &T::AccountId) -> Result<(), Error<T>> {
 		// <Players<T>>::remove(player);
-		<IngamePlayers<T>>::try_mutate(|players| {
-			if let Some(ind) = players.iter().position(|id| id == player) {
-				players.swap_remove(ind);
-			}
-			Ok(())
-		})
-		.map_err(|_: Error<T>| <Error<T>>::PlayerNotFound)?;
 
 		let new_player_count =
 			Self::player_count().checked_sub(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
@@ -362,27 +289,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn charge_ingame() -> Result<(), Error<T>> {
-		let ingame_players: Vec<T::AccountId> = IngamePlayers::<T>::get().into_inner();
-		for player in ingame_players {
-			if let Some(player_service) = Self::get_player_service(player.clone()) {
-				match Self::change_fee(&player, player_service) {
-					Ok(_) => {},
-					Err(_) => {
-						let _ = Self::kick_ingame_player(&player);
-					},
-				}
-			}
-		}
-		Ok(())
-	}
-
-	fn move_newplayer_to_ingame() -> Result<(), Error<T>> {
-		let new_players: Vec<T::AccountId> = NewPlayers::<T>::get().into_inner();
-		for new_player in new_players {
-			<IngamePlayers<T>>::try_append(new_player)
-				.map_err(|_| <Error<T>>::ExceedMaxNewPlayer)?;
-		}
-		<NewPlayers<T>>::kill();
+		// for player in ingame_players {
+		// 	if let Some(player_service) = Self::get_player_service(player.clone()) {
+		// 		match Self::change_fee(&player, player_service) {
+		// 			Ok(_) => {},
+		// 			Err(_) => {
+		// 				let _ = Self::kick_ingame_player(&player);
+		// 			},
+		// 		}
+		// 	}
+		// }
 		Ok(())
 	}
 
@@ -402,7 +318,6 @@ impl<T: Config> Pallet<T> {
 		}
 		None
 	}
-
 
 	pub fn block_to_u64(input: T::BlockNumber) -> Option<u64> {
 		TryInto::<u64>::try_into(input).ok()
@@ -427,7 +342,7 @@ impl<T: Config> Pallet<T> {
 	pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
 		match input.try_into().ok() {
 			Some(val) => Ok(val),
-			None => Err(<Error<T>>::IntoBalanceFail)
+			None => Err(<Error<T>>::IntoBalanceFail),
 		}
 	}
 
@@ -450,4 +365,3 @@ impl<T: Config> Pallet<T> {
 		return 0u64;
 	}
 }
-

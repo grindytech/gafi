@@ -41,7 +41,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
-		// type OptionPool: OptionPoolPlayer<Self::AccountId>;
 	}
 
 	pub type BalanceOf<T> =
@@ -90,19 +89,13 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		PlayerAlreadyStake,
 		PlayerNotStake,
 		StakeCountOverflow,
 		DiscountNotCorrect,
-		AlreadyOnOptionPool,
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
-			// make sure player no re-stake
-			ensure!(<Players::<T>>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyStake);
-			// make sure player not join another pool
-			// ensure!(T::OptionPool::get_option_pool_player(&sender) == None, <Error<T>>::AlreadyOnOptionPool);
 			let staking_amount = <StakingAmount<T>>::get();
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
