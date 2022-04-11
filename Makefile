@@ -50,7 +50,7 @@ benchmark_staking_pool:
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
-    --pallet pallet_staking_pool \
+    --pallet staking_pool \
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
@@ -63,12 +63,12 @@ benchmark_tx_handler:
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
-    --pallet pallet_tx_handler \
+    --pallet gafi-tx \
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
     --json-file=raw.json \
-    --output ./pallets/src/tx-handler/weights.rs
+    --output ./pallets/src/gafi-tx/weights.rs
 
 
 .PHONY: benchmark_template

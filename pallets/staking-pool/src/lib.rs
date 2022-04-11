@@ -6,9 +6,8 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
+	pool::{GafiPool, Level, Service},
 	staking_pool::{Player, StakingPool},
-	option_pool::OptionPoolPlayer,
-	pool::{GafiPool, Level},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -42,7 +41,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
 		type WeightInfo: WeightInfo;
-		type OptionPool: OptionPoolPlayer<Self::AccountId>;
+		// type OptionPool: OptionPoolPlayer<Self::AccountId>;
 	}
 
 	pub type BalanceOf<T> =
@@ -99,28 +98,11 @@ pub mod pallet {
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
-    fn join(sender: T::AccountId, level: Level) -> DispatchResult {
-        todo!()
-    }
-
-    fn leave(sender: T::AccountId, level: Level) -> DispatchResult {
-        todo!()
-    }
-
-    fn get_service(level: Level) -> gafi_primitives::pool::Service {
-        todo!()
-    }
-}
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::stake(100u32))]
-		pub fn stake(origin: OriginFor<T>) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
+		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
 			// make sure player no re-stake
 			ensure!(<Players::<T>>::get(sender.clone()) == None, <Error<T>>::PlayerAlreadyStake);
 			// make sure player not join another pool
-			ensure!(T::OptionPool::get_option_pool_player(&sender) == None, <Error<T>>::AlreadyOnOptionPool);
+			// ensure!(T::OptionPool::get_option_pool_player(&sender) == None, <Error<T>>::AlreadyOnOptionPool);
 			let staking_amount = <StakingAmount<T>>::get();
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
@@ -131,9 +113,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::unstake(100u32))]
-		pub fn unstake(origin: OriginFor<T>) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
+		fn leave(sender: T::AccountId) -> DispatchResult {
 			ensure!(<Players::<T>>::get(sender.clone()) != None, <Error<T>>::PlayerNotStake);
 			let staking_amount = <StakingAmount<T>>::get();
 			let new_player_count =
@@ -144,6 +124,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn get_service(level: Level) -> Service {
+			match level {
+				Level::Basic => Service { tx_limit: 4, discount: 30, value: 1000 },
+				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2000 },
+				Level::Max => Service { tx_limit: u32::MAX, discount: 70, value: 3000 },
+			}
+		}
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
 		pub fn set_discount(origin: OriginFor<T>, new_discount: u8) -> DispatchResult {
 			ensure_root(origin)?;

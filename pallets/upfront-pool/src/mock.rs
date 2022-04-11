@@ -5,7 +5,7 @@
 
 use crate::{self as upfront_pool};
 use gafi_primitives::{option_pool::PackService};
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
 use frame_support::{
@@ -36,16 +36,16 @@ pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
 	(AccountId32::new([9u8; 32]), 1000000000000000000),
 ];
 
-const POOL_FEE: u64 = 10000000000000000;
+const POOL_FEE: u128 = 10000000000000000;
 pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
 pub const TIME_SERVICE: u128 =  60_000u128; // 10 second
 
-pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
+pub const SERVICES: [(PackService, u32, u8, u128); 3] = [
 	(PackService::Basic, 4, 60, POOL_FEE),
 	(PackService::Medium, 8, 70, POOL_FEE * 2),
-	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
+	(PackService::Max, u32::MAX, 80, POOL_FEE * 3),
 ];
 
 // Configure a mock runtime to test the pallet.
@@ -57,7 +57,6 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		PalletPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		PalletStakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
@@ -144,16 +143,7 @@ impl upfront_pool::Config for Test {
 	type MaxNewPlayer = MaxNewPlayer;
 	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = ();
-	type StakingPool = PalletStakingPool;
 }
-
-impl pallet_staking_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type OptionPool = PalletPool;
-}
-
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -176,7 +166,7 @@ pub fn run_to_block(n: u64) {
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u64)>,
 	max_player: u32,
-	services: [(PackService, u8, u8, u64); 3],
+	services: [(PackService, u32, u8, u128); 3],
 	time_service: u128,
 }
 
@@ -198,12 +188,13 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let _ = upfront_pool::GenesisConfig::<Test> {
+		let upfront = upfront_pool::GenesisConfig {
 			max_player: self.max_player,
 			services: self.services,
 			time_service: self.time_service,
-		}
-		.assimilate_storage(&mut storage);
+		};
+
+		// upfront.assimilate_storage(&mut storage).unwrap();
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

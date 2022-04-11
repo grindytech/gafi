@@ -3,7 +3,7 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 use crate::{mock::*, Config, Error};
-use crate::{IngamePlayers, NewPlayers, PlayerCount, Players};
+use crate::{IngamePlayers, NewPlayers, PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::option_pool::PackService;
@@ -49,23 +49,23 @@ fn player_join_pool_should_fail() {
 	})
 }
 
-#[test]
-fn player_join_another_pool_should_fail() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
-		let sender =
-			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
+// #[test]
+// fn player_join_another_pool_should_fail() {
+// 	ExtBuilder::default().build_and_execute(|| {
+// 		run_to_block(10);
+// 		let sender =
+// 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
-		let _ = <Test as Config>::Currency::deposit_creating(&sender, u64::MAX);
+// 		let _ = <Test as Config>::Currency::deposit_creating(&sender, u64::MAX);
 
-		assert_ok!(PalletStakingPool::stake(Origin::signed(sender.clone())));
-		// rejoin
-		assert_err!(
-			PalletPool::join(Origin::signed(sender.clone()), PackService::Basic),
-			<Error<Test>>::AlreadyOnStakingPool
-		);
-	})
-}
+// 		assert_ok!(PalletStakingPool::stake(Origin::signed(sender.clone())));
+// 		// rejoin
+// 		assert_err!(
+// 			PalletPool::join(Origin::signed(sender.clone()), PackService::Basic),
+// 			<Error<Test>>::AlreadyOnStakingPool
+// 		);
+// 	})
+// }
 
 #[test]
 fn set_max_player_should_works() {

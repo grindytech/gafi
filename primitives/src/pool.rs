@@ -38,8 +38,15 @@ pub struct Service {
 	pub value: u128,
 }
 
+
 pub trait GafiPool<AccountId> {
 	fn join(sender: AccountId, level: Level) -> DispatchResult;
-	fn leave(sender: AccountId, level: Level) -> DispatchResult;
+	fn leave(sender: AccountId) -> DispatchResult;
 	fn get_service(level: Level) -> Service;
 }
+
+pub trait PlayerTicket<AccountId> {
+	fn get_player_ticket(player: AccountId) -> Option<Ticket<AccountId>>;
+	fn get_ticket(ticket: TicketType) -> Service;
+}
+

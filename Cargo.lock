@@ -1173,6 +1173,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "gafi-primitives",
+ "gafi-tx",
  "hex-literal 0.3.4",
  "pallet-aura",
  "pallet-balances",
@@ -1188,13 +1189,11 @@ dependencies = [
  "pallet-player",
  "pallet-pool",
  "pallet-randomness-collective-flip",
- "pallet-staking-pool",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "pallet-tx-handler",
  "parity-scale-codec 2.3.1",
  "proof-address-mapping",
  "scale-info",
@@ -1209,6 +1208,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "staking-pool",
  "substrate-wasm-builder",
  "upfront-pool",
 ]
@@ -2246,6 +2246,36 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "gafi-tx"
+version = "4.0.0-dev"
+dependencies = [
+ "fp-self-contained",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "hex-literal 0.2.2",
+ "hex-literal 0.3.4",
+ "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec 2.3.1",
+ "parity-scale-codec 3.1.2",
+ "parity-secp256k1",
+ "proof-address-mapping",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "staking-pool",
+ "upfront-pool",
+ "utils",
 ]
 
 [[package]]
@@ -4502,27 +4532,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-staking-pool"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "log",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "upfront-pool",
-]
-
-[[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/substrate?branch=aur-dot#4bc2af13cd81007a2a340d0333062179420d5daf"
@@ -4611,36 +4620,6 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-api",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-tx-handler"
-version = "4.0.0-dev"
-dependencies = [
- "fp-self-contained",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "hex-literal 0.2.2",
- "hex-literal 0.3.4",
- "pallet-balances",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-staking-pool",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "parity-scale-codec 2.3.1",
- "parity-scale-codec 3.1.2",
- "parity-secp256k1",
- "proof-address-mapping",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "upfront-pool",
- "utils",
 ]
 
 [[package]]
@@ -7658,6 +7637,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "staking-pool"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "log",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "upfront-pool",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7849,15 +7849,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gafi-tx",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-staking-pool",
  "pallet-timestamp",
  "pallet-transaction-payment",
- "pallet-tx-handler",
  "parity-scale-codec 2.3.1",
  "parity-scale-codec 3.1.2",
  "parity-secp256k1",
@@ -7868,6 +7867,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "staking-pool",
  "upfront-pool",
  "utils",
 ]
@@ -8341,7 +8341,6 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-randomness-collective-flip",
- "pallet-staking-pool",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -8350,6 +8349,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "staking-pool",
 ]
 
 [[package]]

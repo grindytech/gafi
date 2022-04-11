@@ -66,9 +66,9 @@ gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 upfront-pool =  {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
-pallet-tx-handler = {version = "4.0.0-dev", default-features = false, path = "../../pallets/tx-handler"}
+gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
 proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
-pallet-staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
+staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
 pallet-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pool" }
 
@@ -95,8 +95,8 @@ runtime-benchmarks = [
   "sp-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
   "upfront-pool/runtime-benchmarks",
-  "pallet-staking-pool/runtime-benchmarks",
-  "pallet-tx-handler/runtime-benchmarks",
+  "staking-pool/runtime-benchmarks",
+  "gafi-tx/runtime-benchmarks",
   "proof-address-mapping/runtime-benchmarks",
 ]
 std = [
@@ -135,8 +135,8 @@ std = [
   "pallet-evm-precompile-simple/std",
   "pallet-evm-precompile-sha3fips/std",
   "upfront-pool/std",
-  "pallet-staking-pool/std",
-  "pallet-tx-handler/std",
+  "staking-pool/std",
+  "gafi-tx/std",
   "gafi-primitives/std",
   "proof-address-mapping/std",
   "pallet-faucet/std",

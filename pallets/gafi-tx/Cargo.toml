@@ -4,7 +4,7 @@ description = "FRAME pallet template for defining custom runtime logic."
 edition = "2021"
 homepage = "https://substrate.io/"
 license = "Unlicense"
-name = "pallet-tx-handler"
+name = "gafi-tx"
 publish = false
 repository = "https://github.com/cryptoviet/gafi"
 version = "4.0.0-dev"
@@ -50,7 +50,7 @@ parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https:
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 proof-address-mapping = {default-feature = false, version = "4.0.0-dev", path = "../address-mapping"}
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
-pallet-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
+staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 
 [features]
 default = ["std"]
