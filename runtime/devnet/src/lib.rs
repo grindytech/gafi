@@ -389,8 +389,6 @@ parameter_types! {
 impl upfront_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type MaxNewPlayer = MaxNewPlayer;
-	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
 }
 
