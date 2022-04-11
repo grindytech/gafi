@@ -2,70 +2,42 @@
 * This unittest should only test logic function e.g. Storage, Computation
 * and not related with Currency e.g. Balances, Transaction Payment
 */
-use crate::{mock::*, Config, Error};
-use crate::{IngamePlayers, NewPlayers, PlayerCount, Tickets};
+use crate::{mock::*, Error};
+use crate::{ PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::option_pool::PackService;
+use gafi_primitives::pool::{GafiPool, Level};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
+
+fn make_deposit(account: &AccountId32, balance: u128) {
+	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
+}
+
+fn new_account(balance: u128) -> AccountId32 {
+	let ALICE: AccountId32 = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+	make_deposit(&ALICE, balance);
+	assert_eq!(Balances::free_balance(&ALICE), balance);
+	return ALICE;
+}
 
 #[test]
 fn player_join_pool_should_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		for account in TEST_ACCOUNTS {
-			let count_before = PlayerCount::<Test>::get();
-			assert_ok!(PalletPool::join(Origin::signed(account.0.clone()), PackService::Basic));
-			let new_players = NewPlayers::<Test>::get();
-			assert_eq!(
-				new_players.contains(&account.0.clone()),
-				true,
-				"NewPlayers must contains new player"
-			);
+		let count_before = PlayerCount::<Test>::get();
+		let alice = new_account(1_000_000 * unit(GAKI));
+		assert_ok!(PalletPool::join(alice.clone(), Level::Basic));
 
-			let player = Players::<Test>::get(account.0.clone());
-			assert_eq!(player == None, false, "new player should be added to Players");
+		let player = Tickets::<Test>::get(alice);
+		assert_ne!(player, None);
 
-			let count_after = PlayerCount::<Test>::get();
-			assert_eq!(count_before, count_after - 1, "player count not correct");
-		}
+		let count_after = PlayerCount::<Test>::get();
+		assert_eq!(count_before, count_after - 1);
 	});
 }
 
-#[test]
-fn player_join_pool_should_fail() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
-		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
-		));
-		// rejoin
-		assert_err!(
-			(PalletPool::join(Origin::signed(TEST_ACCOUNTS[0].0.clone()), PackService::Basic)),
-			<Error<Test>>::PlayerAlreadyJoin
-		);
-	})
-}
 
-// #[test]
-// fn player_join_another_pool_should_fail() {
-// 	ExtBuilder::default().build_and_execute(|| {
-// 		run_to_block(10);
-// 		let sender =
-// 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
-
-// 		let _ = <Test as Config>::Currency::deposit_creating(&sender, u64::MAX);
-
-// 		assert_ok!(PalletStakingPool::stake(Origin::signed(sender.clone())));
-// 		// rejoin
-// 		assert_err!(
-// 			PalletPool::join(Origin::signed(sender.clone()), PackService::Basic),
-// 			<Error<Test>>::AlreadyOnStakingPool
-// 		);
-// 	})
-// }
 
 #[test]
 fn set_max_player_should_works() {
@@ -79,14 +51,14 @@ fn set_max_player_should_works() {
 
 		{
 			run_to_block(10);
-			let max_player = MAX_INGAME_PLAYER;
+			let max_player = MAX_PLAYER;
 			assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
 			assert_eq!(PalletPool::max_player(), max_player, "max_player after set not correct");
 		}
 
 		{
 			run_to_block(20);
-			let max_player = MAX_NEW_PLAYER;
+			let max_player = MAX_PLAYER;
 			assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
 			assert_eq!(PalletPool::max_player(), max_player, "max_player after set not correct");
 		}
@@ -99,59 +71,11 @@ fn set_max_player_should_fail() {
 		// bad origin
 		{
 			run_to_block(10);
-			let max_player = MAX_NEW_PLAYER + 1;
+			let max_player = MAX_PLAYER + 1;
 			assert_err!(
-				PalletPool::set_max_player(Origin::signed(TEST_ACCOUNTS[0].0.clone()), max_player),
+				PalletPool::set_max_player(Origin::signed(AccountId32::new([0; 32])), max_player),
 				frame_support::error::BadOrigin
 			);
-		}
-
-		// incorrect max_player value
-		{
-			run_to_block(10);
-			let max_player = MAX_NEW_PLAYER + 1;
-			assert_err!(
-				PalletPool::set_max_player(Origin::root(), max_player),
-				<Error<Test>>::ExceedMaxNewPlayer
-			);
-		}
-	})
-}
-
-#[test]
-fn set_pack_service_should_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-		for service in SERVICES {
-			assert_ok!(PalletPool::set_pack_service(
-				Origin::root(),
-				service.0,
-				service.1,
-				service.2,
-				service.3
-			));
-		}
-	})
-}
-
-#[test]
-fn set_pack_service_should_fail() {
-	ExtBuilder::default().build_and_execute(|| {
-		// bad origin
-		{
-			run_to_block(1);
-			for service in SERVICES {
-				assert_err!(
-					PalletPool::set_pack_service(
-						Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-						service.0,
-						service.1,
-						service.2,
-						service.3
-					),
-					frame_support::error::BadOrigin
-				);
-			}
 		}
 	})
 }
@@ -160,125 +84,45 @@ fn set_pack_service_should_fail() {
 fn should_restrict_max_player() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
-		let max_player = 5u32;
+		let max_player = 1000u32;
 		assert_ok!(PalletPool::set_max_player(Origin::root(), max_player));
+		
+		let accounts = || -> Vec<AccountId32> {
+			let mut account_vec = Vec::new();
+			for i in 0 .. max_player {
+				let new_account = AccountId32::new([i as u8; 32]);
+				make_deposit(&new_account, 1_000_000 * unit(GAKI));
+				account_vec.push(new_account);
+			}
+			account_vec
+		};
+		
 		let mut count = 0;
-		for account in TEST_ACCOUNTS {
+		for account in accounts() {
 			if count == max_player {
 				assert_err!(
-					PalletPool::join(Origin::signed(account.0.clone()), PackService::Basic),
+					PalletPool::join(account, Level::Basic),
 					<Error<Test>>::ExceedMaxPlayer
 				);
 			} else {
-				assert_ok!(PalletPool::join(Origin::signed(account.0.clone()), PackService::Basic));
+				assert_ok!(PalletPool::join(account, Level::Basic));
 				count = count + 1;
 			}
 		}
 	})
 }
 
-#[test]
-fn should_move_newplayers_to_ingame() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
-		));
-
-		{
-			let new_players_before = NewPlayers::<Test>::get();
-			let ingame_players_before = IngamePlayers::<Test>::get();
-			assert_eq!(new_players_before.len(), 1, "new_players_before length not correct");
-			assert_eq!(ingame_players_before.len(), 0, "ingame_players_before length not correct");
-		}
-
-		run_to_block(10);
-		{
-			let new_players_after = NewPlayers::<Test>::get();
-			let ingame_players_after = IngamePlayers::<Test>::get();
-			assert_eq!(ingame_players_after.len(), 1, "ingame_players_after length not correct");
-			assert_eq!(new_players_after.len(), 0, "new_players_after length not correct");
-		}
-	})
-}
 
 #[test]
 fn new_player_leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
+		let alice = new_account(1_000_000 * unit(GAKI));
 		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
+			alice.clone(),
+			Level::Basic
 		));
 		run_to_block(2);
-		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
-		assert_eq!(
-			Players::<Test>::get(TEST_ACCOUNTS[0].0.clone()),
-			None,
-			"player must not found in Players when leaved"
-		);
-		let new_players = NewPlayers::<Test>::get();
-		assert_eq!(
-			new_players.contains(&TEST_ACCOUNTS[0].0.clone()),
-			false,
-			"player must not found in NewPlayers when leaved"
-		);
-
-		let ingame_players = IngamePlayers::<Test>::get();
-		assert_eq!(
-			ingame_players.contains(&TEST_ACCOUNTS[0].0.clone()),
-			false,
-			"player must not found in IngamePlayers when leaved",
-		)
-	})
-}
-
-#[test]
-fn ingame_player_leave_pool_should_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
-		));
-		run_to_block(100);
-		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
-		assert_eq!(
-			Players::<Test>::get(TEST_ACCOUNTS[0].0.clone()),
-			None,
-			"player must not found in Players when leaved"
-		);
-		let new_players = NewPlayers::<Test>::get();
-		assert_eq!(
-			new_players.contains(&TEST_ACCOUNTS[0].0.clone()),
-			false,
-			"player must not found in NewPlayers when leaved"
-		);
-
-		let ingame_players = IngamePlayers::<Test>::get();
-		assert_eq!(
-			ingame_players.contains(&TEST_ACCOUNTS[0].0.clone()),
-			false,
-			"player must not found in IngamePlayers when leaved",
-		)
-	})
-}
-
-#[test]
-fn leave_pool_should_fail() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
-		assert_ok!(PalletPool::join(
-			Origin::signed(TEST_ACCOUNTS[0].0.clone()),
-			PackService::Basic
-		));
-		run_to_block(15);
-		assert_ok!(PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())));
-		run_to_block(20);
-		assert_err!(
-			PalletPool::leave(Origin::signed(TEST_ACCOUNTS[0].0.clone())),
-			<Error<Test>>::PlayerNotFound
-		);
+		assert_ok!(PalletPool::leave(alice));
 	})
 }

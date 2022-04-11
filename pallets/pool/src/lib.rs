@@ -32,32 +32,63 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type Tickets<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
+	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketType>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		Joined { sender: T::AccountId, ticket: TicketType },
+		Leaved { sender: T::AccountId, ticket: TicketType },
+	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		AlreadyJoined,
+		NotFoundInPool,
+		ComingSoon,
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[pallet::weight(1_000)]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			ensure!(Tickets::<T>::get(sender.clone()) == None, <Error<T>>::AlreadyJoined);
+
 			match ticket {
-				TicketType::Upfront(level) => T::UpfrontPool::join(sender, level)?,
-				TicketType::Staking(level) => T::StakingPool::join(sender, level)?,
-				TicketType::Sponsored(_) => (),
+				TicketType::Upfront(level) => T::UpfrontPool::join(sender.clone(), level)?,
+				TicketType::Staking(level) => T::StakingPool::join(sender.clone(), level)?,
+				TicketType::Sponsored(_) => {
+					return Err(Error::<T>::ComingSoon.into());
+				},
 			}
+
+			Tickets::<T>::insert(sender.clone(), ticket);
+			Self::deposit_event(Event::<T>::Joined { sender, ticket });
 			Ok(())
+		}
+
+		#[pallet::weight(1_000)]
+		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
+				match ticket {
+					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
+					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
+					TicketType::Sponsored(_) => {
+						return Err(Error::<T>::ComingSoon.into());
+					},
+				}
+				Self::deposit_event(Event::<T>::Leaved { sender: sender, ticket: ticket});
+				Ok(())
+			} else {
+				return Err(Error::<T>::NotFoundInPool.into());
+			}
 		}
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
-		fn get_player_ticket(player: T::AccountId) -> Option<Ticket<T::AccountId>> {
+		fn get_player_ticket(player: T::AccountId) -> Option<TicketType> {
 			Tickets::<T>::get(player)
 		}
 

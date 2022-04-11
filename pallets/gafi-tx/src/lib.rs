@@ -93,7 +93,7 @@ where
 		let mut service_fee = corrected_fee;
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		if let Some(ticket) = T::PlayerTicket::get_player_ticket(account_id) {
-			let service = T::PlayerTicket::get_ticket(ticket.ticket_type);
+			let service = T::PlayerTicket::get_ticket(ticket);
 			service_fee = service_fee - (service_fee * service.discount / 100);
 		}
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
