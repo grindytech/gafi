@@ -6,7 +6,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	pool::{GafiPool, Level, Service},
+	pool::{GafiPool, Level, Service, Ticket, TicketType},
 	staking_pool::{Player, StakingPool},
 };
 pub use pallet::*;
@@ -47,39 +47,40 @@ pub mod pallet {
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	#[pallet::storage]
-	pub type Players<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Player<T::AccountId>>;
+	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
 	pub type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
-	pub type StakingAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type Discount<T: Config> = StorageValue<_, u8, ValueQuery>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub staking_amount: BalanceOf<T>,
-		pub staking_discount: u8,
+	pub struct GenesisConfig {
+		pub services: [(Level, Service); 3],
 	}
 
 	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
+	impl Default for GenesisConfig {
 		fn default() -> Self {
-			let staking_amount: u128 = 1000 * unit(GAKI);
-			let into_balance = |fee: u128| -> BalanceOf<T> { fee.try_into().ok().unwrap() };
-			Self { staking_amount: into_balance(staking_amount), staking_discount: 50 }
+			Self {
+				services: [
+					(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
+					(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
+					(Level::Max, Service::new(TicketType::Staking(Level::Max))),
+				],
+			}
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<StakingAmount<T>>::put(self.staking_amount);
-			<Discount<T>>::put(self.staking_discount);
+			for service in self.services {
+				Services::<T>::insert(service.0, service.1);
+			}
 		}
 	}
 
@@ -92,88 +93,80 @@ pub mod pallet {
 		PlayerNotStake,
 		StakeCountOverflow,
 		DiscountNotCorrect,
+		IntoBalanceFail,
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
-			let staking_amount = <StakingAmount<T>>::get();
+			let service = Services::<T>::get(level);
+			let staking_amount = Self::u128_try_to_balance(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			Self::stake_pool(sender, new_player_count);
+			Self::stake_pool(sender, new_player_count, level);
 			Ok(())
 		}
 
 		fn leave(sender: T::AccountId) -> DispatchResult {
-			ensure!(<Players::<T>>::get(sender.clone()) != None, <Error<T>>::PlayerNotStake);
-			let staking_amount = <StakingAmount<T>>::get();
-			let new_player_count =
-				Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
-
-			<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
-			Self::unstake_pool(sender, new_player_count);
-			Ok(())
+			if let Some(player_level) = Self::get_player_level(sender.clone()) {
+				let new_player_count =
+					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
+				let service = Services::<T>::get(player_level);
+				let staking_amount = Self::u128_try_to_balance(service.value)?;
+				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
+				Self::unstake_pool(sender, new_player_count);
+				Ok(())
+			} else {
+				Err(Error::<T>::PlayerNotStake.into())
+			}
 		}
 
 		fn get_service(level: Level) -> Service {
-			match level {
-				Level::Basic => Service { tx_limit: 4, discount: 30, value: 1000 },
-				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2000 },
-				Level::Max => Service { tx_limit: u32::MAX, discount: 70, value: 3000 },
-			}
-		}
-	}
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
-		pub fn set_discount(origin: OriginFor<T>, new_discount: u8) -> DispatchResult {
-			ensure_root(origin)?;
-			ensure!(new_discount <= 100, <Error<T>>::DiscountNotCorrect);
-			<Discount<T>>::put(new_discount);
-			Ok(())
+			Services::<T>::get(level)
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn stake_pool(sender: T::AccountId, new_player_count: u32) {
+		fn stake_pool(sender: T::AccountId, new_player_count: u32, level: Level) {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-
-			let player = Player { address: sender.clone(), join_time: _now };
 			<PlayerCount<T>>::put(new_player_count);
-			<Players<T>>::insert(sender, player);
+			let ticket = Ticket {
+				address: sender.clone(),
+				join_time: _now,
+				ticket_type: TicketType::Staking(level),
+			};
+			Tickets::<T>::insert(sender, ticket);
 		}
 
 		fn unstake_pool(sender: T::AccountId, new_player_count: u32) {
 			<PlayerCount<T>>::put(new_player_count);
-			<Players<T>>::remove(sender);
+			Tickets::<T>::remove(sender);
 		}
 
 		pub fn moment_to_u128(input: T::Moment) -> u128 {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
-	}
 
-	impl<T: Config> StakingPool<T::AccountId> for Pallet<T> {
-		fn is_staking_pool(player: &T::AccountId) -> Option<Player<T::AccountId>> {
-			Players::<T>::get(player)
+		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
+			match input.try_into().ok() {
+				Some(val) => Ok(val),
+				None => Err(<Error<T>>::IntoBalanceFail),
+			}
 		}
 
-		fn staking_pool_discount() -> u8 {
-			Discount::<T>::get()
+		fn get_player_level(player: T::AccountId) -> Option<Level> {
+			match Tickets::<T>::get(player) {
+				Some(ticket) => {
+					if let TicketType::Staking(level) = ticket.ticket_type {
+						Some(level)
+					} else {
+						None
+					}
+				},
+				None => None,
+			}
 		}
-	}
-}
-
-#[cfg(feature = "std")]
-impl<T: Config> GenesisConfig<T> {
-	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
-	}
-
-	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
 	}
 }

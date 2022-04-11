@@ -311,14 +311,6 @@ impl<T: Config> Pallet<T> {
 		None
 	}
 
-	fn get_player_service(player: T::AccountId) -> Option<BalanceOf<T>> {
-		if let Some(level) = Self::into_level(player) {
-			let service = Self::get_service(level);
-			return Self::u128_to_balance(service.value);
-		}
-		None
-	}
-
 	pub fn block_to_u64(input: T::BlockNumber) -> Option<u64> {
 		TryInto::<u64>::try_into(input).ok()
 	}
