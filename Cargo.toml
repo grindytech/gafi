@@ -8,7 +8,7 @@ members = [
   'pallets/upfront-pool',
   'pallets/pool',
   'pallets/staking-pool',
-  'pallets/tx-handler',
+  'pallets/gafi-tx',
   'pallets/address-mapping',
   'pallets/pallet-faucet',
   'tests',

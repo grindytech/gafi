@@ -1,6 +1,6 @@
 use std::{str::FromStr, collections::BTreeMap};
 
-use crate::{self as pallet_tx_handler, GafiEVMCurrencyAdapter};
+use crate::{self as gafi_tx, GafiEVMCurrencyAdapter};
 use frame_support::{parameter_types};
 use frame_system as system;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated };
@@ -34,7 +34,7 @@ pub const SERVICES: [(PackService, u8, u8, u64); 3] = [
 	(PackService::Max, u8::MAX, 80, POOL_FEE * 3),
 ];
 
-pub const PREFIX: &[u8] = b"Bond Aurora Network account:";
+pub const PREFIX: &[u8] = b"Bond Gafi Network account:";
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -47,8 +47,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		OptionPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
-		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>},
+		PalletTxHandler: gafi-tx::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
@@ -116,7 +116,7 @@ impl upfront_pool::Config for Test {
 	type StakingPool = StakingPool;
 }
 
-impl pallet_staking_pool::Config for Test {
+impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
@@ -190,7 +190,7 @@ impl system::Config for Test {
 }
 
 
-impl pallet_tx_handler::Config for Test {
+impl gafi_tx::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type OptionPoolPlayer = OptionPool;

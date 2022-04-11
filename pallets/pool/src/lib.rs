@@ -2,7 +2,7 @@
 
 pub use pallet::*;
 
-use gafi_primitives::pool::{GafiPool, Ticket, TicketType};
+use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, Ticket, TicketType};
 
 // #[cfg(test)]
 // mod mock;
@@ -53,6 +53,20 @@ pub mod pallet {
 				TicketType::Sponsored(_) => (),
 			}
 			Ok(())
+		}
+	}
+
+	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
+		fn get_player_ticket(player: T::AccountId) -> Option<Ticket<T::AccountId>> {
+			Tickets::<T>::get(player)
+		}
+
+		fn get_ticket(ticket: TicketType) -> Service {
+			match ticket {
+				TicketType::Upfront(level) => T::UpfrontPool::get_service(level),
+				TicketType::Staking(level) => T::StakingPool::get_service(level),
+				TicketType::Sponsored(_) => todo!(),
+			}
 		}
 	}
 }

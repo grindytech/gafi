@@ -3,7 +3,7 @@ use gafi_primitives::{currency::{NativeToken::GAKI, unit}};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use gafi_primitives::option_pool::PackService;
-use pallet_tx_handler::Config;
+use gafi-tx::Config;
 use rand::prelude::*;
 use sp_core::H160;
 use sp_runtime::AccountId32;

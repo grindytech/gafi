@@ -1,4 +1,4 @@
-use crate as pallet_staking_pool;
+use crate as staking_pool;
 use frame_support::{traits::{ConstU16, ConstU64, Hooks, GenesisBuild}, parameter_types};
 use frame_system as system;
 use gafi_primitives::option_pool::PackService;
@@ -22,7 +22,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -68,7 +68,7 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_staking_pool::Config for Test {
+impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
@@ -147,7 +147,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: [].to_vec() }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_staking_pool::GenesisConfig::<Test> {
+		let _ = staking_pool::GenesisConfig::<Test> {
 			staking_amount: self.staking_amount,
 			staking_discount: 50u8,
 		}.assimilate_storage(&mut storage);
