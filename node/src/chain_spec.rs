@@ -5,7 +5,7 @@ use devnet::{
 	AddressMappingConfig, FaucetConfig,
 	WASM_BINARY,
 };
-use gafi_primitives::{option_pool::PackService, pool::{Level, Service, TicketType}};
+use gafi_primitives::{pool::{Level, Service, TicketType}};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};

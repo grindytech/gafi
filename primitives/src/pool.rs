@@ -72,3 +72,7 @@ pub trait PlayerTicket<AccountId> {
 	fn get_player_ticket(player: AccountId) -> Option<TicketType>;
 	fn get_ticket(ticket: TicketType) -> Service;
 }
+
+pub trait MasterPool<AccountId> {
+	fn remove_player(player: &AccountId);
+}

@@ -2,7 +2,7 @@
 
 pub use pallet::*;
 
-use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, Ticket, TicketType};
+use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, MasterPool, TicketType};
 
 // #[cfg(test)]
 // mod mock;
@@ -79,6 +79,7 @@ pub mod pallet {
 						return Err(Error::<T>::ComingSoon.into());
 					},
 				}
+				Tickets::<T>::remove(sender.clone());
 				Self::deposit_event(Event::<T>::Leaved { sender: sender, ticket: ticket});
 				Ok(())
 			} else {
@@ -98,6 +99,12 @@ pub mod pallet {
 				TicketType::Staking(level) => T::StakingPool::get_service(level),
 				TicketType::Sponsored(_) => todo!(),
 			}
+		}
+	}
+
+	impl<T: Config> MasterPool<T::AccountId> for Pallet<T> {
+		fn remove_player(player: &T::AccountId) {
+			Tickets::<T>::remove(&player);
 		}
 	}
 }
