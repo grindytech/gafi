@@ -7,7 +7,6 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	pool::{GafiPool, Level, Service, Ticket, TicketType},
-	staking_pool::{Player, StakingPool},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};

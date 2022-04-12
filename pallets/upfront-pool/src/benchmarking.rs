@@ -1,7 +1,6 @@
 //! Benchmarking setup for upfront-pool
 
 use super::*;
-use gafi_primitives::option_pool::PackService;
 #[allow(unused)]
 use crate::Pallet as Pool;
 use crate::{Call, Config};

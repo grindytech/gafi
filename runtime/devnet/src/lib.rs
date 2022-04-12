@@ -382,14 +382,15 @@ impl pallet_player::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxNewPlayer: u32 = 10000;
-	pub const MaxIngamePlayer: u32 = 10000;
+	pub const MaxPlayerStorage: u32 = 10000;
 }
 
 impl upfront_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
+	type MaxPlayerStorage = MaxPlayerStorage;
+	type MasterPool = Pool;
 }
 
 impl staking_pool::Config for Runtime {

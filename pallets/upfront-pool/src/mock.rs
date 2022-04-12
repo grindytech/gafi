@@ -4,7 +4,6 @@
 */
 
 use crate::{self as upfront_pool};
-use gafi_primitives::{option_pool::PackService};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -24,6 +23,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const MAX_PLAYER: u32 = 1000;
+pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -33,15 +33,14 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		PalletPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
+		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		// Event: Event,
 	}
 );
-
-impl pallet_randomness_collective_flip::Config for Test {}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -109,7 +108,25 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl pallet_pool::Config for Test {
+	type Event = Event;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+}
+
+parameter_types! {
+	pub MaxPlayerStorage: u32 = 1000;
+}
+
 impl upfront_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type MaxPlayerStorage = MaxPlayerStorage;
+	type MasterPool = Pool;
+}
+
+impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
@@ -123,12 +140,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
-			PalletPool::on_finalize(System::block_number());
+			UpfrontPool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		PalletPool::on_initialize(System::block_number());
+		UpfrontPool::on_initialize(System::block_number());
 		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
 	}
 }

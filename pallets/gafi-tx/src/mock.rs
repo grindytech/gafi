@@ -4,7 +4,6 @@ use crate::{self as gafi_tx, GafiEVMCurrencyAdapter};
 use frame_support::{parameter_types};
 use frame_system as system;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated };
-use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use proof_address_mapping::{ProofAddressMapping};
 

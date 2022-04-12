@@ -30,7 +30,6 @@ sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://gi
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
@@ -41,6 +40,7 @@ sp-core = {default-features = false, version = "5.0.0-dev", git = "https://githu
 sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
+pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
 
 [features]
 default = ["std"]
@@ -56,7 +56,6 @@ std = [
   "frame-system/std",
   "frame-benchmarking/std",
   "pallet-balances/std",
-  "pallet-randomness-collective-flip/std",
   "pallet-timestamp/std",
   "gafi-primitives/std",
 ]

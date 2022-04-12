@@ -5,10 +5,9 @@ use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::I
 use frame_system as system;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
-use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
-use gafi-tx::{GafiEVMCurrencyAdapter};
+use gafi_tx::{GafiEVMCurrencyAdapter};
 use proof_address_mapping::{ProofAddressMapping};
 
 use frame_support::{
