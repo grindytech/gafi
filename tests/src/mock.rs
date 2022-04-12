@@ -111,6 +111,7 @@ pub const MAX_INGAME_PLAYER: u32 = 20;
 
 impl pallet_pool::Config for Test {
 	type Event = Event;
+	type WeightInfo = ();
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;

@@ -17,7 +17,7 @@
 
 # ignore weights
 raw.json
-pallets/src/
+pallets/benchmarks/
 
 # nodejs ignore
 node_modules

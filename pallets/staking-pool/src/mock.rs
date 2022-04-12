@@ -112,6 +112,7 @@ impl system::Config for Test {
 impl pallet_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
+	type WeightInfo = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }
