@@ -1,3 +1,22 @@
+
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 use crate::weights::WeightInfo;
 use frame_support::{
@@ -11,7 +30,6 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::{GafiPool, Level, Service};
 use gafi_primitives::{
-	currency::{centi, NativeToken::GAKI},
 	pool::{Ticket, TicketType, MasterPool},
 };
 pub use pallet::*;
@@ -44,21 +62,29 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
 	pub trait Config: frame_system::Config + timestamp::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
+		
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// Synchronization remove_player by call remove_player on Master Pool
 		type MasterPool: MasterPool<Self::AccountId>;
 
+		/// Max number of player can join the Upfront Pool
 		#[pallet::constant]
 		type MaxPlayerStorage: Get<u32>;
 	}
 
-	/*
-		1. Charge player in the IngamePlayers
-			1.1 Kick player when they can't pay
-		2. Move all players from NewPlayer to IngamePlayers
-	*/
+	/// on_finalize following by steps:
+	/// 1. Check if current timestamp is the correct time to charge service fee 
+	///	2. Charge player in the IngamePlayers - Kick player when they can't pay
+	///	3. Move all players from NewPlayer to IngamePlayers
+	/// 4. Update new Marktime
+	///
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
@@ -74,10 +100,14 @@ pub mod pallet {
 	}
 
 	//** Storage **//
+
+	/// Holding the number of Max Player can join the Upfront Pool
 	#[pallet::storage]
 	#[pallet::getter(fn max_player)]
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	/// Holding the mark time to check if correct time to charge service fee
+	/// The default value is at the time chain launched 
 	#[pallet::type_value]
 	pub fn DefaultMarkTime<T: Config>() -> T::Moment {
 		<timestamp::Pallet<T>>::get()
@@ -86,6 +116,9 @@ pub mod pallet {
 	#[pallet::getter(fn mark_time)]
 	pub type MarkTime<T: Config> = StorageValue<_, T::Moment, ValueQuery, DefaultMarkTime<T>>;
 
+
+	/// Honding the specific period of time to charge service fee
+	/// The default value is 1 hours
 	#[pallet::type_value]
 	pub fn DefaultTimeService() -> u128 {
 		// 1 hour
@@ -95,20 +128,25 @@ pub mod pallet {
 	#[pallet::getter(fn time_service)]
 	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
 
+	/// Count player on the pool to make sure not exceed the MaxPlayer
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
 	pub(super) type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	/// Holding the tickets that player used to join the pool
 	#[pallet::storage]
 	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
 
+	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
 
+	/// The new players join the pool before the TimeService, whose are without charge
 	#[pallet::storage]
 	pub(super) type NewPlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxPlayerStorage>, ValueQuery>;
 
+	/// Holing players, who stay in the pool longer than TimeService
 	#[pallet::storage]
 	pub type IngamePlayers<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxPlayerStorage>, ValueQuery>;
@@ -154,9 +192,7 @@ pub mod pallet {
 		PlayerCountOverflow,
 		ExceedMaxPlayer,
 		CanNotClearNewPlayers,
-		CanNotCalculateRefundFee,
 		IntoBalanceFail,
-		ServiceNotSupport,
 	}
 
 	#[pallet::event]
@@ -166,8 +202,16 @@ pub mod pallet {
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
+
+		/// Join Upfront Pool
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `level`: The level of ticket Basic - Medium - Advance
+		///
+		/// Weight: `O(1)`
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
-			// make sure not exceed max players
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 
@@ -177,12 +221,17 @@ pub mod pallet {
 					.map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
 				let service = Self::get_service(level);
 				let double_fee = Self::u128_try_to_balance(service.value * 2)?;
-				Self::change_fee(&sender, double_fee)?;
+				Self::charge_fee(&sender, double_fee)?;
 			}
 			Self::join_pool(sender.clone(), level, new_player_count);
 			Ok(())
 		}
 
+		/// Leave Upfront Pool
+		///
+		/// The origin must be Signed
+		///
+		/// Weight: `O(1)`
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				if let Some(level) = Self::get_player_level(sender.clone()) {
@@ -209,13 +258,17 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/*
-			* Set new MaxPlayer for the pool, MaxPlayer must be <= MaxNewPlayer and <= MaxIngamePlayer
-			*/
+		/// Set MaxPlayer
+		///
+		/// The root must be Signed
+		///
+		/// Parameters:
+		/// - `max_player`: new value of MaxPlayer
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(0)]
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
-			// make sure new max_player not exceed the capacity of NewPlayers and IngamePlayers
 			<MaxPlayer<T>>::put(max_player);
 			Ok(())
 		}
@@ -243,7 +296,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
+	fn charge_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
 		let withdraw = T::Currency::withdraw(
 			&sender,
 			fee,
@@ -257,7 +310,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	pub fn calculate_ingame_refund_amount(
+	fn calculate_ingame_refund_amount(
 		_now: u128,
 		join_time: u128,
 		level: Level,
@@ -276,15 +329,9 @@ impl<T: Config> Pallet<T> {
 				.saturating_div(Self::time_service());
 			fee = actual_fee;
 		}
-
-		match Self::u128_to_balance(fee) {
-			Some(value) => Ok(value),
-			None => Err(<Error<T>>::CanNotCalculateRefundFee),
-		}
+		Self::u128_try_to_balance(fee)
 	}
 
-	/*
-	 */
 	fn remove_player(player: &T::AccountId, new_player_count: u32) {
 		T::MasterPool::remove_player(player);
 		Tickets::<T>::remove(player);
@@ -309,7 +356,7 @@ impl<T: Config> Pallet<T> {
 		for player in ingame_players {
 			if let Some(service) = Self::get_player_service(player.clone()) {
 				let fee_value = Self::u128_try_to_balance(service.value)?;
-				match Self::change_fee(&player, fee_value) {
+				match Self::charge_fee(&player, fee_value) {
 					Ok(_) => {},
 					Err(_) => {
 						let new_player_count = Self::player_count()
@@ -339,49 +386,14 @@ impl<T: Config> Pallet<T> {
 		None
 	}
 
-	pub fn block_to_u64(input: T::BlockNumber) -> Option<u64> {
-		TryInto::<u64>::try_into(input).ok()
-	}
-
-	pub fn balance_to_u64(input: BalanceOf<T>) -> Option<u64> {
-		TryInto::<u64>::try_into(input).ok()
-	}
-
-	pub fn balance_to_u128(input: BalanceOf<T>) -> Option<u128> {
-		TryInto::<u128>::try_into(input).ok()
-	}
-
-	pub fn u64_to_balance(input: u64) -> Option<BalanceOf<T>> {
-		input.try_into().ok()
-	}
-
-	pub fn u128_to_balance(input: u128) -> Option<BalanceOf<T>> {
-		input.try_into().ok()
-	}
-
-	pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
+	fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
 		match input.try_into().ok() {
 			Some(val) => Ok(val),
 			None => Err(<Error<T>>::IntoBalanceFail),
 		}
 	}
 
-	pub fn u64_to_block(input: u64) -> Option<T::BlockNumber> {
-		input.try_into().ok()
-	}
-
-	pub fn moment_to_u128(input: T::Moment) -> u128 {
+	fn moment_to_u128(input: T::Moment) -> u128 {
 		sp_runtime::SaturatedConversion::saturated_into(input)
-	}
-
-	/*
-		Return current block number otherwise return 0
-	*/
-	pub fn get_block_number() -> u64 {
-		let block_number = <frame_system::Pallet<T>>::block_number();
-		if let Some(block) = Self::block_to_u64(block_number) {
-			return block;
-		}
-		return 0u64;
 	}
 }
