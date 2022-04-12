@@ -25,65 +25,18 @@ benchmark:
 
 .PHONY: build_benchmark_pool
 build_benchmark_pool:
-	cargo build --release --features runtime-benchmarks -p upfront-pool
+	cargo build --release --features runtime-benchmarks -p pallet-pool
 
-.PHONY: build_benchmark_template
-build_benchmark_template:
-	cargo build --release --features runtime-benchmarks -p pallet-template
 
-.PHONY: benchmark_option_pool
-benchmark_option_pool:
+.PHONY: benchmark_pool
+benchmark_pool:
 	./target/release/gafi-node benchmark \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \
-    --pallet upfront_pool \
-    --extrinsic '*' \
+    --pallet pallet_pool \
+    --extrinsic 'join' \
      --steps 20 \
     --repeat 10 \
     --json-file=raw.json \
-    --output ./pallets/src/upfront-pool/weights.rs
-
-.PHONY: benchmark_staking_pool
-benchmark_staking_pool:
-	./target/release/gafi-node benchmark \
-    --chain dev \
-    --execution wasm \
-    --wasm-execution compiled \
-    --pallet staking_pool \
-    --extrinsic '*' \
-     --steps 20 \
-    --repeat 10 \
-    --json-file=raw.json \
-    --output ./pallets/src/staking-pool/weights.rs
-
-    .PHONY: benchmark_tx_handler
-benchmark_tx_handler:
-	./target/release/gafi-node benchmark \
-    --chain dev \
-    --execution wasm \
-    --wasm-execution compiled \
-    --pallet gafi-tx \
-    --extrinsic '*' \
-     --steps 20 \
-    --repeat 10 \
-    --json-file=raw.json \
-    --output ./pallets/src/gafi-tx/weights.rs
-
-
-.PHONY: benchmark_template
-benchmark_template:
-	./target/release/gafi-node benchmark \
-    --chain dev \
-    --execution wasm \
-    --wasm-execution compiled \
-    --pallet pallet_template \
-    --extrinsic 'do_something' \
-    --steps 20 \
-    --repeat 10 \
-    --json-file=raw.json \
-    --output ./pallets/src/template/weights.rs
-
-
-
-
+    --output ./pallets/src/pool/weights.rs

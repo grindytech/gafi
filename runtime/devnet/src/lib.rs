@@ -438,6 +438,7 @@ impl pallet_faucet::Config for Runtime {
 
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
+	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }

@@ -130,7 +130,7 @@ pub mod pallet {
 				services: [
 					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
 					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-					(Level::Max, Service::new(TicketType::Upfront(Level::Max))),
+					(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
 				],
 			}
 		}

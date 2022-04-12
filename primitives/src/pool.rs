@@ -27,7 +27,7 @@ pub enum TicketType {
 pub enum Level {
 	Basic,
 	Medium,
-	Max,
+	Advance,
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -46,17 +46,17 @@ impl Service {
 			TicketType::Upfront(level) => match level {
 				Level::Basic => Service { tx_limit: 4, discount: 30, value: unit(GAKI) },
 				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * unit(GAKI) },
-				Level::Max => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
 			},
 			TicketType::Staking(level) => match level {
 				Level::Basic => Service { tx_limit: 4, discount: 30, value: 1000 * unit(GAKI) },
 				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * 1000 * unit(GAKI) },
-				Level::Max => Service { tx_limit: u32::MAX, discount: 70, value: 3 * 1000 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * 1000 * unit(GAKI) },
 			},
 			TicketType::Sponsored(level) => match level {
 				Level::Basic => Service { tx_limit: 4, discount: 30, value: unit(GAKI) },
 				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * unit(GAKI) },
-				Level::Max => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
 			},
 		}
 	}
