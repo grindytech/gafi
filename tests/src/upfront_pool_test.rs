@@ -13,7 +13,7 @@ use sp_std::str::FromStr;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
-const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Max];
+const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Advance];
 
 fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
@@ -69,8 +69,8 @@ fn charge_join_pool_medium_work() {
 #[test]
 fn charge_join_max_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = StakingPool::get_service(Level::Max);
-		init_join_pool(pool_fee.value, TicketType::Staking(Level::Max), false);
+		let pool_fee = StakingPool::get_service(Level::Advance);
+		init_join_pool(pool_fee.value, TicketType::Staking(Level::Advance), false);
 	})
 }
 

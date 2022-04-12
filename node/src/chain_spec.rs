@@ -154,12 +154,12 @@ fn testnet_genesis(
 	let upfront_services = [
 		(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
 		(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-		(Level::Max, Service::new(TicketType::Upfront(Level::Max))),
+		(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
 	];
 	let staking_services = [
 		(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
 		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-		(Level::Max, Service::new(TicketType::Staking(Level::Max))),
+		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 	let bond_existential_deposit: u128 = unit(GAKI);

@@ -46,6 +46,9 @@ pub mod pallet {
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	#[pallet::storage]
+	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
 	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
 
 	#[pallet::storage]
@@ -68,7 +71,7 @@ pub mod pallet {
 				services: [
 					(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
 					(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-					(Level::Max, Service::new(TicketType::Staking(Level::Max))),
+					(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
 				],
 			}
 		}
@@ -126,6 +129,21 @@ pub mod pallet {
 			Services::<T>::get(level)
 		}
 	}
+
+	#[pallet::call]
+	impl <T: Config> Pallet<T> {
+		#[pallet::weight((
+			0,
+			DispatchClass::Normal,
+			Pays::No
+		))]
+		pub fn set_max_player(origin: OriginFor<T>, new_max_player: u32) -> DispatchResult {
+			ensure_root(origin)?;
+			MaxPlayer::<T>::put(new_max_player);
+			Ok(())
+		}
+	}
+
 
 	impl<T: Config> Pallet<T> {
 		fn stake_pool(sender: T::AccountId, new_player_count: u32, level: Level) {
