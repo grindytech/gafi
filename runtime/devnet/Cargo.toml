@@ -96,6 +96,7 @@ runtime-benchmarks = [
   "pallet-ethereum/runtime-benchmarks",
   "upfront-pool/runtime-benchmarks",
   "staking-pool/runtime-benchmarks",
+  "pallet-pool/runtime-benchmarks",
   "gafi-tx/runtime-benchmarks",
   "proof-address-mapping/runtime-benchmarks",
 ]

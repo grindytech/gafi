@@ -113,6 +113,7 @@ impl pallet_pool::Config for Test {
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type WeightInfo = ();
 }
 
 parameter_types! {

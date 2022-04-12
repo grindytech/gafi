@@ -441,6 +441,8 @@ impl pallet_pool::Config for Runtime {
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -864,14 +866,16 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
-			use upfront_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use pallet_pool::Pallet as PoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
-			list_benchmark!(list, extra, upfront_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 
@@ -886,9 +890,10 @@ impl_runtime_apis! {
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
-			use upfront_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use pallet_pool::Pallet as PoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -897,7 +902,8 @@ impl_runtime_apis! {
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
-			add_benchmark!(params, batches, upfront_pool, PoolBench::<Runtime>);
+			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
 

@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
-
+use crate::weights::WeightInfo;
 use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, MasterPool, TicketType};
 use frame_support::traits::Currency;
 
@@ -13,6 +13,9 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -26,6 +29,7 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId>;
 		type UpfrontPool: GafiPool<Self::AccountId>;
 		type StakingPool: GafiPool<Self::AccountId>;
+		type WeightInfo: WeightInfo;
 		// type SponsoredPool: GafiPool<Self::AccountId>;
 	}
 
@@ -52,7 +56,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(1_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(100u32, *ticket))]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Tickets::<T>::get(sender.clone()) == None, <Error<T>>::AlreadyJoined);
@@ -70,7 +74,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(1_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(100u32))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
