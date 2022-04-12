@@ -17,11 +17,6 @@ codec = {package = "parity-scale-codec", version = "2.0.0", default-features = f
   "derive",
 ]}
 
-# Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-hex-literal = { version = "0.3.4", optional = true }
 
 # Substrate
 frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -32,26 +27,32 @@ sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.
 sp-runtime = {version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-std = {version = "4.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
+[dev-dependencies]
+hex-literal = { version = "0.3.4" }
+# Frontier
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+
+# Substrate
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-
-# Local
-upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
-gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
-proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
 gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
-
-[dev-dependencies]
 sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-hex-literal = "0.2.1"
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 rand = { version = "0.8.5" }
+
+# Local
+upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
+staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
+pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
+gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
+proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 
 [features]
 default = ["std"]
