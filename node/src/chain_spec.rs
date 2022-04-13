@@ -1,11 +1,11 @@
 use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, OptionPoolConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig,
 	WASM_BINARY,
 };
-use gafi_primitives::option_pool::PackService;
+use gafi_primitives::{pool::{Level, Service, TicketType}};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
@@ -150,16 +150,18 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 	// Pool config
-	let pool_fee: Balance =  75 * centi(GAKI); // 0.75 GAKI
 	const MAX_PLAYER: u32 = 1000;
-	let services: [(PackService, u8, u8, Balance); 3] = [
-		(PackService::Basic, 4, 40, pool_fee),
-		(PackService::Medium, 8, 70, pool_fee * 2),
-		(PackService::Max, u8::MAX, 90, pool_fee * 3),
+	let upfront_services = [
+		(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
+		(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
+		(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+	];
+	let staking_services = [
+		(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
+		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
+		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
-	let staking_amount = 1000 * unit(GAKI);
-	const STAKING_DISCOUNT: u8 = 50;
 	let bond_existential_deposit: u128 = unit(GAKI);
 
 	GenesisConfig {
@@ -206,8 +208,8 @@ fn testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		option_pool: OptionPoolConfig { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE },
-		staking_pool: StakingPoolConfig { staking_amount, staking_discount: STAKING_DISCOUNT },
+		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services, time_service: TIME_SERVICE },
+		staking_pool: StakingPoolConfig { services: staking_services },
 		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 		faucet: FaucetConfig {
 			genesis_accounts: vec![

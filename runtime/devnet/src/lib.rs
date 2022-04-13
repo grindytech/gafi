@@ -9,6 +9,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
+use gafi_primitives::pool::GafiPool;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -56,14 +57,15 @@ pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::
 
 // import local pallets
 pub use pallet_faucet;
-pub use pallet_option_pool;
+pub use upfront_pool;
 pub use pallet_player;
-pub use pallet_staking_pool;
+pub use pallet_pool;
+pub use staking_pool;
 pub use pallet_template;
-pub use pallet_tx_handler;
+pub use gafi_tx;
 
 // custom traits
-use pallet_tx_handler::GafiEVMCurrencyAdapter;
+use gafi_tx::GafiEVMCurrencyAdapter;
 use proof_address_mapping::ProofAddressMapping;
 
 mod precompiles;
@@ -380,28 +382,25 @@ impl pallet_player::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxNewPlayer: u32 = 10000;
-	pub const MaxIngamePlayer: u32 = 10000;
+	pub const MaxPlayerStorage: u32 = 10000;
 }
 
-impl pallet_option_pool::Config for Runtime {
+impl upfront_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type MaxNewPlayer = MaxNewPlayer;
-	type MaxIngamePlayer = MaxIngamePlayer;
-	type WeightInfo = pallet_option_pool::weights::SubstrateWeight<Runtime>;
-	type StakingPool = StakingPool;
+	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
+	type MaxPlayerStorage = MaxPlayerStorage;
+	type MasterPool = Pool;
 }
 
-impl pallet_staking_pool::Config for Runtime {
+impl staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type WeightInfo = pallet_staking_pool::weights::SubstrateWeight<Runtime>;
-	type OptionPool = OptionPool;
+	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
-	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
+	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
 }
 
 impl proof_address_mapping::Config for Runtime {
@@ -411,14 +410,12 @@ impl proof_address_mapping::Config for Runtime {
 	type MessagePrefix = Prefix;
 }
 
-impl pallet_tx_handler::Config for Runtime {
+impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type OptionPoolPlayer = OptionPool;
-	type StakingPool = StakingPool;
-	type PackServiceProvider = OptionPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
+	type PlayerTicket = Pool;
 }
 
 impl pallet_template::Config for Runtime {
@@ -437,6 +434,15 @@ impl pallet_faucet::Config for Runtime {
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type FaucetBalance = FaucetBalance;
 	type MinFaucetBalance = MinFaucetBalance;
+}
+
+impl pallet_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -460,9 +466,10 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 
 		Player: pallet_player,
-		OptionPool: pallet_option_pool,
-		StakingPool: pallet_staking_pool,
-		TxHandler: pallet_tx_handler,
+		Pool: pallet_pool,
+		UpfrontPool: upfront_pool,
+		StakingPool: staking_pool,
+		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
 		Template: pallet_template,
@@ -859,16 +866,18 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_option_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
-			use pallet_staking_pool::Pallet as StakingPoolBench;
+			use staking_pool::Pallet as StakingPoolBench;
+			use pallet_pool::Pallet as PoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_option_pool, PoolBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_tx_handler, AddressMappingBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_staking_pool, StakingPoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
+			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
+			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -881,9 +890,10 @@ impl_runtime_apis! {
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use pallet_template::Pallet as TemplateBench;
-			use pallet_option_pool::Pallet as PoolBench;
+			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
-			use pallet_staking_pool::Pallet as StakingPoolBench;
+			use staking_pool::Pallet as StakingPoolBench;
+			use pallet_pool::Pallet as PoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -892,9 +902,10 @@ impl_runtime_apis! {
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_option_pool, PoolBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_tx_handler, AddressMappingBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
+			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
+			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -52,9 +52,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self {
-				genesis_accounts: vec![],
-			}
+			Self { genesis_accounts: vec![] }
 		}
 	}
 
@@ -63,7 +61,7 @@ pub mod pallet {
 		fn build(&self) {
 			for i in 0..self.genesis_accounts.len() {
 				<GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
-				.map_or((),|_| {});
+					.map_or((), |_| {});
 			}
 		}
 	}
@@ -79,12 +77,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight((
+			0,
+			DispatchClass::Normal,
+			Pays::No
+		))]
 		pub fn faucet(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
 
-			ensure!(T::Currency::free_balance(&sender) < T::MinFaucetBalance::get(), <Error<T>>::DontBeGreedy);
+			ensure!(
+				T::Currency::free_balance(&sender) < T::MinFaucetBalance::get(),
+				<Error<T>>::DontBeGreedy
+			);
 
 			for account in genesis_accounts {
 				match T::Currency::transfer(

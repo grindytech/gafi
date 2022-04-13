@@ -5,8 +5,7 @@ use sp_runtime::AccountId32;
 #[test]
 fn faucet_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		let sender = AccountId32::new([11;32]);
-
+		let sender = AccountId32::new([11; 32]);
 		assert_eq!(Balances::free_balance(&sender), 0);
 		assert_ok!(Faucet::faucet(Origin::signed(sender.clone())));
 		assert_eq!(Balances::free_balance(&sender), FAUCET_BALANCE);

@@ -15,3 +15,4 @@ benchmarks! {
 		let s in 0 .. 2;
 	}: _(RawOrigin::Root, s)
 }
+

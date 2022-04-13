@@ -4,8 +4,7 @@ use frame_support::{
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
 use gafi_primitives::{
-	option_pool::{OptionPoolPlayer, PackServiceProvider},
-	staking_pool::StakingPool,
+	pool::{PlayerTicket}
 };
 pub use pallet::*;
 use pallet_evm::AddressMapping;
@@ -44,11 +43,9 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
-		type OptionPoolPlayer: OptionPoolPlayer<Self::AccountId>;
-		type StakingPool: StakingPool<Self::AccountId>;
-		type PackServiceProvider: PackServiceProvider<BalanceOf<Self>>;
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 		type AddressMapping: AddressMapping<Self::AccountId>;
+		type PlayerTicket: PlayerTicket<Self::AccountId>;
 	}
 
 	// Errors.
@@ -94,14 +91,10 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		let mut service_fee = corrected_fee;
-		let account_id = <T as pallet::Config>::AddressMapping::into_account_id(*who);
-		if let Some(_) = T::StakingPool::is_staking_pool(&account_id) {
-			service_fee =
-				service_fee - (service_fee * T::StakingPool::staking_pool_discount() / 100);
-		} else if let Some(player) = T::OptionPoolPlayer::get_option_pool_player(&account_id) {
-			if let Some(service) = T::PackServiceProvider::get_service(player.service) {
-				service_fee = service_fee - (service_fee * service.discount / 100);
-			}
+		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
+		if let Some(ticket) = T::PlayerTicket::get_player_ticket(account_id) {
+			let service = T::PlayerTicket::get_ticket(ticket);
+			service_fee = service_fee - (service_fee * service.discount / 100);
 		}
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}

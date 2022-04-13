@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-tx-handler
+//! Benchmarking setup for gafi-tx
 
 use super::*;
 #[allow(unused)]

@@ -5,10 +5,9 @@ use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::I
 use frame_system as system;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
-use gafi_primitives::option_pool::PackService;
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
-use pallet_tx_handler::{GafiEVMCurrencyAdapter};
+use gafi_tx::{GafiEVMCurrencyAdapter};
 use proof_address_mapping::{ProofAddressMapping};
 
 use frame_support::{
@@ -43,9 +42,10 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletPool: pallet_option_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: pallet_staking_pool::{Pallet, Call, Storage, Event<T>},
-		PalletTxHandler: pallet_tx_handler::{Pallet, Call, Storage, Event<T>},
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
+		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
+		PalletTxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
@@ -109,25 +109,30 @@ pub const MAX_PLAYER: u32 = 20;
 pub const MAX_NEW_PLAYER: u32 = 20;
 pub const MAX_INGAME_PLAYER: u32 = 20;
 
-parameter_types! {
-	pub const MaxNewPlayer: u32 = MAX_NEW_PLAYER;
-	pub const MaxIngamePlayer: u32 = MAX_INGAME_PLAYER;
-}
-
-impl pallet_option_pool::Config for Test {
+impl pallet_pool::Config for Test {
 	type Event = Event;
-	type Currency = Balances;
-	type MaxNewPlayer = MaxNewPlayer;
-	type MaxIngamePlayer = MaxIngamePlayer;
 	type WeightInfo = ();
+	type Currency = Balances;
+	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }
 
-impl pallet_staking_pool::Config for Test {
+parameter_types! {
+	pub MaxPlayerStorage: u32 = 1000;
+}
+
+impl upfront_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
-	type OptionPool = PalletPool;
+	type MaxPlayerStorage = MaxPlayerStorage;
+	type MasterPool = Pool;
+}
+
+impl staking_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -197,14 +202,12 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_tx_handler::Config for Test {
+impl gafi_tx::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type OptionPoolPlayer = PalletPool;
-	type StakingPool = StakingPool;
-	type PackServiceProvider = PalletPool;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping<Self>;
+	type PlayerTicket = Pool;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -215,32 +218,25 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
-			PalletPool::on_finalize(System::block_number());
+			UpfrontPool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		PalletPool::on_initialize(System::block_number());
+		UpfrontPool::on_initialize(System::block_number());
 		Timestamp::set_timestamp((System::block_number() as u64 * SLOT_DURATION) + INIT_TIMESTAMP);
 	}
 }
 
 pub struct ExtBuilder {
-	max_player: u32,
-	services: [(PackService, u8, u8, u128); 3],
-	time_service: u128,
+	balances: Vec<(AccountId32, u128)>,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		let pool_fee: u128 = 75 * centi(GAKI); // 0.75 GAKI
-		let services: [(PackService, u8, u8, u128); 3] = [
-			(PackService::Basic, 4, 40, pool_fee),
-			(PackService::Medium, 8, 70, pool_fee * 2),
-			(PackService::Max, u8::MAX, 90, pool_fee * 3),
-		];
-
-		Self { max_player: MAX_PLAYER, services, time_service: TIME_SERVICE }
+		Self {
+			balances: vec![],
+		}
 	}
 }
 
@@ -248,12 +244,14 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_option_pool::GenesisConfig::<Test> {
-			max_player: self.max_player,
-			services: self.services,
-			time_service: self.time_service,
-		}
-		.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
+			.assimilate_storage(&mut storage);
+
+		GenesisBuild::<Test>::assimilate_storage(
+			&upfront_pool::GenesisConfig::default(),
+			&mut storage,
+		)
+		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

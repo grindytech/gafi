@@ -2,6 +2,5 @@
 
 pub mod currency;
 
-pub mod option_pool;
+pub mod pool;
 
-pub mod staking_pool;
