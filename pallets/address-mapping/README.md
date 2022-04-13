@@ -28,7 +28,7 @@ to H160 address which used to generate it.
 
 ### Goals
 
-The assets system in Substrate is designed to make the following possible:
+The address_mapping pallet in Gafi is designed to make the following possible:
 
 * Bond
 * Unbond
@@ -55,6 +55,6 @@ Please visit the [unittest](https://github.com/cryptoviet/gafi/blob/master/palle
 
 ### Prerequisites
 
-Import the Assets module and types and derive your runtime's configuration traits from the Assets module trait.
+Import the Proof Address Mapping pallet and types and derive your runtime's configuration traits from the Proof Address Mapping trait.
 
 License: Apache-2.0
