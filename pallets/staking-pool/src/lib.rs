@@ -1,3 +1,22 @@
+
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	pallet_prelude::*,
@@ -5,14 +24,10 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	currency::{unit, NativeToken::GAKI},
 	pool::{GafiPool, Level, Service, Ticket, TicketType},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-
-#[cfg(feature = "std")]
-use frame_support::serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod mock;
@@ -29,32 +44,44 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::{dispatch::DispatchResult};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Currency: ReservableCurrency<Self::AccountId>;
-		type WeightInfo: WeightInfo;
-	}
-
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
+	/// Configure the pallet by specifying the parameters and types it depends on.
+	#[pallet::config]
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		
+		/// The currency mechanism.
+		type Currency: ReservableCurrency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
+	}
+
+	//** Storage **//
+
+	/// Holding the number of maximum player can join the staking pool
 	#[pallet::storage]
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	/// Holding the tickets detail
 	#[pallet::storage]
 	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
 
+	/// Player count
 	#[pallet::storage]
 	#[pallet::getter(fn player_count)]
 	pub type PlayerCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
 
@@ -94,11 +121,18 @@ pub mod pallet {
 	pub enum Error<T> {
 		PlayerNotStake,
 		StakeCountOverflow,
-		DiscountNotCorrect,
 		IntoBalanceFail,
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
+		/// Join Staking Pool
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `level`: The level of ticket Basic - Medium - Advance
+		///
+		/// Weight: `O(1)`
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
 			let service = Services::<T>::get(level);
 			let staking_amount = Self::u128_try_to_balance(service.value)?;
@@ -111,6 +145,11 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Leave Upfront Pool
+		///
+		/// The origin must be Signed
+		///
+		/// Weight: `O(1)`
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(player_level) = Self::get_player_level(sender.clone()) {
 				let new_player_count =
@@ -132,6 +171,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl <T: Config> Pallet<T> {
+		/// Set MaxPlayer
+		///
+		/// The root must be Signed
+		///
+		/// Parameters:
+		/// - `max_player`: new value of MaxPlayer
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight((
 			0,
 			DispatchClass::Normal,

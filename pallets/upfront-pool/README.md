@@ -12,11 +12,13 @@ The supported dispatchable functions are documented in the comment
 
 ### Terminology
 
-* **Refund amount:**
+* **Refund amount:** The refund amount when player leave the pool early
 
-* **New Players:**
+* **TimeService:** The specific period of time to charge service fee
 
-* **Ingame Players:**
+* **New Players:** The new players join the pool before the TimeService, whose are without charge
+
+* **Ingame Players:** The players, who stay in the pool longer than TimeService
 
 ### Goals
 
@@ -25,7 +27,6 @@ The upfront_pool module in Gafi is designed to make the following possible:
 * Join Pool with charge double service fee
 * Leave Pool with return refund amount
 * Charge service fee in every specific period of time
-* Verify ECDSA signature
 
 ## Interface
 

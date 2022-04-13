@@ -24,7 +24,7 @@ const ENCODEDS = [
 describe('Contract', () => {
     it("it should get bind arguments data", async () => {
         for (let i = 0; i < ACCOUNTS.length; i++) {
-            const test_message = `Bond Aurora Network account:${ENCODEDS[i]}`;
+            const test_message = `Bond Gafi Network account:${ENCODEDS[i]}`;
             let sign_data = ACCOUNTS[i].sign(test_message);
             console.log({
                 "address: ": ACCOUNTS[i].address,
