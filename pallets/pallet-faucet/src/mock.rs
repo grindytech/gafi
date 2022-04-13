@@ -102,8 +102,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
+pub const GENESIS_ACCOUNT: AccountId32 = AccountId32::new([0u8; 32]);
+
 pub const TEST_ACCOUNTS: [(AccountId32, u64); 10] = [
-	(AccountId32::new([0u8; 32]), 1000000000000000000),
+	(GENESIS_ACCOUNT, 1000000000000000000),
 	(AccountId32::new([1u8; 32]), 1000000000000000000),
 	(AccountId32::new([2u8; 32]), 1000000000000000000),
 	(AccountId32::new([3u8; 32]), 1000000000000000000),
@@ -125,7 +127,7 @@ impl Default for ExtBuilder {
 		Self {
 			balances: TEST_ACCOUNTS.to_vec(),
 			genesis_accounts: vec![
-				TEST_ACCOUNTS[0].0.clone(),
+				GENESIS_ACCOUNT,
 				TEST_ACCOUNTS[1].0.clone(),
 				TEST_ACCOUNTS[2].0.clone(),
 				TEST_ACCOUNTS[3].0.clone(),
