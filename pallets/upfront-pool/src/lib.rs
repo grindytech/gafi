@@ -24,7 +24,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{ExistenceRequirement, WithdrawReasons},
-		Currency,
+		ReservableCurrency, Currency
 	},
 };
 use frame_system::pallet_prelude::*;
@@ -61,12 +61,12 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + timestamp::Config {
+	pub trait Config: frame_system::Config + timestamp::Config + pallet_balances::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency mechanism.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: ReservableCurrency<Self::AccountId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -217,11 +217,22 @@ pub mod pallet {
 
 			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
 			{
+				let service = Self::get_service(level);
+				let service_fee = Self::u128_try_to_balance(service.value)?;
+				let double_service_fee = Self::u128_try_to_balance(service.value * 2)?;
+				ensure!(T::Currency::free_balance(&sender) > double_service_fee, pallet_balances::Error::<T>::InsufficientBalance);
 				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 					.map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
-				let service = Self::get_service(level);
-				let double_fee = Self::u128_try_to_balance(service.value * 2)?;
-				Self::charge_fee(&sender, double_fee)?;
+				T::Currency::reserve(
+					&sender,
+					service_fee,
+				)?;
+				T::Currency::withdraw(
+					&sender,
+					service_fee,
+					WithdrawReasons::FEE,
+					ExistenceRequirement::KeepAlive,
+				)?;
 			}
 			Self::join_pool(sender.clone(), level, new_player_count);
 			Ok(())
@@ -237,12 +248,27 @@ pub mod pallet {
 				if let Some(level) = Self::get_player_level(sender.clone()) {
 					let join_time = ticket.join_time;
 					let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-					let refund_fee = Self::calculate_ingame_refund_amount(_now, join_time, level)?;
+
+					let service_fee;
+					let charge_fee;
+					{
+						let service = Self::get_service(level);
+						let refund_fee = Self::get_refund_balance(_now, join_time, service.value);
+						charge_fee = Self::u128_try_to_balance(service.value - refund_fee)?;
+						service_fee = Self::u128_try_to_balance(service.value)?;
+					}
+
+					T::Currency::unreserve(&sender, service_fee);
+					T::Currency::withdraw(
+						&sender,
+						charge_fee,
+						WithdrawReasons::FEE,
+						ExistenceRequirement::KeepAlive,
+					)?;
+
 					let new_player_count = Self::player_count()
 						.checked_sub(1)
 						.ok_or(<Error<T>>::PlayerCountOverflow)?;
-
-					let _ = T::Currency::deposit_into_existing(&sender, refund_fee);
 					Self::remove_player(&sender, new_player_count);
 				}
 				Ok(())
@@ -300,7 +326,7 @@ impl<T: Config> Pallet<T> {
 		let withdraw = T::Currency::withdraw(
 			&sender,
 			fee,
-			WithdrawReasons::RESERVE,
+			WithdrawReasons::FEE,
 			ExistenceRequirement::KeepAlive,
 		);
 
@@ -310,26 +336,24 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn calculate_ingame_refund_amount(
-		_now: u128,
+	fn get_refund_balance(
+		leave_time: u128,
 		join_time: u128,
-		level: Level,
-	) -> Result<BalanceOf<T>, Error<T>> {
-		let service = Self::get_service(level);
-
-		let period_time = _now.saturating_sub(join_time);
-		let mut fee: u128 = 0;
+		service_fee: u128,
+	) -> u128 {
+		let period_time = leave_time.saturating_sub(join_time);
+		let fee: u128;
 		if period_time < Self::time_service() {
-			fee = service.value;
+			fee = service_fee;
 		} else {
 			let extra = period_time % Self::time_service();
-			let serive_fee = service.value;
+			let serive_fee = service_fee;
 			let actual_fee = serive_fee
 				.saturating_mul(Self::time_service().saturating_sub(extra))
 				.saturating_div(Self::time_service());
 			fee = actual_fee;
 		}
-		Self::u128_try_to_balance(fee)
+		fee
 	}
 
 	fn remove_player(player: &T::AccountId, new_player_count: u32) {
@@ -356,6 +380,9 @@ impl<T: Config> Pallet<T> {
 		for player in ingame_players {
 			if let Some(service) = Self::get_player_service(player.clone()) {
 				let fee_value = Self::u128_try_to_balance(service.value)?;
+
+
+
 				match Self::charge_fee(&player, fee_value) {
 					Ok(_) => {},
 					Err(_) => {
