@@ -67,7 +67,7 @@ pub mod pallet {
 
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
-		
+
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
@@ -80,7 +80,7 @@ pub mod pallet {
 	}
 
 	/// on_finalize following by steps:
-	/// 1. Check if current timestamp is the correct time to charge service fee 
+	/// 1. Check if current timestamp is the correct time to charge service fee
 	///	2. Charge player in the IngamePlayers - Kick player when they can't pay
 	///	3. Move all players from NewPlayer to IngamePlayers
 	/// 4. Update new Marktime
@@ -107,7 +107,7 @@ pub mod pallet {
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// Holding the mark time to check if correct time to charge service fee
-	/// The default value is at the time chain launched 
+	/// The default value is at the time chain launched
 	#[pallet::type_value]
 	pub fn DefaultMarkTime<T: Config>() -> T::Moment {
 		<timestamp::Pallet<T>>::get()
