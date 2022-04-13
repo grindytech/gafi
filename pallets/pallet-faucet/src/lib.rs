@@ -19,7 +19,7 @@ pub mod pallet {
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
+	pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -68,10 +68,14 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		Transferred(T::AccountId, T::AccountId, BalanceOf<T>),
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		TransferToSelf,
+		NotEnoughBalance,
 		DontBeGreedy,
 	}
 
@@ -103,6 +107,29 @@ pub mod pallet {
 				}
 			}
 			Err(DispatchError::Other("Out of Faucet"))
+		}
+
+		#[pallet::weight(100)]
+		pub fn donate(
+			origin: OriginFor<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			let from = ensure_signed(origin)?;
+
+			ensure!(T::Currency::free_balance(&from) > amount, <Error<T>>::NotEnoughBalance);
+			let genesis_accounts = GenesisAccounts::<T>::get();
+			ensure!(genesis_accounts[0] != from, <Error<T>>::TransferToSelf);
+
+			T::Currency::transfer(
+				&from,
+				&genesis_accounts[0],
+				amount,
+				ExistenceRequirement::KeepAlive,
+			);
+
+			Self::deposit_event(Event::Transferred(from, genesis_accounts[0].clone(), amount));
+
+			Ok(())
 		}
 	}
 }
