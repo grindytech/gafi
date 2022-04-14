@@ -52,6 +52,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use pallet_evm::FeeCalculator;
 
 pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
 
@@ -65,7 +66,7 @@ pub use pallet_template;
 pub use gafi_tx;
 
 // custom traits
-use gafi_tx::GafiEVMCurrencyAdapter;
+use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use proof_address_mapping::ProofAddressMapping;
 
 mod precompiles;
@@ -318,8 +319,8 @@ parameter_types! {
 }
 
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = pallet_dynamic_fee::Pallet<Self>;
-	type GasWeightMapping = ();
+	type FeeCalculator = TxHandler;
+	type GasWeightMapping = GafiGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;

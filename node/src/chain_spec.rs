@@ -2,7 +2,7 @@ use devnet::{
 	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
-	AddressMappingConfig, FaucetConfig,
+	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
 	WASM_BINARY,
 };
 use gafi_primitives::{pool::{Level, Service, TicketType}};
@@ -218,6 +218,9 @@ fn testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			],
+		},
+		tx_handler: TxHandlerConfig {
+			gas_price: U256::from(100_000_000_000u128),
 		}
 	}
 }

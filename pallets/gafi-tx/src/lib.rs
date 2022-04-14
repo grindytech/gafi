@@ -3,13 +3,15 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
+use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	pool::{PlayerTicket}
 };
 pub use pallet::*;
-use pallet_evm::AddressMapping;
+use pallet_evm::{AddressMapping, GasWeightMapping};
 use pallet_evm::OnChargeEVMTransaction;
 use sp_core::{H160, U256};
+use pallet_evm::FeeCalculator;
 
 #[cfg(test)]
 mod mock;
@@ -26,7 +28,6 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -47,6 +48,31 @@ pub mod pallet {
 		type AddressMapping: AddressMapping<Self::AccountId>;
 		type PlayerTicket: PlayerTicket<Self::AccountId>;
 	}
+	// Storage
+	#[pallet::storage]
+	pub type GasPrice<T: Config> = StorageValue<_, U256, ValueQuery>;
+
+	//** Genesis Conguration **//
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub gas_price: U256,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				gas_price: U256::from(100_000_000_000u128),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			GasPrice::<T>::put(self.gas_price);
+		}
+	}
 
 	// Errors.
 	#[derive(PartialEq)]
@@ -57,10 +83,23 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {}
 
-	// Storage
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
+			ensure_root(origin)?;
+			GasPrice::<T>::put(new_gas_price);
+			Ok(())
+		}
+
+	}
+
+	impl<T: Config> FeeCalculator for Pallet<T> {
+		fn min_gas_price() -> sp_core::U256 { 
+			GasPrice::<T>::get()
+		 }
+	}
 }
 
 pub struct GafiEVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
@@ -101,5 +140,17 @@ where
 
 	fn pay_priority_fee(tip: U256) {
 		T::OnChargeEVMTxHandler::pay_priority_fee(tip)
+	}
+}
+
+pub struct GafiGasWeightMapping;
+
+impl GasWeightMapping for GafiGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas as Weight
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight as u64
 	}
 }

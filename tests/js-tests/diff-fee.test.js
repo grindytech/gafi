@@ -19,16 +19,16 @@ const test1 = web3.eth.accounts.privateKeyToAccount("bcf293ba01f30136a0d861e2ffe
 const test2 = web3.eth.accounts.privateKeyToAccount("943272b0eaa0392e251cba3d1525a9b518b2c47ffb934e0266dab32b40826f22");
 const test3 = web3.eth.accounts.privateKeyToAccount("0c6a0445624c4f0e51feeb56eb86e286adb9f94ff486c53fab63c36844602749");
 
-
 async function add_additional_gas(contract, address) {
     const gas_limit = await contract.estimateGas({ from: address });
     const additional_gas = BigNumber.from(gas_limit.toString()).mul("50").div("100");
     return BigNumber.from(gas_limit.toString()).add(additional_gas).toString();
 }
 
-const TX_COUNT = 20;
+const TX_COUNT = 10;
 
 describe('Contract', () => {
+
     it('show total fee spent when ouside the pool', async () => {
         let admin = test1;
         let before_balance = await web3.eth.getBalance(admin.address);
@@ -43,11 +43,12 @@ describe('Contract', () => {
                 data: ERC20ABI.bytecode,
                 arguments: arguments
             });
-
+            const nonce = await web3.eth.getTransactionCount(admin.address, "pending");
             const options = {
                 data: contract_data.encodeABI(),
                 gas: await add_additional_gas(contract_data, admin.address),
-                gasPrice: await web3.eth.getGasPrice()
+                gasPrice: await web3.eth.getGasPrice(),
+                nonce,
             };
             const signed = await web3.eth.accounts.signTransaction(options, admin.privateKey);
             const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
@@ -56,7 +57,7 @@ describe('Contract', () => {
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
 
-        console.log("total_cost: ", BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString());
+        console.log("total_cost: ", web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString()), "GAKI");
     }).timeout(3600000);
 
     it('show total fee spent when inside the pool', async () => {
@@ -86,7 +87,7 @@ describe('Contract', () => {
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
 
-        console.log("total_cost: ", BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString());
+        console.log("total_cost: ", web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString()), "GAKI");
     }).timeout(3600000);
 })
 
