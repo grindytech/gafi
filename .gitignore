@@ -6,6 +6,8 @@
 
 .DS_Store
 
+**/.env
+
 # The cache for docker container dependency
 .cargo
 

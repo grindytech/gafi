@@ -1,5 +1,5 @@
 use devnet::{
-	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
@@ -13,7 +13,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use gafi_primitives::{currency::{NativeToken::GAKI, unit, centi, GafiCurrency, TokenInfo}};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -161,8 +161,9 @@ fn testnet_genesis(
 		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
 		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
 	];
-	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
+	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
 	let bond_existential_deposit: u128 = unit(GAKI);
+	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -244,7 +245,7 @@ fn testnet_genesis(
 			],
 		},
 		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(100_000_000_000u128),
+			gas_price: U256::from(min_gas_price),
 		}
 	}
 }

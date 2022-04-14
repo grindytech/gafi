@@ -35,7 +35,7 @@ pub enum Level {
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
 pub struct Service {
-	pub tx_limit: u32, // max number of transaction per minute
+	pub tx_limit: u32, // max number of discounted transaction user can use in TimeService 
 	pub discount: u8,  // percentage of discount
 	pub value: u128,
 }
@@ -44,19 +44,19 @@ impl Service {
 	pub fn new(ticket: TicketType) -> Self {
 		match ticket {
 			TicketType::Upfront(level) => match level {
-				Level::Basic => Service { tx_limit: 4, discount: 30, value: unit(GAKI) },
-				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
+				Level::Basic => Service { tx_limit: 100, discount: 30, value: 5 * unit(GAKI) },
+				Level::Medium => Service { tx_limit: 100, discount: 50, value: 7 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: 100, discount: 70, value: 10 * unit(GAKI) },
 			},
 			TicketType::Staking(level) => match level {
-				Level::Basic => Service { tx_limit: 4, discount: 30, value: 1000 * unit(GAKI) },
-				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * 1000 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * 1000 * unit(GAKI) },
+				Level::Basic => Service { tx_limit: 100, discount: 30, value: 1000 * unit(GAKI) },
+				Level::Medium => Service { tx_limit: 100, discount: 50, value: 1500 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: 100, discount: 70, value: 2000 * unit(GAKI) },
 			},
 			TicketType::Sponsored(level) => match level {
-				Level::Basic => Service { tx_limit: 4, discount: 30, value: unit(GAKI) },
-				Level::Medium => Service { tx_limit: 8, discount: 50, value: 2 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: u32::MAX, discount: 70, value: 3 * unit(GAKI) },
+				Level::Basic => Service { tx_limit: 100, discount: 30, value: unit(GAKI) },
+				Level::Medium => Service { tx_limit: 100, discount: 50, value: 2 * unit(GAKI) },
+				Level::Advance => Service { tx_limit: 100, discount: 70, value: 3 * unit(GAKI) },
 			},
 		}
 	}
