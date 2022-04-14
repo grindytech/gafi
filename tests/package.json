@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha --reporter spec js-tests/*",
     "test-sig": "mocha --reporter spec js-tests/get-signature.test.js",
-    "test-fee": "mocha --reporter spec js-tests/diff-fee.test.js"
+    "test-dif-fee": "mocha --reporter spec js-tests/diff-fee.test.js",
+    "test-base-fee": "mocha --reporter spec js-tests/base-fee.test.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +15,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/bytes": "^5.6.0",
     "@ethersproject/keccak256": "^5.6.0",
+    "@openzeppelin/contracts": "^4.5.0",
     "abi-decoder": "^2.4.0",
     "axios": "^0.26.0",
     "chai": "^4.3.6",

@@ -1,8 +1,7 @@
 require('dotenv').config();
 const { assert, equal } = require('assert');
-const RPC = "http://127.0.0.1:9933";
 const Web3 = require('web3');
-const web3 = new Web3(RPC);
+const web3 = new Web3(process.env.RPC_API);
 const axios = require('axios');
 const chai = require('chai');
 const cryptojs = require('crypto-js');
@@ -10,9 +9,9 @@ const expect = chai.expect;
 chai.use(require('chai-as-promised'));
 
 const ACCOUNTS = [
-    web3.eth.accounts.privateKeyToAccount("bcf293ba01f30136a0d861e2ffe76c17ea6fd728bfbb2da6b09a6994846057fe"), // test 1
-    web3.eth.accounts.privateKeyToAccount("943272b0eaa0392e251cba3d1525a9b518b2c47ffb934e0266dab32b40826f22"), // test 2
-    web3.eth.accounts.privateKeyToAccount("bcf293ba01f30136a0d861e2ffe76c17ea6fd728bfbb2da6b09a6994846057fe"), // test 1
+    web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1),
+    web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2),
+    web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_3),
 ]
 
 const ENCODEDS = [
@@ -34,4 +33,3 @@ describe('Contract', () => {
         }
     })
 })
-

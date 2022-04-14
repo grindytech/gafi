@@ -1,31 +1,16 @@
 require('dotenv').config();
-const { assert, equal } = require('assert');
-const RPC = "http://127.0.0.1:9933";
 const Web3 = require('web3');
-const web3 = new Web3(RPC);
-const axios = require('axios');
+const web3 = new Web3(process.env.RPC_API);
 const chai = require('chai');
-const cryptojs = require('crypto-js');
-const expect = chai.expect;
 chai.use(require('chai-as-promised'));
-var randomBytes = require('randombytes');
 const { BigNumber } = require('@ethersproject/bignumber');
-const { ethers, keccak256 } = require("ethers");
-const { arrayify, BytesLike } = require("@ethersproject/bytes");
+const utils = require('./utils');
 
-var ERC20ABI = require('../build/contracts/ERC20.json');
+const test1 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
+const test2 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
+const test3 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_3);
 
-const test1 = web3.eth.accounts.privateKeyToAccount("bcf293ba01f30136a0d861e2ffe76c17ea6fd728bfbb2da6b09a6994846057fe");
-const test2 = web3.eth.accounts.privateKeyToAccount("943272b0eaa0392e251cba3d1525a9b518b2c47ffb934e0266dab32b40826f22");
-const test3 = web3.eth.accounts.privateKeyToAccount("0c6a0445624c4f0e51feeb56eb86e286adb9f94ff486c53fab63c36844602749");
-
-async function add_additional_gas(contract, address) {
-    const gas_limit = await contract.estimateGas({ from: address });
-    const additional_gas = BigNumber.from(gas_limit.toString()).mul("50").div("100");
-    return BigNumber.from(gas_limit.toString()).add(additional_gas).toString();
-}
-
-const TX_COUNT = 10;
+const TEST_COUNT = process.env.TEST_COUNT;
 
 describe('Contract', () => {
 
@@ -34,25 +19,8 @@ describe('Contract', () => {
         let before_balance = await web3.eth.getBalance(admin.address);
         console.log("before_balance: ", before_balance);
         console.log("deploying...");
-        for (let i = 0; i < TX_COUNT; i++) {
-            const arguments = [
-
-            ];
-            const stake_contract = new web3.eth.Contract(ERC20ABI.abi);
-            const contract_data = await stake_contract.deploy({
-                data: ERC20ABI.bytecode,
-                arguments: arguments
-            });
-            const nonce = await web3.eth.getTransactionCount(admin.address, "pending");
-            const options = {
-                data: contract_data.encodeABI(),
-                gas: await add_additional_gas(contract_data, admin.address),
-                gasPrice: await web3.eth.getGasPrice(),
-                nonce,
-            };
-            const signed = await web3.eth.accounts.signTransaction(options, admin.privateKey);
-            const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-            // console.log("receipt: ", receipt);
+        for (let i = 0; i < TEST_COUNT; i++) {
+            let receipt = await utils.create_new_contract(admin);
         }
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
@@ -66,23 +34,8 @@ describe('Contract', () => {
         console.log("before_balance: ", before_balance);
         console.log("deploying...");
 
-        for (let i = 0; i < TX_COUNT; i++) {
-            const arguments = [
-
-            ];
-            const stake_contract = new web3.eth.Contract(ERC20ABI.abi);
-            const contract_data = await stake_contract.deploy({
-                data: ERC20ABI.bytecode,
-                arguments: arguments
-            });
-
-            const options = {
-                data: contract_data.encodeABI(),
-                gas: await add_additional_gas(contract_data, admin.address),
-                gasPrice: await web3.eth.getGasPrice()
-            };
-            const signed = await web3.eth.accounts.signTransaction(options, admin.privateKey);
-            const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+        for (let i = 0; i < TEST_COUNT; i++) {
+            let receipt = utils.create_new_contract(admin);
         }
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
