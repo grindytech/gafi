@@ -14,14 +14,14 @@ the [Substrate Playground](https://docs.substrate.io/playground/) :hammer_and_wr
 First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
 
 ### Test
+  #### Test pallet functionalities
+  ```sh
+  make test
+  ```
+  #### [Client tests](https://wiki.gafi.network/build/how-to-guides/how-to-run-client-tests)
 
-
-```sh
-make test
-```
 
 ### Run
-
 
 ```sh
 make run-dev
@@ -35,7 +35,7 @@ make build
 
 ### Docs
 
-https://docs.gafi.network
+https://wiki.gafi.network
 
 
 ### Connect with Polkadot-JS Apps Front-end
