@@ -139,6 +139,7 @@ pub mod pallet {
 
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
+	#[pallet::getter(fn services)]
 	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
 
 	/// The new players join the pool before the TimeService, whose are without charge
