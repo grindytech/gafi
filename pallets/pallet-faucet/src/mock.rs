@@ -54,7 +54,6 @@ pub const MIN_FAUCET_BALANCE: u64 = 500_000;
 parameter_types! {
 	pub FaucetBalance: u64 = FAUCET_BALANCE;
 	pub MaxGenesisAccount: u32 = 5;
-	pub MinFaucetBalance: u64 = MIN_FAUCET_BALANCE;
 }
 
 impl pallet_faucet::Config for Test {
@@ -62,7 +61,6 @@ impl pallet_faucet::Config for Test {
 	type Currency = Balances;
 	type FaucetBalance = FaucetBalance;
 	type MaxGenesisAccount = MaxGenesisAccount;
-	type MinFaucetBalance = MinFaucetBalance;
 }
 
 parameter_types! {
@@ -145,7 +143,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts }
+		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts, faucet_amount: MIN_FAUCET_BALANCE }
 			.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);

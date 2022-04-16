@@ -31,8 +31,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type FaucetBalance: Get<BalanceOf<Self>>;
 
-		#[pallet::constant]
-		type MinFaucetBalance: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -43,16 +41,20 @@ pub mod pallet {
 	pub(super) type GenesisAccounts<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxGenesisAccount>, ValueQuery>;
 
+	#[pallet::storage]
+	pub type FaucetAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub genesis_accounts: Vec<T::AccountId>,
+		pub faucet_amount: BalanceOf<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { genesis_accounts: vec![] }
+			Self { genesis_accounts: vec![], faucet_amount: BalanceOf::<T>::default()}
 		}
 	}
 
@@ -63,6 +65,8 @@ pub mod pallet {
 				<GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
 					.map_or((), |_| {});
 			}
+
+			FaucetAmount::<T>::put(self.faucet_amount);
 		}
 	}
 
@@ -91,7 +95,7 @@ pub mod pallet {
 			let genesis_accounts = GenesisAccounts::<T>::get();
 
 			ensure!(
-				T::Currency::free_balance(&sender) < T::MinFaucetBalance::get(),
+				T::Currency::free_balance(&sender) < (FaucetAmount::<T>::get() / 10u128.try_into().ok().unwrap()),
 				<Error<T>>::DontBeGreedy
 			);
 
@@ -125,7 +129,7 @@ pub mod pallet {
 				&genesis_accounts[0],
 				amount,
 				ExistenceRequirement::KeepAlive,
-			);
+			)?;
 
 			Self::deposit_event(Event::Transferred(from, genesis_accounts[0].clone(), amount));
 

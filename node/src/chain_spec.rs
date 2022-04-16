@@ -164,6 +164,9 @@ fn testnet_genesis(
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 	let bond_existential_deposit: u128 = unit(GAKI);
 
+	// pallet-faucet
+	let faucet_amount: u128 = 1500 * unit(GAKI);
+
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -218,6 +221,7 @@ fn testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			],
+			faucet_amount,
 		},
 		tx_handler: TxHandlerConfig {
 			gas_price: U256::from(100_000_000_000u128),
