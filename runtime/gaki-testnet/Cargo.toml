@@ -4,7 +4,7 @@ description = "A fresh FRAME-based Substrate runtime, ready for hacking."
 edition = "2021"
 homepage = "https://substrate.io/"
 license = "Unlicense"
-name = "gafix-testnet"
+name = "gaki-testnet"
 publish = false
 repository = "https://github.com/cryptoviet/gafi"
 version = "4.0.0-dev"
@@ -69,6 +69,8 @@ pallet-template = {version = "4.0.0-dev", default-features = false, path = "../.
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
 proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
+pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
+pallet-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pool" }
 
 # unit test
 [dev.dependencies]
@@ -94,6 +96,7 @@ runtime-benchmarks = [
   "pallet-ethereum/runtime-benchmarks",
   "upfront-pool/runtime-benchmarks",
   "staking-pool/runtime-benchmarks",
+  "pallet-pool/runtime-benchmarks",
   "gafi-tx/runtime-benchmarks",
   "proof-address-mapping/runtime-benchmarks",
 ]
@@ -137,4 +140,6 @@ std = [
   "gafi-tx/std",
   "gafi-primitives/std",
   "proof-address-mapping/std",
+  "pallet-faucet/std",
+  "pallet-pool/std",
 ]
