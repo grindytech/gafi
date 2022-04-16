@@ -18,7 +18,7 @@ fn faucet_works() {
 fn faucet_works_with_low_balance() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11; 32]);
-		let legit_balance = MIN_FAUCET_BALANCE/10 - 1u64;
+		let legit_balance = FAUCET_BALANCE/10 - 1u64;
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, legit_balance);
 		assert_eq!(Balances::free_balance(&sender), legit_balance);
 		assert_ok!(Faucet::faucet(Origin::signed(sender.clone())));
@@ -31,7 +31,7 @@ fn faucet_works_with_low_balance() {
 fn faucet_fail() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11;32]);
-		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, MIN_FAUCET_BALANCE);
+		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, FAUCET_BALANCE);
 		assert_err!(Faucet::faucet(Origin::signed(sender.clone())), <Error<Test>>::DontBeGreedy);
 	})
 }
@@ -40,7 +40,7 @@ fn faucet_fail() {
 fn donate_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11;32]);
-		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, MIN_FAUCET_BALANCE);
+		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, FAUCET_BALANCE);
 
 		let before_balance = Balances::free_balance(GENESIS_ACCOUNT.clone());
 
@@ -54,8 +54,8 @@ fn donate_work() {
 fn donate_fail() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11;32]);
-		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, MIN_FAUCET_BALANCE);
+		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, FAUCET_BALANCE);
 
-		assert_err!(Faucet::donate(Origin::signed(sender.clone()), MIN_FAUCET_BALANCE.add(100_000)), <Error<Test>>::NotEnoughBalance);
+		assert_err!(Faucet::donate(Origin::signed(sender.clone()), FAUCET_BALANCE.add(100_000)), <Error<Test>>::NotEnoughBalance);
 	})
 }

@@ -425,14 +425,12 @@ impl pallet_template::Config for Runtime {
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
-	pub FaucetBalance: Balance = 10 * unit(GAKI); // 10 GAKI
 }
 
 impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
-	type FaucetBalance = FaucetBalance;
 }
 
 impl pallet_pool::Config for Runtime {

@@ -4,7 +4,6 @@ use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -49,17 +48,14 @@ impl pallet_balances::Config for Test {
 }
 
 pub const FAUCET_BALANCE: u64 = 1_000_000;
-pub const MIN_FAUCET_BALANCE: u64 = 500_000;
 
 parameter_types! {
-	pub FaucetBalance: u64 = FAUCET_BALANCE;
 	pub MaxGenesisAccount: u32 = 5;
 }
 
 impl pallet_faucet::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type FaucetBalance = FaucetBalance;
 	type MaxGenesisAccount = MaxGenesisAccount;
 }
 
@@ -143,7 +139,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts, faucet_amount: MIN_FAUCET_BALANCE }
+		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts, faucet_amount: FAUCET_BALANCE }
 			.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);

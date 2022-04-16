@@ -27,10 +27,6 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxGenesisAccount: Get<u32>;
-
-		#[pallet::constant]
-		type FaucetBalance: Get<BalanceOf<Self>>;
-
 	}
 
 	#[pallet::pallet]
@@ -103,7 +99,7 @@ pub mod pallet {
 				match T::Currency::transfer(
 					&account,
 					&sender,
-					T::FaucetBalance::get(),
+					FaucetAmount::<T>::get(),
 					ExistenceRequirement::KeepAlive,
 				) {
 					Ok(_) => return Ok(()),
