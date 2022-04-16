@@ -33,6 +33,12 @@ make run-dev
 make build
 ```
 
+### Benchmarking
+
+```sh
+make benchmark
+```
+
 ### Docs
 
 https://wiki.gafi.network
