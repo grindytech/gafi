@@ -3,7 +3,7 @@ version: "3.2"
 services:
   dev:
     container_name: gafi-node
-    image: dttr278/public:gafi-linux
+    image: dttr278/gafi-linux:latest
     working_dir: /var/www/gafi-node
     ports:
       - "9944:9944"
