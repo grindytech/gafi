@@ -3,7 +3,7 @@ version: "3.2"
 services:
   dev:
     container_name: gafi-node
-    image: paritytech/ci-linux:f203f298-20220415
+    image: dttr278/gafi-linux:latest
     working_dir: /var/www/gafi-node
     ports:
       - "9944:9944"
