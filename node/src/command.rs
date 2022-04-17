@@ -56,12 +56,11 @@ impl SubstrateCli for Cli {
 			"dev" => Box::new(chain_spec::dev::development_config()?),
 			"" | "local" => Box::new(chain_spec::dev::local_testnet_config()?),
 
-			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::development_config()?),
+			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
 
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
-
 		})
 	}
 

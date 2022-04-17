@@ -44,7 +44,11 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn gaki_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../../resources/gaki-testnet.json")[..])
+}
+
+pub fn gaki_testnet_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut props : Properties = Properties::new();
@@ -63,7 +67,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		"dev",
 		ChainType::Development,
 		move || {
-			dev_genesis(
+			gaki_testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
@@ -94,7 +98,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 /// Configure initial storage state for FRAME modules.
-fn dev_genesis(
+fn gaki_testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,

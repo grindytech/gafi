@@ -11,6 +11,13 @@ run-dev:
     --dev \
     --rpc-port 9933
 
+.PHONY: run-gaki-testnet
+run-gaki-testnet:
+	./target/release/gafi-node \
+    --tmp \
+    --chain gaki-testnet \
+    --rpc-port 9933
+
 .PHONY: test
 test:
 	cargo test
