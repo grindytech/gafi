@@ -29,6 +29,7 @@ sp-std = {version = "4.0.0", default-features = false, git = "https://github.com
 
 [dev-dependencies]
 hex-literal = { version = "0.3.4" }
+more-asserts = { version = "0.2.2" }
 # Frontier
 fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
 pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}

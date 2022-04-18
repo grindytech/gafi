@@ -117,24 +117,24 @@ fn init_leave_pool(
 }
 
 #[test]
-fn leave_basic_pool_early_works() {
+fn leave_pool_early_works() {
 	for i in 0..50 {
+		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-			for level in LEVELS {
 				let pool_fee = StakingPool::get_service(level);
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
 				init_leave_pool(i, pool_fee.value, TicketType::Staking(level), 1, leave_block);
+			});
 			}
-		});
-	}
+		}
 }
 
 #[test]
-fn leave_basic_pool_over_works() {
+fn leave_pool_over_works() {
 	for i in 0..50 {
+		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-			for level in LEVELS {
 				let pool_fee = StakingPool::get_service(level);
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
@@ -146,7 +146,7 @@ fn leave_basic_pool_over_works() {
 					start_block,
 					leave_block,
 				);
-			}
-		});
+			});
+		}
 	}
 }

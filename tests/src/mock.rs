@@ -65,7 +65,7 @@ impl proof_address_mapping::Config for Test {
 }
 
 parameter_types! {
-	pub TransactionByteFee: u128 = 2 * milli(GAKI); // 0.002 GAKI
+	pub TransactionByteFee: u128 = 0; // 0.002 GAKI
 }
 
 impl pallet_transaction_payment::Config for Test {
@@ -252,6 +252,12 @@ impl ExtBuilder {
 			&mut storage,
 		)
 		.unwrap();
+
+		// GenesisBuild::<Test>::assimilate_storage(
+		// 	&staking_pool::GenesisConfig::default(),
+		// 	&mut storage,
+		// )
+		// .unwrap();
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

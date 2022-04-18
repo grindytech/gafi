@@ -7907,6 +7907,7 @@ dependencies = [
  "gafi-primitives",
  "gafi-tx",
  "hex-literal 0.3.4",
+ "more-asserts",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
