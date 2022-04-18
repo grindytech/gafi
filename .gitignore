@@ -24,4 +24,5 @@ node_modules
 **/tests/build/
 package-lock.json
 
-
+# Custome chain spec
+genesis/
