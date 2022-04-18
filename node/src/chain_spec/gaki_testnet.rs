@@ -1,5 +1,5 @@
 use devnet::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig,
+	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
@@ -13,7 +13,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap, str::FromStr};
 use serde_json::json;
-use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit, centi, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -44,13 +44,17 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn gaki_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../../resources/gakiTestnetSpecRaw.json")[..])
+}
+
+pub fn gaki_dev_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut props : Properties = Properties::new();
 	let aux = GafiCurrency::token_info(GAKI);
 	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("GAKI".to_string()));
-	let name  =json!( String::from_utf8(aux.name).unwrap_or("Aurora X".to_string()));
+	let name  =json!( String::from_utf8(aux.name).unwrap_or("Gafi Network Kusama".to_string()));
 	let decimals  =json!(aux.decimals);
     props.insert("tokenSymbol".to_string(), symbol);
     props.insert("tokenName".to_string(), name);
@@ -63,7 +67,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		"dev",
 		ChainType::Development,
 		move || {
-			testnet_genesis(
+			gaki_testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
@@ -93,56 +97,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	))
 }
 
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
-	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-
-	Ok(ChainSpec::from_genesis(
-		// Name
-		"Local Testnet",
-		// ID
-		"local_testnet",
-		ChainType::Local,
-		move || {
-			testnet_genesis(
-				wasm_binary,
-				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				true,
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		None,
-		// Properties
-		None,
-		// Extensions
-		None,
-	))
-}
-
 /// Configure initial storage state for FRAME modules.
-fn testnet_genesis(
+fn gaki_testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,
@@ -161,9 +117,11 @@ fn testnet_genesis(
 		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
 		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
 	];
-	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
+	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 	let bond_existential_deposit: u128 = unit(GAKI);
-	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
+
+	// pallet-faucet
+	let faucet_amount: u128 = 1500 * unit(GAKI);
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -219,9 +177,10 @@ fn testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			],
+			faucet_amount,
 		},
 		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(min_gas_price),
+			gas_price: U256::from(100_000_000_000u128),
 		}
 	}
 }

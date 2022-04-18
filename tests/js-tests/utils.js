@@ -21,7 +21,6 @@ async function add_additional_gas(contract, address) {
 
 async function create_new_contract(account) {
     const arguments = [
-        "1000000000000000000000000000" // 1B
     ];
     const contract = new web3.eth.Contract(ERC20ABI.abi);
     const contract_data = await contract.deploy({
