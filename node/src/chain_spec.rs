@@ -203,30 +203,6 @@ fn testnet_genesis(
 						storage: std::collections::BTreeMap::new(),
 					},
 				);
-				map.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"F0B9EaA0fAaC58d5d4F3224958D75a5370672231"
-					)),
-					pallet_evm::GenesisAccount {
-						nonce: U256::zero(),
-						balance: U256::from(1000 * unit(GAKI)),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
-					},
-				);
-
-				map.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"D910E83396231988F79df2f1175a90e15d26aB71"
-					)),
-					pallet_evm::GenesisAccount {
-						nonce: U256::zero(),
-						balance: U256::from(1000 * unit(GAKI)),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
-					},
-				);
-
 				map
 			},
 		},
