@@ -9,7 +9,6 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
-use gafi_primitives::pool::GafiPool;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -425,16 +424,12 @@ impl pallet_template::Config for Runtime {
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
-	pub FaucetBalance: Balance = 10 * unit(GAKI); // 10 GAKI
-	pub MinFaucetBalance: Balance = 2 * unit(GAKI); // 2 GAKI
 }
 
 impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
-	type FaucetBalance = FaucetBalance;
-	type MinFaucetBalance = MinFaucetBalance;
 }
 
 impl pallet_pool::Config for Runtime {

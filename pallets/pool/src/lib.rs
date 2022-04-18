@@ -4,6 +4,10 @@ pub use pallet::*;
 use crate::weights::WeightInfo;
 use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, MasterPool, TicketType};
 use frame_support::traits::Currency;
+use frame_support::pallet_prelude::*;
+#[cfg(feature = "std")]
+use frame_support::serde::{Deserialize, Serialize};
+use scale_info::TypeInfo;
 
 #[cfg(test)]
 mod mock;
@@ -37,8 +41,28 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+	#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+	pub struct TicketInfo {
+		pub ticket_type: TicketType,
+		pub ticket_remain: u32,
+	}
+
+	impl TicketInfo {
+		pub fn withdraw_ticket(&self) -> Option<Self> {
+			if let Some(new_ticket_remain) = self.ticket_remain.checked_sub(1) {
+				return Some(TicketInfo {
+					ticket_remain: new_ticket_remain,
+					ticket_type: self.ticket_type,
+				});
+			}
+			None
+		}
+	}
+
+
 	#[pallet::storage]
-	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketType>;
+	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -69,7 +93,14 @@ pub mod pallet {
 				},
 			}
 
-			Tickets::<T>::insert(sender.clone(), ticket);
+			let service = Self::get_service(ticket);
+
+			let ticket_info = TicketInfo {
+				ticket_type: ticket,
+				ticket_remain: service.tx_limit,
+			};
+
+			Tickets::<T>::insert(sender.clone(), ticket_info);
 			Self::deposit_event(Event::<T>::Joined { sender, ticket });
 			Ok(())
 		}
@@ -78,7 +109,7 @@ pub mod pallet {
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
-				match ticket {
+				match ticket.ticket_type {
 					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
 					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
 					TicketType::Sponsored(_) => {
@@ -86,7 +117,7 @@ pub mod pallet {
 					},
 				}
 				Tickets::<T>::remove(sender.clone());
-				Self::deposit_event(Event::<T>::Leaved { sender: sender, ticket: ticket});
+				Self::deposit_event(Event::<T>::Leaved { sender: sender, ticket: ticket.ticket_type});
 				Ok(())
 			} else {
 				return Err(Error::<T>::NotFoundInPool.into());
@@ -95,11 +126,17 @@ pub mod pallet {
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
-		fn get_player_ticket(player: T::AccountId) -> Option<TicketType> {
-			Tickets::<T>::get(player)
+		fn use_ticket(player: T::AccountId) -> Option<TicketType> {
+			if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
+				if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
+					Tickets::<T>::insert(player, new_ticket_info);
+					return Some(new_ticket_info.ticket_type);
+				}
+			}
+			None
 		}
 
-		fn get_ticket(ticket: TicketType) -> Service {
+		fn get_service(ticket: TicketType) -> Service {
 			match ticket {
 				TicketType::Upfront(level) => T::UpfrontPool::get_service(level),
 				TicketType::Staking(level) => T::StakingPool::get_service(level),
