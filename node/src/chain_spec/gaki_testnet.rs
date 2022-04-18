@@ -45,10 +45,10 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 pub fn gaki_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../../resources/gaki-testnet.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../../../resources/gakiTestnetSpecRaw.json")[..])
 }
 
-pub fn gaki_testnet_config() -> Result<ChainSpec, String> {
+pub fn gaki_dev_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut props : Properties = Properties::new();
