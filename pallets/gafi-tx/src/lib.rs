@@ -131,8 +131,8 @@ where
 	) {
 		let mut service_fee = corrected_fee;
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
-		if let Some(ticket) = T::PlayerTicket::get_player_ticket(account_id) {
-			let service = T::PlayerTicket::get_ticket(ticket);
+		if let Some(ticket) = T::PlayerTicket::withdraw_player_ticket(account_id) {
+			let service = T::PlayerTicket::get_service(ticket);
 			let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
 			service_fee = service_fee.saturating_sub(discount_fee.unwrap_or(U256::from(0u64)));
 		}
