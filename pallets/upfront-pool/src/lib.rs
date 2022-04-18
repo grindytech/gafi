@@ -200,6 +200,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		ChargePoolService,
+		UpfrontSetMaxPlayer {new_max_player: u32},
 	}
 
 	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
@@ -297,6 +298,7 @@ pub mod pallet {
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			<MaxPlayer<T>>::put(max_player);
+			Self::deposit_event(Event::<T>::UpfrontSetMaxPlayer{new_max_player: max_player});
 			Ok(())
 		}
 	}
