@@ -69,7 +69,7 @@ pub trait GafiPool<AccountId> {
 }
 
 pub trait PlayerTicket<AccountId> {
-	fn withdraw_player_ticket(player: AccountId) -> Option<TicketType>;
+	fn use_ticket(player: AccountId) -> Option<TicketType>;
 	fn get_service(ticket: TicketType) -> Service;
 }
 

@@ -126,7 +126,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
-		fn withdraw_player_ticket(player: T::AccountId) -> Option<TicketType> {
+		fn use_ticket(player: T::AccountId) -> Option<TicketType> {
 			if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
 				if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
 					Tickets::<T>::insert(player, new_ticket_info);
