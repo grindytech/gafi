@@ -1,15 +1,14 @@
-use std::{collections::BTreeMap, str::FromStr};
+use std::{ str::FromStr};
 
-use gafi_primitives::{currency::{NativeToken::GAKI, milli, centi}};
+use gafi_primitives::{pool::{Level, Service, TicketType}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use gafi_tx::{GafiEVMCurrencyAdapter};
 use proof_address_mapping::{ProofAddressMapping};
-
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
@@ -30,7 +29,7 @@ fn get_accountid32(addr: &str) -> AccountId32 {
 	AccountId32::from_str(addr).unwrap()
 }
 
-pub const PREFIX: &[u8] = b"Bond Aurora Network account:";
+pub const PREFIX: &[u8] = b"Bond Gafi Network account:";
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -65,7 +64,7 @@ impl proof_address_mapping::Config for Test {
 }
 
 parameter_types! {
-	pub TransactionByteFee: u128 = 2 * milli(GAKI); // 0.002 GAKI
+	pub TransactionByteFee: u128 = 0; // 0.002 GAKI
 }
 
 impl pallet_transaction_payment::Config for Test {
@@ -86,7 +85,7 @@ impl pallet_evm::Config for Test {
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressRoot<AccountId32>;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
 	type AddressMapping = ProofAddressMapping<Self>;
 	type Currency = Balances;
@@ -104,10 +103,6 @@ impl pallet_ethereum::Config for Test {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
-
-pub const MAX_PLAYER: u32 = 20;
-pub const MAX_NEW_PLAYER: u32 = 20;
-pub const MAX_INGAME_PLAYER: u32 = 20;
 
 impl pallet_pool::Config for Test {
 	type Event = Event;
@@ -136,10 +131,10 @@ impl staking_pool::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
+pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
-pub const INIT_TIMESTAMP: u64 = 30_000;
+pub const INIT_TIMESTAMP: u64 = 0;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -219,23 +214,41 @@ pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
 			UpfrontPool::on_finalize(System::block_number());
+			Pool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		UpfrontPool::on_initialize(System::block_number());
+		Pool::on_initialize(System::block_number());
 		Timestamp::set_timestamp((System::block_number() as u64 * SLOT_DURATION) + INIT_TIMESTAMP);
 	}
 }
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
+	pub max_player: u32,
+	pub time_service: u128,
+	pub upfront_services: [(Level, Service); 3],
+	pub staking_services: [(Level, Service); 3],
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
+			max_player: 1000,
+			time_service: TIME_SERVICE,
+			upfront_services: [
+				(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
+				(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
+				(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+			],
+			staking_services: [
+				(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
+				(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
+				(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+			],
 		}
 	}
 }
@@ -248,7 +261,19 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig::default(),
+			&upfront_pool::GenesisConfig { max_player: self.max_player, services: self.upfront_services },
+			&mut storage,
+		)
+		.unwrap();
+		
+		GenesisBuild::<Test>::assimilate_storage(
+			&staking_pool::GenesisConfig { services: self.staking_services },
+			&mut storage,
+		)
+		.unwrap();
+		
+		GenesisBuild::<Test>::assimilate_storage(
+			&pallet_pool::GenesisConfig { time_service: self.time_service },
 			&mut storage,
 		)
 		.unwrap();

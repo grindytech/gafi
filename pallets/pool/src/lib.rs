@@ -1,19 +1,20 @@
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+use frame_support::{
+	pallet_prelude::*,
+	traits::{Currency, ReservableCurrency},
+};
+use frame_system::pallet_prelude::*;
+use gafi_primitives::{
+	pool::{GafiPool, Level, Service, Ticket, TicketType, PlayerTicket, MasterPool},
+};
+use pallet_timestamp::{self as timestamp};
 
-pub use pallet::*;
 use crate::weights::WeightInfo;
-use gafi_primitives::pool::{GafiPool, PlayerTicket, Service, MasterPool, TicketType};
-use frame_support::traits::Currency;
-use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
-
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
+pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -24,11 +25,10 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{pallet_prelude::*, Twox64Concat};
-	use frame_system::pallet_prelude::*;
+	use frame_support::{Twox64Concat};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
 		type UpfrontPool: GafiPool<Self::AccountId>;
@@ -58,11 +58,80 @@ pub mod pallet {
 			}
 			None
 		}
+
+		pub  fn renew_ticket(&self, new_remain: u32) -> Self {
+			TicketInfo {
+				ticket_remain: new_remain,
+				ticket_type: self.ticket_type,
+			}
+		}
+
 	}
 
 
 	#[pallet::storage]
 	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
+
+	/// Holding the mark time to check if correct time to charge service fee
+	/// The default value is at the time chain launched
+	#[pallet::type_value]
+	pub fn DefaultMarkTime<T: Config>() -> u128 {
+		<timestamp::Pallet<T>>::get().try_into().ok().unwrap()
+	}
+	#[pallet::storage]
+	#[pallet::getter(fn mark_time)]
+	pub type MarkTime<T: Config> = StorageValue<_, u128, ValueQuery, DefaultMarkTime<T>>;
+
+	/// Honding the specific period of time to charge service fee
+	/// The default value is 1 hours
+	#[pallet::type_value]
+	pub fn DefaultTimeService() -> u128 {
+		// 1 hour
+		3_600_000u128
+	}
+	#[pallet::storage]
+	#[pallet::getter(fn time_service)]
+	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
+
+	/// on_finalize following by steps:
+	/// 1. renew tickets
+	/// 2. Update new Marktime
+	///
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_finalize(_block_number: BlockNumberFor<T>) {
+			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
+			if _now - Self::mark_time() >= Self::time_service() {
+				Self::renew_tickets();
+				MarkTime::<T>::put(_now);
+			}
+		}
+	}
+
+	//** Genesis Conguration **//
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub time_service: u128,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				time_service: 3_600_000u128,
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			<TimeService<T>>::put(self.time_service);
+			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
+			<MarkTime<T>>::put(_now);
+		}
+	}
+		
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -125,6 +194,18 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		pub fn renew_tickets() {
+			let _ = Tickets::<T>::iter().for_each(|player| {
+				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
+					let service = Self::get_service(ticket_info.ticket_type);
+					let new_ticket = ticket_info.renew_ticket(service.tx_limit);
+					Tickets::<T>::insert(player.0.clone(), new_ticket);
+				}
+			});
+		}
+	}
+
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
 		fn use_ticket(player: T::AccountId) -> Option<TicketType> {
 			if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
@@ -148,6 +229,14 @@ pub mod pallet {
 	impl<T: Config> MasterPool<T::AccountId> for Pallet<T> {
 		fn remove_player(player: &T::AccountId) {
 			Tickets::<T>::remove(&player);
+		}
+
+		fn get_timeservice() -> u128 {
+			TimeService::<T>::get()
+		}
+
+		fn get_marktime() -> u128 {
+			MarkTime::<T>::get()
 		}
 	}
 }
