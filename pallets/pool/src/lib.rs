@@ -101,8 +101,9 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
-			if _now - Self::mark_time() >= Self::get_timeservice() {
-				Self::renew_ticket();
+			if _now - Self::mark_time() >= Self::time_service() {
+				// println!("Update");
+				Self::renew_tickets();
 				MarkTime::<T>::put(_now);
 			}
 		}
@@ -195,8 +196,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn renew_ticket() {
-			let _ = Tickets::<T>::iter().map(|player| {
+		pub fn renew_tickets() {
+			let _ = Tickets::<T>::iter().for_each(|player| {
 				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
 					let service = Self::get_service(ticket_info.ticket_type);
 					let new_ticket = ticket_info.renew_ticket(service.tx_limit);

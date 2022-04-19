@@ -131,10 +131,10 @@ impl staking_pool::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
+pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
-pub const INIT_TIMESTAMP: u64 = 30_000;
+pub const INIT_TIMESTAMP: u64 = 0;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
