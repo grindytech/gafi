@@ -52,11 +52,53 @@ pub mod pallet {
 			}
 			None
 		}
+
+		pub  fn renew_ticket(&self, new_remain: u32) -> Self {
+			TicketInfo {
+				ticket_remain: new_remain,
+				ticket_type: self.ticket_type,
+			}
+		}
+
 	}
 
 
 	#[pallet::storage]
 	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
+
+	/// Honding the specific period of time to charge service fee
+	/// The default value is 1 hours
+	#[pallet::type_value]
+	pub fn DefaultTimeService() -> u128 {
+		// 1 hour
+		3_600_000u128
+	}
+	#[pallet::storage]
+	#[pallet::getter(fn time_service)]
+	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
+
+	//** Genesis Conguration **//
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub time_service: u128,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				time_service: 3_600_000u128,
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			<TimeService<T>>::put(self.time_service);
+		}
+	}
+		
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -143,5 +185,17 @@ pub mod pallet {
 		fn remove_player(player: &T::AccountId) {
 			Tickets::<T>::remove(&player);
 		}
+
+		fn get_timeservice() -> u128 {
+			TimeService::<T>::get()
+		}
+
+		// fn renew_ticket(player: &T::AccountId) {
+		// 	if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
+		// 			let service = Self::get_service(ticket_info.ticket_type);
+		// 			let new_ticket = ticket_info.renew_ticket(service.tx_limit);
+		// 			Tickets::<T>::insert(player, new_ticket);
+		// 	}
+		// }
 	}
 }

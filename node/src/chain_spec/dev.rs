@@ -3,7 +3,7 @@ use devnet::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
-	WASM_BINARY,
+	WASM_BINARY, PoolConfig,
 };
 use gafi_primitives::{pool::{Level, Service, TicketType}};
 use sc_service::{ChainType, Properties};
@@ -152,14 +152,14 @@ fn dev_genesis(
 	// Pool config
 	const MAX_PLAYER: u32 = 1000;
 	let upfront_services = [
-		(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-		(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-		(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+		(Level::Basic, Service { discount: 30, tx_limit: 10, value: 100}),
+		(Level::Medium, Service { discount: 50, tx_limit: 10, value: 200}),
+		(Level::Advance, Service { discount: 70, tx_limit: 10, value: 300}),
 	];
 	let staking_services = [
-		(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
-		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+		(Level::Basic, Service { discount: 30, tx_limit: 10, value: 1000}),
+		(Level::Medium, Service { discount: 30, tx_limit: 10, value: 1500}),
+		(Level::Advance, Service { discount: 30, tx_limit: 10, value: 2000}),
 	];
 	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
 	let bond_existential_deposit: u128 = unit(GAKI);
@@ -212,7 +212,7 @@ fn dev_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services, time_service: TIME_SERVICE },
+		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
 		staking_pool: StakingPoolConfig { services: staking_services },
 		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 		faucet: FaucetConfig {
@@ -226,6 +226,9 @@ fn dev_genesis(
 		},
 		tx_handler: TxHandlerConfig {
 			gas_price: U256::from(min_gas_price),
-		}
+		},
+		pool: PoolConfig {
+			time_service: TIME_SERVICE
+		},
 	}
 }

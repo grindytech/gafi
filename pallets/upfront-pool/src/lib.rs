@@ -90,7 +90,7 @@ pub mod pallet {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now = <timestamp::Pallet<T>>::get();
 
-			if _now - Self::mark_time() >= Self::time_service().try_into().ok().unwrap() {
+			if _now - Self::mark_time() >= T::MasterPool::get_timeservice().try_into().ok().unwrap() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
 				MarkTime::<T>::put(_now);
@@ -116,17 +116,6 @@ pub mod pallet {
 	#[pallet::getter(fn mark_time)]
 	pub type MarkTime<T: Config> = StorageValue<_, T::Moment, ValueQuery, DefaultMarkTime<T>>;
 
-
-	/// Honding the specific period of time to charge service fee
-	/// The default value is 1 hours
-	#[pallet::type_value]
-	pub fn DefaultTimeService() -> u128 {
-		// 1 hour
-		3_600_000u128
-	}
-	#[pallet::storage]
-	#[pallet::getter(fn time_service)]
-	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
 
 	/// Count player on the pool to make sure not exceed the MaxPlayer
 	#[pallet::storage]
@@ -156,7 +145,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub max_player: u32,
-		pub time_service: u128,
 		pub services: [(Level, Service); 3],
 	}
 
@@ -165,7 +153,6 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				max_player: 1000,
-				time_service: 3_600_000u128,
 				services: [
 					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
 					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
@@ -180,7 +167,6 @@ pub mod pallet {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
 			<MarkTime<T>>::put(<timestamp::Pallet<T>>::get());
-			<TimeService<T>>::put(self.time_service);
 			for service in self.services {
 				Services::<T>::insert(service.0, service.1);
 			}
@@ -319,11 +305,12 @@ impl<T: Config> Pallet<T> {
 	fn move_newplayer_to_ingame() -> Result<(), Error<T>> {
 		let new_players: Vec<T::AccountId> = NewPlayers::<T>::get().into_inner();
 		for new_player in new_players {
-			<IngamePlayers<T>>::try_append(new_player).map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
+			<IngamePlayers<T>>::try_append(new_player.clone()).map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
 		}
 		<NewPlayers<T>>::kill();
 		Ok(())
 	}
+
 
 	fn charge_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
 		let withdraw = T::Currency::withdraw(
@@ -346,14 +333,14 @@ impl<T: Config> Pallet<T> {
 	) -> u128 {
 		let period_time = leave_time.saturating_sub(join_time);
 		let fee: u128;
-		if period_time < Self::time_service() {
+		if period_time < T::MasterPool::get_timeservice() {
 			fee = service_fee;
 		} else {
-			let extra = period_time % Self::time_service();
+			let extra = period_time % T::MasterPool::get_timeservice();
 			let serive_fee = service_fee;
 			let actual_fee = serive_fee
-				.saturating_mul(Self::time_service().saturating_sub(extra))
-				.saturating_div(Self::time_service());
+				.saturating_mul(T::MasterPool::get_timeservice().saturating_sub(extra))
+				.saturating_div(T::MasterPool::get_timeservice());
 			fee = actual_fee;
 		}
 		fee
@@ -384,10 +371,9 @@ impl<T: Config> Pallet<T> {
 			if let Some(service) = Self::get_player_service(player.clone()) {
 				let fee_value = Self::u128_try_to_balance(service.value)?;
 
-
-
 				match Self::charge_fee(&player, fee_value) {
-					Ok(_) => {},
+					Ok(_) => {
+					},
 					Err(_) => {
 						let new_player_count = Self::player_count()
 							.checked_sub(1)

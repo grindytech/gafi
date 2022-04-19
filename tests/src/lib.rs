@@ -8,6 +8,9 @@ mod mock;
 #[cfg(test)]
 mod upfront_pool_test;
 
+#[cfg(test)]
+mod tx_limit_test;
+
 pub fn get_account_encoded(sub_address: &str) -> Option<String> {
     let account_id = AccountId32::from_str(sub_address);
     match account_id {

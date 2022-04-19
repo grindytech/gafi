@@ -118,7 +118,7 @@ fn init_leave_pool(
 
 #[test]
 fn leave_pool_early_works() {
-	for i in 0..50 {
+	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
 				let pool_fee = StakingPool::get_service(level);
@@ -132,7 +132,7 @@ fn leave_pool_early_works() {
 
 #[test]
 fn leave_pool_over_works() {
-	for i in 0..50 {
+	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
 				let pool_fee = StakingPool::get_service(level);
