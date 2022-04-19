@@ -4544,6 +4544,7 @@ dependencies = [
  "gafi-primitives",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

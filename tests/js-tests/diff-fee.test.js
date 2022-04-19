@@ -62,8 +62,9 @@ describe('Contract', () => {
         console.log("before_balance: ", before_balance);
         console.log("deploying...");
 
-        let receipt = await utils.create_new_contract(admin);
-        
+        for (let i = 0; i < TEST_COUNT; i++) {
+            let receipt = await utils.create_new_contract(admin);
+        }
         let after_balance = await web3.eth.getBalance(admin.address);
         console.log("after_balance: ", after_balance);
 
