@@ -20,7 +20,7 @@ var ERC20_Address;
 
 describe('Contract', () => {
 
-    it('base transaction fee by transfer erc20', async () => {
+    it('base transaction fee create token erc20', async () => {
         let before_balance = await web3.eth.getBalance(test1.address);
         console.log("before_balance: ", before_balance);
         console.log("deploying...");

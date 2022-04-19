@@ -16,6 +16,8 @@
     "@ethersproject/bytes": "^5.6.0",
     "@ethersproject/keccak256": "^5.6.0",
     "@openzeppelin/contracts": "^4.5.0",
+    "@polkadot/api": "^8.0.2",
+    "@polkadot/util": "^9.0.1",
     "abi-decoder": "^2.4.0",
     "axios": "^0.26.0",
     "chai": "^4.3.6",

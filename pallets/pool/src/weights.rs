@@ -59,7 +59,12 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: StakingPool PlayerCount (r:1 w:1)
 	// Storage: StakingPool Tickets (r:0 w:1)
 	fn join(s: u32, ticket: TicketType) -> Weight {
-		let mut weight = (48_079_000 as Weight).saturating_mul(s as Weight);
+		let base_r = 8;
+		let base_w = 4;
+		let mut weight = (48_079_000 as Weight).saturating_mul(s as Weight)
+		.saturating_add(T::DbWeight::get().reads(base_r as Weight))
+		.saturating_add(T::DbWeight::get().writes(base_w as Weight));
+
 		match ticket {
 			// r:4 w:3
    			TicketType::Upfront(_) => {
@@ -110,7 +115,11 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 
 impl WeightInfo for () {
 	fn join(s: u32, ticket: TicketType ) -> Weight {
-		let mut weight = (48_079_000 as Weight).saturating_mul(s as Weight);
+		let base_r = 8;
+		let base_w = 4;
+		let mut weight = (48_079_000 as Weight).saturating_mul(s as Weight)
+		.saturating_add(RocksDbWeight::get().reads(base_r as Weight))
+		.saturating_add(RocksDbWeight::get().writes(base_w as Weight));
 		match ticket {
 			// r:4 w:3
    			TicketType::Upfront(_) => {
