@@ -94,23 +94,19 @@ pub mod pallet {
 	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
 
 	/// on_finalize following by steps:
-	/// 1. Check if current timestamp is the correct time to charge service fee
-	///	2. Charge player in the IngamePlayers - Kick player when they can't pay
-	///	3. Move all players from NewPlayer to IngamePlayers
-	/// 4. Update new Marktime
+	/// 1. renew tickets
+	/// 2. Update new Marktime
 	///
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
-
 			if _now - Self::mark_time() >= Self::get_timeservice() {
-
+				Self::renew_ticket();
 				MarkTime::<T>::put(_now);
 			}
 		}
 	}
-
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
@@ -198,6 +194,18 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		fn renew_ticket() {
+			let _ = Tickets::<T>::iter().map(|player| {
+				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
+					let service = Self::get_service(ticket_info.ticket_type);
+					let new_ticket = ticket_info.renew_ticket(service.tx_limit);
+					Tickets::<T>::insert(player.0.clone(), new_ticket);
+				}
+			});
+		}
+	}
+
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
 		fn use_ticket(player: T::AccountId) -> Option<TicketType> {
 			if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
@@ -230,13 +238,5 @@ pub mod pallet {
 		fn get_marktime() -> u128 {
 			MarkTime::<T>::get()
 		}
-
-		// fn renew_ticket(player: &T::AccountId) {
-		// 	if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
-		// 			let service = Self::get_service(ticket_info.ticket_type);
-		// 			let new_ticket = ticket_info.renew_ticket(service.tx_limit);
-		// 			Tickets::<T>::insert(player, new_ticket);
-		// 	}
-		// }
 	}
 }

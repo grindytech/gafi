@@ -39,16 +39,16 @@ fn use_tickets_works() {
     }
 }
 
-// #[test]
-// fn renew_ticket_works() {
-//     ExtBuilder::default().build_and_execute(|| {
-//     for i in 0..TICKETS.len() {
-//             run_to_block(1);
-//             let account = AccountId32::new([i as u8;32]);
-//             use_tickets(TicketType::Upfront(Level::Basic), account.clone());
+#[test]
+fn renew_ticket_works() {
+    ExtBuilder::default().build_and_execute(|| {
+    for i in 0..TICKETS.len() {
+            run_to_block(1);
+            let account = AccountId32::new([i as u8;32]);
+            use_tickets(TicketType::Upfront(Level::Basic), account.clone());
             
-//             run_to_block(CIRCLE_BLOCK + ADDITIONAL_BLOCK);
-//             assert_ne!(Pool::use_ticket(account.clone()), None);
-//         }
-//     });
-// }
+            run_to_block(CIRCLE_BLOCK + ADDITIONAL_BLOCK);
+            assert_ne!(Pool::use_ticket(account.clone()), None);
+        }
+    });
+}
