@@ -102,7 +102,6 @@ pub mod pallet {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
 			if _now - Self::mark_time() >= Self::time_service() {
-				// println!("Update");
 				Self::renew_tickets();
 				MarkTime::<T>::put(_now);
 			}

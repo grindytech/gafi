@@ -6,4 +6,7 @@ mod mock;
 mod upfront_pool_test;
 
 #[cfg(test)]
+mod staking_pool_test;
+
+#[cfg(test)]
 mod pool_test;

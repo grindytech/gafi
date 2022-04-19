@@ -229,7 +229,7 @@ pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
 	pub max_player: u32,
 	pub time_service: u128,
-	pub services: [(Level, Service); 3],
+	pub upfront_services: [(Level, Service); 3],
 }
 
 impl Default for ExtBuilder {
@@ -238,7 +238,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			max_player: 1000,
 				time_service: TIME_SERVICE,
-				services: [
+				upfront_services: [
 					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
 					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
 					(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
@@ -255,7 +255,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig { max_player: self.max_player, services: self.services },
+			&upfront_pool::GenesisConfig { max_player: self.max_player, services: self.upfront_services },
 			&mut storage,
 		)
 		.unwrap();
@@ -266,11 +266,11 @@ impl ExtBuilder {
 		)
 		.unwrap();
 
-		// GenesisBuild::<Test>::assimilate_storage(
-		// 	&staking_pool::GenesisConfig::default(),
-		// 	&mut storage,
-		// )
-		// .unwrap();
+		GenesisBuild::<Test>::assimilate_storage(
+			&staking_pool::GenesisConfig::default(),
+			&mut storage,
+		)
+		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

@@ -11,7 +11,9 @@ const TICKETS: [TicketType; 6] = [TicketType::Upfront(Level::Basic),
  TicketType::Upfront(Level::Medium), TicketType::Upfront(Level::Advance),
 TicketType::Staking(Level::Basic), TicketType::Staking(Level::Medium),
  TicketType::Staking(Level::Advance)];
- 
+
+ const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Advance];
+
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
 
@@ -40,12 +42,12 @@ fn use_tickets_works() {
 }
 
 #[test]
-fn renew_ticket_works() {
-    for i in 0..TICKETS.len() {
+fn renew_upfront_ticket_works() {
+    for i in 0..LEVELS.len() {
     ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
             let account = AccountId32::new([i as u8;32]);
-            use_tickets(TicketType::Upfront(Level::Basic), account.clone());
+            use_tickets(TicketType::Upfront(LEVELS[i]), account.clone());
             assert_eq!(Pool::use_ticket(account.clone()), None);
             
             Pool::renew_tickets();
@@ -55,15 +57,47 @@ fn renew_ticket_works() {
 }
 
 #[test]
-fn trigger_renew_tickets_works() {
-    for i in 0..TICKETS.len() {
+fn trigger_renew_upfront_tickets_works() {
+    for i in 0..LEVELS.len() {
     ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
-            let account = AccountId32::new([i as u8;32]);
-            use_tickets(TICKETS[i], account.clone());
+            let account = AccountId32::new([ i as u8;32]);
+            use_tickets(TicketType::Upfront(LEVELS[i]), account.clone());
+            assert_eq!(Pool::use_ticket(account.clone()), None);
             
             run_to_block(CIRCLE_BLOCK + ADDITIONAL_BLOCK);
             assert_ne!(Pool::use_ticket(account.clone()), None);
         });
     }
 }
+
+// #[test]
+// fn renew_staking_ticket_works() {
+//     for i in 0..LEVELS.len() {
+//     ExtBuilder::default().build_and_execute(|| {
+//             run_to_block(1);
+//             let account = AccountId32::new([i as u8;32]);
+//             use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
+//             assert_eq!(Pool::use_ticket(account.clone()), None);
+            
+//             Pool::renew_tickets();
+//             assert_ne!(Pool::use_ticket(account.clone()), None);
+//         });
+//     }
+// }
+
+// #[test]
+// fn renew_staking_ticket_works() {
+//     for i in 0..LEVELS.len() {
+//     ExtBuilder::default().build_and_execute(|| {
+//             run_to_block(1);
+//             let account = AccountId32::new([i as u8;32]);
+//             use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
+//             assert_eq!(Pool::use_ticket(account.clone()), None);
+            
+//             Pool::renew_tickets();
+//             assert_ne!(Pool::use_ticket(account.clone()), None);
+//         });
+//     }
+// }
+
