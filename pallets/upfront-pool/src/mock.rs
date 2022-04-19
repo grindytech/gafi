@@ -154,12 +154,14 @@ pub fn run_to_block(n: u64) {
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
+	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
+			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -170,6 +172,12 @@ impl ExtBuilder {
 
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
+
+		GenesisBuild::<Test>::assimilate_storage(
+				&pallet_pool::GenesisConfig { time_service: self.time_service },
+				&mut storage,
+		)
+		.unwrap();
 
 		GenesisBuild::<Test>::assimilate_storage(
 			&upfront_pool::GenesisConfig::default(),

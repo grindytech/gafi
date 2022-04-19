@@ -1,15 +1,14 @@
-use std::{collections::BTreeMap, str::FromStr};
+use std::{ str::FromStr};
 
-use gafi_primitives::{currency::{NativeToken::GAKI, milli, centi}, pool::{Level, Service, TicketType}};
+use gafi_primitives::{pool::{Level, Service, TicketType}};
 use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
 use frame_system as system;
 use hex_literal::hex;
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, HashedAddressMapping, EnsureAddressRoot};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use gafi_tx::{GafiEVMCurrencyAdapter};
 use proof_address_mapping::{ProofAddressMapping};
-
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
@@ -255,6 +254,12 @@ impl ExtBuilder {
 
 		GenesisBuild::<Test>::assimilate_storage(
 			&upfront_pool::GenesisConfig { max_player: self.max_player, services: self.services },
+			&mut storage,
+		)
+		.unwrap();
+
+		GenesisBuild::<Test>::assimilate_storage(
+			&pallet_pool::GenesisConfig { time_service: self.time_service },
 			&mut storage,
 		)
 		.unwrap();

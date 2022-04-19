@@ -75,6 +75,7 @@ std = [
   'pallet-transaction-payment/std',
   'proof-address-mapping/std',
   'upfront-pool/std',
+  'pallet-pool/std',
   'staking-pool/std',
   'gafi-tx/std',
   'utils/std',

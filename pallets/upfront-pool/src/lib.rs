@@ -83,17 +83,15 @@ pub mod pallet {
 	/// 1. Check if current timestamp is the correct time to charge service fee
 	///	2. Charge player in the IngamePlayers - Kick player when they can't pay
 	///	3. Move all players from NewPlayer to IngamePlayers
-	/// 4. Update new Marktime
 	///
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
-			let _now = <timestamp::Pallet<T>>::get();
+			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
 
-			if _now - Self::mark_time() >= T::MasterPool::get_timeservice().try_into().ok().unwrap() {
+			if _now - T::MasterPool::get_marktime() >= T::MasterPool::get_timeservice() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
-				MarkTime::<T>::put(_now);
 				Self::deposit_event(<Event<T>>::ChargePoolService);
 			}
 		}
@@ -105,17 +103,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn max_player)]
 	pub type MaxPlayer<T: Config> = StorageValue<_, u32, ValueQuery>;
-
-	/// Holding the mark time to check if correct time to charge service fee
-	/// The default value is at the time chain launched
-	#[pallet::type_value]
-	pub fn DefaultMarkTime<T: Config>() -> T::Moment {
-		<timestamp::Pallet<T>>::get()
-	}
-	#[pallet::storage]
-	#[pallet::getter(fn mark_time)]
-	pub type MarkTime<T: Config> = StorageValue<_, T::Moment, ValueQuery, DefaultMarkTime<T>>;
-
 
 	/// Count player on the pool to make sure not exceed the MaxPlayer
 	#[pallet::storage]
@@ -166,7 +153,6 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
-			<MarkTime<T>>::put(<timestamp::Pallet<T>>::get());
 			for service in self.services {
 				Services::<T>::insert(service.0, service.1);
 			}
