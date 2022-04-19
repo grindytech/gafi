@@ -57,6 +57,7 @@ std = [
   "frame-benchmarking/std",
   "pallet-balances/std",
   "pallet-timestamp/std",
+  "pallet-pool/std",
   "gafi-primitives/std",
 ]
 

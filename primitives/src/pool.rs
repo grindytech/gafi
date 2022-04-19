@@ -75,4 +75,6 @@ pub trait PlayerTicket<AccountId> {
 
 pub trait MasterPool<AccountId> {
 	fn remove_player(player: &AccountId);
+	fn get_timeservice() -> u128;
+	fn get_marktime() -> u128;
 }
