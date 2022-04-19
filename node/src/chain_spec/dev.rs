@@ -161,7 +161,7 @@ fn dev_genesis(
 		(Level::Medium, Service { discount: 30, tx_limit: 10, value: 1500}),
 		(Level::Advance, Service { discount: 30, tx_limit: 10, value: 2000}),
 	];
-	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
+	const TIME_SERVICE: u128 = 3 * 60_000u128; // 30 minutes
 	let bond_existential_deposit: u128 = unit(GAKI);
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 

@@ -30,18 +30,18 @@ describe('Contract', () => {
         await utils.proof_address_mapping(admin, alice);
     }).timeout(3600000);
 
-    delay(15000);
+    delay(6000);
 
     it('it should join the pool', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.join_pool(alice, {upfront: "Basic"});
     }).timeout(3600000);
 
-    delay(15000);
+    delay(6000);
 
     it('show use ticket fee', async () => {
         let admin = test2;
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 40; i++) {
             let before_balance = await web3.eth.getBalance(admin.address);
             let receipt = await utils.create_new_contract(admin);
             let after_balance = await web3.eth.getBalance(admin.address);
