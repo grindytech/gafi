@@ -1,3 +1,7 @@
+/*
+* This unittest should only test logic function e.g. Storage, Computation
+* and not related with Currency e.g. Balances, Transaction Payment
+*/
 use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};

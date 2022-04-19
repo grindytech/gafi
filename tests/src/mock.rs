@@ -230,6 +230,7 @@ pub struct ExtBuilder {
 	pub max_player: u32,
 	pub time_service: u128,
 	pub upfront_services: [(Level, Service); 3],
+	pub staking_services: [(Level, Service); 3],
 }
 
 impl Default for ExtBuilder {
@@ -237,12 +238,17 @@ impl Default for ExtBuilder {
 		Self {
 			balances: vec![],
 			max_player: 1000,
-				time_service: TIME_SERVICE,
-				upfront_services: [
-					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-					(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
-				],
+			time_service: TIME_SERVICE,
+			upfront_services: [
+				(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
+				(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
+				(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+			],
+			staking_services: [
+				(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
+				(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
+				(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+			],
 		}
 	}
 }
@@ -259,15 +265,15 @@ impl ExtBuilder {
 			&mut storage,
 		)
 		.unwrap();
-
+		
 		GenesisBuild::<Test>::assimilate_storage(
-			&pallet_pool::GenesisConfig { time_service: self.time_service },
+			&staking_pool::GenesisConfig { services: self.staking_services },
 			&mut storage,
 		)
 		.unwrap();
-
+		
 		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig::default(),
+			&pallet_pool::GenesisConfig { time_service: self.time_service },
 			&mut storage,
 		)
 		.unwrap();

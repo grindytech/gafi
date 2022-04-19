@@ -71,33 +71,33 @@ fn trigger_renew_upfront_tickets_works() {
     }
 }
 
-// #[test]
-// fn renew_staking_ticket_works() {
-//     for i in 0..LEVELS.len() {
-//     ExtBuilder::default().build_and_execute(|| {
-//             run_to_block(1);
-//             let account = AccountId32::new([i as u8;32]);
-//             use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
-//             assert_eq!(Pool::use_ticket(account.clone()), None);
+#[test]
+fn renew_staking_ticket_works() {
+    for i in 0..LEVELS.len() {
+    ExtBuilder::default().build_and_execute(|| {
+            run_to_block(1);
+            let account = AccountId32::new([i as u8;32]);
+            use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
+            assert_eq!(Pool::use_ticket(account.clone()), None);
             
-//             Pool::renew_tickets();
-//             assert_ne!(Pool::use_ticket(account.clone()), None);
-//         });
-//     }
-// }
+            Pool::renew_tickets();
+            assert_ne!(Pool::use_ticket(account.clone()), None);
+        });
+    }
+}
 
-// #[test]
-// fn renew_staking_ticket_works() {
-//     for i in 0..LEVELS.len() {
-//     ExtBuilder::default().build_and_execute(|| {
-//             run_to_block(1);
-//             let account = AccountId32::new([i as u8;32]);
-//             use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
-//             assert_eq!(Pool::use_ticket(account.clone()), None);
+#[test]
+fn trigger_renew_staking_tickets_works() {
+    for i in 0..LEVELS.len() {
+    ExtBuilder::default().build_and_execute(|| {
+            run_to_block(1);
+            let account = AccountId32::new([i as u8;32]);
+            use_tickets(TicketType::Staking(LEVELS[i]), account.clone());
+            assert_eq!(Pool::use_ticket(account.clone()), None);
             
-//             Pool::renew_tickets();
-//             assert_ne!(Pool::use_ticket(account.clone()), None);
-//         });
-//     }
-// }
+            Pool::renew_tickets();
+            assert_ne!(Pool::use_ticket(account.clone()), None);
+        });
+    }
+}
 
