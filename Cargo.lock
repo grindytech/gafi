@@ -2307,6 +2307,7 @@ dependencies = [
  "pallet-player",
  "pallet-pool",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -4563,6 +4564,22 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "safe-mix",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "4.0.0-dev"
+source = "git+https://github.com/cryptoviet/substrate?branch=aur-dot#4bc2af13cd81007a2a340d0333062179420d5daf"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
