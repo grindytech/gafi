@@ -1,3 +1,22 @@
+
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	pallet_prelude::*,
@@ -41,14 +60,25 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		
+		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
+		
+		/// Customize OnChargeEVMTransaction
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
+
+		/// Substrate - EVM Address Mapping
 		type AddressMapping: AddressMapping<Self::AccountId>;
+
+		/// To use tickets
 		type PlayerTicket: PlayerTicket<Self::AccountId>;
 	}
-	// Storage
+
+	//** STORAGE **//
+
+	/// Holding gas price value
 	#[pallet::storage]
 	pub type GasPrice<T: Config> = StorageValue<_, U256, ValueQuery>;
 
@@ -81,15 +111,27 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		SetGasPrice {value: U256},
+	}
 
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		/// Set Gas Price
+		///
+		/// The root must be Signed
+		///
+		/// Parameters:
+		/// - `new_gas_price`: new gas_price value
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(0)]
 		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
 			ensure_root(origin)?;
 			GasPrice::<T>::put(new_gas_price);
+			Self::deposit_event(Event::<T>::SetGasPrice{value: new_gas_price});
 			Ok(())
 		}
 
@@ -124,6 +166,9 @@ where
 		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
 	}
 
+	/// Steps
+	/// 1. Get player ticket to reduce the transaction fee
+	/// 2. Use ticket 
 	fn correct_and_deposit_fee(
 		who: &H160,
 		corrected_fee: U256,

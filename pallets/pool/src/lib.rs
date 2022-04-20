@@ -1,12 +1,29 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	pallet_prelude::*,
-	traits::{Currency, ReservableCurrency},
+	traits::{Currency},
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{GafiPool, Level, Service, Ticket, TicketType, PlayerTicket, MasterPool},
+	pool::{GafiPool, Service, TicketType, PlayerTicket, MasterPool},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -29,11 +46,22 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		
+		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
-		type UpfrontPool: GafiPool<Self::AccountId>;
-		type StakingPool: GafiPool<Self::AccountId>;
+		
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// Add upfront pool
+		type UpfrontPool: GafiPool<Self::AccountId>;
+
+		/// Add Staking Pool
+		type StakingPool: GafiPool<Self::AccountId>;
+
+		// Add SponsoredPool - Coming soon
 		// type SponsoredPool: GafiPool<Self::AccountId>;
 	}
 
@@ -41,34 +69,36 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Holding the number of tickets to restrict player transaction
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub struct TicketInfo {
 		pub ticket_type: TicketType,
-		pub ticket_remain: u32,
+		pub tickets: u32,
 	}
 
 	impl TicketInfo {
+		/// reduce tickets by 1
 		pub fn withdraw_ticket(&self) -> Option<Self> {
-			if let Some(new_ticket_remain) = self.ticket_remain.checked_sub(1) {
+			if let Some(new_tickets) = self.tickets.checked_sub(1) {
 				return Some(TicketInfo {
-					ticket_remain: new_ticket_remain,
+					tickets: new_tickets,
 					ticket_type: self.ticket_type,
 				});
 			}
 			None
 		}
 
+		/// renew ticket
 		pub  fn renew_ticket(&self, new_remain: u32) -> Self {
 			TicketInfo {
-				ticket_remain: new_remain,
+				tickets: new_remain,
 				ticket_type: self.ticket_type,
 			}
 		}
-
 	}
 
-
+	/// Holding all the tickets in the network
 	#[pallet::storage]
 	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
 
@@ -96,7 +126,6 @@ pub mod pallet {
 	/// on_finalize following by steps:
 	/// 1. renew tickets
 	/// 2. Update new Marktime
-	///
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
@@ -149,6 +178,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// join pool
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `ticket`: ticket type
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(100u32, *ticket))]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -166,7 +203,7 @@ pub mod pallet {
 
 			let ticket_info = TicketInfo {
 				ticket_type: ticket,
-				ticket_remain: service.tx_limit,
+				tickets: service.tx_limit,
 			};
 
 			Tickets::<T>::insert(sender.clone(), ticket_info);
@@ -174,6 +211,11 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// leave pool
+		///
+		/// The origin must be Signed
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(100u32))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
