@@ -53,24 +53,24 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 #[test]
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = StakingPool::get_service(Level::Basic);
-		init_join_pool(pool_fee.value, TicketType::Staking(Level::Basic), false);
+		let pool_fee = UpfrontPool::get_service(Level::Basic);
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Basic), false);
 	})
 }
 
 #[test]
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = StakingPool::get_service(Level::Medium);
-		init_join_pool(pool_fee.value, TicketType::Staking(Level::Medium), false);
+		let pool_fee = UpfrontPool::get_service(Level::Medium);
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Medium), false);
 	})
 }
 
 #[test]
 fn charge_join_max_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = StakingPool::get_service(Level::Advance);
-		init_join_pool(pool_fee.value, TicketType::Staking(Level::Advance), false);
+		let pool_fee = UpfrontPool::get_service(Level::Advance);
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Advance), false);
 	})
 }
 
@@ -117,36 +117,36 @@ fn init_leave_pool(
 }
 
 #[test]
-fn leave_basic_pool_early_works() {
-	for i in 0..50 {
+fn leave_pool_early_works() {
+	for i in 0..10 {
+		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-			for level in LEVELS {
-				let pool_fee = StakingPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level);
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
-				init_leave_pool(i, pool_fee.value, TicketType::Staking(level), 1, leave_block);
+				init_leave_pool(i, pool_fee.value, TicketType::Upfront(level), 1, leave_block);
+			});
 			}
-		});
-	}
+		}
 }
 
 #[test]
-fn leave_basic_pool_over_works() {
-	for i in 0..50 {
+fn leave_pool_over_works() {
+	for i in 0..10 {
+		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-			for level in LEVELS {
-				let pool_fee = StakingPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level);
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
 				let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));
 				init_leave_pool(
 					i,
 					pool_fee.value,
-					TicketType::Staking(level),
+					TicketType::Upfront(level),
 					start_block,
 					leave_block,
 				);
-			}
-		});
+			});
+		}
 	}
 }

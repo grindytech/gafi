@@ -3,7 +3,7 @@ use devnet::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
-	WASM_BINARY,
+	WASM_BINARY, PoolConfig,
 };
 use gafi_primitives::{pool::{Level, Service, TicketType}};
 use sc_service::{ChainType, Properties};
@@ -167,7 +167,7 @@ fn gaki_testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services, time_service: TIME_SERVICE },
+		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
 		staking_pool: StakingPoolConfig { services: staking_services },
 		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 		faucet: FaucetConfig {
@@ -181,6 +181,9 @@ fn gaki_testnet_genesis(
 		},
 		tx_handler: TxHandlerConfig {
 			gas_price: U256::from(100_000_000_000u128),
-		}
+		},
+		pool: PoolConfig {
+			time_service: TIME_SERVICE,
+		},
 	}
 }
