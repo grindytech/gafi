@@ -2307,6 +2307,7 @@ dependencies = [
  "pallet-player",
  "pallet-pool",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -3709,9 +3710,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.14"
+version = "0.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
+checksum = "6389c490849ff5bc16be905ae24bc913a9c8892e19b2341dbc175e14c341c2b8"
 dependencies = [
  "cfg-if 1.0.0",
  "value-bag",
@@ -4542,8 +4543,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "log",
+ "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -4560,6 +4564,22 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "safe-mix",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "4.0.0-dev"
+source = "git+https://github.com/cryptoviet/substrate?branch=aur-dot#4bc2af13cd81007a2a340d0333062179420d5daf"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7905,7 +7925,9 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "gafi-tx",
+ "hex",
  "hex-literal 0.3.4",
+ "more-asserts",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
@@ -7918,6 +7940,7 @@ dependencies = [
  "proof-address-mapping",
  "rand 0.8.5",
  "scale-info",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",

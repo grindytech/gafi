@@ -35,6 +35,7 @@ pallet-aura = {version = "4.0.0-dev", default-features = false, git = "https://g
 pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-grandpa = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-randomness-collective-flip = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-scheduler = {default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-sudo = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 pallet-transaction-payment = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
@@ -60,17 +61,17 @@ frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, gi
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
-gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
+gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
 
 # Local pallets
-pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
-upfront-pool =  {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
-pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
-proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
+pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
+pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
+pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
+pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
+proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
-pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
-pallet-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pool" }
+upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
 # unit test
 [dev.dependencies]
@@ -142,4 +143,5 @@ std = [
   "proof-address-mapping/std",
   "pallet-faucet/std",
   "pallet-pool/std",
+  "pallet-scheduler/std",
 ]
