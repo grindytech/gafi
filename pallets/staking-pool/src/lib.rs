@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{GafiPool, Level, Service, Ticket, TicketType},
+	pool::{FlexPool, Level, Service, Ticket, TicketType},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -45,6 +45,7 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult};
+use gafi_primitives::pool::FlexPool;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -127,8 +128,8 @@ pub mod pallet {
 		IntoBalanceFail,
 	}
 
-	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
-		/// Join Staking Pool
+	impl<T: Config> FlexPool<T::AccountId> for Pallet<T> {
+			/// Join Staking Pool
 		///
 		/// The origin must be Signed
 		///

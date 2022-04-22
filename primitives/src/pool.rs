@@ -4,7 +4,7 @@ use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
-use crate::currency::{unit, NativeToken::GAKI};
+use crate::{currency::{unit, NativeToken::GAKI}, constant::ID};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -19,7 +19,7 @@ pub struct Ticket<AccountId> {
 pub enum TicketType {
 	Upfront(Level),
 	Staking(Level),
-	Sponsored(Level),
+	Sponsored,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -40,6 +40,18 @@ pub struct Service {
 	pub value: u128,
 }
 
+pub trait FlexPool<AccountId> {
+	fn join(sender: AccountId, level: Level) -> DispatchResult;
+	fn leave(sender: AccountId) -> DispatchResult;
+	fn get_service(level: Level) -> Service;
+}
+
+pub trait StaticPool<AccountId> {
+	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
+	fn leave(sender: AccountId) -> DispatchResult;
+	fn get_service(pool_id: ID) -> Option<Service>;
+}
+
 impl Service {
 	pub fn new(ticket: TicketType) -> Self {
 		match ticket {
@@ -53,19 +65,11 @@ impl Service {
 				Level::Medium => Service { tx_limit: 100, discount: 50, value: 1500 * unit(GAKI) },
 				Level::Advance => Service { tx_limit: 100, discount: 70, value: 2000 * unit(GAKI) },
 			},
-			TicketType::Sponsored(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 2 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 3 * unit(GAKI) },
+			TicketType::Sponsored => {
+				return Service { tx_limit: 100, discount: 30, value: unit(GAKI) }
 			},
 		}
 	}
-}
-
-pub trait GafiPool<AccountId> {
-	fn join(sender: AccountId, level: Level) -> DispatchResult;
-	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(level: Level) -> Service;
 }
 
 pub trait PlayerTicket<AccountId> {

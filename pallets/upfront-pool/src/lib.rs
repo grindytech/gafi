@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::pool::{GafiPool, Level, Service};
+use gafi_primitives::pool::{FlexPool, Level, Service};
 use gafi_primitives::{
 	pool::{Ticket, TicketType, MasterPool},
 };
@@ -49,9 +49,7 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
-
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -175,7 +173,7 @@ pub mod pallet {
 		UpfrontSetMaxPlayer {new_max_player: u32},
 	}
 
-	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> FlexPool<T::AccountId> for Pallet<T> {
 
 		/// Join Upfront Pool
 		///

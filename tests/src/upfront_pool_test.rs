@@ -2,7 +2,7 @@ use crate::mock::*;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	pool::{GafiPool, Level, TicketType},
+	pool::{Level, TicketType, FlexPool},
 };
 use gafi_tx::Config;
 use hex_literal::hex;

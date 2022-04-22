@@ -23,7 +23,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{StaticPool, Service, TicketType, PlayerTicket, MasterPool, FlexPool},
+	pool::{GafiPool, Service, TicketType, PlayerTicket, MasterPool, FlexPool},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -56,10 +56,10 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Add upfront pool
-		type UpfrontPool: FlexPool<Self::AccountId>;
+		type UpfrontPool: GafiPool<Self::AccountId> + FlexPool;
 
 		/// Add Staking Pool
-		type StakingPool: FlexPool<Self::AccountId>;
+		type StakingPool: GafiPool<Self::AccountId> + FlexPool;
 
 		// Add SponsoredPool - Coming soon
 		// type SponsoredPool: GafiPool<Self::AccountId>;
