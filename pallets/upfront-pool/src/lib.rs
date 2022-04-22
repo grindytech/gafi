@@ -114,7 +114,7 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service>;
 
 	/// The new players join the pool before the TimeService, whose are without charge
 	#[pallet::storage]
@@ -164,6 +164,7 @@ pub mod pallet {
 		ExceedMaxPlayer,
 		CanNotClearNewPlayers,
 		IntoBalanceFail,
+		LevelNotFound
 	}
 
 	#[pallet::event]
@@ -189,9 +190,9 @@ pub mod pallet {
 
 			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
 			{
-				let service = Self::get_service(level);
+				let service = Self::get_service_by_level(level)?;
 				let service_fee = Self::u128_try_to_balance(service.value)?;
-				let double_service_fee = Self::u128_try_to_balance(service.value * 2)?;
+				let double_service_fee = Self::u128_try_to_balance(service.value * 2u128)?;
 				ensure!(T::Currency::free_balance(&sender) > double_service_fee, pallet_balances::Error::<T>::InsufficientBalance);
 				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 					.map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
@@ -224,7 +225,7 @@ pub mod pallet {
 					let service_fee;
 					let charge_fee;
 					{
-						let service = Self::get_service(level);
+						let service = Self::get_service_by_level(level)?;
 						let refund_fee = Self::get_refund_balance(_now, join_time, service.value);
 						charge_fee = Self::u128_try_to_balance(service.value - refund_fee)?;
 						service_fee = Self::u128_try_to_balance(service.value)?;
@@ -249,7 +250,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: Level) -> Service {
+		fn get_service(level: Level) -> Option<Service> {
 			Services::<T>::get(level)
 		}
 	}
@@ -368,7 +369,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_player_service(player: T::AccountId) -> Option<Service> {
 		if let Some(level) = Self::get_player_level(player) {
-			return Some(Self::get_service(level));
+			Self::get_service(level);
 		}
 		None
 	}
@@ -391,5 +392,12 @@ impl<T: Config> Pallet<T> {
 
 	fn moment_to_u128(input: T::Moment) -> u128 {
 		sp_runtime::SaturatedConversion::saturated_into(input)
+	}
+
+	fn get_service_by_level(level: Level) -> Result<Service, Error<T>> {
+		match Services::<T>::get(level) {
+			Some(service) => Ok(service),
+			None => Err(<Error<T>>::LevelNotFound),
+		}
 	}
 }

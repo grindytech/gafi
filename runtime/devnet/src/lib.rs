@@ -62,6 +62,7 @@ pub use pallet_player;
 pub use pallet_pool;
 pub use staking_pool;
 pub use gafi_tx;
+pub use sponsored_pool;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -398,6 +399,11 @@ impl staking_pool::Config for Runtime {
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 }
 
+impl sponsored_pool::Config for Runtime {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+}
+
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
 }
@@ -433,7 +439,7 @@ impl pallet_pool::Config for Runtime {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-
+	type SponsoredPool = SponsoredPool;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -460,6 +466,7 @@ construct_runtime!(
 		Pool: pallet_pool,
 		UpfrontPool: upfront_pool,
 		StakingPool: staking_pool,
+		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,

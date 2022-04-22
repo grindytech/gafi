@@ -69,6 +69,7 @@ pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
+sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
@@ -141,4 +142,5 @@ std = [
   "pallet-faucet/std",
   "pallet-pool/std",
   "pallet-scheduler/std",
+  "sponsored-pool/std",
 ]

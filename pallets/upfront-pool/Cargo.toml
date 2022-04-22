@@ -41,6 +41,8 @@ sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.
 sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
+sponsored-pool = {default-feature = false, version = "4.0.0-dev", path = "../sponsored-pool"}
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 [features]
 default = ["std"]

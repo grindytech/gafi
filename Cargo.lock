@@ -1207,6 +1207,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "sponsored-pool",
  "staking-pool",
  "substrate-wasm-builder",
  "upfront-pool",
@@ -2324,6 +2325,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "sponsored-pool",
  "staking-pool",
  "substrate-wasm-builder",
  "upfront-pool",
@@ -7721,6 +7723,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-pool",
+ "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -7729,6 +7732,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sponsored-pool",
  "upfront-pool",
 ]
 
@@ -7932,6 +7936,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-pool",
+ "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
@@ -7945,6 +7950,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sponsored-pool",
  "staking-pool",
  "upfront-pool",
  "utils",
@@ -8419,6 +8425,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-pool",
+ "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -8427,6 +8434,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sponsored-pool",
  "staking-pool",
 ]
 

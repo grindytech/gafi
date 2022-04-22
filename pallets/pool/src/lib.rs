@@ -61,8 +61,8 @@ pub mod pallet {
 		/// Add Staking Pool
 		type StakingPool: FlexPool<Self::AccountId>;
 
-		// Add SponsoredPool - Coming soon
-		// type SponsoredPool: GafiPool<Self::AccountId>;
+		/// Add Sponsored Pool
+		type SponsoredPool: StaticPool<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -173,6 +173,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		AlreadyJoined,
 		NotFoundInPool,
+		TicketNotFound,
 		ComingSoon,
 	}
 
@@ -190,16 +191,13 @@ pub mod pallet {
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Tickets::<T>::get(sender.clone()) == None, <Error<T>>::AlreadyJoined);
+			let service = Self::verify_ticket(ticket)?;
 
 			match ticket {
 				TicketType::Upfront(level) => T::UpfrontPool::join(sender.clone(), level)?,
 				TicketType::Staking(level) => T::StakingPool::join(sender.clone(), level)?,
-				TicketType::Sponsored => {
-					return Err(Error::<T>::ComingSoon.into());
-				},
+				TicketType::Sponsored(pool_id) => T::SponsoredPool::join(sender.clone(), pool_id)?,
 			}
-
-			let service = Self::get_service(ticket);
 
 			let ticket_info = TicketInfo {
 				ticket_type: ticket,
@@ -223,9 +221,7 @@ pub mod pallet {
 				match ticket.ticket_type {
 					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
 					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
-					TicketType::Sponsored => {
-						return Err(Error::<T>::ComingSoon.into());
-					},
+					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
 				Tickets::<T>::remove(sender.clone());
 				Self::deposit_event(Event::<T>::Leaved { sender, ticket: ticket.ticket_type});
@@ -240,11 +236,19 @@ pub mod pallet {
 		pub fn renew_tickets() {
 			let _ = Tickets::<T>::iter().for_each(|player| {
 				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
-					let service = Self::get_service(ticket_info.ticket_type);
-					let new_ticket = ticket_info.renew_ticket(service.tx_limit);
-					Tickets::<T>::insert(player.0, new_ticket);
+					if let Some(service) = Self::get_service(ticket_info.ticket_type) {
+						let new_ticket = ticket_info.renew_ticket(service.tx_limit);
+						Tickets::<T>::insert(player.0, new_ticket);
+					}
 				}
 			});
+		}
+
+		fn verify_ticket(ticket: TicketType) -> Result<Service, Error<T>> {
+			match Self::get_service(ticket) {
+				Some(service) => Ok(service),
+				None => Err(<Error<T>>::TicketNotFound),
+			}
 		}
 	}
 
@@ -259,11 +263,11 @@ pub mod pallet {
 			None
 		}
 
-		fn get_service(ticket: TicketType) -> Service {
+		fn get_service(ticket: TicketType) -> Option<Service> {
 			match ticket {
 				TicketType::Upfront(level) => T::UpfrontPool::get_service(level),
 				TicketType::Staking(level) => T::StakingPool::get_service(level),
-				TicketType::Sponsored => todo!(),
+				TicketType::Sponsored(pool_id)=> T::SponsoredPool::get_service(pool_id),
 			}
 		}
 	}

@@ -19,7 +19,7 @@ pub struct Ticket<AccountId> {
 pub enum TicketType {
 	Upfront(Level),
 	Staking(Level),
-	Sponsored,
+	Sponsored(ID),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -43,7 +43,7 @@ pub struct Service {
 pub trait FlexPool<AccountId> {
 	fn join(sender: AccountId, level: Level) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(level: Level) -> Service;
+	fn get_service(level: Level) -> Option<Service>;
 }
 
 pub trait StaticPool<AccountId> {
@@ -65,7 +65,7 @@ impl Service {
 				Level::Medium => Service { tx_limit: 100, discount: 50, value: 1500 * unit(GAKI) },
 				Level::Advance => Service { tx_limit: 100, discount: 70, value: 2000 * unit(GAKI) },
 			},
-			TicketType::Sponsored => {
+			TicketType::Sponsored(_) => {
 				return Service { tx_limit: 100, discount: 30, value: unit(GAKI) }
 			},
 		}
@@ -74,7 +74,7 @@ impl Service {
 
 pub trait PlayerTicket<AccountId> {
 	fn use_ticket(player: AccountId) -> Option<TicketType>;
-	fn get_service(ticket: TicketType) -> Service;
+	fn get_service(ticket: TicketType) -> Option<Service>;
 }
 
 pub trait MasterPool<AccountId> {

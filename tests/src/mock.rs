@@ -44,13 +44,17 @@ frame_support::construct_runtime!(
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
+		SponsoredPool: sponsored_pool::{Pallet, Storage, Event<T>},
 		PalletTxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
+
+impl pallet_randomness_collective_flip::Config for Test {}
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  PREFIX;
@@ -78,7 +82,6 @@ impl pallet_transaction_payment::Config for Test {
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	// pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
 impl pallet_evm::Config for Test {
@@ -110,6 +113,7 @@ impl pallet_pool::Config for Test {
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type SponsoredPool = SponsoredPool;
 }
 
 parameter_types! {
@@ -129,6 +133,12 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 }
+
+impl sponsored_pool::Config for Test {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+}
+
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds

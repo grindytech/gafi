@@ -34,18 +34,24 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 			false
 		));
 	}
+
+	let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
 	assert_ok!(Pool::join(Origin::signed(sender.clone()), ticket));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
-		base_balance - (pool_fee * 2)
+		before_balance - (pool_fee * 2)
 	); //charge x2 when once join
 
 	for i in 1..10 {
 		run_to_block((CIRCLE_BLOCK * i) + ADDITIONAL_BLOCK);
 		// let _now = pallet_timestamp::Pallet::<Test>::get();
+		// assert_eq!(
+		// 	<Test as Config>::Currency::free_balance(sender.clone()),
+		// 	base_balance - (pool_fee * (i + 1) as u128)
+		// );
 		assert_eq!(
 			<Test as Config>::Currency::free_balance(sender.clone()),
-			base_balance - (pool_fee * (i + 1) as u128)
+			before_balance - (pool_fee * (i + 1) as u128)
 		);
 	}
 }
@@ -53,7 +59,7 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 #[test]
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Basic);
+		let pool_fee = UpfrontPool::get_service(Level::Basic).unwrap();
 		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Basic), false);
 	})
 }
@@ -61,7 +67,7 @@ fn charge_join_pool_basic_work() {
 #[test]
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Medium);
+		let pool_fee = UpfrontPool::get_service(Level::Medium).unwrap();
 		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Medium), false);
 	})
 }
@@ -69,7 +75,7 @@ fn charge_join_pool_medium_work() {
 #[test]
 fn charge_join_max_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Advance);
+		let pool_fee = UpfrontPool::get_service(Level::Advance).unwrap();
 		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Advance), false);
 	})
 }
@@ -121,7 +127,7 @@ fn leave_pool_early_works() {
 	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-				let pool_fee = UpfrontPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level).unwrap();
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
 				init_leave_pool(i, pool_fee.value, TicketType::Upfront(level), 1, leave_block);
@@ -135,7 +141,7 @@ fn leave_pool_over_works() {
 	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-				let pool_fee = UpfrontPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level).unwrap();
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
 				let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));

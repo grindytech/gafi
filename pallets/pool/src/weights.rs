@@ -146,17 +146,9 @@ impl WeightInfo for () {
 				weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
 				.saturating_add(RocksDbWeight::get().writes(staking_w));
 			},
-<<<<<<< HEAD
-    		TicketType::Sponsored => {
-				let r = 0;
-				let w = 0;
-				weight = (weight as Weight).saturating_add(RocksDbWeight::get().reads(r as Weight))
-				.saturating_add(RocksDbWeight::get().writes(w as Weight));
-=======
     		TicketType::Sponsored(_) => {
 				weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
 				.saturating_add(RocksDbWeight::get().writes(sponsored_w));
->>>>>>> v1.1.0
 			},
 		}
 		weight

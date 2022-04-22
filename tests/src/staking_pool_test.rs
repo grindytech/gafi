@@ -36,7 +36,7 @@ fn leave_pool(account: AccountId32, staking_amount: u128) {
 fn join_pool_works() {
     for i in 0..LEVELS.len() {
         ExtBuilder::default().build_and_execute(|| {
-            let pool_fee = StakingPool::get_service(LEVELS[i]);
+            let pool_fee = StakingPool::get_service(LEVELS[i]).unwrap();
             let account = AccountId32::new([i as u8; 32]);
             join_pool(account, pool_fee.value, TicketType::Staking(LEVELS[i]));
         })
@@ -48,7 +48,7 @@ fn join_pool_works() {
 fn leave_pool_works() {
     for i in 0..LEVELS.len() {
         ExtBuilder::default().build_and_execute(|| {
-            let pool_fee = StakingPool::get_service(LEVELS[i]);
+            let pool_fee = StakingPool::get_service(LEVELS[i]).unwrap();
             let account = AccountId32::new([i as u8; 32]);
             join_pool(account.clone(), pool_fee.value, TicketType::Staking(LEVELS[i]));
             leave_pool(account.clone(), pool_fee.value);

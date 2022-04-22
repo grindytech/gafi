@@ -35,13 +35,15 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
+		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		// Event: Event,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
 
+impl pallet_randomness_collective_flip::Config for Test {}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -115,6 +117,7 @@ impl pallet_pool::Config for Test {
 	type WeightInfo = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type SponsoredPool = Sponsored;
 }
 
 parameter_types! {
@@ -133,6 +136,11 @@ impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+}
+
+impl sponsored_pool::Config for Test {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
 }
 
 // Build genesis storage according to the mock runtime.
