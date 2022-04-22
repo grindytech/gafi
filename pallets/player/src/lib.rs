@@ -79,28 +79,14 @@ pub mod pallet {
 		}
 
 		pub fn create_new_player(sender: T::AccountId, user_name: NAME) -> Result<ID, Error<T>> {
-			ensure!(Self::is_player_available(&sender), <Error<T>>::PlayerExisted);
+			ensure!(Self::player_owned(sender.clone()).is_none(), <Error<T>>::PlayerExisted);
 			let id = Self::gen_id()?;
-			ensure!(Self::is_player_id_available(&id), <Error<T>>::PlayerIdUsed);
+			ensure!(Players::<T>::get(id).is_none(), <Error<T>>::PlayerIdUsed);
 			let player = Player::<T::AccountId> { id, owner: sender.clone(), name: user_name };
 
 			<Players<T>>::insert(id, player);
 			<PlayerOwned<T>>::insert(sender, id);
 			Ok(id)
-		}
-
-		pub fn is_player_id_available(id: &ID) -> bool {
-			match Players::<T>::get(id) {
-				Some(_) => false,
-				None => true,
-			}
-		}
-
-		pub fn is_player_available(player: &T::AccountId) -> bool {
-			match Self::player_owned(player) {
-				Some(_) => false,
-				None => true,
-			}
 		}
 	}
 }

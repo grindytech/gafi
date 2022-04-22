@@ -186,7 +186,7 @@ pub mod pallet {
 		/// - `ticket`: ticket type
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(100u32, *ticket))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Tickets::<T>::get(sender.clone()) == None, <Error<T>>::AlreadyJoined);
@@ -216,7 +216,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(100u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u32))]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
@@ -228,7 +228,7 @@ pub mod pallet {
 					},
 				}
 				Tickets::<T>::remove(sender.clone());
-				Self::deposit_event(Event::<T>::Leaved { sender: sender, ticket: ticket.ticket_type});
+				Self::deposit_event(Event::<T>::Leaved { sender, ticket: ticket.ticket_type});
 				Ok(())
 			} else {
 				return Err(Error::<T>::NotFoundInPool.into());
