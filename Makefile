@@ -40,3 +40,29 @@ benchmark_pool:
     --repeat 10 \
     --json-file=raw.json \
     --output ./pallets/benchmarks/pool/weights.rs
+
+.PHONY: benchmark_staking_pool
+benchmark_staking_pool:
+	./target/release/gafi-node benchmark \
+    --chain dev \
+    --execution wasm \
+    --wasm-execution compiled \
+    --pallet staking_pool \
+    --extrinsic '*' \
+     --steps 20 \
+    --repeat 10 \
+    --json-file=raw.json \
+    --output ./pallets/benchmarks/staking_pool/weights.rs
+
+.PHONY: benchmark_upfront_pool
+benchmark_upfront_pool:
+	./target/release/gafi-node benchmark \
+    --chain dev \
+    --execution wasm \
+    --wasm-execution compiled \
+    --pallet upfront_pool \
+    --extrinsic '*' \
+     --steps 20 \
+    --repeat 10 \
+    --json-file=raw.json \
+    --output ./pallets/benchmarks/upfront_pool/weights.rs
