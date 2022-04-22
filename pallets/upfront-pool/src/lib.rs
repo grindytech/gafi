@@ -208,7 +208,7 @@ pub mod pallet {
 					ExistenceRequirement::KeepAlive,
 				)?;
 			}
-			Self::join_pool(sender.clone(), level, new_player_count);
+			Self::join_pool(sender, level, new_player_count);
 			Ok(())
 		}
 
@@ -300,7 +300,7 @@ impl<T: Config> Pallet<T> {
 
 	fn charge_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
 		let withdraw = T::Currency::withdraw(
-			&sender,
+			sender,
 			fee,
 			WithdrawReasons::FEE,
 			ExistenceRequirement::KeepAlive,
@@ -318,17 +318,16 @@ impl<T: Config> Pallet<T> {
 		service_fee: u128,
 	) -> u128 {
 		let period_time = leave_time.saturating_sub(join_time);
-		let fee: u128;
-		if period_time < T::MasterPool::get_timeservice() {
-			fee = service_fee;
+		let fee = if period_time < T::MasterPool::get_timeservice() {
+			service_fee
 		} else {
 			let extra = period_time % T::MasterPool::get_timeservice();
 			let serive_fee = service_fee;
 			let actual_fee = serive_fee
 				.saturating_mul(T::MasterPool::get_timeservice().saturating_sub(extra))
 				.saturating_div(T::MasterPool::get_timeservice());
-			fee = actual_fee;
-		}
+			actual_fee
+		};
 		fee
 	}
 

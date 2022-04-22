@@ -59,36 +59,36 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: StakingPool PlayerCount (r:1 w:1)
 	// Storage: StakingPool Tickets (r:0 w:1)
 	fn join(s: u32, ticket: TicketType) -> Weight {
-		let total_read = 15u64;
-		let total_write = 9u64;
+		let total_read = 15_u64;
+		let total_write = 9_u64;
 
-		let upfront_r = 4u64;
-		let upfront_w = 3u64;
-		let staking_r = 2u64;
-		let staking_w = 2u64;
-		let sponsored_r = 0u64;
-		let sponsored_w = 0u64;
+		let upfront_r = 4_u64;
+		let upfront_w = 3_u64;
+		let staking_r = 2_u64;
+		let staking_w = 2_u64;
+		let sponsored_r = 0_u64;
+		let sponsored_w = 0_u64;
 
 		let base_r = total_read - upfront_r - staking_r - sponsored_r;
 		let base_w = total_write - upfront_w - staking_w - sponsored_w;
-		let mut weight = (57_611_000u64 as Weight).saturating_mul(s as Weight)
-		.saturating_add(T::DbWeight::get().reads(base_r as Weight))
-		.saturating_add(T::DbWeight::get().writes(base_w as Weight));
+		let mut weight = (57_611_000_u64).saturating_mul(s.into())
+		.saturating_add(T::DbWeight::get().reads(base_r))
+		.saturating_add(T::DbWeight::get().writes(base_w));
 
 		match ticket {
 			// r:4 w:3
    			TicketType::Upfront(_) => {
-				   weight = (weight as Weight).saturating_add(T::DbWeight::get().reads(upfront_r as Weight))
-				   .saturating_add(T::DbWeight::get().writes(upfront_w as Weight));
+				   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
+				   .saturating_add(T::DbWeight::get().writes(upfront_w));
 			   },
 			// r:2 w:2
     		TicketType::Staking(_) => {
-				weight = (weight as Weight).saturating_add(T::DbWeight::get().reads(staking_r as Weight))
-				.saturating_add(T::DbWeight::get().writes(staking_w as Weight));
+				weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
+				.saturating_add(T::DbWeight::get().writes(staking_w));
 			},
     		TicketType::Sponsored(_) => {
-				weight = (weight as Weight).saturating_add(T::DbWeight::get().reads(sponsored_r as Weight))
-				.saturating_add(T::DbWeight::get().writes(sponsored_w as Weight));
+				weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
+				.saturating_add(T::DbWeight::get().writes(sponsored_w));
 			},
 		}
 		weight
@@ -111,52 +111,52 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: StakingPool PlayerCount (r:1 w:1)
 	// Storage: StakingPool Services (r:1 w:0)
 	fn leave(s: u32 ) -> Weight {
-		(56_579_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(T::DbWeight::get().reads(15 as Weight))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
+		(56_579_000_u64).saturating_mul(s.into())
+			.saturating_add(T::DbWeight::get().reads(15_u64))
+			.saturating_add(T::DbWeight::get().writes(9_u64))
 	}
 }
 
 impl WeightInfo for () {
 	fn join(s: u32, ticket: TicketType ) -> Weight {
-		let total_read = 15u64;
-		let total_write = 9u64;
+		let total_read = 15_u64;
+		let total_write = 9_u64;
 
-		let upfront_r = 4u64;
-		let upfront_w = 3u64;
-		let staking_r = 2u64;
-		let staking_w = 2u64;
-		let sponsored_r = 0u64;
-		let sponsored_w = 0u64;
+		let upfront_r = 4_u64;
+		let upfront_w = 3_u64;
+		let staking_r = 2_u64;
+		let staking_w = 2_u64;
+		let sponsored_r = 0_u64;
+		let sponsored_w = 0_u64;
 
 		let base_r = total_read - upfront_r - staking_r - sponsored_r;
 		let base_w = total_write - upfront_w - staking_w - sponsored_w;
-		let mut weight = (57_611_000u64 as Weight).saturating_mul(s as Weight)
-		.saturating_add(RocksDbWeight::get().reads(base_r as Weight))
-		.saturating_add(RocksDbWeight::get().writes(base_w as Weight));
+		let mut weight = (57_611_000_u64).saturating_mul(s.into())
+		.saturating_add(RocksDbWeight::get().reads(base_r))
+		.saturating_add(RocksDbWeight::get().writes(base_w));
 
 		match ticket {
 			// r:4 w:3
    			TicketType::Upfront(_) => {
-				   weight = (weight as Weight).saturating_add(RocksDbWeight::get().reads(upfront_r as Weight))
-				   .saturating_add(RocksDbWeight::get().writes(upfront_w as Weight));
+				   weight = (weight).saturating_add(RocksDbWeight::get().reads(upfront_r))
+				   .saturating_add(RocksDbWeight::get().writes(upfront_w));
 			   },
 			// r:2 w:2
     		TicketType::Staking(_) => {
-				weight = (weight as Weight).saturating_add(RocksDbWeight::get().reads(staking_r as Weight))
-				.saturating_add(RocksDbWeight::get().writes(staking_w as Weight));
+				weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
+				.saturating_add(RocksDbWeight::get().writes(staking_w));
 			},
     		TicketType::Sponsored(_) => {
-				weight = (weight as Weight).saturating_add(RocksDbWeight::get().reads(sponsored_r as Weight))
-				.saturating_add(RocksDbWeight::get().writes(sponsored_w as Weight));
+				weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
+				.saturating_add(RocksDbWeight::get().writes(sponsored_w));
 			},
 		}
 		weight
 	}
 
 	fn leave(s: u32,) -> Weight {
-		(56_579_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(9 as Weight))
+		(56_579_000_u64).saturating_mul(s.into())
+			.saturating_add(RocksDbWeight::get().reads(15_u64))
+			.saturating_add(RocksDbWeight::get().writes(9_u64))
 	}
 }

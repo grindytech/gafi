@@ -231,7 +231,7 @@ pub mod pallet {
 				Self::deposit_event(Event::<T>::Leaved { sender, ticket: ticket.ticket_type});
 				Ok(())
 			} else {
-				return Err(Error::<T>::NotFoundInPool.into());
+				Err(Error::<T>::NotFoundInPool.into())
 			}
 		}
 	}
@@ -242,7 +242,7 @@ pub mod pallet {
 				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
 					let service = Self::get_service(ticket_info.ticket_type);
 					let new_ticket = ticket_info.renew_ticket(service.tx_limit);
-					Tickets::<T>::insert(player.0.clone(), new_ticket);
+					Tickets::<T>::insert(player.0, new_ticket);
 				}
 			});
 		}

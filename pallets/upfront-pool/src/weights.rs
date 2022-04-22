@@ -46,16 +46,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: UpfrontPool MaxPlayer (r:0 w:1)
 	fn set_max_player(_s: u32, ) -> Weight {
-		(10_028_000u64 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4u64 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3u64 as Weight))
+		(10_028_000_u64)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }
 
 impl WeightInfo for () {
 	fn set_max_player(_s: u32, ) -> Weight {
-		(10_028_000u64 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4u64 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3u64 as Weight))
+		(10_028_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(4_u64))
+			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
 }
