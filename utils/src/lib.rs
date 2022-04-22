@@ -52,9 +52,9 @@ impl<'de> Deserialize<'de> for EthereumAddress {
 		let offset = if base_string.starts_with("0x") { 2 } else { 0 };
 		let s = &base_string[offset..];
 		if s.len() != 40 {
-			Err(serde::de::Error::custom(
+			return Err(serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			))?;
+			));
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| serde::de::Error::custom(format!("{:?}", e)))?;
