@@ -56,6 +56,7 @@ std = [
   "gafi-primitives/std",
   "pallet-balances/std",
   "sp-std/std",
+  "pallet-pool/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

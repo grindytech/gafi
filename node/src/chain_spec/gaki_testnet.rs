@@ -1,5 +1,5 @@
 use devnet::{
-	AccountId, AuraConfig, Balance, BalancesConfig, EVMConfig,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
@@ -11,9 +11,9 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::{collections::BTreeMap, str::FromStr};
+use std::{collections::BTreeMap};
 use serde_json::json;
-use gafi_primitives::{currency::{NativeToken::GAKI, unit, centi, GafiCurrency, TokenInfo}};
+use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
 use sp_std::*;
 
 // The URL for the telemetry server.

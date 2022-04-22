@@ -45,7 +45,7 @@ pub use frame_support::{
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressTruncated, Runner, EnsureAddressRoot};
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, Runner, EnsureAddressRoot};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
