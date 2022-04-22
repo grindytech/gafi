@@ -45,7 +45,7 @@ pub use frame_support::{
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressTruncated, Runner, EnsureAddressRoot};
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, Runner, EnsureAddressRoot};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -61,7 +61,6 @@ pub use upfront_pool;
 pub use pallet_player;
 pub use pallet_pool;
 pub use staking_pool;
-pub use pallet_template;
 pub use gafi_tx;
 
 // custom traits
@@ -418,10 +417,6 @@ impl gafi_tx::Config for Runtime {
 	type PlayerTicket = Pool;
 }
 
-impl pallet_template::Config for Runtime {
-	type Event = Event;
-}
-
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
 }
@@ -468,7 +463,6 @@ construct_runtime!(
 		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
-		Template: pallet_template,
 	}
 );
 
@@ -861,7 +855,6 @@ impl_runtime_apis! {
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
-			use pallet_template::Pallet as TemplateBench;
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
@@ -869,7 +862,6 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_template, TemplateBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
@@ -885,7 +877,6 @@ impl_runtime_apis! {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
-			use pallet_template::Pallet as TemplateBench;
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
@@ -897,7 +888,6 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_template, TemplateBench::<Runtime>);
 			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);

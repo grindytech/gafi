@@ -5,13 +5,13 @@ use devnet::{
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
 	WASM_BINARY, PoolConfig,
 };
-use gafi_primitives::{pool::{Level, Service, TicketType}};
+use gafi_primitives::{pool::{Level, Service}};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::{collections::BTreeMap, str::FromStr};
+use std::{collections::BTreeMap};
 use serde_json::json;
 use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
 use sp_std::*;
@@ -164,9 +164,6 @@ fn dev_genesis(
 	const TIME_SERVICE: u128 = 3 * 60_000u128; // 3 minutes for testing
 	let bond_existential_deposit: u128 = unit(GAKI);
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
-
-	// pallet-faucet
-	let faucet_amount: u128 = 1500 * unit(GAKI);
 
 	// pallet-faucet
 	let faucet_amount: u128 = 1500 * unit(GAKI);

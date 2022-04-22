@@ -240,9 +240,9 @@ where
 	pub fn get_evm_address(account_id: AccountId32) -> Option<H160> {
 		let data: [u8; 32] = account_id.into();
 		if data.starts_with(b"evm:") {
-			return Some(H160::from_slice(&data[4..24]));
+			Some(H160::from_slice(&data[4..24]))
 		} else {
-			return None;
+			None
 		}
 	}
 
@@ -253,7 +253,7 @@ where
 
 	pub fn get_or_create_evm_address(account_id: AccountId32) -> H160 {
 		Self::get_evm_address(account_id.clone())
-			.unwrap_or(Self::get_default_evm_address(account_id))
+			.unwrap_or_else(|| Self::get_default_evm_address(account_id))
 	}
 
 	fn insert_pair_bond(address: H160, account_id: AccountId32)
@@ -277,9 +277,9 @@ where
 		<H160Mapping<T>>::remove(address);
 		<Id32Mapping<T>>::remove(account_id.clone());
 
-		let origin_address: H160 = Self::get_or_create_evm_address(account_id.clone());
+		let origin_address: H160 = Self::get_or_create_evm_address(account_id);
 		let origin_account_id = H160Mapping::<T>::get(origin_address)
-			.unwrap_or(OriginAddressMapping::into_account_id(address));
+			.unwrap_or_else(|| OriginAddressMapping::into_account_id(address));
 
 		<H160Mapping<T>>::remove(origin_address);
 		<Id32Mapping<T>>::remove(origin_account_id);

@@ -179,7 +179,7 @@ where
 		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
 			let service = T::PlayerTicket::get_service(ticket);
 			let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
-			service_fee = service_fee.saturating_sub(discount_fee.unwrap_or(U256::from(0u64)));
+			service_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
 		}
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
 	}

@@ -190,7 +190,7 @@ pub mod pallet {
 		pub fn set_max_player(origin: OriginFor<T>, new_max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			MaxPlayer::<T>::put(new_max_player);
-			Self::deposit_event(Event::<T>::StakingNewMaxPlayer{new_max_player: new_max_player});
+			Self::deposit_event(Event::<T>::StakingNewMaxPlayer{new_max_player});
 			Ok(())
 		}
 	}
