@@ -318,17 +318,14 @@ impl<T: Config> Pallet<T> {
 		service_fee: u128,
 	) -> u128 {
 		let period_time = leave_time.saturating_sub(join_time);
-		let fee = if period_time < T::MasterPool::get_timeservice() {
+		if period_time < T::MasterPool::get_timeservice() {
 			service_fee
 		} else {
 			let extra = period_time % T::MasterPool::get_timeservice();
-			let serive_fee = service_fee;
-			let actual_fee = serive_fee
+			service_fee
 				.saturating_mul(T::MasterPool::get_timeservice().saturating_sub(extra))
-				.saturating_div(T::MasterPool::get_timeservice());
-			actual_fee
-		};
-		fee
+				.saturating_div(T::MasterPool::get_timeservice())
+		}
 	}
 
 	fn remove_player(player: &T::AccountId, new_player_count: u32) {
