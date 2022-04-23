@@ -86,7 +86,6 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
-
 			if _now - T::MasterPool::get_marktime() >= T::MasterPool::get_timeservice() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
@@ -296,21 +295,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-
-	fn charge_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
-		let withdraw = T::Currency::withdraw(
-			sender,
-			fee,
-			WithdrawReasons::FEE,
-			ExistenceRequirement::KeepAlive,
-		);
-
-		match withdraw {
-			Ok(_) => Ok(()),
-			Err(err) => Err(err),
-		}
-	}
-
 	fn get_refund_balance(
 		leave_time: u128,
 		join_time: u128,
@@ -352,7 +336,12 @@ impl<T: Config> Pallet<T> {
 			if let Some(service) = Self::get_player_service(player.clone()) {
 				let fee_value = Self::u128_try_to_balance(service.value)?;
 
-				match Self::charge_fee(&player, fee_value) {
+				match T::Currency::withdraw(
+					&player,
+					fee_value,
+					WithdrawReasons::FEE,
+					ExistenceRequirement::KeepAlive,
+				) {
 					Ok(_) => {
 					},
 					Err(_) => {
@@ -361,7 +350,7 @@ impl<T: Config> Pallet<T> {
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
 						let _ = Self::remove_player(&player, new_player_count);
 					},
-				}
+				};
 			}
 		}
 		Ok(())
@@ -369,7 +358,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_player_service(player: T::AccountId) -> Option<Service> {
 		if let Some(level) = Self::get_player_level(player) {
-			Self::get_service(level);
+			return Self::get_service(level);
 		}
 		None
 	}

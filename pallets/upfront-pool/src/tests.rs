@@ -1,14 +1,13 @@
-/*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
 use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::{FlexPool, Level};
+use gafi_primitives::pool::{FlexPool, Level, TicketType};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
+
+const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
+
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -30,6 +29,16 @@ fn new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
 		account_vec.push(new_account);
 	}
 	account_vec
+}
+
+#[test]
+fn default_services_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		assert_eq!(UpfrontPool::get_service(Level::Basic).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(Level::Medium).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(Level::Advance).is_none(), false);
+	})
 }
 
 #[test]
@@ -135,14 +144,53 @@ fn should_move_newplayers_to_ingame() {
 			assert_eq!(new_players_before.len(), 1);
 			assert_eq!(ingame_players_before.len(), 0);
 		}
-		let circle_block: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 
-		run_to_block(circle_block);
+		run_to_block(CIRCLE_BLOCK);
 		{
 			let new_players_after = NewPlayers::<Test>::get();
 			let ingame_players_after = IngamePlayers::<Test>::get();
 			assert_eq!(ingame_players_after.len(), 1);
 			assert_eq!(new_players_after.len(), 0);
 		}
+	})
+}
+
+#[test]
+fn get_player_level_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		let alice = new_account(1_000_000 * unit(GAKI));
+		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+
+		let level = UpfrontPool::get_player_level(alice.clone());
+		assert_eq!(level.is_none(), false);
+	})
+}
+
+#[test]
+fn get_player_service_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		let alice = new_account(1_000_000 * unit(GAKI));
+		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+
+		let serevice = UpfrontPool::get_player_service(alice.clone());
+		assert_eq!(serevice.is_none(), false);
+	})
+}
+
+#[test]
+fn charge_ingame_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		run_to_block(1);
+		let alice = new_account(1_000_000 * unit(GAKI));
+		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+
+		run_to_block(CIRCLE_BLOCK + 1); // move to ingame
+		let before_balance = Balances::free_balance(&alice);
+		let _ = UpfrontPool::charge_ingame();
+		let after_balance = Balances::free_balance(&alice);
+		let service = UpfrontPool::get_service(Level::Basic).unwrap();
+		assert_eq!(before_balance, after_balance + service.value);
 	})
 }
