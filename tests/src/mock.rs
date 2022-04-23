@@ -137,6 +137,7 @@ impl staking_pool::Config for Test {
 impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
 }
 
 

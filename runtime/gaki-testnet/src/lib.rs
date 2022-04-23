@@ -424,6 +424,7 @@ impl staking_pool::Config for Runtime {
 impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
 }
 
 parameter_types! {

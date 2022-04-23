@@ -141,6 +141,7 @@ impl staking_pool::Config for Test {
 impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
 }
 
 // Build genesis storage according to the mock runtime.
