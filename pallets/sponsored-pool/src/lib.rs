@@ -14,8 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(
 Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct SponsoredPool {
+pub struct SponsoredPool<AccountId> {
 	pub id: ID,
+	pub owner: AccountId,
 	pub value: u128,
 	pub discount: u8,
 	pub tx_limit: u32,
@@ -46,6 +47,9 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>;
 
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+
+		#[pallet::constant]
+		type MaxPoolOwned: Get<u32>;
 	}
 
 	//** Storages **//
@@ -54,10 +58,10 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool>;
+	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
 
 	#[pallet::storage]
-	pub(super) type PoolOwned<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
+	pub(super) type PoolOwned<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -72,7 +76,8 @@ pub mod pallet {
 		ConvertBalanceFail,
 		NewAccountFail,
 		YouAreNotTheOwner,
-		PoolNotFound,
+		PoolNotExist,
+		ExceedMaxPoolOwned,
 	}
 
 
@@ -89,6 +94,7 @@ pub mod pallet {
 
 			let new_pool = SponsoredPool {
 				id: pool_id.0,
+				owner: sender.clone(),
 				value: Self::balance_try_to_u128(value)?,
 				discount,
 				tx_limit,
@@ -101,7 +107,10 @@ pub mod pallet {
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			PoolOwned::<T>::insert(sender.clone(), pool_id.0);
+			PoolOwned::<T>::try_mutate(&sender,|pool_vec| {
+				pool_vec.try_push(pool_id.0)
+			}).map_err(|_| <Error<T>>::ExceedMaxPoolOwned)?;
+
 			Pools::<T>::insert(pool_id.0, new_pool);
 
 			Self::deposit_event(Event::CreatedPool { id: pool_id.0 });
@@ -112,14 +121,20 @@ pub mod pallet {
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotFound);
-			ensure!(PoolOwned::<T>::get(sender.clone()) == Some(pool_id), <Error<T>>::YouAreNotTheOwner);
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(Self::is_pool_owner(&pool_id, &sender)?, <Error<T>>::YouAreNotTheOwner);
 			let pool = Self::into_account(pool_id)?;
 			
 			Self::transfer_all(&pool, &sender, false)?;
 			
 			Pools::<T>::remove(pool_id);
-			PoolOwned::<T>::remove(sender);
+			PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
+				if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
+					pool_owned.swap_remove(ind);
+					return Ok(())
+				}
+				Err(())
+			}).map_err(|_| <Error<T>>::PoolNotExist)?;
 			Ok(())
 		}
 	}
@@ -178,14 +193,21 @@ pub mod pallet {
 				existence,
 			)
 		}
+
+		pub fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
+			match Pools::<T>::get(pool_id) {
+    			Some(pool) => Ok(pool.owner == *owner),
+    			None => Err(<Error<T>>::PoolNotExist),
+				}
+			}
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
-		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
 			Ok(())
 		}
 	
-		fn leave(sender: T::AccountId) -> DispatchResult {
+		fn leave(_sender: T::AccountId) -> DispatchResult {
 			Ok(())
 		}
 

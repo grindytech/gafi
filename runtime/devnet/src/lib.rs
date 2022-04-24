@@ -399,10 +399,15 @@ impl staking_pool::Config for Runtime {
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub MaxPoolOwned: u32 =  10;
+}
+
 impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type MaxPoolOwned = MaxPoolOwned;
 }
 
 parameter_types! {

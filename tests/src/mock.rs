@@ -134,10 +134,15 @@ impl staking_pool::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub MaxPoolOwned: u32 =  10;
+}
+
 impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type MaxPoolOwned = MaxPoolOwned;
 }
 
 
