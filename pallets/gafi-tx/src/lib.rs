@@ -1,4 +1,3 @@
-
 // This file is part of Gafi Network.
 
 // Copyright (C) 2021-2022 CryptoViet.
@@ -18,19 +17,18 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+use frame_support::traits::tokens::{ExistenceRequirement, WithdrawReasons};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
-	pool::{PlayerTicket, TicketType}
-};
+use gafi_primitives::pool::{PlayerTicket, TicketType};
 pub use pallet::*;
-use pallet_evm::{AddressMapping, GasWeightMapping};
-use pallet_evm::OnChargeEVMTransaction;
-use sp_core::{H160, U256};
 use pallet_evm::FeeCalculator;
+use pallet_evm::OnChargeEVMTransaction;
+use pallet_evm::{AddressMapping, GasWeightMapping};
+use sp_core::{H160, U256};
 
 #[cfg(test)]
 mod mock;
@@ -62,10 +60,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
-		
 		/// Customize OnChargeEVMTransaction
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 
@@ -107,18 +103,18 @@ pub mod pallet {
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		IntoBalanceFail,
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SetGasPrice {value: U256},
+		SetGasPrice { value: U256 },
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Set Gas Price
 		///
 		/// The root must be Signed
@@ -131,16 +127,26 @@ pub mod pallet {
 		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
 			ensure_root(origin)?;
 			GasPrice::<T>::put(new_gas_price);
-			Self::deposit_event(Event::<T>::SetGasPrice{value: new_gas_price});
+			Self::deposit_event(Event::<T>::SetGasPrice {
+				value: new_gas_price,
+			});
 			Ok(())
 		}
+	}
 
+	impl<T: Config> Pallet<T> {
+		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
+			match input.try_into().ok() {
+				Some(val) => Ok(val),
+				None => Err(<Error<T>>::IntoBalanceFail),
+			}
+		}
 	}
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
-		fn min_gas_price() -> sp_core::U256 { 
+		fn min_gas_price() -> sp_core::U256 {
 			GasPrice::<T>::get()
-		 }
+		}
 	}
 }
 
@@ -168,7 +174,7 @@ where
 
 	/// Steps
 	/// 1. Get player ticket to reduce the transaction fee
-	/// 2. Use ticket 
+	/// 2. Use ticket
 	fn correct_and_deposit_fee(
 		who: &H160,
 		corrected_fee: U256,
@@ -180,17 +186,33 @@ where
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
 				match ticket {
 					TicketType::Staking(_) | TicketType::Upfront(_) => {
-						let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
-						service_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
-					},
-					TicketType::Sponsored(_) => {
-						let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
-						let sponsored_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
-						let sponsor_fee = service_fee - sponsored_fee;
-						{
-							// let sponsor = 
+						let discount_fee = service_fee
+							.saturating_mul(U256::from(service.discount))
+							.checked_div(U256::from(100u64));
+						service_fee = service_fee
+							.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+					}
+					TicketType::Sponsored(pool_id) => {
+						if let Some(sponsor) = T::PlayerTicket::get_sponsor(pool_id) {
+							let discount_fee = service_fee
+								.saturating_mul(U256::from(service.discount))
+								.checked_div(U256::from(100u64));
+							let sponsored_fee = service_fee
+								.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+							let sponsor_fee = service_fee - sponsored_fee;
+
+							if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128())
+							{
+								if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+									&sponsor,
+									fee,
+									WithdrawReasons::FEE,
+									ExistenceRequirement::KeepAlive,
+								) {
+									service_fee = sponsored_fee;
+								}
+							}
 						}
-						service_fee = sponsored_fee;
 					}
 				}
 			}

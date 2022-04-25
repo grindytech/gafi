@@ -24,6 +24,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	pool::{StaticPool, Service, TicketType, PlayerTicket, MasterPool, FlexPool},
+	constant::{ID},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -284,6 +285,13 @@ pub mod pallet {
 					}
 				},
 			}
+		}
+
+		fn get_sponsor(pool_id: ID) -> Option<T::AccountId> {
+			if let Some(service) = T::SponsoredPool::get_service(pool_id) {
+				return Some(service.sponsor);
+			}
+			None
 		}
 	}
 
