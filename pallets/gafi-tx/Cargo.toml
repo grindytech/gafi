@@ -48,7 +48,6 @@ pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "http
 hex-literal = "0.2.1"
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
-proof-address-mapping = {default-feature = false, version = "4.0.0-dev", path = "../address-mapping"}
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 

@@ -4,7 +4,6 @@ members = [
   'utils',
   'runtime/devnet',
   'runtime/gaki-testnet',
-  'pallets/template',
   'pallets/player',
   'pallets/upfront-pool',
   'pallets/pool',
@@ -12,6 +11,7 @@ members = [
   'pallets/gafi-tx',
   'pallets/address-mapping',
   'pallets/pallet-faucet',
+  'pallets/sponsored-pool',
   'tests',
   'primitives',
 ]

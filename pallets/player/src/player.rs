@@ -16,5 +16,3 @@ pub struct Player<AccountId> {
 	pub owner: AccountId,
 	pub name: NAME,
 }
-
-

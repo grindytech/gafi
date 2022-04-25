@@ -3,7 +3,7 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as upfront_pool};
+use crate::{self as sponsored_pool};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 

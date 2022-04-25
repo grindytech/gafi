@@ -49,10 +49,12 @@ sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://gi
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 
 # Local
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
+sponsored-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/sponsored-pool" }
 pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
 gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
@@ -73,9 +75,11 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
+  'pallet-randomness-collective-flip/std',
   'proof-address-mapping/std',
   'upfront-pool/std',
   'pallet-pool/std',
+  'sponsored-pool/std',
   'staking-pool/std',
   'gafi-tx/std',
   'utils/std',

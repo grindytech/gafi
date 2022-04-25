@@ -24,7 +24,7 @@ fn use_tickets(ticket: TicketType, account: AccountId32) {
 
     assert_ok!(Pool::join(Origin::signed(account.clone()), ticket));
 
-    let service = Pool::get_service(ticket);
+    let service = Pool::get_service(ticket).unwrap();
     for _ in 0..service.tx_limit {
         assert_ne!(Pool::use_ticket(account.clone()), None);
     }

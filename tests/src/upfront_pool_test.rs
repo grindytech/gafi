@@ -2,7 +2,7 @@ use crate::mock::*;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	pool::{GafiPool, Level, TicketType},
+	pool::{Level, TicketType, FlexPool},
 };
 use gafi_tx::Config;
 use hex_literal::hex;
@@ -15,7 +15,7 @@ const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
 const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Advance];
 
-fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
+fn init_join_pool(pool_fee: u128, ticket: TicketType) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
 	let base_balance = 1_000_000 * unit(GAKI);
@@ -24,28 +24,18 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 		assert_eq!(<Test as Config>::Currency::free_balance(sender.clone()), base_balance);
 	}
 
-	if is_bond {
-		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
-		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		assert_ok!(PalletAddressMapping::bond(
-			Origin::signed(sender.clone()),
-			signature,
-			address,
-			false
-		));
-	}
+	let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
 	assert_ok!(Pool::join(Origin::signed(sender.clone()), ticket));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
-		base_balance - (pool_fee * 2)
+		before_balance - (pool_fee * 2)
 	); //charge x2 when once join
 
 	for i in 1..10 {
 		run_to_block((CIRCLE_BLOCK * i) + ADDITIONAL_BLOCK);
-		// let _now = pallet_timestamp::Pallet::<Test>::get();
 		assert_eq!(
 			<Test as Config>::Currency::free_balance(sender.clone()),
-			base_balance - (pool_fee * (i + 1) as u128)
+			before_balance - (pool_fee * (i + 1) as u128)
 		);
 	}
 }
@@ -53,24 +43,24 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType, is_bond: bool) {
 #[test]
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Basic);
-		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Basic), false);
+		let pool_fee = UpfrontPool::get_service(Level::Basic).unwrap();
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Basic));
 	})
 }
 
 #[test]
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Medium);
-		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Medium), false);
+		let pool_fee = UpfrontPool::get_service(Level::Medium).unwrap();
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Medium));
 	})
 }
 
 #[test]
 fn charge_join_max_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		let pool_fee = UpfrontPool::get_service(Level::Advance);
-		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Advance), false);
+		let pool_fee = UpfrontPool::get_service(Level::Advance).unwrap();
+		init_join_pool(pool_fee.value, TicketType::Upfront(Level::Advance));
 	})
 }
 
@@ -121,7 +111,7 @@ fn leave_pool_early_works() {
 	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-				let pool_fee = UpfrontPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level).unwrap();
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
 				init_leave_pool(i, pool_fee.value, TicketType::Upfront(level), 1, leave_block);
@@ -135,7 +125,7 @@ fn leave_pool_over_works() {
 	for i in 0..10 {
 		for level in LEVELS {
 		ExtBuilder::default().build_and_execute(|| {
-				let pool_fee = UpfrontPool::get_service(level);
+				let pool_fee = UpfrontPool::get_service(level).unwrap();
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
 				let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));
