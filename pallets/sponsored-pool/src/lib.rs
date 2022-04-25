@@ -78,7 +78,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		PoolIdExisted,
 		ConvertBalanceFail,
-		NewAccountFail,
+		IntoAccountFail,
 		NotTheOwner,
 		PoolNotExist,
 		ExceedMaxPoolOwned,
@@ -166,14 +166,14 @@ pub mod pallet {
 			let id = Self::gen_id()?;
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok((id, account)),
-				Err(_) => Err(<Error<T>>::NewAccountFail),
+				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
 
 		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(account),
-				Err(_) => Err(<Error<T>>::NewAccountFail),
+				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
 

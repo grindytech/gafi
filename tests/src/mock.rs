@@ -11,7 +11,7 @@ use frame_support::{
 };
 use frame_system as system;
 use gafi_primitives::pool::{FlexService, Level, Service, TicketType};
-use gafi_primitives::currency::{NativeToken::GAKI, unit};
+use gafi_primitives::currency::{NativeToken::GAKI, unit, centi};
 use gafi_tx::GafiEVMCurrencyAdapter;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
@@ -73,7 +73,7 @@ impl proof_address_mapping::Config for Test {
 }
 
 parameter_types! {
-	pub TransactionByteFee: u128 = 0; // 0.002 GAKI
+	pub TransactionByteFee: u128 = 2 * centi(GAKI);
 }
 
 impl pallet_transaction_payment::Config for Test {

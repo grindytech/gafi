@@ -23,7 +23,10 @@ use frame_support::{
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::pool::{PlayerTicket, TicketType};
+use gafi_primitives::{
+	constant::ID,
+	pool::{PlayerTicket, TicketType},
+};
 pub use pallet::*;
 use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
@@ -105,6 +108,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		IntoBalanceFail,
+		IntoAccountFail,
 	}
 
 	#[pallet::event]
@@ -139,6 +143,13 @@ pub mod pallet {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoBalanceFail),
+			}
+		}
+
+		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
+			match T::AccountId::decode(&mut &id[..]) {
+				Ok(account) => Ok(account),
+				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
 	}
@@ -193,13 +204,13 @@ where
 							.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
 					}
 					TicketType::Sponsored(pool_id) => {
-						if let Some(sponsor) = T::PlayerTicket::get_sponsor(pool_id) {
-							let discount_fee = service_fee
+						if let Ok(sponsor) =  Pallet::<T>::into_account(pool_id) {
+							let sponsor_fee = service_fee
 								.saturating_mul(U256::from(service.discount))
-								.checked_div(U256::from(100u64));
-							let sponsored_fee = service_fee
-								.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
-							let sponsor_fee = service_fee - sponsored_fee;
+								.checked_div(U256::from(100u64))
+								.unwrap_or_else(|| U256::from(0u64));
+
+							let player_fee = service_fee.saturating_sub(sponsor_fee);
 
 							if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128())
 							{
@@ -209,7 +220,7 @@ where
 									WithdrawReasons::FEE,
 									ExistenceRequirement::KeepAlive,
 								) {
-									service_fee = sponsored_fee;
+									service_fee = player_fee;
 								}
 							}
 						}

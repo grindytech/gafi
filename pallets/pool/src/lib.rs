@@ -286,13 +286,6 @@ pub mod pallet {
 				},
 			}
 		}
-
-		fn get_sponsor(pool_id: ID) -> Option<T::AccountId> {
-			if let Some(service) = T::SponsoredPool::get_service(pool_id) {
-				return Some(service.sponsor);
-			}
-			None
-		}
 	}
 
 	impl<T: Config> MasterPool<T::AccountId> for Pallet<T> {
