@@ -37,39 +37,60 @@ pub enum Level {
 pub struct Service {
 	pub tx_limit: u32, // max number of discounted transaction user can use in TimeService 
 	pub discount: u8,  // percentage of discount
+}
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+)]
+pub struct FlexService {
+	pub service: Service,
 	pub value: u128,
+}
+
+impl FlexService {
+	pub fn new(tx_limit: u32, discount: u8, value: u128) -> Self {
+		FlexService {
+			service: Service {
+				tx_limit,
+				discount,
+			},
+			value,
+		}
+	}
 }
 
 pub trait FlexPool<AccountId> {
 	fn join(sender: AccountId, level: Level) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(level: Level) -> Option<Service>;
+	fn get_service(level: Level) -> Option<FlexService>;
+}
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+)]
+pub struct StaticService<AccountId> {
+	pub service: Service,
+	pub sponsor: AccountId,
+}
+
+impl<AccountId> StaticService<AccountId> {
+	pub fn new(tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
+		StaticService {
+			service: Service {
+				tx_limit,
+				discount,
+			},
+			sponsor,
+		}
+	}
 }
 
 pub trait StaticPool<AccountId> {
 	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(pool_id: ID) -> Option<Service>;
-}
-
-impl Service {
-	pub fn new(ticket: TicketType) -> Self {
-		match ticket {
-			TicketType::Upfront(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: 5 * unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 7 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 10 * unit(GAKI) },
-			},
-			TicketType::Staking(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: 1000 * unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 1500 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 2000 * unit(GAKI) },
-			},
-			TicketType::Sponsored(_) => {
-				return Service { tx_limit: 100, discount: 30, value: unit(GAKI) }
-			},
-		}
-	}
+	fn get_service(pool_id: ID) -> Option<StaticService<AccountId>>;
 }
 
 pub trait PlayerTicket<AccountId> {

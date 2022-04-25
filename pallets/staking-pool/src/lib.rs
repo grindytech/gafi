@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{FlexPool, Level, Service, Ticket, TicketType},
+	pool::{FlexPool, FlexService, Level, Service, Ticket, TicketType},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -85,12 +85,12 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, FlexService>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub services: [(Level, Service); 3],
+		pub services: [(Level, FlexService); 3],
 	}
 
 	#[cfg(feature = "std")]
@@ -98,9 +98,9 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				services: [
-					(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
-					(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-					(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+					(Level::Basic, FlexService::new(100_u32, 30_u8, 100000u128)),
+					(Level::Medium, FlexService::new(100_u32, 50_u8, 100000u128)),
+					(Level::Advance,  FlexService::new(100_u32, 70_u8, 100000u128)),
 				],
 			}
 		}
@@ -169,7 +169,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: Level) -> Option<Service> {
+		fn get_service(level: Level) -> Option<FlexService> {
 			Services::<T>::get(level)
 		}
 	}
@@ -239,7 +239,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service_by_level(level: Level) -> Result<Service, Error<T>> {
+		fn get_service_by_level(level: Level) -> Result<FlexService, Error<T>> {
 			match Services::<T>::get(level) {
 				Some(service) => Ok(service),
 				None => Err(<Error<T>>::LevelNotFound),

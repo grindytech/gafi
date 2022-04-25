@@ -1,18 +1,23 @@
-use std::{ str::FromStr};
+use std::str::FromStr;
 
-use gafi_primitives::{pool::{Level, Service, TicketType}};
-use frame_support::{parameter_types, traits::{GenesisBuild, ConstU8}, weights::IdentityFee};
-use frame_system as system;
-use hex_literal::hex;
-use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use pallet_timestamp;
-use pallet_transaction_payment::CurrencyAdapter;
-use gafi_tx::{GafiEVMCurrencyAdapter};
-use proof_address_mapping::{ProofAddressMapping};
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
+use frame_support::{
+	parameter_types,
+	traits::{ConstU8, GenesisBuild},
+	weights::IdentityFee,
+};
+use frame_system as system;
+use gafi_primitives::pool::{FlexService, Level, Service, TicketType};
+use gafi_primitives::currency::{NativeToken::GAKI, unit};
+use gafi_tx::GafiEVMCurrencyAdapter;
+use hex_literal::hex;
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
+use pallet_timestamp;
+use pallet_transaction_payment::CurrencyAdapter;
+use proof_address_mapping::ProofAddressMapping;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -145,7 +150,6 @@ impl sponsored_pool::Config for Test {
 	type MaxPoolOwned = MaxPoolOwned;
 }
 
-
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
@@ -223,7 +227,10 @@ impl gafi_tx::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }
 
 pub fn run_to_block(n: u64) {
@@ -245,8 +252,8 @@ pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
 	pub max_player: u32,
 	pub time_service: u128,
-	pub upfront_services: [(Level, Service); 3],
-	pub staking_services: [(Level, Service); 3],
+	pub upfront_services: [(Level, FlexService); 3],
+	pub staking_services: [(Level, FlexService); 3],
 }
 
 impl Default for ExtBuilder {
@@ -256,14 +263,32 @@ impl Default for ExtBuilder {
 			max_player: 1000,
 			time_service: TIME_SERVICE,
 			upfront_services: [
-				(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-				(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-				(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+				(
+					Level::Basic,
+					FlexService::new(100_u32, 30_u8, 5 * unit(GAKI)),
+				),
+				(
+					Level::Medium,
+					FlexService::new(100_u32, 50_u8, 7 * unit(GAKI)),
+				),
+				(
+					Level::Advance,
+					FlexService::new(100_u32, 70_u8, 10 * unit(GAKI)),
+				),
 			],
 			staking_services: [
-				(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
-				(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-				(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+				(
+					Level::Basic,
+					FlexService::new(100_u32, 30_u8, 1000 * unit(GAKI)),
+				),
+				(
+					Level::Medium,
+					FlexService::new(100_u32, 50_u8, 1500 * unit(GAKI)),
+				),
+				(
+					Level::Advance,
+					FlexService::new(100_u32, 70_u8, 2000 * unit(GAKI)),
+				),
 			],
 		}
 	}
@@ -271,25 +296,34 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig { max_player: self.max_player, services: self.upfront_services },
+			&upfront_pool::GenesisConfig {
+				max_player: self.max_player,
+				services: self.upfront_services,
+			},
 			&mut storage,
 		)
 		.unwrap();
-		
 		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig { services: self.staking_services },
+			&staking_pool::GenesisConfig {
+				services: self.staking_services,
+			},
 			&mut storage,
 		)
 		.unwrap();
-		
 		GenesisBuild::<Test>::assimilate_storage(
-			&pallet_pool::GenesisConfig { time_service: self.time_service },
+			&pallet_pool::GenesisConfig {
+				time_service: self.time_service,
+			},
 			&mut storage,
 		)
 		.unwrap();

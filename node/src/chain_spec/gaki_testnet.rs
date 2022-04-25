@@ -5,7 +5,6 @@ use devnet::{
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
 	WASM_BINARY, PoolConfig,
 };
-use gafi_primitives::{pool::{Level, Service, TicketType}};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
@@ -14,6 +13,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap};
 use serde_json::json;
 use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
+use gafi_primitives::{pool::{Level, Service, TicketType, FlexService}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -108,14 +108,14 @@ fn gaki_testnet_genesis(
 	// Pool config
 	const MAX_PLAYER: u32 = 1000;
 	let upfront_services = [
-		(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-		(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-		(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+		(Level::Basic, FlexService::new(100_u32, 30_u8, 5 * unit(GAKI))),
+		(Level::Medium, FlexService::new(100_u32, 50_u8, 7 * unit(GAKI))),
+		(Level::Advance, FlexService::new(100_u32, 70_u8, 10 * unit(GAKI))),
 	];
 	let staking_services = [
-		(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
-		(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-		(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+		(Level::Basic, FlexService::new(100_u32, 30_u8, 1000 * unit(GAKI))),
+		(Level::Medium, FlexService::new(100_u32, 50_u8, 1500 * unit(GAKI))),
+		(Level::Advance, FlexService::new(100_u32, 70_u8, 2000 * unit(GAKI))),
 	];
 	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 	let bond_existential_deposit: u128 = unit(GAKI);

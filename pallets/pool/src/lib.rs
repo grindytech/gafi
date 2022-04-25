@@ -265,9 +265,24 @@ pub mod pallet {
 
 		fn get_service(ticket: TicketType) -> Option<Service> {
 			match ticket {
-				TicketType::Upfront(level) => T::UpfrontPool::get_service(level),
-				TicketType::Staking(level) => T::StakingPool::get_service(level),
-				TicketType::Sponsored(pool_id)=> T::SponsoredPool::get_service(pool_id),
+				TicketType::Upfront(level) => {
+					match T::UpfrontPool::get_service(level) {
+						Some(service) => Some(service.service),
+						None => None
+					}
+				},
+				TicketType::Staking(level) => {
+					match T::StakingPool::get_service(level) {
+						Some(service) => Some(service.service),
+						None => None
+					}
+				},
+				TicketType::Sponsored(pool_id) => {
+					match T::SponsoredPool::get_service(pool_id) {
+						Some(service) => Some(service.service),
+						None => None
+					}
+				},
 			}
 		}
 	}

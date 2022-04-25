@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::pool::{FlexPool, Level, Service};
+use gafi_primitives::pool::{FlexPool, FlexService, Level, Service};
 use gafi_primitives::{
 	pool::{Ticket, TicketType, MasterPool},
 };
@@ -113,7 +113,7 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, FlexService>;
 
 	/// The new players join the pool before the TimeService, whose are without charge
 	#[pallet::storage]
@@ -129,7 +129,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub max_player: u32,
-		pub services: [(Level, Service); 3],
+		pub services: [(Level, FlexService); 3],
 	}
 
 	#[cfg(feature = "std")]
@@ -138,9 +138,9 @@ pub mod pallet {
 			Self {
 				max_player: 1000,
 				services: [
-					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-					(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+					(Level::Basic, FlexService::new(100_u32, 30_u8, 1000000u128)),
+					(Level::Medium, FlexService::new(100_u32, 50_u8, 1000000u128)),
+					(Level::Advance, FlexService::new(100_u32, 70_u8, 1000000u128)),
 				],
 			}
 		}
@@ -249,7 +249,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: Level) -> Option<Service> {
+		fn get_service(level: Level) -> Option<FlexService> {
 			Services::<T>::get(level)
 		}
 	}
@@ -356,7 +356,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn get_player_service(player: T::AccountId) -> Option<Service> {
+	fn get_player_service(player: T::AccountId) -> Option<FlexService> {
 		if let Some(level) = Self::get_player_level(player) {
 			return Self::get_service(level);
 		}
@@ -383,7 +383,7 @@ impl<T: Config> Pallet<T> {
 		sp_runtime::SaturatedConversion::saturated_into(input)
 	}
 
-	fn get_service_by_level(level: Level) -> Result<Service, Error<T>> {
+	fn get_service_by_level(level: Level) -> Result<FlexService, Error<T>> {
 		match Services::<T>::get(level) {
 			Some(service) => Ok(service),
 			None => Err(<Error<T>>::LevelNotFound),

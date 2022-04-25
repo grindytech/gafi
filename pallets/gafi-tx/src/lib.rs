@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{PlayerTicket}
+	pool::{PlayerTicket, TicketType}
 };
 pub use pallet::*;
 use pallet_evm::{AddressMapping, GasWeightMapping};
@@ -177,10 +177,22 @@ where
 		let mut service_fee = corrected_fee;
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
-			
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
-				let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
-				service_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+				match ticket {
+					TicketType::Staking(_) | TicketType::Upfront(_) => {
+						let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
+						service_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+					},
+					TicketType::Sponsored(_) => {
+						let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
+						let sponsored_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+						let sponsor_fee = service_fee - sponsored_fee;
+						{
+							// let sponsor = 
+						}
+						service_fee = sponsored_fee;
+					}
+				}
 			}
 		}
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
