@@ -32,6 +32,10 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 sp-core = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-io = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
 sp-runtime = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
+upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
+pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
 
 [features]
 default = ["std"]
@@ -46,6 +50,8 @@ std = [
   "pallet-randomness-collective-flip/std",
   "sp-io/std",
   "pallet-balances/std",
+  "upfront-pool/std",
+  "pallet-pool/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

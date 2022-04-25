@@ -7684,13 +7684,17 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
+ "pallet-pool",
  "pallet-randomness-collective-flip",
+ "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "scale-info",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "staking-pool",
+ "upfront-pool",
 ]
 
 [[package]]

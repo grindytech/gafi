@@ -26,14 +26,14 @@ pub struct SponsoredPool<AccountId> {
 	pub tx_limit: u32,
 }
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -79,7 +79,7 @@ pub mod pallet {
 		PoolIdExisted,
 		ConvertBalanceFail,
 		NewAccountFail,
-		YouAreNotTheOwner,
+		NotTheOwner,
 		PoolNotExist,
 		ExceedMaxPoolOwned,
 	}
@@ -136,7 +136,7 @@ pub mod pallet {
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
 			ensure!(
 				Self::is_pool_owner(&pool_id, &sender)?,
-				<Error<T>>::YouAreNotTheOwner
+				<Error<T>>::NotTheOwner
 			);
 			let pool = Self::into_account(pool_id)?;
 			Self::transfer_all(&pool, &sender, false)?;
