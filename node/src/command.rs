@@ -152,16 +152,17 @@ pub fn run() -> sc_cli::Result<()> {
 			})
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
+			// if cfg!(feature = "runtime-benchmarks") {
+			// 	let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config))
-			} else {
-				Err(
-					"Benchmarking wasn't enabled when building the node. You can enable it with `--features runtime-benchmarks`."
-						.into(),
-				)
-			}
+			// 	runner.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config))
+			// } else {
+			// 	Err(
+			// 		"Benchmarking wasn't enabled when building the node. You can enable it with `--features runtime-benchmarks`."
+			// 			.into(),
+			// 	)
+			// }
+			Ok(())
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.base)?;
