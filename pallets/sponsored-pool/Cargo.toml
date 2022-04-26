@@ -13,26 +13,26 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ]}
 serde = {version = "1.0.119"}
 
 # Substrate
-frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
-pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-scale-info = {version = "1.0", default-features = false, features = ["derive"]}
-sp-io = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
+sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
 
 [dev-dependencies]
-sp-core = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-io = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-runtime = {default-features = false, version = "5.0.0", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "gafi-dot-v1.1.0"}
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
 pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
