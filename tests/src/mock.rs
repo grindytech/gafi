@@ -72,15 +72,11 @@ impl proof_address_mapping::Config for Test {
 	type MessagePrefix = Prefix;
 }
 
-parameter_types! {
-	pub TransactionByteFee: u128 = 2 * centi(GAKI);
-}
-
 impl pallet_transaction_payment::Config for Test {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<u128>;
+	type LengthToFee = IdentityFee<u128>;
 	type FeeMultiplierUpdate = ();
 }
 
