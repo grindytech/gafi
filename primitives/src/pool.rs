@@ -96,7 +96,6 @@ pub trait StaticPool<AccountId> {
 pub trait PlayerTicket<AccountId> {
 	fn use_ticket(player: AccountId) -> Option<TicketType>;
 	fn get_service(ticket: TicketType) -> Option<Service>;
-	fn get_sponsor(pool_id: ID) -> Option<AccountId>;
 }
 
 pub trait MasterPool<AccountId> {

@@ -265,7 +265,7 @@ pub mod pallet {
 		}
 
 		fn get_service(ticket: TicketType) -> Option<Service> {
-			match ticket {
+			return match ticket {
 				TicketType::Upfront(level) => {
 					match T::UpfrontPool::get_service(level) {
 						Some(service) => Some(service.service),
@@ -285,13 +285,6 @@ pub mod pallet {
 					}
 				},
 			}
-		}
-
-		fn get_sponsor(pool_id: ID) -> Option<T::AccountId> {
-			if let Some(service) = T::SponsoredPool::get_service(pool_id) {
-				return Some(service.sponsor);
-			}
-			None
 		}
 	}
 

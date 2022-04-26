@@ -17,7 +17,7 @@ test:
 
 .PHONY: check
 check:
-	cargo check
+	cargo check --release
 
 .PHONY: benchmark
 benchmark:
