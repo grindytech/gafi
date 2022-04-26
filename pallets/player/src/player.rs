@@ -1,16 +1,14 @@
 use frame_support::RuntimeDebug;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::pallet_prelude::*;
+use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use frame_support::serde::{Deserialize, Serialize};
 
 use crate::pallet::{ID, NAME};
 
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
-
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
-)]
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct Player<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,

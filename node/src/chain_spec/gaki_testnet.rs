@@ -154,7 +154,7 @@ fn gaki_testnet_genesis(
 					H160::from_slice(&hex_literal::hex!(
 						"4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11" //base
 					)),
-					pallet_evm::GenesisAccount {
+					fp_evm::GenesisAccount {
 						nonce: U256::zero(),
 						balance: U256::from(1000 * unit(GAKI)),
 						code: vec![],
