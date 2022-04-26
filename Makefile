@@ -66,3 +66,16 @@ benchmark_upfront_pool:
     --repeat 10 \
     --json-file=raw.json \
     --output ./pallets/benchmarks/upfront_pool/weights.rs
+
+.PHONY: benchmark_faucet
+benchmark_faucet:
+	./target/release/gafi-node benchmark \
+    --chain dev \
+    --execution wasm \
+    --wasm-execution compiled \
+    --pallet pallet_faucet \
+    --extrinsic '*' \
+     --steps 20 \
+    --repeat 10 \
+    --json-file=raw.json \
+    --output ./pallets/benchmarks/pallet-faucet/weights.rs

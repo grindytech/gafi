@@ -876,6 +876,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
@@ -883,6 +884,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -898,6 +900,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -909,6 +912,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
