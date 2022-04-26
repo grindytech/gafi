@@ -30,12 +30,16 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
+pub trait WeightInfo {
+	fn faucet(s: u32, ) -> Weight;
+	fn donate(s: u32, ) -> Weight;
+}
 /// Weight functions for `pallet_faucet`.
-pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_faucet::WeightInfo for WeightInfo<T> {
+pub struct FaucetWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for FaucetWeight<T> {
 	// Storage: Faucet GenesisAccounts (r:1 w:0)
 	// Storage: Faucet FaucetAmount (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
@@ -58,5 +62,44 @@ impl<T: frame_system::Config> pallet_faucet::WeightInfo for WeightInfo<T> {
 		(31_411_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+}
+
+impl WeightInfo for () {
+	fn faucet(b: u32, ) -> Weight {
+		let total_read = 7_u64;
+		let total_write = 3_u64;
+
+		let faucet_r = 2_u64;
+
+		let base_r = total_read - faucet_r;
+		let base_w = total_write;
+		let mut weight = (39_500_000_u64).saturating_mul(b.into())
+		.saturating_add(RocksDbWeight::get().reads(base_r))
+		.saturating_add(RocksDbWeight::get().writes(base_w));
+
+		// r:2 w:0
+		weight = (weight).saturating_add(RocksDbWeight::get().reads(faucet_r));
+
+		weight
+	}
+
+	fn donate(b: u32,) -> Weight {
+		let total_read = 7_u64;
+		let total_write = 4_u64;
+
+		let donate_r = 1_u64;
+
+		let base_r = total_read - donate_r;
+		let base_w = total_write;
+
+		let mut weight = (31_411_000_u64).saturating_mul(b.into())
+			.saturating_add(RocksDbWeight::get().reads(base_r))
+			.saturating_add(RocksDbWeight::get().writes(base_w));
+
+		// r:1 w:0
+		weight = (weight).saturating_add(RocksDbWeight::get().reads(donate_r));
+
+		weight
 	}
 }
