@@ -67,39 +67,14 @@ impl<T: frame_system::Config> WeightInfo for FaucetWeight<T> {
 
 impl WeightInfo for () {
 	fn faucet(b: u32, ) -> Weight {
-		let total_read = 7_u64;
-		let total_write = 3_u64;
-
-		let faucet_r = 2_u64;
-
-		let base_r = total_read - faucet_r;
-		let base_w = total_write;
-		let mut weight = (39_500_000_u64).saturating_mul(b.into())
-		.saturating_add(RocksDbWeight::get().reads(base_r))
-		.saturating_add(RocksDbWeight::get().writes(base_w));
-
-		// r:2 w:0
-		weight = (weight).saturating_add(RocksDbWeight::get().reads(faucet_r));
-
-		weight
+		(39_500_000 as Weight)
+		.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+		.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 
 	fn donate(b: u32,) -> Weight {
-		let total_read = 7_u64;
-		let total_write = 4_u64;
-
-		let donate_r = 1_u64;
-
-		let base_r = total_read - donate_r;
-		let base_w = total_write;
-
-		let mut weight = (31_411_000_u64).saturating_mul(b.into())
-			.saturating_add(RocksDbWeight::get().reads(base_r))
-			.saturating_add(RocksDbWeight::get().writes(base_w));
-
-		// r:1 w:0
-		weight = (weight).saturating_add(RocksDbWeight::get().reads(donate_r));
-
-		weight
+		(31_411_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 }
