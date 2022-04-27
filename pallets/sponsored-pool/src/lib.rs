@@ -12,6 +12,7 @@ pub use gafi_primitives::{
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_core::H160;
 use sp_io::hashing::blake2_256;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -20,6 +21,7 @@ use sp_io::hashing::blake2_256;
 )]
 pub struct SponsoredPool<AccountId> {
 	pub id: ID,
+	pub name: [u8; 32],
 	pub owner: AccountId,
 	pub value: u128,
 	pub discount: u8,
@@ -42,6 +44,11 @@ pub mod pallet {
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
+	pub struct NewPool<AccountId> {
+		pub id: ID,
+		pub account: AccountId,
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -53,6 +60,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxPoolOwned: Get<u32>;
+
+		#[pallet::constant]
+		type MaxPoolTarget: Get<u32>;
 	}
 
 	//** Storages **//
@@ -67,6 +77,10 @@ pub mod pallet {
 	pub(super) type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
+	#[pallet::storage]
+	pub type Targets<T: Config> =
+		StorageMap<_, Twox64Concat, ID, BoundedVec<H160, T::MaxPoolTarget>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -79,9 +93,11 @@ pub mod pallet {
 		PoolIdExisted,
 		ConvertBalanceFail,
 		IntoAccountFail,
+		IntoU32Fail,
 		NotTheOwner,
 		PoolNotExist,
 		ExceedMaxPoolOwned,
+		ExceedPoolTarget,
 	}
 
 	#[pallet::call]
@@ -89,24 +105,31 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn create_pool(
 			origin: OriginFor<T>,
+			name: [u8; 32],
+			targets: Vec<H160>,
 			value: BalanceOf<T>,
 			discount: u8,
 			tx_limit: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let pool_id = Self::new_pool()?;
+			let pool_config = Self::new_pool()?;
 			ensure!(
-				Pools::<T>::get(pool_id.0) == None,
+				Pools::<T>::get(pool_config.id) == None,
 				<Error<T>>::PoolIdExisted
 			);
 			ensure!(
 				T::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
+			ensure! {
+				Self::usize_try_to_u32(targets.len())? <= T::MaxPoolTarget::get(),
+				<Error<T>>::ExceedPoolTarget
+			}
 
 			let new_pool = SponsoredPool {
-				id: pool_id.0,
+				id: pool_config.id,
+				name,
 				owner: sender.clone(),
 				value: Self::balance_try_to_u128(value)?,
 				discount,
@@ -115,17 +138,27 @@ pub mod pallet {
 
 			<T as pallet::Config>::Currency::transfer(
 				&sender,
-				&pool_id.1,
+				&pool_config.account,
 				value,
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			PoolOwned::<T>::try_mutate(&sender, |pool_vec| pool_vec.try_push(pool_id.0))
+			PoolOwned::<T>::try_mutate(&sender, |pool_vec| pool_vec.try_push(pool_config.id))
 				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned)?;
+			Targets::<T>::try_mutate(pool_config.id, |target_vec| {
+				for target in targets {
+					if let Ok(_) = target_vec.try_push(target) {
+					} else {
+						return Err(());
+					}
+				}
+				Ok(())
+			})
+			.map_err(|_| <Error<T>>::ExceedMaxPoolOwned)?;
 
-			Pools::<T>::insert(pool_id.0, new_pool);
+			Pools::<T>::insert(pool_config.id, new_pool);
 
-			Self::deposit_event(Event::CreatedPool { id: pool_id.0 });
+			Self::deposit_event(Event::CreatedPool { id: pool_config.id });
 			Ok(())
 		}
 
@@ -140,7 +173,6 @@ pub mod pallet {
 			);
 			let pool = Self::into_account(pool_id)?;
 			Self::transfer_all(&pool, &sender, false)?;
-			Pools::<T>::remove(pool_id);
 			PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
 				if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
 					pool_owned.swap_remove(ind);
@@ -149,6 +181,8 @@ pub mod pallet {
 				Err(())
 			})
 			.map_err(|_| <Error<T>>::PoolNotExist)?;
+			Pools::<T>::remove(pool_id);
+			Targets::<T>::remove(pool_id);
 			Ok(())
 		}
 	}
@@ -162,10 +196,10 @@ pub mod pallet {
 			Ok(payload.using_encoded(blake2_256))
 		}
 
-		pub fn new_pool() -> Result<(ID, T::AccountId), Error<T>> {
+		pub fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
 			let id = Self::gen_id()?;
 			match T::AccountId::decode(&mut &id[..]) {
-				Ok(account) => Ok((id, account)),
+				Ok(account) => Ok(NewPool::<T::AccountId> { id, account }),
 				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
@@ -181,6 +215,13 @@ pub mod pallet {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::ConvertBalanceFail),
+			}
+		}
+
+		pub fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
+			match input.try_into().ok() {
+				Some(val) => Ok(val),
+				None => Err(<Error<T>>::IntoU32Fail),
 			}
 		}
 

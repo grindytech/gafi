@@ -37,6 +37,7 @@ fn create_pool(
 ) -> ID {
     assert_ok!(Sponsored::create_pool(
         Origin::signed(account.clone()),
+        [0_u8; 32],
         pool_value,
         discount,
         tx_limit
@@ -76,7 +77,7 @@ fn create_pool_fail() {
 
         let pool_value = 1000 * unit(GAKI);
         assert_err!(
-            Sponsored::create_pool(Origin::signed(account.clone()), pool_value, 10, 100),
+            Sponsored::create_pool(Origin::signed(account.clone()),[0_u8; 32], pool_value, 10, 100),
             pallet_balances::Error::<Test>::InsufficientBalance
         );
     })
