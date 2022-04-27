@@ -2,12 +2,10 @@ use crate::{mock::*, Error, PoolOwned, Pools};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::{StaticService, StaticPool};
+use gafi_primitives::pool::{StaticPool};
 use sp_runtime::AccountId32;
 use sp_core::H160;
 use sp_std::str::FromStr;
-
-const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 
 fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
