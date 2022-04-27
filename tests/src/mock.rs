@@ -137,6 +137,7 @@ impl staking_pool::Config for Test {
 
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 = 10;
 }
 
 impl sponsored_pool::Config for Test {
@@ -144,6 +145,7 @@ impl sponsored_pool::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

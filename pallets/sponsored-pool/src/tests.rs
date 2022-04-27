@@ -24,7 +24,7 @@ fn new_pool_works() {
         run_to_block(1);
 
         let new_pool = Sponsored::new_pool();
-        assert_eq!(new_pool.unwrap().0.len(), 32);
+        assert_eq!(new_pool.unwrap().id.len(), 32);
     })
 }
 
@@ -37,6 +37,8 @@ fn create_pool(
 ) -> ID {
     assert_ok!(Sponsored::create_pool(
         Origin::signed(account.clone()),
+        [0_u8; 32],
+        [].to_vec(),
         pool_value,
         discount,
         tx_limit
@@ -76,7 +78,7 @@ fn create_pool_fail() {
 
         let pool_value = 1000 * unit(GAKI);
         assert_err!(
-            Sponsored::create_pool(Origin::signed(account.clone()), pool_value, 10, 100),
+            Sponsored::create_pool(Origin::signed(account.clone()),[0_u8; 32], [].to_vec(), pool_value, 10, 100),
             pallet_balances::Error::<Test>::InsufficientBalance
         );
     })
@@ -110,7 +112,7 @@ fn withdraw_pool_fail() {
         {
             let new_pool = Sponsored::new_pool();
             assert_err!(
-                Sponsored::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().0),
+                Sponsored::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().id),
                 Error::<Test>::PoolNotExist
             );
         }

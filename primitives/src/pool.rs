@@ -3,8 +3,9 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
-
 use crate::{currency::{unit, NativeToken::GAKI}, constant::ID};
+use sp_std::vec::{Vec};
+use sp_core::H160;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -66,18 +67,18 @@ pub trait FlexPool<AccountId> {
 	fn get_service(level: Level) -> Option<FlexService>;
 }
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
-)]
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct StaticService<AccountId> {
 	pub service: Service,
 	pub sponsor: AccountId,
+	pub targets: Vec<H160>,
 }
 
 impl<AccountId> StaticService<AccountId> {
-	pub fn new(tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
+	pub fn new(targets: Vec<H160>, tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
 		StaticService {
+			targets,
 			service: Service {
 				tx_limit,
 				discount,
@@ -96,6 +97,7 @@ pub trait StaticPool<AccountId> {
 pub trait PlayerTicket<AccountId> {
 	fn use_ticket(player: AccountId) -> Option<TicketType>;
 	fn get_service(ticket: TicketType) -> Option<Service>;
+	fn get_targets(pool_id: ID) -> Vec<H160>;
 }
 
 pub trait MasterPool<AccountId> {

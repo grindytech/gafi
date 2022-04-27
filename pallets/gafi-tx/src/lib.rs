@@ -32,6 +32,7 @@ use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
 use pallet_evm::{AddressMapping, GasWeightMapping};
 use sp_core::{H160, U256};
+use sp_std::vec::Vec;
 
 #[cfg(test)]
 mod mock;
@@ -152,6 +153,54 @@ pub mod pallet {
 				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
+
+		pub fn correct_and_deposit_fee_sponsored(
+			pool_id: ID,
+			targets: Vec<H160>,
+			target: Option<H160>,
+			service_fee: U256,
+			discount: u8,
+		) -> Option<U256> {
+			if !Self::is_target(targets, target) {
+				return None;
+			}
+
+			if let Ok(sponsor) = Pallet::<T>::into_account(pool_id) {
+				let sponsor_fee = service_fee
+					.saturating_mul(U256::from(discount))
+					.checked_div(U256::from(100u64))
+					.unwrap_or_else(|| U256::from(0u64));
+
+				let player_fee = service_fee.saturating_sub(sponsor_fee);
+
+				if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128()) {
+					if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+						&sponsor,
+						fee,
+						WithdrawReasons::FEE,
+						ExistenceRequirement::KeepAlive,
+					) {
+						return Some(player_fee);
+					}
+				}
+			}
+			None
+		}
+
+		fn is_target(targets: Vec<H160>, target: Option<H160>) -> bool {
+			if let Some(tar) = target {
+				return targets.contains(&tar);
+			}
+			false
+		}
+
+		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
+			let discount_fee = service_fee
+				.saturating_mul(U256::from(discount))
+				.checked_div(U256::from(100u64));
+
+			Some(service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64))))
+		}
 	}
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
@@ -188,6 +237,7 @@ where
 	/// 2. Use ticket
 	fn correct_and_deposit_fee(
 		who: &H160,
+		target: Option<H160>,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
@@ -197,38 +247,34 @@ where
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
 				match ticket {
 					TicketType::Staking(_) | TicketType::Upfront(_) => {
-						let discount_fee = service_fee
-							.saturating_mul(U256::from(service.discount))
-							.checked_div(U256::from(100u64));
-						service_fee = service_fee
-							.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_service(
+							service_fee,
+							service.discount,
+						) {
+							service_fee = fee;
+						}
 					}
 					TicketType::Sponsored(pool_id) => {
-						if let Ok(sponsor) =  Pallet::<T>::into_account(pool_id) {
-							let sponsor_fee = service_fee
-								.saturating_mul(U256::from(service.discount))
-								.checked_div(U256::from(100u64))
-								.unwrap_or_else(|| U256::from(0u64));
-
-							let player_fee = service_fee.saturating_sub(sponsor_fee);
-
-							if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128())
-							{
-								if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
-									&sponsor,
-									fee,
-									WithdrawReasons::FEE,
-									ExistenceRequirement::KeepAlive,
-								) {
-									service_fee = player_fee;
-								}
-							}
+						let targets = T::PlayerTicket::get_targets(pool_id);
+						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
+							pool_id,
+							targets,
+							target,
+							service_fee,
+							service.discount,
+						) {
+							service_fee = fee;
 						}
 					}
 				}
 			}
 		}
-		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
+		T::OnChargeEVMTxHandler::correct_and_deposit_fee(
+			who,
+			target,
+			service_fee,
+			already_withdrawn,
+		)
 	}
 
 	fn pay_priority_fee(tip: U256) {
