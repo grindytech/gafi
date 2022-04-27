@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{GafiPool, Level, Service, Ticket, TicketType},
+	pool::{FlexPool, FlexService, Level, Service, Ticket, TicketType},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -45,6 +45,7 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult};
+	use gafi_primitives::pool::FlexPool;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -84,12 +85,12 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, FlexService>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub services: [(Level, Service); 3],
+		pub services: [(Level, FlexService); 3],
 	}
 
 	#[cfg(feature = "std")]
@@ -97,9 +98,9 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				services: [
-					(Level::Basic, Service::new(TicketType::Staking(Level::Basic))),
-					(Level::Medium, Service::new(TicketType::Staking(Level::Medium))),
-					(Level::Advance, Service::new(TicketType::Staking(Level::Advance))),
+					(Level::Basic, FlexService::new(100_u32, 30_u8, 100000u128)),
+					(Level::Medium, FlexService::new(100_u32, 50_u8, 100000u128)),
+					(Level::Advance,  FlexService::new(100_u32, 70_u8, 100000u128)),
 				],
 			}
 		}
@@ -125,10 +126,11 @@ pub mod pallet {
 		PlayerNotStake,
 		StakeCountOverflow,
 		IntoBalanceFail,
+		LevelNotFound,
 	}
 
-	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
-		/// Join Staking Pool
+	impl<T: Config> FlexPool<T::AccountId> for Pallet<T> {
+			/// Join Staking Pool
 		///
 		/// The origin must be Signed
 		///
@@ -137,7 +139,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
-			let service = Services::<T>::get(level);
+			let service = Self::get_service_by_level(level)?;
 			let staking_amount = Self::u128_try_to_balance(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
@@ -154,10 +156,10 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		fn leave(sender: T::AccountId) -> DispatchResult {
-			if let Some(player_level) = Self::get_player_level(sender.clone()) {
+			if let Some(level) = Self::get_player_level(sender.clone()) {
 				let new_player_count =
 					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
-				let service = Services::<T>::get(player_level);
+				let service = Self::get_service_by_level(level)?;
 				let staking_amount = Self::u128_try_to_balance(service.value)?;
 				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 				Self::unstake_pool(sender, new_player_count);
@@ -167,7 +169,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: Level) -> Service {
+		fn get_service(level: Level) -> Option<FlexService> {
 			Services::<T>::get(level)
 		}
 	}
@@ -234,6 +236,13 @@ pub mod pallet {
 					}
 				},
 				None => None,
+			}
+		}
+
+		fn get_service_by_level(level: Level) -> Result<FlexService, Error<T>> {
+			match Services::<T>::get(level) {
+				Some(service) => Ok(service),
+				None => Err(<Error<T>>::LevelNotFound),
 			}
 		}
 	}

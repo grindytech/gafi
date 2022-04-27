@@ -13,51 +13,51 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"]}
-scale-info = {version = "1.0", default-features = false, features = ["derive"]}
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 
 # Frontier
-fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
 
 # Substrate
-frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-frame-support = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-frame-system = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-aura = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-grandpa = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-randomness-collective-flip = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-scheduler = {default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-sudo = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-transaction-payment = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-block-builder = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-consensus-aura = {version = "0.10.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-core = {version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-inherents = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-offchain = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-runtime = {version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-session = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-transaction-pool = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-version = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-support = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-system = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-aura = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-grandpa = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-randomness-collective-flip = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-scheduler = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-sudo = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-transaction-payment = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-block-builder = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-consensus-aura = {version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-inherents = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-offchain = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-session = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-transaction-pool = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-version = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Used for the node template's RPCs
-frame-system-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-system-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Used for runtime benchmarking
-frame-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
-frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot", optional = true}
+frame-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
+frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
@@ -69,15 +69,16 @@ pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
+sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
 # unit test
 [dev.dependencies]
-sp-io = {version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-io = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [build-dependencies]
-substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [features]
 aura = []
@@ -141,4 +142,5 @@ std = [
   "pallet-faucet/std",
   "pallet-pool/std",
   "pallet-scheduler/std",
+  "sponsored-pool/std",
 ]

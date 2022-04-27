@@ -1,4 +1,3 @@
-
 // This file is part of Gafi Network.
 
 // Copyright (C) 2021-2022 CryptoViet.
@@ -18,19 +17,22 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+use frame_support::traits::tokens::{ExistenceRequirement, WithdrawReasons};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Imbalance, OnUnbalanced},
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{PlayerTicket}
+	constant::ID,
+	pool::{PlayerTicket, TicketType},
 };
 pub use pallet::*;
-use pallet_evm::{AddressMapping, GasWeightMapping};
-use pallet_evm::OnChargeEVMTransaction;
-use sp_core::{H160, U256};
 use pallet_evm::FeeCalculator;
+use pallet_evm::OnChargeEVMTransaction;
+use pallet_evm::{AddressMapping, GasWeightMapping};
+use sp_core::{H160, U256};
+use sp_std::vec::Vec;
 
 #[cfg(test)]
 mod mock;
@@ -62,10 +64,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
-		
 		/// Customize OnChargeEVMTransaction
 		type OnChargeEVMTxHandler: OnChargeEVMTransaction<Self>;
 
@@ -107,18 +107,19 @@ pub mod pallet {
 	// Errors.
 	#[derive(PartialEq)]
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		IntoBalanceFail,
+		IntoAccountFail,
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SetGasPrice {value: U256},
+		SetGasPrice { value: U256 },
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Set Gas Price
 		///
 		/// The root must be Signed
@@ -131,16 +132,81 @@ pub mod pallet {
 		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
 			ensure_root(origin)?;
 			GasPrice::<T>::put(new_gas_price);
-			Self::deposit_event(Event::<T>::SetGasPrice{value: new_gas_price});
+			Self::deposit_event(Event::<T>::SetGasPrice {
+				value: new_gas_price,
+			});
 			Ok(())
 		}
+	}
 
+	impl<T: Config> Pallet<T> {
+		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
+			match input.try_into().ok() {
+				Some(val) => Ok(val),
+				None => Err(<Error<T>>::IntoBalanceFail),
+			}
+		}
+
+		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
+			match T::AccountId::decode(&mut &id[..]) {
+				Ok(account) => Ok(account),
+				Err(_) => Err(<Error<T>>::IntoAccountFail),
+			}
+		}
+
+		pub fn correct_and_deposit_fee_sponsored(
+			pool_id: ID,
+			targets: Vec<H160>,
+			target: Option<H160>,
+			service_fee: U256,
+			discount: u8,
+		) -> Option<U256> {
+			if !Self::is_target(targets, target) {
+				return None;
+			}
+
+			if let Ok(sponsor) = Pallet::<T>::into_account(pool_id) {
+				let sponsor_fee = service_fee
+					.saturating_mul(U256::from(discount))
+					.checked_div(U256::from(100u64))
+					.unwrap_or_else(|| U256::from(0u64));
+
+				let player_fee = service_fee.saturating_sub(sponsor_fee);
+
+				if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128()) {
+					if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+						&sponsor,
+						fee,
+						WithdrawReasons::FEE,
+						ExistenceRequirement::KeepAlive,
+					) {
+						return Some(player_fee);
+					}
+				}
+			}
+			None
+		}
+
+		fn is_target(targets: Vec<H160>, target: Option<H160>) -> bool {
+			if let Some(tar) = target {
+				return targets.contains(&tar);
+			}
+			false
+		}
+
+		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
+			let discount_fee = service_fee
+				.saturating_mul(U256::from(discount))
+				.checked_div(U256::from(100u64));
+
+			Some(service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64))))
+		}
 	}
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
-		fn min_gas_price() -> sp_core::U256 { 
+		fn min_gas_price() -> sp_core::U256 {
 			GasPrice::<T>::get()
-		 }
+		}
 	}
 }
 
@@ -168,20 +234,47 @@ where
 
 	/// Steps
 	/// 1. Get player ticket to reduce the transaction fee
-	/// 2. Use ticket 
+	/// 2. Use ticket
 	fn correct_and_deposit_fee(
 		who: &H160,
+		target: Option<H160>,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		let mut service_fee = corrected_fee;
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
-			let service = T::PlayerTicket::get_service(ticket);
-			let discount_fee = service_fee.saturating_mul(U256::from(service.discount)).checked_div(U256::from(100u64));
-			service_fee = service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64)));
+			if let Some(service) = T::PlayerTicket::get_service(ticket) {
+				match ticket {
+					TicketType::Staking(_) | TicketType::Upfront(_) => {
+						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_service(
+							service_fee,
+							service.discount,
+						) {
+							service_fee = fee;
+						}
+					}
+					TicketType::Sponsored(pool_id) => {
+						let targets = T::PlayerTicket::get_targets(pool_id);
+						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
+							pool_id,
+							targets,
+							target,
+							service_fee,
+							service.discount,
+						) {
+							service_fee = fee;
+						}
+					}
+				}
+			}
 		}
-		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
+		T::OnChargeEVMTxHandler::correct_and_deposit_fee(
+			who,
+			target,
+			service_fee,
+			already_withdrawn,
+		)
 	}
 
 	fn pay_priority_fee(tip: U256) {

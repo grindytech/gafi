@@ -3,7 +3,7 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as staking_pool};
+use crate::{self as sponsored_pool};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -35,10 +35,10 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
-		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
@@ -114,9 +114,9 @@ impl system::Config for Test {
 impl pallet_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type WeightInfo = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type WeightInfo = ();
 	type SponsoredPool = Sponsored;
 }
 
@@ -140,7 +140,7 @@ impl staking_pool::Config for Test {
 
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
-	pub MaxPoolTarget: u32 = 10;
+	pub MaxPoolTarget: u32 =  10;
 }
 
 impl sponsored_pool::Config for Test {
@@ -148,7 +148,7 @@ impl sponsored_pool::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
-	type MaxPoolTarget =  MaxPoolTarget;
+	type MaxPoolTarget = MaxPoolTarget;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -160,23 +160,27 @@ pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
 			UpfrontPool::on_finalize(System::block_number());
+			Pool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		UpfrontPool::on_initialize(System::block_number());
+		Pool::on_initialize(System::block_number());
 		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
 	}
 }
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
+	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
+			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -189,7 +193,13 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig::default(),
+				&pallet_pool::GenesisConfig { time_service: self.time_service },
+				&mut storage,
+		)
+		.unwrap();
+
+		GenesisBuild::<Test>::assimilate_storage(
+			&upfront_pool::GenesisConfig::default(),
 			&mut storage,
 		)
 		.unwrap();

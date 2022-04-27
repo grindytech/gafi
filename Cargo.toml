@@ -11,6 +11,7 @@ members = [
   'pallets/gafi-tx',
   'pallets/address-mapping',
   'pallets/pallet-faucet',
+  'pallets/sponsored-pool',
   'tests',
   'primitives',
 ]

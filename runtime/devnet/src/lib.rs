@@ -52,6 +52,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use pallet_evm::FeeCalculator;
+pub use frame_system::Call as SystemCall;
 
 pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
 
@@ -62,6 +63,7 @@ pub use pallet_player;
 pub use pallet_pool;
 pub use staking_pool;
 pub use gafi_tx;
+pub use sponsored_pool;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -279,15 +281,15 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
-}
+// parameter_types! {
+// 	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
+// }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
+	type LengthToFee =  IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
 }
 
@@ -399,6 +401,19 @@ impl staking_pool::Config for Runtime {
 }
 
 parameter_types! {
+	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 =  10;
+}
+
+impl sponsored_pool::Config for Runtime {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
+}
+
+parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
 }
 
@@ -425,6 +440,7 @@ impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -433,7 +449,7 @@ impl pallet_pool::Config for Runtime {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-
+	type SponsoredPool = SponsoredPool;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -460,6 +476,7 @@ construct_runtime!(
 		Pool: pallet_pool,
 		UpfrontPool: upfront_pool,
 		StakingPool: staking_pool,
+		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
@@ -502,6 +519,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -515,6 +533,8 @@ pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -859,6 +879,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
@@ -866,6 +887,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -881,6 +903,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -892,6 +915,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -38,9 +38,12 @@ frame_support::construct_runtime!(
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		// Event: Event,
+		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
+
+impl pallet_randomness_collective_flip::Config for Test {}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -114,6 +117,7 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = ();
+	type SponsoredPool = Sponsored;
 }
 
 parameter_types! {
@@ -132,6 +136,19 @@ impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 = 10;
+}
+
+impl sponsored_pool::Config for Test {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
 }
 
 // Build genesis storage according to the mock runtime.

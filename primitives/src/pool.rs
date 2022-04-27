@@ -3,8 +3,9 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
-
-use crate::currency::{unit, NativeToken::GAKI};
+use crate::{currency::{unit, NativeToken::GAKI}, constant::ID};
+use sp_std::vec::{Vec};
+use sp_core::H160;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -19,7 +20,7 @@ pub struct Ticket<AccountId> {
 pub enum TicketType {
 	Upfront(Level),
 	Staking(Level),
-	Sponsored(Level),
+	Sponsored(ID),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -37,40 +38,66 @@ pub enum Level {
 pub struct Service {
 	pub tx_limit: u32, // max number of discounted transaction user can use in TimeService 
 	pub discount: u8,  // percentage of discount
+}
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+)]
+pub struct FlexService {
+	pub service: Service,
 	pub value: u128,
 }
 
-impl Service {
-	pub fn new(ticket: TicketType) -> Self {
-		match ticket {
-			TicketType::Upfront(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: 5 * unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 7 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 10 * unit(GAKI) },
+impl FlexService {
+	pub fn new(tx_limit: u32, discount: u8, value: u128) -> Self {
+		FlexService {
+			service: Service {
+				tx_limit,
+				discount,
 			},
-			TicketType::Staking(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: 1000 * unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 1500 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 2000 * unit(GAKI) },
-			},
-			TicketType::Sponsored(level) => match level {
-				Level::Basic => Service { tx_limit: 100, discount: 30, value: unit(GAKI) },
-				Level::Medium => Service { tx_limit: 100, discount: 50, value: 2 * unit(GAKI) },
-				Level::Advance => Service { tx_limit: 100, discount: 70, value: 3 * unit(GAKI) },
-			},
+			value,
 		}
 	}
 }
 
-pub trait GafiPool<AccountId> {
+pub trait FlexPool<AccountId> {
 	fn join(sender: AccountId, level: Level) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(level: Level) -> Service;
+	fn get_service(level: Level) -> Option<FlexService>;
+}
+
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub struct StaticService<AccountId> {
+	pub service: Service,
+	pub sponsor: AccountId,
+	pub targets: Vec<H160>,
+}
+
+impl<AccountId> StaticService<AccountId> {
+	pub fn new(targets: Vec<H160>, tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
+		StaticService {
+			targets,
+			service: Service {
+				tx_limit,
+				discount,
+			},
+			sponsor,
+		}
+	}
+}
+
+pub trait StaticPool<AccountId> {
+	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
+	fn leave(sender: AccountId) -> DispatchResult;
+	fn get_service(pool_id: ID) -> Option<StaticService<AccountId>>;
 }
 
 pub trait PlayerTicket<AccountId> {
 	fn use_ticket(player: AccountId) -> Option<TicketType>;
-	fn get_service(ticket: TicketType) -> Service;
+	fn get_service(ticket: TicketType) -> Option<Service>;
+	fn get_targets(pool_id: ID) -> Vec<H160>;
 }
 
 pub trait MasterPool<AccountId> {

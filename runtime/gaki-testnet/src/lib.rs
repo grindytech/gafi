@@ -53,7 +53,9 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use pallet_evm::FeeCalculator;
 
-pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
+pub use gafi_primitives::{currency::{centi, microcent, milli, unit, NativeToken::GAKI},
+	pool::{FlexPool, StaticPool}
+};
 
 // import local pallets
 pub use pallet_faucet;
@@ -62,6 +64,7 @@ pub use pallet_player;
 pub use pallet_pool;
 pub use staking_pool;
 pub use gafi_tx;
+pub use sponsored_pool;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -279,15 +282,15 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
-}
+// parameter_types! {
+// 	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
+// }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
+	type LengthToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
 }
 
@@ -419,6 +422,19 @@ impl staking_pool::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxPoolOwned: u32 = 10;
+	pub const MaxPoolTarget: u32 = 10;
+}
+
+impl sponsored_pool::Config for Runtime {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
+}
+
+parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
 }
 
@@ -445,6 +461,7 @@ impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -452,8 +469,8 @@ impl pallet_pool::Config for Runtime {
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+	type SponsoredPool = SponsoredPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -480,6 +497,7 @@ construct_runtime!(
 		Pool: pallet_pool,
 		UpfrontPool: upfront_pool,
 		StakingPool: staking_pool,
+		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,

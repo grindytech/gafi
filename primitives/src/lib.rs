@@ -4,3 +4,4 @@ pub mod currency;
 
 pub mod pool;
 
+pub mod constant;

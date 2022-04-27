@@ -13,18 +13,18 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ]}
 
 # Substrate
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-scale-info = {version = "1.0", default-features = false, features = ["derive"]}
-sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-runtime = {version = "5.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-std = {version = "4.0.0", default-features = false, git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [dev-dependencies]
 hex-literal = { version = "0.3.4" }
@@ -34,25 +34,26 @@ hex = { version = "0.4" }
 serde_json = "1.0.59"
 
 # Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "aur-dot"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
 
 # Substrate
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 utils = {default-features = false, version = "4.0.0-dev", path = "../utils" }
 gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
-sp-core = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-io = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-sp-runtime = {default-features = false, version = "5.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/cryptoviet/substrate", branch = "aur-dot"}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
-parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
+sponsored-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/sponsored-pool" }
 pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
 gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
@@ -73,9 +74,11 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
+  'pallet-randomness-collective-flip/std',
   'proof-address-mapping/std',
   'upfront-pool/std',
   'pallet-pool/std',
+  'sponsored-pool/std',
   'staking-pool/std',
   'gafi-tx/std',
   'utils/std',

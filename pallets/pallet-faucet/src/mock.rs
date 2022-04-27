@@ -57,6 +57,7 @@ impl pallet_faucet::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = ();
 }
 
 parameter_types! {

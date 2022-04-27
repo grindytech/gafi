@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::pool::{GafiPool, Level, Service};
+use gafi_primitives::pool::{FlexPool, FlexService, Level, Service};
 use gafi_primitives::{
 	pool::{Ticket, TicketType, MasterPool},
 };
@@ -49,9 +49,7 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
-
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -88,7 +86,6 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
-
 			if _now - T::MasterPool::get_marktime() >= T::MasterPool::get_timeservice() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
@@ -116,7 +113,7 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, Service, ValueQuery>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, Level, FlexService>;
 
 	/// The new players join the pool before the TimeService, whose are without charge
 	#[pallet::storage]
@@ -132,7 +129,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub max_player: u32,
-		pub services: [(Level, Service); 3],
+		pub services: [(Level, FlexService); 3],
 	}
 
 	#[cfg(feature = "std")]
@@ -141,9 +138,9 @@ pub mod pallet {
 			Self {
 				max_player: 1000,
 				services: [
-					(Level::Basic, Service::new(TicketType::Upfront(Level::Basic))),
-					(Level::Medium, Service::new(TicketType::Upfront(Level::Medium))),
-					(Level::Advance, Service::new(TicketType::Upfront(Level::Advance))),
+					(Level::Basic, FlexService::new(100_u32, 30_u8, 1000000u128)),
+					(Level::Medium, FlexService::new(100_u32, 50_u8, 1000000u128)),
+					(Level::Advance, FlexService::new(100_u32, 70_u8, 1000000u128)),
 				],
 			}
 		}
@@ -166,6 +163,7 @@ pub mod pallet {
 		ExceedMaxPlayer,
 		CanNotClearNewPlayers,
 		IntoBalanceFail,
+		LevelNotFound
 	}
 
 	#[pallet::event]
@@ -175,7 +173,7 @@ pub mod pallet {
 		UpfrontSetMaxPlayer {new_max_player: u32},
 	}
 
-	impl<T: Config> GafiPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> FlexPool<T::AccountId> for Pallet<T> {
 
 		/// Join Upfront Pool
 		///
@@ -191,9 +189,9 @@ pub mod pallet {
 
 			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
 			{
-				let service = Self::get_service(level);
+				let service = Self::get_service_by_level(level)?;
 				let service_fee = Self::u128_try_to_balance(service.value)?;
-				let double_service_fee = Self::u128_try_to_balance(service.value * 2)?;
+				let double_service_fee = Self::u128_try_to_balance(service.value * 2u128)?;
 				ensure!(T::Currency::free_balance(&sender) > double_service_fee, pallet_balances::Error::<T>::InsufficientBalance);
 				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 					.map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
@@ -226,7 +224,7 @@ pub mod pallet {
 					let service_fee;
 					let charge_fee;
 					{
-						let service = Self::get_service(level);
+						let service = Self::get_service_by_level(level)?;
 						let refund_fee = Self::get_refund_balance(_now, join_time, service.value);
 						charge_fee = Self::u128_try_to_balance(service.value - refund_fee)?;
 						service_fee = Self::u128_try_to_balance(service.value)?;
@@ -251,7 +249,7 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: Level) -> Service {
+		fn get_service(level: Level) -> Option<FlexService> {
 			Services::<T>::get(level)
 		}
 	}
@@ -297,21 +295,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-
-	fn charge_fee(sender: &T::AccountId, fee: BalanceOf<T>) -> DispatchResult {
-		let withdraw = T::Currency::withdraw(
-			sender,
-			fee,
-			WithdrawReasons::FEE,
-			ExistenceRequirement::KeepAlive,
-		);
-
-		match withdraw {
-			Ok(_) => Ok(()),
-			Err(err) => Err(err),
-		}
-	}
-
 	fn get_refund_balance(
 		leave_time: u128,
 		join_time: u128,
@@ -353,7 +336,12 @@ impl<T: Config> Pallet<T> {
 			if let Some(service) = Self::get_player_service(player.clone()) {
 				let fee_value = Self::u128_try_to_balance(service.value)?;
 
-				match Self::charge_fee(&player, fee_value) {
+				match T::Currency::withdraw(
+					&player,
+					fee_value,
+					WithdrawReasons::FEE,
+					ExistenceRequirement::KeepAlive,
+				) {
 					Ok(_) => {
 					},
 					Err(_) => {
@@ -362,15 +350,15 @@ impl<T: Config> Pallet<T> {
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
 						let _ = Self::remove_player(&player, new_player_count);
 					},
-				}
+				};
 			}
 		}
 		Ok(())
 	}
 
-	fn get_player_service(player: T::AccountId) -> Option<Service> {
+	fn get_player_service(player: T::AccountId) -> Option<FlexService> {
 		if let Some(level) = Self::get_player_level(player) {
-			return Some(Self::get_service(level));
+			return Self::get_service(level);
 		}
 		None
 	}
@@ -393,5 +381,12 @@ impl<T: Config> Pallet<T> {
 
 	fn moment_to_u128(input: T::Moment) -> u128 {
 		sp_runtime::SaturatedConversion::saturated_into(input)
+	}
+
+	fn get_service_by_level(level: Level) -> Result<FlexService, Error<T>> {
+		match Services::<T>::get(level) {
+			Some(service) => Ok(service),
+			None => Err(<Error<T>>::LevelNotFound),
+		}
 	}
 }
