@@ -90,10 +90,21 @@ async function join_pool(sub_account, service) {
     return unsub;
 }
 
+async function leave_pool(sub_account) {
+    const api = await ApiPromise.create({ provider: wsProvider });
+
+    const txExecute = api.tx.pool.leave();
+
+    const unsub = await txExecute
+        .signAndSend(sub_account);
+    return unsub;
+}
+
 module.exports = {
     add_additional_gas,
     create_new_contract,
     transfer_erc20,
     proof_address_mapping,
-    join_pool
+    join_pool,
+    leave_pool
 }
