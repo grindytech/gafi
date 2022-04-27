@@ -100,11 +100,22 @@ async function leave_pool(sub_account) {
     return unsub;
 }
 
+async function create_pool(sub_account, arguments) {
+    const api = await ApiPromise.create({ provider: wsProvider });
+
+    const txExecute = api.tx.sponsoredPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
+
+    const unsub = await txExecute
+        .signAndSend(sub_account);
+    return unsub;
+}
+
 module.exports = {
     add_additional_gas,
     create_new_contract,
     transfer_erc20,
     proof_address_mapping,
     join_pool,
-    leave_pool
+    leave_pool,
+    create_pool,
 }

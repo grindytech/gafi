@@ -14,6 +14,10 @@ var assert = require('assert');
 
 const test1 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
 const test2 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
+const test3 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_3);
+
+var nomal_fee;
+var ERC20_ADDRESS;
 
 function delay(interval) {
     return it(`should delay ${interval}`, done => {
@@ -21,13 +25,12 @@ function delay(interval) {
     }).timeout(interval + 100)
 }
 
-var nomal_fee;
 
 function percentage_of(oldNumber, newNumber) {
     return (1 - (oldNumber / newNumber)) * 100
 }
 
-function create_erc20_token_circle(ticket, expect_rate) {
+function join_leave_circle(ticket, erc20_address, expect_rate) {
     delay(7000);
     it('leave pool works', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
@@ -67,18 +70,39 @@ describe('Contract', () => {
 
     it('it should mapping addresses', async () => {
         const api = await ApiPromise.create({ provider: wsProvider });
-        let admin = test2;
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.proof_address_mapping(admin, alice);
+        await utils.proof_address_mapping(test2, alice);
     }).timeout(3600000);
 
-    create_erc20_token_circle({ Staking: "Basic" }, 30);
-    create_erc20_token_circle({ Staking: "Medium" }, 50);
-    create_erc20_token_circle({ Staking: "Advance" }, 70);
+    it('it should mapping addresses', async () => {
+        const api = await ApiPromise.create({ provider: wsProvider });
+        const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+        await utils.proof_address_mapping(test3, bob);
+    }).timeout(3600000);
+    delay(7000);
+
+    it('it should create new pool', async () => {
+        const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+
+        let value = "1000000000000000000000"; // 1000 GAKI
+        let discount = 45;
+        let txLimit = 10;
+
+        let argument = {
+            targets: [],
+            value: value,
+            discount: discount,
+            txLimit: txLimit,
+        }
+
+        let before_balance = await web3.eth.getBalance(test3.address);
+        await utils.create_pool(bob, argument);
+        let after_balance = await web3.eth.getBalance(test3.address);
+
+        console.log("before_balance: ", before_balance);
+        console.log("after_balance: ", after_balance);
 
 
-    create_erc20_token_circle({ Upfront: "Basic" }, 30);
-    create_erc20_token_circle({ Upfront: "Medium" }, 50);
-    create_erc20_token_circle({ Upfront: "Advance" }, 70);
+    })
+
 })
-
