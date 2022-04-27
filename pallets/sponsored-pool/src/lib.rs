@@ -14,6 +14,7 @@ pub use pallet::*;
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
+use sp_std::vec::{Vec};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -273,7 +274,8 @@ pub mod pallet {
 
 		fn get_service(pool_id: ID) -> Option<StaticService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
-				return Some(StaticService::new(pool.tx_limit, pool.discount, pool.owner));
+				let targets = Targets::<T>::get(pool_id);
+				return Some(StaticService::new(targets.to_vec(), pool.tx_limit, pool.discount, pool.owner));
 			}
 			None
 		}

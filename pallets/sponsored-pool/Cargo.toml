@@ -23,20 +23,21 @@ frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "ht
 frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
-sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [dev-dependencies]
+pallet-pool = {default-features = false, version = "4.0.0-dev", path = "../pool"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
-upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
-pallet-pool = { default-features = false, version = "4.0.0-dev", path = "../pool" }
+staking-pool = {default-features = false, version = "4.0.0-dev", path = "../staking-pool"}
+upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../upfront-pool"}
 
 [features]
 default = ["std"]
@@ -54,6 +55,7 @@ std = [
   "pallet-balances/std",
   "upfront-pool/std",
   "pallet-pool/std",
+  "sp-std/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

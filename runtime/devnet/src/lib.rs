@@ -402,6 +402,7 @@ impl staking_pool::Config for Runtime {
 
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 =  10;
 }
 
 impl sponsored_pool::Config for Runtime {
@@ -409,6 +410,7 @@ impl sponsored_pool::Config for Runtime {
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
 }
 
 parameter_types! {
