@@ -5,10 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --reporter spec js-tests/*",
-    "test-sig": "mocha --reporter spec js-tests/get-signature.test.js",
-    "service-fee": "mocha --reporter spec js-tests/service-fee.test.js",
-    "test-base-fee": "mocha --reporter spec js-tests/base-fee.test.js",
-    "test-tx-limit": "mocha --reporter spec js-tests/tx-limit.test.js"
+    "scripts": "mocha --reporter spec scripts/*"
   },
   "author": "",
   "license": "ISC",

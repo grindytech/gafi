@@ -4,7 +4,7 @@ const web3 = new Web3(process.env.RPC_API);
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
-const utils = require('./utils');
+const utils = require('../utils/utils');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const wsProvider = new WsProvider(process.env.WS_API);
 const { Keyring } = require('@polkadot/api');
