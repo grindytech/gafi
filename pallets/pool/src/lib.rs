@@ -32,6 +32,8 @@ use crate::weights::WeightInfo;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
+use sp_core::H160;
+use sp_std::vec::{Vec};
 pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -284,6 +286,13 @@ pub mod pallet {
 						None => None
 					}
 				},
+			}
+		}
+
+		fn get_targets(pool_id: ID) -> Vec<H160> {
+			match T::SponsoredPool::get_service(pool_id) {
+				Some(service) => service.targets,
+				None => [].to_vec(),
 			}
 		}
 	}

@@ -32,6 +32,7 @@ use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
 use pallet_evm::{AddressMapping, GasWeightMapping};
 use sp_core::{H160, U256};
+use sp_std::vec::{Vec};
 
 #[cfg(test)]
 mod mock;
@@ -155,6 +156,8 @@ pub mod pallet {
 
 		pub fn correct_and_deposit_fee_sponsored(
 			pool_id: ID,
+			targets: Vec<H160>,
+			target: Option<H160>,
 			service_fee: U256,
 			discount: u8,
 		) -> Option<U256> {
@@ -241,8 +244,11 @@ where
 						}
 					}
 					TicketType::Sponsored(pool_id) => {
+						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
 							pool_id,
+							targets,
+							target,
 							service_fee,
 							service.discount,
 						) {
