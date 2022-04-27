@@ -2,7 +2,7 @@
 
 use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
-use crate::weights::WeightInfo;
+pub use crate::weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
