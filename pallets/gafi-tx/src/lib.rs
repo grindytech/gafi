@@ -188,6 +188,7 @@ where
 	/// 2. Use ticket
 	fn correct_and_deposit_fee(
 		who: &H160,
+		target: Option<H160>,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
@@ -228,7 +229,7 @@ where
 				}
 			}
 		}
-		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, service_fee, already_withdrawn)
+		T::OnChargeEVMTxHandler::correct_and_deposit_fee(who, target, service_fee, already_withdrawn)
 	}
 
 	fn pay_priority_fee(tip: U256) {
