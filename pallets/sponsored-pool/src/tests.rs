@@ -2,10 +2,10 @@ use crate::{mock::*, Error, PoolOwned, Pools};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::{FlexPool, Level, TicketType, StaticPool};
+use gafi_primitives::pool::{StaticPool};
 use sp_runtime::AccountId32;
-
-const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
+use sp_core::H160;
+use sp_std::str::FromStr;
 
 fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -31,14 +31,14 @@ fn new_pool_works() {
 fn create_pool(
     account: AccountId32,
     account_balance: u128,
+    targets: Vec<H160>,
     pool_value: u128,
     tx_limit: u32,
     discount: u8,
 ) -> ID {
     assert_ok!(Sponsored::create_pool(
         Origin::signed(account.clone()),
-        [0_u8; 32],
-        [].to_vec(),
+        targets,
         pool_value,
         discount,
         tx_limit
@@ -64,7 +64,7 @@ fn create_pool_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
         let pool_value = 1000 * unit(GAKI);
-        create_pool(account, account_balance, pool_value, 10, 100);
+        create_pool(account, account_balance, vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()], pool_value, 10, 100);
     })
 }
 
@@ -78,7 +78,7 @@ fn create_pool_fail() {
 
         let pool_value = 1000 * unit(GAKI);
         assert_err!(
-            Sponsored::create_pool(Origin::signed(account.clone()),[0_u8; 32], [].to_vec(), pool_value, 10, 100),
+            Sponsored::create_pool(Origin::signed(account.clone()), vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()], pool_value, 10, 100),
             pallet_balances::Error::<Test>::InsufficientBalance
         );
     })
@@ -91,7 +91,7 @@ fn withdraw_pool_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
         let pool_value = 1000 * unit(GAKI);
-        let pool_id = create_pool(account.clone(), account_balance, pool_value, 10, 100);
+        let pool_id = create_pool(account.clone(),  account_balance, vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()], pool_value, 10, 100);
 
         assert_ok!(Sponsored::withdraw_pool(
             Origin::signed(account.clone()),
@@ -120,7 +120,7 @@ fn withdraw_pool_fail() {
         // not the owner
         {
             let account_1 = new_account([1_u8; 32], account_balance);
-            let pool_id = create_pool(account.clone(), account_balance, pool_value, 10, 100);
+            let pool_id = create_pool(account.clone(), account_balance, vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()], pool_value, 10, 100);
             assert_err!(
                 Sponsored::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
                 Error::<Test>::NotTheOwner
@@ -136,11 +136,12 @@ fn get_service_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
         let pool_value = 1000 * unit(GAKI);
-        let pool_id = create_pool(account.clone(), account_balance, pool_value, 100, 10);
+        let pool_id = create_pool(account.clone(), account_balance, vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()], pool_value, 100, 10);
 
         let service = Sponsored::get_service(pool_id).unwrap();
         assert_eq!(service.sponsor, account);
         assert_eq!(service.service.discount, 10);
         assert_eq!(service.service.tx_limit, 100);
+        assert_eq!(service.targets, vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()]);
     })
 }

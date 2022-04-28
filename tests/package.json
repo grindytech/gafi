@@ -5,10 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --reporter spec js-tests/*",
-    "test-sig": "mocha --reporter spec js-tests/get-signature.test.js",
-    "test-dif-fee": "mocha --reporter spec js-tests/diff-fee.test.js",
-    "test-base-fee": "mocha --reporter spec js-tests/base-fee.test.js",
-    "test-tx-limit": "mocha --reporter spec js-tests/tx-limit.test.js"
+    "scripts": "mocha --reporter spec scripts/*",
+    "sponsored": "mocha --reporter spec js-tests/sponsored-fee.test.js",
+    "service": "mocha --reporter spec js-tests/service-fee.test.js"
   },
   "author": "",
   "license": "ISC",
