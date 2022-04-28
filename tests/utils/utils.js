@@ -102,11 +102,11 @@ async function leave_pool(sub_account) {
 
 async function create_pool(sub_account, arguments) {
     const api = await ApiPromise.create({ provider: wsProvider });
-
+    
     const txExecute = api.tx.sponsoredPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
-
+    
     const unsub = await txExecute
-        .signAndSend(sub_account);
+    .signAndSend(sub_account);
     return unsub;
 }
 

@@ -12,12 +12,14 @@ const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
 
 
-const test1 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
-const test2 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
-const test3 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_3);
+const alice_pair = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
+const bob_pair = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
 
-var nomal_fee;
+var NormalFee;
 var ERC20_ADDRESS;
+var NewPool;
+const DISCOUNT = 19;
+const TX_LIMIT = 10;
 
 function delay(interval) {
     return it(`should delay ${interval}`, done => {
@@ -30,79 +32,99 @@ function percentage_of(oldNumber, newNumber) {
     return (1 - (oldNumber / newNumber)) * 100
 }
 
-function join_leave_circle(ticket, erc20_address, expect_rate) {
-    delay(7000);
-    it('leave pool works', async () => {
-        const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.leave_pool(alice);
-    }).timeout(3600000);
-
-    delay(7000);
-    it('join staking pool basic works', async () => {
-        const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.join_pool(alice, ticket);
-    }).timeout(3600000);
-
-    delay(7000);
-    it('discount of Staking Pool basic should works', async () => {
-        let admin = test2;
-        let before_balance = await web3.eth.getBalance(admin.address);
-        console.log("deploying...");
-        let receipt = await utils.create_new_contract(admin);
-        let after_balance = await web3.eth.getBalance(admin.address);
-        let staking_fee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-        let rate = percentage_of(staking_fee, nomal_fee);
-        assert.equal(Math.round(rate), expect_rate);
-    }).timeout(3600000);
-}
-
 describe('Contract', () => {
 
-    it('show total fee spent when ouside the pool', async () => {
-        let admin = test1;
-        let before_balance = await web3.eth.getBalance(admin.address);
-        console.log("deploying...");
-        let receipt = await utils.create_new_contract(admin);
-        let after_balance = await web3.eth.getBalance(admin.address);
-        nomal_fee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-        console.log("Normal fee: ", nomal_fee);
+    it('it should create new erc20 token', async () => {
+        let before_balance = await web3.eth.getBalance(alice_pair.address);
+        let receipt = await utils.create_new_contract(alice_pair);
+        ERC20_ADDRESS = receipt.contractAddress;
+        let after_balance = await web3.eth.getBalance(alice_pair.address);
+    }).timeout(3600000);
+
+    it('it should trasfer erc20 token', async () => {
+        let before_balance = await web3.eth.getBalance(alice_pair.address);
+        let receipt = await utils.transfer_erc20(ERC20_ADDRESS, alice_pair,
+            bob_pair.address, "1000000000000000000");
+        let after_balance = await web3.eth.getBalance(alice_pair.address);
+        NormalFee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
     }).timeout(3600000);
 
     it('it should mapping addresses', async () => {
         const api = await ApiPromise.create({ provider: wsProvider });
-        const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.proof_address_mapping(test2, alice);
+        const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+        await utils.proof_address_mapping(alice_pair, Alice);
     }).timeout(3600000);
 
     it('it should mapping addresses', async () => {
         const api = await ApiPromise.create({ provider: wsProvider });
-        const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.proof_address_mapping(test3, bob);
+        var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+
+        await utils.proof_address_mapping(bob_pair, Bob);
     }).timeout(3600000);
-    delay(7000);
+    delay(6000);
 
     it('it should create new pool', async () => {
-        const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+        var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
 
         let value = "1000000000000000000000"; // 1000 GAKI
-        let discount = 45;
-        let txLimit = 10;
+        let discount = DISCOUNT;
+        let txLimit = TX_LIMIT;
 
         let argument = {
-            targets: [],
+            targets: [ERC20_ADDRESS],
             value: value,
             discount: discount,
             txLimit: txLimit,
         }
+        await utils.create_pool(Bob, argument);
+    }).timeout(3600000);
+    delay(6000);
 
-        let before_balance = await web3.eth.getBalance(test3.address);
-        await utils.create_pool(bob, argument);
-        let after_balance = await web3.eth.getBalance(test3.address);
-
-        console.log("before_balance: ", before_balance);
-        console.log("after_balance: ", after_balance);
-
-
+    it('it should get owned pools before create new pool', async () => {
+        const api = await ApiPromise.create({ provider: wsProvider });
+        var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+        let pools = await api.query.sponsoredPool.poolOwned(Bob.publicKey);
+        NewPool = pools[pools.length - 1];
     })
 
+    it('leave pool works', async () => {
+        const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+        await utils.leave_pool(Alice);
+    }).timeout(3600000);
+
+    delay(6000);
+    it('it should trasfer erc20 token', async () => {
+        let before_balance = await web3.eth.getBalance(alice_pair.address);
+        let receipt = await utils.transfer_erc20(ERC20_ADDRESS, alice_pair,
+            bob_pair.address, "1000000000000000000");
+        let after_balance = await web3.eth.getBalance(alice_pair.address);
+        NormalFee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+    }).timeout(3600000);
+
+
+    delay(6000);
+    it('join sponsored sponsored works', async () => {
+        const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+        await utils.join_pool(Alice, { Sponsored: NewPool });
+    }).timeout(3600000);
+
+    delay(6000);
+    it('Tx limit works', async () => {
+        let count = 0;
+        for (let i = 0; i < 11; i++) {
+            let before_balance = await web3.eth.getBalance(alice_pair.address);
+            await utils.transfer_erc20(ERC20_ADDRESS, alice_pair,
+                bob_pair.address, "1000000000000000000");
+            let after_balance = await web3.eth.getBalance(alice_pair.address);
+            let transfer_fee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+            let rate = percentage_of(transfer_fee, NormalFee);
+
+            count++;
+            if(count <= TX_LIMIT) {
+                assert.equal(Math.round(rate), DISCOUNT);
+            } else {
+                assert.notEqual(Math.round(rate), DISCOUNT);
+            }
+        }
+    }).timeout(3600000);
 })

@@ -34,14 +34,14 @@ describe('Contract', () => {
 
     it('it should join the pool', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.join_pool(alice, {upfront: "Basic"});
+        await utils.join_pool(alice, {Upfront: "Basic"});
     }).timeout(3600000);
 
     delay(6000);
 
     it('show use ticket fee', async () => {
         let admin = test2;
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 30; i++) {
             let before_balance = await web3.eth.getBalance(admin.address);
             let receipt = await utils.create_new_contract(admin);
             let after_balance = await web3.eth.getBalance(admin.address);
