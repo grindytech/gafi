@@ -27,7 +27,7 @@ function percentage_of(oldNumber, newNumber) {
     return (1 - (oldNumber / newNumber)) * 100
 }
 
-function create_erc20_token_circle(ticket, expect_rate) {
+function create_erc20_token_circle(ticket, expect_rate, tx_limit) {
     delay(7000);
     it('leave pool works', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
@@ -35,21 +35,29 @@ function create_erc20_token_circle(ticket, expect_rate) {
     }).timeout(3600000);
 
     delay(7000);
-    it('join staking pool basic works', async () => {
+    it(`join pool works`, async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.join_pool(alice, ticket);
     }).timeout(3600000);
 
     delay(7000);
-    it('discount of Staking Pool basic should works', async () => {
+    it('Discount with tx limit works', async () => {
         let admin = test2;
-        let before_balance = await web3.eth.getBalance(admin.address);
-        console.log("deploying...");
-        let receipt = await utils.create_new_contract(admin);
-        let after_balance = await web3.eth.getBalance(admin.address);
-        let staking_fee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-        let rate = percentage_of(staking_fee, nomal_fee);
-        assert.equal(Math.round(rate), expect_rate);
+        let count = 0;
+        for (let i = 0; i < 12; i++) {
+            let before_balance = await web3.eth.getBalance(admin.address);
+            let receipt = await utils.create_new_contract(admin);
+            let after_balance = await web3.eth.getBalance(admin.address);
+            let staking_fee = web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+            let rate = percentage_of(staking_fee, nomal_fee);
+
+            if (count < tx_limit) {
+                assert.equal(Math.round(rate), expect_rate);
+            } else {
+                assert.notEqual(Math.round(rate), expect_rate);
+            }
+            count++;
+        }
     }).timeout(3600000);
 }
 
@@ -72,13 +80,13 @@ describe('Contract', () => {
         await utils.proof_address_mapping(admin, alice);
     }).timeout(3600000);
 
-    create_erc20_token_circle({ Staking: "Basic" }, 30);
-    create_erc20_token_circle({ Staking: "Medium" }, 50);
-    create_erc20_token_circle({ Staking: "Advance" }, 70);
+    create_erc20_token_circle({ Staking: "Basic" }, 30, 10);
+    create_erc20_token_circle({ Staking: "Medium" }, 50, 10);
+    create_erc20_token_circle({ Staking: "Advance" }, 70, 10);
 
 
-    create_erc20_token_circle({ Upfront: "Basic" }, 30);
-    create_erc20_token_circle({ Upfront: "Medium" }, 50);
-    create_erc20_token_circle({ Upfront: "Advance" }, 70);
+    create_erc20_token_circle({ Upfront: "Basic" }, 30, 10);
+    create_erc20_token_circle({ Upfront: "Medium" }, 50, 10);
+    create_erc20_token_circle({ Upfront: "Advance" }, 70, 10);
 })
 

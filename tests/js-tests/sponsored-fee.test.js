@@ -109,7 +109,7 @@ describe('Contract', () => {
     }).timeout(3600000);
 
     delay(6000);
-    it('Tx limit works', async () => {
+    it('Discount with tx limit works', async () => {
         let count = 0;
         for (let i = 0; i < 11; i++) {
             let before_balance = await web3.eth.getBalance(alice_pair.address);
