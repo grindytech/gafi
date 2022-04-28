@@ -22,7 +22,6 @@ use sp_std::vec::{Vec};
 )]
 pub struct SponsoredPool<AccountId> {
 	pub id: ID,
-	pub name: [u8; 32],
 	pub owner: AccountId,
 	pub value: u128,
 	pub discount: u8,
@@ -106,7 +105,6 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn create_pool(
 			origin: OriginFor<T>,
-			name: [u8; 32],
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
 			discount: u8,
@@ -130,7 +128,6 @@ pub mod pallet {
 
 			let new_pool = SponsoredPool {
 				id: pool_config.id,
-				name,
 				owner: sender.clone(),
 				value: Self::balance_try_to_u128(value)?,
 				discount,
