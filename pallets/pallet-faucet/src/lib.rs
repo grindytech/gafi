@@ -27,12 +27,16 @@ pub mod pallet {
 	pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// Number of accounts that will send the tokens for user.
 		#[pallet::constant]
 		type MaxGenesisAccount: Get<u32>;
 	}
@@ -41,6 +45,7 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Holding all the accounts
 	#[pallet::storage]
 	pub(super) type GenesisAccounts<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxGenesisAccount>, ValueQuery>;
@@ -89,6 +94,11 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// faucet
+		///
+		/// The origin must be Signed
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight((
 			0,
 			DispatchClass::Normal,
@@ -117,6 +127,14 @@ pub mod pallet {
 			Err(DispatchError::Other("Out of Faucet"))
 		}
 
+		/// donate
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `amount`: donation amount
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::donate(50u32))]
 		pub fn donate(
 			origin: OriginFor<T>,
