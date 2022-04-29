@@ -133,9 +133,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 // Time is measured by number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -440,6 +440,7 @@ impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -878,6 +879,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
@@ -885,6 +887,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -900,6 +903,7 @@ impl_runtime_apis! {
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -911,6 +915,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

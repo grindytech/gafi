@@ -98,6 +98,7 @@ runtime-benchmarks = [
   "pallet-pool/runtime-benchmarks",
   "gafi-tx/runtime-benchmarks",
   "proof-address-mapping/runtime-benchmarks",
+  "pallet-faucet/runtime-benchmarks",
 ]
 std = [
   "codec/std",

@@ -161,7 +161,7 @@ fn dev_genesis(
 		(Level::Medium, FlexService::new(10_u32, 50_u8, 1500 * unit(GAKI))),
 		(Level::Advance, FlexService::new(10_u32, 70_u8, 2000 * unit(GAKI))),
 	];
-	const TIME_SERVICE: u128 = 3 * 60_000u128; // 3 minutes for testing
+	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
 	let bond_existential_deposit: u128 = unit(GAKI);
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 

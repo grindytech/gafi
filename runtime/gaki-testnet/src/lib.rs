@@ -461,6 +461,7 @@ impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 }
 
 impl pallet_pool::Config for Runtime {

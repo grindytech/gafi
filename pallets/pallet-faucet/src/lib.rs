@@ -2,14 +2,19 @@
 
 use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
+pub use crate::weights::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -24,6 +29,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		#[pallet::constant]
 		type MaxGenesisAccount: Get<u32>;
@@ -109,7 +117,7 @@ pub mod pallet {
 			Err(DispatchError::Other("Out of Faucet"))
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::donate(50u32))]
 		pub fn donate(
 			origin: OriginFor<T>,
 			amount: BalanceOf<T>,
@@ -118,7 +126,7 @@ pub mod pallet {
 
 			ensure!(T::Currency::free_balance(&from) > amount, <Error<T>>::NotEnoughBalance);
 			let genesis_accounts = GenesisAccounts::<T>::get();
-			ensure!(genesis_accounts[0] != from, <Error<T>>::TransferToSelf);
+		ensure!(genesis_accounts[0] != from, <Error<T>>::TransferToSelf);
 
 			T::Currency::transfer(
 				&from,

@@ -1,3 +1,4 @@
+// ** This module tests the tests related to Balances ** //
 
 #[cfg(test)]
 mod mock;
@@ -10,3 +11,6 @@ mod staking_pool_test;
 
 #[cfg(test)]
 mod pool_test;
+
+#[cfg(test)]
+mod sponsored_pool_test;

@@ -14,7 +14,8 @@ pub use pallet::*;
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
-use sp_std::vec::{Vec};
+use sp_std::vec::Vec;
+use std::borrow::BorrowMut;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -22,7 +23,6 @@ use sp_std::vec::{Vec};
 )]
 pub struct SponsoredPool<AccountId> {
 	pub id: ID,
-	pub name: [u8; 32],
 	pub owner: AccountId,
 	pub value: u128,
 	pub discount: u8,
@@ -106,7 +106,6 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn create_pool(
 			origin: OriginFor<T>,
-			name: [u8; 32],
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
 			discount: u8,
@@ -130,7 +129,6 @@ pub mod pallet {
 
 			let new_pool = SponsoredPool {
 				id: pool_config.id,
-				name,
 				owner: sender.clone(),
 				value: Self::balance_try_to_u128(value)?,
 				discount,
@@ -184,6 +182,38 @@ pub mod pallet {
 			.map_err(|_| <Error<T>>::PoolNotExist)?;
 			Pools::<T>::remove(pool_id);
 			Targets::<T>::remove(pool_id);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn new_targets(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			targets: Vec<H160>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+			ensure!(
+				Self::usize_try_to_u32(targets.len())? < T::MaxPoolTarget::get(),
+				<Error<T>>::ExceedPoolTarget
+			);
+
+			Targets::<T>::insert(pool_id, BoundedVec::default());
+			Targets::<T>::try_mutate(&pool_id, |target_vec| {
+				for target in targets {
+					if let Ok(_) = target_vec.try_push(target) {
+					} else {
+						return Err(());
+					}
+				}
+				Ok(())
+			})
+			.map_err(|_| <Error<T>>::ExceedPoolTarget)?;
+
 			Ok(())
 		}
 	}
@@ -275,7 +305,12 @@ pub mod pallet {
 		fn get_service(pool_id: ID) -> Option<StaticService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
 				let targets = Targets::<T>::get(pool_id);
-				return Some(StaticService::new(targets.to_vec(), pool.tx_limit, pool.discount, pool.owner));
+				return Some(StaticService::new(
+					targets.to_vec(),
+					pool.tx_limit,
+					pool.discount,
+					pool.owner,
+				));
 			}
 			None
 		}
