@@ -11,13 +11,13 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
+pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -77,7 +77,6 @@ impl pallet_timestamp::Config for Test {
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -149,11 +148,15 @@ impl sponsored_pool::Config for Test {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }
 
 pub fn run_to_block(n: u64) {
@@ -167,7 +170,9 @@ pub fn run_to_block(n: u64) {
 		System::on_initialize(System::block_number());
 		UpfrontPool::on_initialize(System::block_number());
 		Pool::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
@@ -187,14 +192,20 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-				&pallet_pool::GenesisConfig { time_service: self.time_service },
-				&mut storage,
+			&pallet_pool::GenesisConfig {
+				time_service: self.time_service,
+			},
+			&mut storage,
 		)
 		.unwrap();
 
