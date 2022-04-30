@@ -10,8 +10,8 @@ use frame_support::{
 	weights::IdentityFee,
 };
 use frame_system as system;
+use gafi_primitives::currency::{centi, unit, NativeToken::GAKI};
 use gafi_primitives::pool::{FlexService, Level, Service, TicketType};
-use gafi_primitives::currency::{NativeToken::GAKI, unit, centi};
 use gafi_tx::GafiEVMCurrencyAdapter;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
@@ -146,6 +146,7 @@ impl sponsored_pool::Config for Test {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
