@@ -149,6 +149,7 @@ impl sponsored_pool::Config for Test {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget =  MaxPoolTarget;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

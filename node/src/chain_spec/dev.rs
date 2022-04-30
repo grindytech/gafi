@@ -5,7 +5,6 @@ use devnet::{
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
 	WASM_BINARY, PoolConfig,
 };
-
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};

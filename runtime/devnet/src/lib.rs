@@ -411,6 +411,7 @@ impl sponsored_pool::Config for Runtime {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
 parameter_types! {
@@ -878,6 +879,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 
@@ -885,6 +887,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
+			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
@@ -902,6 +905,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 
@@ -915,6 +919,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

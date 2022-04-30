@@ -432,6 +432,7 @@ impl sponsored_pool::Config for Runtime {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
 parameter_types! {

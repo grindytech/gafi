@@ -60,17 +60,17 @@ frame-system-benchmarking = {version = "4.0.0-dev", default-features = false, gi
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
-gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
+gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
 
 # Local pallets
-pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
-upfront-pool =  {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
-proof-address-mapping = { version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping" }
+pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
+pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
+pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
+proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
+sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
-pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
-pallet-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pool" }
-sponsored-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool" }
+upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
 # unit test
 [dev.dependencies]
@@ -99,6 +99,7 @@ runtime-benchmarks = [
   "gafi-tx/runtime-benchmarks",
   "proof-address-mapping/runtime-benchmarks",
   "pallet-faucet/runtime-benchmarks",
+  "sponsored-pool/runtime-benchmarks",
 ]
 std = [
   "codec/std",
