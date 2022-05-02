@@ -12,6 +12,7 @@ members = [
   'pallets/address-mapping',
   'pallets/pallet-faucet',
   'pallets/sponsored-pool',
+  'pallets/pallet-cache',
   'tests',
   'primitives',
 ]

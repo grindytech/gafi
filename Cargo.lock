@@ -1178,6 +1178,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-cache",
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
@@ -4428,6 +4429,20 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-cache"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
 ]
 
