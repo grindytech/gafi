@@ -7801,7 +7801,6 @@ dependencies = [
  "gafi-primitives",
  "log",
  "pallet-balances",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7811,8 +7810,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
- "upfront-pool",
 ]
 
 [[package]]
