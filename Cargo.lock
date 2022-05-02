@@ -2329,6 +2329,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-cache",
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
@@ -7758,7 +7759,6 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7768,8 +7768,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "staking-pool",
- "upfront-pool",
 ]
 
 [[package]]
