@@ -40,9 +40,9 @@ fn insert_data_works() {
 }
 
 #[test]
-fn get_data_works() {
+fn get_data_insert_early_work() {
     ExtBuilder::default().build_and_execute(|| {
-        run_to_block(1);
+        run_to_block(ADDL_BLOCK);
         let account = new_account([0_u8; 32], 1_000_000_u128 * unit(GAKI));
         let data = TicketInfo {
             ticket_type: TicketType::Upfront(Level::Basic),
@@ -50,14 +50,18 @@ fn get_data_works() {
         };
         Pallet::<Test>::insert(account.clone(), data);
 
-        assert_eq!(Pallet::<Test>::get(account.clone()), Some(data));
+        run_to_block(CIRCLE_BLOCK + ADDL_BLOCK);
+        assert_eq!(Pallet::<Test>::get(account.clone()), None);
+
+        run_to_block(CIRCLE_BLOCK * 2 + ADDL_BLOCK);
+        assert_eq!(Pallet::<Test>::get(account.clone()), None);
     })
 }
 
 #[test]
-fn hooks_work() {
+fn get_data_insert_late_work() {
     ExtBuilder::default().build_and_execute(|| {
-        run_to_block(1);
+        run_to_block(CIRCLE_BLOCK - ADDL_BLOCK);
         let account = new_account([0_u8; 32], 1_000_000_u128 * unit(GAKI));
         let data = TicketInfo {
             ticket_type: TicketType::Upfront(Level::Basic),

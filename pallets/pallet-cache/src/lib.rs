@@ -176,10 +176,20 @@ pub mod pallet {
 		}
 
 		fn get(id: T::AccountId) -> Option<T::Data> {
-			if let Some(data) = DataLeft::<T>::get(id.clone()) {
-				return Some(data.data);
-			} else if let Some(data) = DataRight::<T>::get(id) {
-				return Some(data.data);
+			let get_wrap_data = || -> Option<WrapData<T::Data>>{
+				if let Some(data) = DataLeft::<T>::get(id.clone()) {
+					return Some(data);
+				} else if let Some(data) = DataRight::<T>::get(id) {
+					return Some(data);
+				}
+				None
+			};
+
+			if let Some(wrap_data) = get_wrap_data() {
+				let _now = Self::get_timestamp();
+				if _now - wrap_data.timestamp < CleanTime::<T>::get() {
+					return Some(wrap_data.data);
+				}
 			}
 			None
 		}
