@@ -64,6 +64,7 @@ gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../.
 
 # Local pallets
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
+pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
@@ -71,7 +72,6 @@ proof-address-mapping = {version = "4.0.0-dev", default-features = false, path =
 sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
-pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 
 # unit test
 [dev.dependencies]
@@ -143,5 +143,6 @@ std = [
   "proof-address-mapping/std",
   "pallet-faucet/std",
   "pallet-pool/std",
+  "pallet-cache/std",
   "sponsored-pool/std",
 ]

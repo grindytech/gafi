@@ -1,5 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+use gafi_primitives::cache::Cache;
+
 pub use pallet::*;
 
 // #[cfg(test)]
@@ -13,12 +17,13 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 	use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+
+		type Data: Parameter;
+
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
@@ -40,4 +45,15 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 
 	}
+
+	impl<T: Config> Cache<T::AccountId, T::Data> for Pallet<T> {
+		fn insert(data: T::Data) {
+
+		}
+
+		fn get(id: T::AccountId) -> Option<T::Data> {
+			todo!()
+		}
+	}
+
 }
