@@ -57,6 +57,7 @@ sponsored-pool =  { default-features = false, version = "4.0.0-dev", path = "../
 pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
 gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
+pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallets/pallet-cache"}
 
 [features]
 default = ["std"]
@@ -83,4 +84,5 @@ std = [
   'gafi-tx/std',
   'utils/std',
   'gafi-primitives/std',
+  'pallet-cache/std',
 ]

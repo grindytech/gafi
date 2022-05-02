@@ -8008,6 +8008,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "more-asserts",
  "pallet-balances",
+ "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-pool",

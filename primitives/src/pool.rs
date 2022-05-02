@@ -106,7 +106,7 @@ pub trait MasterPool<AccountId> {
 impl<AccountId> MasterPool<AccountId> for () {
 	fn remove_player(_player: &AccountId) {}
 	fn get_timeservice() -> u128 {
-		u128::default()
+		30 * 60_000u128 // 30 minutes
 	}
 	fn get_marktime() -> u128 {
 		u128::default()
