@@ -30,9 +30,6 @@ use gafi_primitives::{
 use pallet_timestamp::{self as timestamp};
 
 use crate::weights::WeightInfo;
-#[cfg(feature = "std")]
-use frame_support::serde::{Deserialize, Serialize};
-use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_std::vec::{Vec};
 use gafi_primitives::cache::Cache;
