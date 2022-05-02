@@ -24,7 +24,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-
+use gafi_primitives::player::TicketInfo;
 pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -50,6 +50,7 @@ frame_support::construct_runtime!(
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		SponsoredPool: sponsored_pool::{Pallet, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 		PalletTxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
@@ -108,6 +109,11 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
+impl pallet_cache::Config for Test {
+	type Event = Event;
+	type Data = TicketInfo;
+}
+
 impl pallet_pool::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
@@ -115,6 +121,7 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type SponsoredPool = SponsoredPool;
+	type Cache = PalletCache;
 }
 
 parameter_types! {

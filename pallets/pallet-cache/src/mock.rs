@@ -1,9 +1,4 @@
-/*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
-
-use crate::{self as staking_pool};
+use crate::{self as pallet_cache};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -11,13 +6,14 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
+pub use gafi_primitives::player::TicketInfo;
+pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -33,14 +29,11 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 	}
 );
-
-impl pallet_randomness_collective_flip::Config for Test {}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -75,6 +68,10 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+impl pallet_cache::Config for Test {
+	type Data = TicketInfo;
+	type Event = Event;
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -108,49 +105,58 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl staking_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-}
-
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }
 
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
 			System::on_finalize(System::block_number());
+			PalletCache::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		PalletCache::on_finalize(System::block_number());
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
+	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
+			time_service: TIME_SERVICE,
 		}
 	}
 }
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig::default(),
+			&pallet_cache::GenesisConfig {
+				clean_time: self.time_service,
+			},
 			&mut storage,
 		)
 		.unwrap();

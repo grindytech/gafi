@@ -31,13 +31,10 @@ sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [dev-dependencies]
-pallet-pool = {default-features = false, version = "4.0.0-dev", path = "../pool"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-staking-pool = {default-features = false, version = "4.0.0-dev", path = "../staking-pool"}
-upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../upfront-pool"}
 
 [features]
 default = ["std"]
@@ -53,9 +50,8 @@ std = [
   "sp-io/std",
   "sp-core/std",
   "pallet-balances/std",
-  "upfront-pool/std",
-  "pallet-pool/std",
   "sp-std/std",
+  "pallet-timestamp/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

@@ -17,24 +17,20 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{
-	pallet_prelude::*,
-	traits::{Currency},
-};
+use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	pool::{StaticPool, Service, TicketType, PlayerTicket, MasterPool, FlexPool},
-	constant::{ID},
+	constant::ID,
+	player::TicketInfo,
+	pool::{FlexPool, MasterPool, PlayerTicket, Service, StaticPool, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
 use crate::weights::WeightInfo;
-#[cfg(feature = "std")]
-use frame_support::serde::{Deserialize, Serialize};
-use scale_info::TypeInfo;
-use sp_core::H160;
-use sp_std::vec::{Vec};
+use gafi_primitives::cache::Cache;
 pub use pallet::*;
+use sp_core::H160;
+use sp_std::vec::Vec;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -45,16 +41,14 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Twox64Concat};
+	use frame_support::Twox64Concat;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
-		
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
@@ -66,40 +60,14 @@ pub mod pallet {
 
 		/// Add Sponsored Pool
 		type SponsoredPool: StaticPool<Self::AccountId>;
+
+		/// Add Cache
+		type Cache: Cache<Self::AccountId, TicketInfo>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
-	/// Holding the number of tickets to restrict player transaction
-	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-	pub struct TicketInfo {
-		pub ticket_type: TicketType,
-		pub tickets: u32,
-	}
-
-	impl TicketInfo {
-		/// reduce tickets by 1
-		pub fn withdraw_ticket(&self) -> Option<Self> {
-			if let Some(new_tickets) = self.tickets.checked_sub(1) {
-				return Some(TicketInfo {
-					tickets: new_tickets,
-					ticket_type: self.ticket_type,
-				});
-			}
-			None
-		}
-
-		/// renew ticket
-		pub  fn renew_ticket(&self, new_remain: u32) -> Self {
-			TicketInfo {
-				tickets: new_remain,
-				ticket_type: self.ticket_type,
-			}
-		}
-	}
 
 	/// Holding all the tickets in the network
 	#[pallet::storage]
@@ -159,17 +127,25 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<TimeService<T>>::put(self.time_service);
-			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
+			let _now: u128 = <timestamp::Pallet<T>>::get()
+				.try_into()
+				.ok()
+				.unwrap_or_default();
 			<MarkTime<T>>::put(_now);
 		}
 	}
-		
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Joined { sender: T::AccountId, ticket: TicketType },
-		Leaved { sender: T::AccountId, ticket: TicketType },
+		Joined {
+			sender: T::AccountId,
+			ticket: TicketType,
+		},
+		Leaved {
+			sender: T::AccountId,
+			ticket: TicketType,
+		},
 	}
 
 	#[pallet::error]
@@ -193,7 +169,10 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			ensure!(Tickets::<T>::get(sender.clone()) == None, <Error<T>>::AlreadyJoined);
+			ensure!(
+				Tickets::<T>::get(sender.clone()) == None,
+				<Error<T>>::AlreadyJoined
+			);
 			let service = Self::verify_ticket(ticket)?;
 
 			match ticket {
@@ -227,7 +206,10 @@ pub mod pallet {
 					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
 				Tickets::<T>::remove(sender.clone());
-				Self::deposit_event(Event::<T>::Leaved { sender, ticket: ticket.ticket_type});
+				Self::deposit_event(Event::<T>::Leaved {
+					sender,
+					ticket: ticket.ticket_type,
+				});
 				Ok(())
 			} else {
 				Err(Error::<T>::NotFoundInPool.into())
@@ -268,25 +250,19 @@ pub mod pallet {
 
 		fn get_service(ticket: TicketType) -> Option<Service> {
 			return match ticket {
-				TicketType::Upfront(level) => {
-					match T::UpfrontPool::get_service(level) {
-						Some(service) => Some(service.service),
-						None => None
-					}
+				TicketType::Upfront(level) => match T::UpfrontPool::get_service(level) {
+					Some(service) => Some(service.service),
+					None => None,
 				},
-				TicketType::Staking(level) => {
-					match T::StakingPool::get_service(level) {
-						Some(service) => Some(service.service),
-						None => None
-					}
+				TicketType::Staking(level) => match T::StakingPool::get_service(level) {
+					Some(service) => Some(service.service),
+					None => None,
 				},
-				TicketType::Sponsored(pool_id) => {
-					match T::SponsoredPool::get_service(pool_id) {
-						Some(service) => Some(service.service),
-						None => None
-					}
+				TicketType::Sponsored(pool_id) => match T::SponsoredPool::get_service(pool_id) {
+					Some(service) => Some(service.service),
+					None => None,
 				},
-			}
+			};
 		}
 
 		fn get_targets(pool_id: ID) -> Vec<H160> {

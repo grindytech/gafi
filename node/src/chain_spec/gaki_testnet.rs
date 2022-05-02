@@ -3,7 +3,7 @@ use devnet::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
-	WASM_BINARY, PoolConfig,
+	WASM_BINARY, PoolConfig, PalletCacheConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -184,6 +184,9 @@ fn gaki_testnet_genesis(
 		},
 		pool: PoolConfig {
 			time_service: TIME_SERVICE,
+		},
+		pallet_cache: PalletCacheConfig {
+			clean_time: TIME_SERVICE,
 		},
 	}
 }
