@@ -33,6 +33,7 @@ gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../.
 sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-io = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [features]
 default = ["std"]
@@ -46,6 +47,7 @@ std = [
   "frame-benchmarking/std",
   "gafi-primitives/std",
   "pallet-timestamp/std",
+  "pallet-balances/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

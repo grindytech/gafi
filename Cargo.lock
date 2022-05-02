@@ -4440,6 +4440,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
