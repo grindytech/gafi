@@ -55,6 +55,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type Data: Parameter + MaxEncodedLen + Copy + TypeInfo;
+		type Action: Parameter + MaxEncodedLen + Copy + TypeInfo;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
@@ -100,10 +101,10 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type DataLeft<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, WrapData<T::Data>>;
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::Action, WrapData<T::Data>>;
 	#[pallet::storage]
 	pub(super) type DataRight<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, WrapData<T::Data>>;
+	StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::Action, WrapData<T::Data>>;
 
 	/// Holding the mark time to check if correct time to charge service fee
 	/// The default value is at the time chain launched
@@ -164,22 +165,22 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Cache<T::AccountId, T::Data> for Pallet<T> {
-		fn insert(id: T::AccountId, data: T::Data) {
+	impl<T: Config> Cache<T::AccountId, T::Action, T::Data> for Pallet<T> {
+		fn insert(id: &T::AccountId, action: T::Action, data: T::Data) {
 			let _now = Self::get_timestamp();
 			let wrap_data = WrapData::new(data, _now);
 			if DataFlag::<T>::get() == Flag::Left {
-				DataLeft::<T>::insert(id, wrap_data);
+				DataLeft::<T>::insert(id, action, wrap_data);
 			} else {
-				DataRight::<T>::insert(id, wrap_data);
+				DataRight::<T>::insert(id, action, wrap_data);
 			}
 		}
 
-		fn get(id: T::AccountId) -> Option<T::Data> {
+		fn get(id: &T::AccountId, action: T::Action) -> Option<T::Data> {
 			let get_wrap_data = || -> Option<WrapData<T::Data>>{
-				if let Some(data) = DataLeft::<T>::get(id.clone()) {
+				if let Some(data) = DataLeft::<T>::get(id, action) {
 					return Some(data);
-				} else if let Some(data) = DataRight::<T>::get(id) {
+				} else if let Some(data) = DataRight::<T>::get(id, action) {
 					return Some(data);
 				}
 				None

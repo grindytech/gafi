@@ -6,7 +6,9 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
-pub use gafi_primitives::player::TicketInfo;
+pub use gafi_primitives::{player::TicketInfo,
+	pool::TicketType,
+};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
@@ -70,6 +72,7 @@ impl pallet_timestamp::Config for Test {
 
 impl pallet_cache::Config for Test {
 	type Data = TicketInfo;
+	type Action = TicketType;
 	type Event = Event;
 }
 
