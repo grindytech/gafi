@@ -71,7 +71,8 @@ pub mod pallet {
 
 	/// Holding all the tickets in the network
 	#[pallet::storage]
-	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
+	#[pallet::getter(fn tickets)]
+	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
 
 	/// Holding the mark time to check if correct time to charge service fee
 	/// The default value is at the time chain launched
@@ -173,11 +174,7 @@ pub mod pallet {
 				Tickets::<T>::get(sender.clone()) == None,
 				<Error<T>>::AlreadyJoined
 			);
-			let service = Self::get_ticket_service(ticket)?;
-			let ticket_info = TicketInfo {
-				ticket_type: ticket,
-				tickets: service.tx_limit,
-			};
+			let ticket_info = Self::get_ticket_info(&sender, ticket)?;
 
 			match ticket {
 				TicketType::Upfront(level) => T::UpfrontPool::join(sender.clone(), level)?,
@@ -204,7 +201,7 @@ pub mod pallet {
 					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
 					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
-				// Self::insert_cache(&sender, ticket);
+				Self::insert_cache(&sender, ticket.ticket_type, ticket);
 				Tickets::<T>::remove(sender.clone());
 				Self::deposit_event(Event::<T>::Leaved {
 					sender,
