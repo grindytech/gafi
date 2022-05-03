@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Pallet, DataFlag, DataLeft, DataRight, Flag};
+use crate::{mock::*, DataFlag, DataLeft, DataRight, Error, Flag, Pallet};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::cache::Cache;
 use gafi_primitives::{
@@ -31,10 +31,15 @@ fn insert_data_works() {
             ticket_type: TicketType::Upfront(Level::Basic),
             tickets: 100_u32,
         };
-        Pallet::<Test>::insert(account.clone(), data);
+        Pallet::<Test>::insert(&account, data.ticket_type, data);
 
         if DataFlag::<Test>::get() == Flag::Left {
-            assert_eq!(DataLeft::<Test>::get(account.clone()).unwrap().data, data);
+            assert_eq!(
+                DataLeft::<Test>::get(account.clone(), data.ticket_type)
+                    .unwrap()
+                    .data,
+                data
+            );
         }
     })
 }
@@ -48,13 +53,13 @@ fn get_data_insert_early_work() {
             ticket_type: TicketType::Upfront(Level::Basic),
             tickets: 100_u32,
         };
-        Pallet::<Test>::insert(account.clone(), data);
+        Pallet::<Test>::insert(&account, data.ticket_type, data);
 
         run_to_block(CIRCLE_BLOCK + ADDL_BLOCK);
-        assert_eq!(Pallet::<Test>::get(account.clone()), None);
+        assert_eq!(Pallet::<Test>::get(&account, data.ticket_type), None);
 
         run_to_block(CIRCLE_BLOCK * 2 + ADDL_BLOCK);
-        assert_eq!(Pallet::<Test>::get(account.clone()), None);
+        assert_eq!(Pallet::<Test>::get(&account, data.ticket_type), None);
     })
 }
 
@@ -67,13 +72,12 @@ fn get_data_insert_late_work() {
             ticket_type: TicketType::Upfront(Level::Basic),
             tickets: 100_u32,
         };
-        Pallet::<Test>::insert(account.clone(), data);
+        Pallet::<Test>::insert(&account, data.ticket_type, data);
 
         run_to_block(CIRCLE_BLOCK + ADDL_BLOCK);
-        assert_eq!(Pallet::<Test>::get(account.clone()), Some(data));
+        assert_eq!(Pallet::<Test>::get(&account, data.ticket_type), Some(data));
 
         run_to_block(CIRCLE_BLOCK * 2 + ADDL_BLOCK);
-        assert_eq!(Pallet::<Test>::get(account.clone()), None);
+        assert_eq!(Pallet::<Test>::get(&account, data.ticket_type), None);
     })
 }
-

@@ -58,6 +58,7 @@ pub use gafi_primitives::{
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	player::TicketInfo,
 	cache::Cache,
+	pool::TicketType,
 };
 
 // import local pallets
@@ -455,6 +456,7 @@ impl pallet_faucet::Config for Runtime {
 impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
+	type Action = TicketType;
 }
 
 impl pallet_pool::Config for Runtime {

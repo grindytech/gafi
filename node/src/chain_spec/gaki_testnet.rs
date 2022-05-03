@@ -13,7 +13,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap};
 use serde_json::json;
 use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
-use gafi_primitives::{pool::{Level, Service, TicketType, FlexService}};
+use gafi_primitives::{pool::{Level, FlexService}};
 use sp_std::*;
 
 // The URL for the telemetry server.

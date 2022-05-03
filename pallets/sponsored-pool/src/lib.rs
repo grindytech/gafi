@@ -81,7 +81,8 @@ pub mod pallet {
 	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
 
 	#[pallet::storage]
-	pub(super) type PoolOwned<T: Config> =
+	#[pallet::getter(fn pool_owned)]
+	pub type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
 	#[pallet::storage]
@@ -299,6 +300,10 @@ pub mod pallet {
 				None => Err(<Error<T>>::PoolNotExist),
 			}
 		}
+
+		// pub fn get_last_pool_id() -> ID {
+		// 	Pools::<T>::get().
+		// }
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
@@ -323,3 +328,4 @@ pub mod pallet {
 		}
 	}
 }
+

@@ -1,5 +1,5 @@
 
-pub trait Cache<AccountId, I> {
-    fn insert(id: AccountId, data: I);
-    fn get(id: AccountId) -> Option<I>;
+pub trait Cache<AccountId, A, D> {
+    fn insert(id: &AccountId, action: A, data: D);
+    fn get(id: &AccountId, action: A) -> Option<D>;
 }

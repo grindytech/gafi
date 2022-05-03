@@ -112,6 +112,7 @@ impl pallet_ethereum::Config for Test {
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Data = TicketInfo;
+	type Action = TicketType;
 }
 
 impl pallet_pool::Config for Test {

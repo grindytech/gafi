@@ -22,7 +22,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	player::TicketInfo,
-	pool::{FlexPool, MasterPool, PlayerTicket, Service, StaticPool, TicketType},
+	pool::{FlexPool, Level, MasterPool, PlayerTicket, Service, StaticPool, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -62,7 +62,7 @@ pub mod pallet {
 		type SponsoredPool: StaticPool<Self::AccountId>;
 
 		/// Add Cache
-		type Cache: Cache<Self::AccountId, TicketInfo>;
+		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;
 	}
 
 	#[pallet::pallet]
@@ -71,7 +71,8 @@ pub mod pallet {
 
 	/// Holding all the tickets in the network
 	#[pallet::storage]
-	pub(super) type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
+	#[pallet::getter(fn tickets)]
+	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
 
 	/// Holding the mark time to check if correct time to charge service fee
 	/// The default value is at the time chain launched
@@ -173,18 +174,13 @@ pub mod pallet {
 				Tickets::<T>::get(sender.clone()) == None,
 				<Error<T>>::AlreadyJoined
 			);
-			let service = Self::verify_ticket(ticket)?;
+			let ticket_info = Self::get_ticket_info(&sender, ticket)?;
 
 			match ticket {
 				TicketType::Upfront(level) => T::UpfrontPool::join(sender.clone(), level)?,
 				TicketType::Staking(level) => T::StakingPool::join(sender.clone(), level)?,
 				TicketType::Sponsored(pool_id) => T::SponsoredPool::join(sender.clone(), pool_id)?,
 			}
-
-			let ticket_info = TicketInfo {
-				ticket_type: ticket,
-				tickets: service.tx_limit,
-			};
 
 			Tickets::<T>::insert(sender.clone(), ticket_info);
 			Self::deposit_event(Event::<T>::Joined { sender, ticket });
@@ -205,6 +201,7 @@ pub mod pallet {
 					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
 					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
+				Self::insert_cache(&sender, ticket.ticket_type, ticket);
 				Tickets::<T>::remove(sender.clone());
 				Self::deposit_event(Event::<T>::Leaved {
 					sender,
@@ -218,6 +215,47 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		fn insert_cache(sender: &T::AccountId, ticket: TicketType, data: TicketInfo) {
+			match ticket {
+				TicketType::Staking(_) => {}
+				TicketType::Upfront(_) => {}
+				TicketType::Sponsored(_) => {
+					T::Cache::insert(sender, ticket, data);
+				}
+			}
+		}
+
+		fn get_ticket_info(
+			sender: &T::AccountId,
+			ticket: TicketType,
+		) -> Result<TicketInfo, Error<T>> {
+			let service = Self::get_ticket_service(ticket)?;
+			if let Some(cache) = Self::get_cache(&sender, ticket) {
+				return Ok(TicketInfo {
+					ticket_type: ticket,
+					tickets: cache.tickets,
+				});
+			}
+
+			Ok(TicketInfo {
+				ticket_type: ticket,
+				tickets: service.tx_limit,
+			})
+		}
+
+		fn get_cache(sender: &T::AccountId, ticket: TicketType) -> Option<TicketInfo> {
+			match ticket {
+				TicketType::Staking(_) => {}
+				TicketType::Upfront(_) => {}
+				TicketType::Sponsored(_) => {
+					if let Some(ticket_cache) = T::Cache::get(&sender, ticket) {
+						return Some(ticket_cache);
+					}
+				}
+			}
+			None
+		}
+
 		pub fn renew_tickets() {
 			let _ = Tickets::<T>::iter().for_each(|player| {
 				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
@@ -229,7 +267,7 @@ pub mod pallet {
 			});
 		}
 
-		fn verify_ticket(ticket: TicketType) -> Result<Service, Error<T>> {
+		fn get_ticket_service(ticket: TicketType) -> Result<Service, Error<T>> {
 			match Self::get_service(ticket) {
 				Some(service) => Ok(service),
 				None => Err(<Error<T>>::TicketNotFound),

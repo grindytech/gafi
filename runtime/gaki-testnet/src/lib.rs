@@ -52,10 +52,10 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use pallet_evm::FeeCalculator;
-use gafi_primitives::player::TicketInfo;
 
 pub use gafi_primitives::{currency::{centi, microcent, milli, unit, NativeToken::GAKI},
-	pool::{FlexPool, StaticPool}
+	pool::{FlexPool, StaticPool, TicketType},
+	player::TicketInfo,
 };
 
 // import local pallets
@@ -470,6 +470,7 @@ impl pallet_faucet::Config for Runtime {
 impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
+	type Action = TicketType;
 }
 
 impl pallet_pool::Config for Runtime {
