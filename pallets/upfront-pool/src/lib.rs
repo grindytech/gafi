@@ -85,7 +85,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
-			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
+			let _now: u128 = Self::get_timestamp();
 			if _now - T::MasterPool::get_marktime() >= T::MasterPool::get_timeservice() {
 				let _ = Self::charge_ingame();
 				let _ = Self::move_newplayer_to_ingame();
@@ -381,6 +381,14 @@ impl<T: Config> Pallet<T> {
 
 	fn moment_to_u128(input: T::Moment) -> u128 {
 		sp_runtime::SaturatedConversion::saturated_into(input)
+	}
+
+	pub fn get_timestamp() -> u128 {
+		let _now: u128 = <timestamp::Pallet<T>>::get()
+			.try_into()
+			.ok()
+			.unwrap_or_else(|| u128::default());
+		_now
 	}
 
 	fn get_service_by_level(level: Level) -> Result<FlexService, Error<T>> {

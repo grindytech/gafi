@@ -43,27 +43,33 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, StorageValue,
 };
+pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EVMAccount, EnsureAddressNever, Runner, EnsureAddressRoot};
+use pallet_evm::FeeCalculator;
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-use pallet_evm::FeeCalculator;
-pub use frame_system::Call as SystemCall;
 
-pub use gafi_primitives::currency::{centi, microcent, milli, unit, NativeToken::GAKI};
+pub use gafi_primitives::{
+	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
+	player::TicketInfo,
+	cache::Cache,
+	pool::TicketType,
+};
 
 // import local pallets
+pub use gafi_tx;
+pub use pallet_cache;
 pub use pallet_faucet;
-pub use upfront_pool;
 pub use pallet_player;
 pub use pallet_pool;
-pub use staking_pool;
-pub use gafi_tx;
 pub use sponsored_pool;
+pub use staking_pool;
+pub use upfront_pool;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -133,9 +139,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 // Time is measured by number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -145,7 +151,10 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+	NativeVersion {
+		runtime_version: VERSION,
+		can_author_with: Default::default(),
+	}
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -289,7 +298,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
-	type LengthToFee =  IdentityFee<Balance>;
+	type LengthToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
 }
 
@@ -411,6 +420,7 @@ impl sponsored_pool::Config for Runtime {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
 parameter_types! {
@@ -443,6 +453,12 @@ impl pallet_faucet::Config for Runtime {
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 }
 
+impl pallet_cache::Config for Runtime {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = TicketType;
+}
+
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -450,6 +466,7 @@ impl pallet_pool::Config for Runtime {
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
 	type SponsoredPool = SponsoredPool;
+	type Cache = PalletCache;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -479,6 +496,7 @@ construct_runtime!(
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		AddressMapping: proof_address_mapping,
+		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
 	}
 );
@@ -583,9 +601,9 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
-				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
-			),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
 			_ => None,
 		}
 	}
@@ -878,6 +896,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 
@@ -885,6 +904,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
+			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
@@ -902,6 +922,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 
@@ -915,6 +936,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

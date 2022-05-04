@@ -1178,6 +1178,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-cache",
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
@@ -2328,6 +2329,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-cache",
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
@@ -4432,6 +4434,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-cache"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#b5dcbe722cf6ae3e6c5a3c9d1af1edcfc81a4737"
@@ -4597,6 +4618,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "log",
+ "pallet-cache",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7737,7 +7759,6 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7747,8 +7768,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "staking-pool",
- "upfront-pool",
 ]
 
 [[package]]
@@ -7782,7 +7801,6 @@ dependencies = [
  "gafi-primitives",
  "log",
  "pallet-balances",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7792,8 +7810,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
- "upfront-pool",
 ]
 
 [[package]]
@@ -7992,6 +8008,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "more-asserts",
  "pallet-balances",
+ "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-pool",

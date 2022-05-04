@@ -33,9 +33,6 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
-		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
@@ -111,32 +108,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type WeightInfo = ();
-	type SponsoredPool = Sponsored;
-}
-
-parameter_types! {
-	pub MaxPlayerStorage: u32 = 1000;
-}
-
-impl upfront_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type MaxPlayerStorage = MaxPlayerStorage;
-	type MasterPool = Pool;
-}
-
-impl staking_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
@@ -149,6 +120,7 @@ impl sponsored_pool::Config for Test {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
@@ -159,14 +131,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
-			UpfrontPool::on_finalize(System::block_number());
-			Pool::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		UpfrontPool::on_initialize(System::block_number());
-		Pool::on_initialize(System::block_number());
 		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
 	}
 }
@@ -191,18 +159,6 @@ impl ExtBuilder {
 
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
-
-		GenesisBuild::<Test>::assimilate_storage(
-				&pallet_pool::GenesisConfig { time_service: self.time_service },
-				&mut storage,
-		)
-		.unwrap();
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig::default(),
-			&mut storage,
-		)
-		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

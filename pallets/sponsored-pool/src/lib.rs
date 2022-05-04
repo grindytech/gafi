@@ -9,12 +9,13 @@ pub use gafi_primitives::{
 	constant::ID,
 	pool::{Level, Service, StaticPool, StaticService},
 };
+use crate::weights::WeightInfo;
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
-use sp_std::vec::{Vec};
+use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -22,7 +23,6 @@ use sp_std::vec::{Vec};
 )]
 pub struct SponsoredPool<AccountId> {
 	pub id: ID,
-	pub name: [u8; 32],
 	pub owner: AccountId,
 	pub value: u128,
 	pub discount: u8,
@@ -35,8 +35,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -64,6 +67,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxPoolTarget: Get<u32>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	//** Storages **//
@@ -75,7 +81,8 @@ pub mod pallet {
 	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
 
 	#[pallet::storage]
-	pub(super) type PoolOwned<T: Config> =
+	#[pallet::getter(fn pool_owned)]
+	pub type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
 	#[pallet::storage]
@@ -85,8 +92,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SomethingStored(u32, T::AccountId),
 		CreatedPool { id: ID },
+		Withdrew { id: ID },
 	}
 
 	#[pallet::error]
@@ -103,10 +110,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u32))]
 		pub fn create_pool(
 			origin: OriginFor<T>,
-			name: [u8; 32],
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
 			discount: u8,
@@ -130,7 +136,6 @@ pub mod pallet {
 
 			let new_pool = SponsoredPool {
 				id: pool_config.id,
-				name,
 				owner: sender.clone(),
 				value: Self::balance_try_to_u128(value)?,
 				discount,
@@ -163,7 +168,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u32))]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -184,6 +189,39 @@ pub mod pallet {
 			.map_err(|_| <Error<T>>::PoolNotExist)?;
 			Pools::<T>::remove(pool_id);
 			Targets::<T>::remove(pool_id);
+			Self::deposit_event(Event::Withdrew { id: pool_id });
+			Ok(())
+		}
+
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::new_targets(50u32))]
+		pub fn new_targets(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			targets: Vec<H160>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+			ensure!(
+				Self::usize_try_to_u32(targets.len())? < T::MaxPoolTarget::get(),
+				<Error<T>>::ExceedPoolTarget
+			);
+
+			Targets::<T>::insert(pool_id, BoundedVec::default());
+			Targets::<T>::try_mutate(&pool_id, |target_vec| {
+				for target in targets {
+					if let Ok(_) = target_vec.try_push(target) {
+					} else {
+						return Err(());
+					}
+				}
+				Ok(())
+			})
+			.map_err(|_| <Error<T>>::ExceedPoolTarget)?;
+
 			Ok(())
 		}
 	}
@@ -262,6 +300,10 @@ pub mod pallet {
 				None => Err(<Error<T>>::PoolNotExist),
 			}
 		}
+
+		// pub fn get_last_pool_id() -> ID {
+		// 	Pools::<T>::get().
+		// }
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
@@ -275,9 +317,15 @@ pub mod pallet {
 		fn get_service(pool_id: ID) -> Option<StaticService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
 				let targets = Targets::<T>::get(pool_id);
-				return Some(StaticService::new(targets.to_vec(), pool.tx_limit, pool.discount, pool.owner));
+				return Some(StaticService::new(
+					targets.to_vec(),
+					pool.tx_limit,
+					pool.discount,
+					pool.owner,
+				));
 			}
 			None
 		}
 	}
 }
+

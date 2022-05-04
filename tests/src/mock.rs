@@ -10,8 +10,8 @@ use frame_support::{
 	weights::IdentityFee,
 };
 use frame_system as system;
+use gafi_primitives::currency::{centi, unit, NativeToken::GAKI};
 use gafi_primitives::pool::{FlexService, Level, Service, TicketType};
-use gafi_primitives::currency::{NativeToken::GAKI, unit, centi};
 use gafi_tx::GafiEVMCurrencyAdapter;
 use hex_literal::hex;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
@@ -24,7 +24,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-
+use gafi_primitives::player::TicketInfo;
 pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -50,6 +50,7 @@ frame_support::construct_runtime!(
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		SponsoredPool: sponsored_pool::{Pallet, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 		PalletTxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>},
 		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
@@ -108,6 +109,12 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
+impl pallet_cache::Config for Test {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = TicketType;
+}
+
 impl pallet_pool::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
@@ -115,6 +122,7 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type SponsoredPool = SponsoredPool;
+	type Cache = PalletCache;
 }
 
 parameter_types! {
@@ -146,6 +154,7 @@ impl sponsored_pool::Config for Test {
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

@@ -3,9 +3,8 @@ use devnet::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
-	WASM_BINARY, PoolConfig,
+	WASM_BINARY, PoolConfig, PalletCacheConfig,
 };
-
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
@@ -14,7 +13,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::{collections::BTreeMap};
 use serde_json::json;
 use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
-use gafi_primitives::{pool::{Level, Service, FlexService}};
+use gafi_primitives::{pool::{Level, FlexService}};
 use sp_std::*;
 
 // The URL for the telemetry server.
@@ -162,7 +161,7 @@ fn dev_genesis(
 		(Level::Medium, FlexService::new(10_u32, 50_u8, 1500 * unit(GAKI))),
 		(Level::Advance, FlexService::new(10_u32, 70_u8, 2000 * unit(GAKI))),
 	];
-	const TIME_SERVICE: u128 = 3 * 60_000u128; // 3 minutes for testing
+	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
 	let bond_existential_deposit: u128 = unit(GAKI);
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
@@ -230,6 +229,9 @@ fn dev_genesis(
 		},
 		pool: PoolConfig {
 			time_service: TIME_SERVICE
+		},
+		pallet_cache: PalletCacheConfig {
+			clean_time: TIME_SERVICE,
 		},
 	}
 }
