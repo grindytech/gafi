@@ -5,7 +5,7 @@ build:
 	cargo build --release --features with-development
 
 .PHONY: build-gaki
-build:
+build-gaki:
 	cargo build --release --features with-gaki-runtime
 
 .PHONY: run-dev
