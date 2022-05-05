@@ -2,13 +2,15 @@
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
+use sp_core::H160;
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
@@ -33,5 +35,15 @@ pub mod pallet {
 	pub enum Error<T> {}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+
+		
+		
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn verify_owner() -> Option<H160> {
+			None
+		}
+	}
 }

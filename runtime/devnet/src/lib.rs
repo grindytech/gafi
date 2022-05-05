@@ -70,6 +70,7 @@ pub use pallet_pool;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
+pub use game_creator;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -455,6 +456,10 @@ impl pallet_cache::Config for Runtime {
 	type Action = TicketType;
 }
 
+impl game_creator::Config for Runtime {
+	type Event = Event;
+}
+
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -494,6 +499,7 @@ construct_runtime!(
 		AddressMapping: proof_address_mapping,
 		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
+		GameCreator: game_creator,
 	}
 );
 

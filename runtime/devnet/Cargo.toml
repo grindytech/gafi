@@ -72,6 +72,7 @@ proof-address-mapping = {version = "4.0.0-dev", default-features = false, path =
 sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
+game-creator = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-creator"}
 
 # unit test
 [dev.dependencies]
@@ -145,4 +146,5 @@ std = [
   "pallet-pool/std",
   "pallet-cache/std",
   "sponsored-pool/std",
+  "game-creator/std",
 ]
