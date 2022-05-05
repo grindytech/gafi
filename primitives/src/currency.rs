@@ -31,14 +31,14 @@ impl TokenInfo for GafiCurrency {
 	fn token_info(token: NativeToken) -> Token {
 		let gaki: Token = Token {
 			id: 1,
-			name: b"Gafi Native Token".to_vec(),
-			symbol: "GAFI".as_bytes().to_vec(),
+			name: b"GAKI Token".to_vec(),
+			symbol: "GAKI".as_bytes().to_vec(),
 			decimals: 18,
 		};
 		let gafi: Token = Token {
 			id: 2,
-			name: b"Gaki Native Token".to_vec(),
-			symbol: "GAKI".as_bytes().to_vec(),
+			name: b"GAFI Token".to_vec(),
+			symbol: "GAFI".as_bytes().to_vec(),
 			decimals: 18,
 		};
 

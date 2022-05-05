@@ -50,10 +50,10 @@ pub fn gaki_dev_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut props: Properties = Properties::new();
-	let aux = GafiCurrency::token_info(GAKI);
-	let symbol = json!(String::from_utf8(aux.symbol).unwrap_or("GAKI".to_string()));
-	let name = json!(String::from_utf8(aux.name).unwrap_or("Gafi Network Kusama".to_string()));
-	let decimals = json!(aux.decimals);
+	let gaki = GafiCurrency::token_info(GAKI);
+	let symbol = json!(String::from_utf8(gaki.symbol).unwrap_or("GAKI".to_string()));
+	let name = json!(String::from_utf8(gaki.name).unwrap_or("GAKI Token".to_string()));
+	let decimals = json!(gaki.decimals);
 	props.insert("tokenSymbol".to_string(), symbol);
 	props.insert("tokenName".to_string(), name);
 	props.insert("tokenDecimals".to_string(), decimals);
