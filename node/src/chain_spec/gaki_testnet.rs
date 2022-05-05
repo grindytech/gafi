@@ -62,7 +62,7 @@ pub fn gaki_dev_config() -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Development",
+		"Gaki Development",
 		// ID
 		"dev",
 		ChainType::Development,
