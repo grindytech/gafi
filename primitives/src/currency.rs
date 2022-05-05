@@ -58,14 +58,17 @@ pub fn centi(token: NativeToken) -> u128 {
     unit(token) / 100
 }
 
+/// 1 milli = 0.001 unit
 pub fn milli(token: NativeToken) -> u128 {
     unit(token) / 1000
 }
 
+/// 1 millicent = 0.00001 unit
 pub fn millicent(token: NativeToken) -> u128 {
     centi(token) / 1000
 }
 
+/// 1 microcent = 0.000001 unit
 pub fn microcent(token: NativeToken) -> u128 {
     milli(token) / 1000
 }
