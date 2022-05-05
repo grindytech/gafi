@@ -81,7 +81,7 @@ frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = 
 frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local Dependencies
-devnet = {path = "../runtime/devnet"}
+devnet = {path = "../runtime/devnet", optional = true}
 gafi-primitives = {path = "../primitives"}
 gaki-testnet = {path = "../runtime/gaki-testnet", optional = true}
 
@@ -97,6 +97,10 @@ runtime-benchmarks = [
   "devnet/runtime-benchmarks",
 ]
 
-with-gaki-testnet = [
+with-development = [
+  "devnet",
+]
+
+with-gaki-runtime = [
   "gaki-testnet",
 ]
