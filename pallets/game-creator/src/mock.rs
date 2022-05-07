@@ -1,6 +1,7 @@
 use crate::{self as game_creator};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
+use proof_address_mapping::ProofAddressMapping;
 
 use frame_support::{
 	dispatch::Vec,
@@ -31,8 +32,21 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		GameCreator: game_creator::{Pallet, Storage, Event<T>},
+		PalletAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
 	}
 );
+
+
+parameter_types! {
+	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
+}
+
+impl proof_address_mapping::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type MessagePrefix = Prefix;
+}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -67,8 +81,15 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub MaxContractOwned: u32 = 100;
+}
+
 impl game_creator::Config for Test {
 	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping<Self>;
+	type MaxContractOwned = MaxContractOwned;
 }
 
 parameter_types! {

@@ -2376,12 +2376,16 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "proof-address-mapping",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

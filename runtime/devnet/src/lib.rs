@@ -456,8 +456,15 @@ impl pallet_cache::Config for Runtime {
 	type Action = TicketType;
 }
 
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+}
+
 impl game_creator::Config for Runtime {
 	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping<Self>;
+	type MaxContractOwned = MaxContractOwned;
 }
 
 impl pallet_pool::Config for Runtime {

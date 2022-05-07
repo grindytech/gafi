@@ -300,10 +300,6 @@ pub mod pallet {
 				None => Err(<Error<T>>::PoolNotExist),
 			}
 		}
-
-		// pub fn get_last_pool_id() -> ID {
-		// 	Pools::<T>::get().
-		// }
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
