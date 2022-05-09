@@ -1,5 +1,5 @@
 
-use crate::{mock::*, Pallet, ContractOwned, Error};
+use crate::{mock::*, Pallet, ContractOwned, Error, ContractMapping};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use sp_runtime::AccountId32;
 use sp_core::H160;
@@ -30,13 +30,23 @@ fn claim_reward_works() {
         let sub_contract_addr: AccountId32 = ProofAddressMapping::<Test>::into_account_id(contract_addr);
         make_deposit(&sub_contract_addr, contract_balance);
 
-        ContractOwned::<Test>::try_mutate(&owner, |contract_vec| {
-            contract_vec.try_push(contract_addr);
-            Ok(())
-        }).map_err(|_: Error::<Test>| <Error<Test>>::ExceedMaxContractOwned);
+        ContractOwned::<Test>::insert(contract_addr, owner.clone());
 
         assert_ok!(GameCreator::claim_reward(Origin::signed(owner.clone()), contract_addr));
 
         assert_eq!(Balances::free_balance(&owner), owner_balance + contract_balance);
+        assert_eq!(Balances::free_balance(&sub_contract_addr), 0_u128);
+    })
+}
+
+#[test]
+fn mapping_contract_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        let contract: H160 = H160::from_str("0xB5C35Cbc5c46DC34A5A89E7cD73B2b3A1e1DC008").unwrap();
+        let owner: H160 = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+
+        GameCreator::mapping_contract(&contract, &owner);
+
+        assert_eq!(ContractMapping::<Test>::get(contract.clone()), Some(owner.clone()));
     })
 }

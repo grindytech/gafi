@@ -38,22 +38,23 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub type ContractOwned<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::AccountId,
-		BoundedVec<H160, T::MaxContractOwned>,
-		ValueQuery,
-	>;
+	pub(super) type ContractOwned<T: Config> = StorageMap<_, Twox64Concat, H160, T::AccountId>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn contract_mapping)]
+	pub(super) type ContractMapping<T: Config> = StorageMap<_, Twox64Concat, H160, H160>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		MappedContract {contract: H160, owner: H160},
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		NotContractOwner,
 		ExceedMaxContractOwned,
+		ContractNotFound,
 	}
 
 	#[pallet::call]
@@ -72,11 +73,18 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		fn is_owner(sender: &T::AccountId, contract: &H160) -> Result<(), Error<T>> {
-			let contracts = ContractOwned::<T>::get(sender);
-			if !contracts.contains(contract) {
+			if let Some(owner) = ContractOwned::<T>::get(contract) {
+				if owner == *sender {
+					return Ok(());
+				}
 				return Err(<Error<T>>::NotContractOwner);
 			}
-			Ok(())
+			return Err(<Error<T>>::ContractNotFound);
+		}
+
+		pub fn mapping_contract(contract: &H160, owner: &H160) {
+			// <ContractMapping<T>>::insert(contract.clone(), owner.clone());
+			Self::deposit_event(Event::MappedContract{contract: contract.clone(), owner: owner.clone()});
 		}
 
 		pub fn transfer_all(

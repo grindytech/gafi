@@ -55,14 +55,16 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
+	cache::Cache,
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	player::TicketInfo,
-	cache::Cache,
 	pool::TicketType,
 };
+use sp_std::if_std;
 
 // import local pallets
 pub use gafi_tx;
+pub use game_creator;
 pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
@@ -70,7 +72,6 @@ pub use pallet_pool;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
-pub use game_creator;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -772,7 +773,7 @@ impl_runtime_apis! {
 				None
 			};
 
-			<Runtime as pallet_evm::Config>::Runner::create(
+			let result = <Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
@@ -782,7 +783,18 @@ impl_runtime_apis! {
 				nonce,
 				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
+			).map_err(|err| err.into());
+
+			if let Ok(create_info) = result.clone() {
+				GameCreator::mapping_contract(&create_info.value, &from);
+
+				if_std! {
+					println!("called by {:?}", from);
+					println!("contract address: {:?}", create_info.value);
+				}
+			}
+
+			result
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
