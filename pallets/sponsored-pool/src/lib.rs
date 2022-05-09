@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use crate::weights::WeightInfo;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
@@ -9,7 +10,6 @@ pub use gafi_primitives::{
 	constant::ID,
 	pool::{Level, Service, StaticPool, StaticService},
 };
-use crate::weights::WeightInfo;
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -82,11 +82,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pool_owned)]
-	pub type PoolOwned<T: Config> =
+	pub(super) type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
 	#[pallet::storage]
-	pub type Targets<T: Config> =
+	pub(super) type Targets<T: Config> =
 		StorageMap<_, Twox64Concat, ID, BoundedVec<H160, T::MaxPoolTarget>, ValueQuery>;
 
 	#[pallet::event]
@@ -227,7 +227,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn gen_id() -> Result<ID, Error<T>> {
+		fn gen_id() -> Result<ID, Error<T>> {
 			let payload = (
 				T::Randomness::random(&b""[..]).0,
 				<frame_system::Pallet<T>>::block_number(),
@@ -235,7 +235,7 @@ pub mod pallet {
 			Ok(payload.using_encoded(blake2_256))
 		}
 
-		pub fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
+		pub(super) fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
 			let id = Self::gen_id()?;
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(NewPool::<T::AccountId> { id, account }),
@@ -243,35 +243,35 @@ pub mod pallet {
 			}
 		}
 
-		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
+		fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(account),
 				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
 
-		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
+		fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::ConvertBalanceFail),
 			}
 		}
 
-		pub fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
+		fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoU32Fail),
 			}
 		}
 
-		pub fn balance_try_to_u128(input: BalanceOf<T>) -> Result<u128, Error<T>> {
+		fn balance_try_to_u128(input: BalanceOf<T>) -> Result<u128, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::ConvertBalanceFail),
 			}
 		}
 
-		pub fn transfer_all(
+		fn transfer_all(
 			from: &T::AccountId,
 			to: &T::AccountId,
 			keep_alive: bool,
@@ -294,16 +294,12 @@ pub mod pallet {
 			)
 		}
 
-		pub fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
+		fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
 			match Pools::<T>::get(pool_id) {
 				Some(pool) => Ok(pool.owner == *owner),
 				None => Err(<Error<T>>::PoolNotExist),
 			}
 		}
-
-		// pub fn get_last_pool_id() -> ID {
-		// 	Pools::<T>::get().
-		// }
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
@@ -328,4 +324,3 @@ pub mod pallet {
 		}
 	}
 }
-
