@@ -73,7 +73,6 @@ pub use upfront_pool;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
-use proof_address_mapping::ProofAddressMapping;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -333,7 +332,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressRoot<AccountId>;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -438,7 +437,7 @@ impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
 }
 
@@ -495,7 +494,7 @@ construct_runtime!(
 		StakingPool: staking_pool,
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
-		AddressMapping: proof_address_mapping,
+		ProofAddressMapping: proof_address_mapping,
 		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
 	}
