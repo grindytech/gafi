@@ -8,6 +8,7 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::*;
 use pallet_evm::AddressMapping;
 use sp_core::H160;
+use pallet_evm::{GetContractCreator};
 
 #[cfg(test)]
 mod mock;

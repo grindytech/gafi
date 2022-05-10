@@ -773,7 +773,7 @@ impl_runtime_apis! {
 				None
 			};
 
-			let result = <Runtime as pallet_evm::Config>::Runner::create(
+			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
@@ -783,18 +783,7 @@ impl_runtime_apis! {
 				nonce,
 				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into());
-
-			if let Ok(create_info) = result.clone() {
-				GameCreator::mapping_contract(&create_info.value, &from);
-
-				if_std! {
-					println!("called by {:?}", from);
-					println!("contract address: {:?}", create_info.value);
-				}
-			}
-
-			result
+			).map_err(|err| err.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
