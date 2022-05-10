@@ -249,7 +249,7 @@ fn bond_account_balances() {
 
 		// evm_address balance should  equal to ALICE
 		{
-			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT - EXISTENTIAL_BOND_DEPOSIT);
+			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT - RESERVATION_FEE);
 			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
 			assert_eq!(mapping_address_balance, Balances::free_balance(&ALICE).into());
 		}
@@ -286,7 +286,7 @@ fn unbond_works() {
 			let before_balance = Balances::free_balance(&ALICE);
 			assert_ok!(ProofAddressMapping::unbond(Origin::signed(ALICE.clone())));
 			let after_balance = Balances::free_balance(&ALICE);
-			assert_eq!(before_balance, after_balance - EXISTENTIAL_BOND_DEPOSIT);
+			assert_eq!(before_balance, after_balance - RESERVATION_FEE);
 		}
 
 		run_to_block(100);
