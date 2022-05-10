@@ -34,7 +34,6 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	// pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
 impl pallet_evm::Config for Test {

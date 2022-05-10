@@ -7,8 +7,8 @@ use frame_support::traits::{
 };
 use frame_system::pallet_prelude::*;
 use pallet_evm::AddressMapping;
+use pallet_evm::GetContractCreator;
 use sp_core::H160;
-use pallet_evm::{GetContractCreator};
 
 #[cfg(test)]
 mod mock;
@@ -16,8 +16,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -32,83 +32,58 @@ pub mod pallet {
 		type MaxContractOwned: Get<u32>;
 
 		type Currency: ReservableCurrency<Self::AccountId>;
+
+		type ContractCreator: GetContractCreator;
 	}
 
+	//** STORAGE  **//
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type ContractOwned<T: Config> = StorageMap<_, Twox64Concat, H160, T::AccountId>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn contract_mapping)]
-	pub(super) type ContractMapping<T: Config> = StorageMap<_, Twox64Concat, H160, H160>;
+	pub type ContractOwner<T: Config> = StorageMap<_, Twox64Concat, H160, T::AccountId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		MappedContract {contract: H160, owner: H160},
-	}
+	pub enum Event<T: Config> {}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		NotContractOwner,
-		ExceedMaxContractOwned,
 		ContractNotFound,
+		ContractClaimed,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
-		pub fn claim_reward(origin: OriginFor<T>, contract: H160) -> DispatchResult {
+		pub fn claim_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::is_owner(&sender, &contract)?;
-
-			let contract_acc = T::AddressMapping::into_account_id(contract);
-
-			Self::transfer_all(&contract_acc, &sender, false)?;
+			ensure!(
+				ContractOwner::<T>::get(contract).is_none(),
+				<Error<T>>::ContractClaimed
+			);
+			Self::verify_owner(&sender, &contract)?;
+			ContractOwner::<T>::insert(contract, sender.clone());
 			Ok(())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn is_owner(sender: &T::AccountId, contract: &H160) -> Result<(), Error<T>> {
-			if let Some(owner) = ContractOwned::<T>::get(contract) {
-				if owner == *sender {
-					return Ok(());
-				}
-				return Err(<Error<T>>::NotContractOwner);
+		fn verify_owner(sender: &T::AccountId, contract: &H160) -> Result<(), Error<T>> {
+			let contract_creator = Self::get_contract_creator(&contract)?;
+			if *sender != contract_creator {
+				return Err(Error::<T>::NotContractOwner);
 			}
-			return Err(<Error<T>>::ContractNotFound);
+			Ok(())
 		}
 
-		pub fn mapping_contract(contract: &H160, owner: &H160) {
-			// <ContractMapping<T>>::insert(contract.clone(), owner.clone());
-			Self::deposit_event(Event::MappedContract{contract: contract.clone(), owner: owner.clone()});
-		}
-
-		pub fn transfer_all(
-			from: &T::AccountId,
-			to: &T::AccountId,
-			keep_alive: bool,
-		) -> DispatchResult {
-			let reducible_balance: u128 =
-				pallet_balances::pallet::Pallet::<T>::reducible_balance(from, keep_alive)
-					.try_into()
-					.ok()
-					.unwrap();
-			let existence = if keep_alive {
-				ExistenceRequirement::KeepAlive
-			} else {
-				ExistenceRequirement::AllowDeath
-			};
-			<T as pallet::Config>::Currency::transfer(
-				from,
-				to,
-				reducible_balance.try_into().ok().unwrap(),
-				existence,
-			)
+		fn get_contract_creator(contract: &H160) -> Result<T::AccountId, Error<T>> {
+			match T::ContractCreator::get_contract_creator(contract) {
+				Some(address) => return Ok(T::AddressMapping::into_account_id(address)),
+				None => Err(Error::<T>::ContractNotFound),
+			}
 		}
 	}
 }

@@ -39,6 +39,7 @@ sp-runtime = {version = "6.0.0", default-features = false, git = "https://github
 sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local
+gafi-primitives = {version = "4.0.0-dev", default-version = false, path = "../../primitives"}
 proof-address-mapping = {version = "4.0.0-dev", default-version = false, path = "../address-mapping"}
 
 [features]
@@ -55,6 +56,7 @@ std = [
   "pallet-evm/std",
   "sp-std/std",
   "proof-address-mapping/std",
+  "gafi-primitives/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

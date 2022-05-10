@@ -1,14 +1,14 @@
 use crate::{self as game_creator};
-use frame_support::{parameter_types, traits::GenesisBuild};
-use frame_system as system;
-use proof_address_mapping::ProofAddressMapping;
-
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
+use frame_support::{parameter_types, traits::GenesisBuild};
+use frame_system as system;
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
 pub use pallet_balances::Call as BalancesCall;
-use sp_core::H256;
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
+use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -32,13 +32,43 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		GameCreator: game_creator::{Pallet, Storage, Event<T>},
-		PalletAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
+		ProofAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
 
+parameter_types! {
+	pub const ChainId: u64 = 1337;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
+impl pallet_evm::Config for Test {
+	type FeeCalculator = ();
+	type GasWeightMapping = ();
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
+	type AddressMapping = ProofAddressMapping;
+	type Currency = Balances;
+	type Event = Event;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
+	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
+	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
+	type FindAuthor = ();
+}
+
+impl pallet_ethereum::Config for Test {
+	type Event = Event;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+}
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
+	pub Fee: u128 = 1 *  unit(GAKI);
 }
 
 impl proof_address_mapping::Config for Test {
@@ -46,6 +76,7 @@ impl proof_address_mapping::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type MessagePrefix = Prefix;
+	type ReservationFee = Fee;
 }
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
@@ -88,8 +119,9 @@ parameter_types! {
 impl game_creator::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
 }
 
 parameter_types! {

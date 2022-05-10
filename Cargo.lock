@@ -2375,6 +2375,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "pallet-balances",
  "pallet-ethereum",
  "pallet-evm",
