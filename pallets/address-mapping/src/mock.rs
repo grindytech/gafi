@@ -1,5 +1,4 @@
 use crate as proof_address_mapping;
-use crate::{ProofAddressMapping};
 use frame_support::parameter_types;
 use frame_system as system;
 
@@ -28,7 +27,7 @@ frame_support::construct_runtime!(
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
+		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -44,7 +43,7 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;

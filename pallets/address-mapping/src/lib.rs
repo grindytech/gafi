@@ -169,7 +169,7 @@ pub mod pallet {
 			);
 			<T as pallet::Config>::Currency::reserve(&sender, <BondExistentialDeposit<T>>::get())?;
 			if withdraw {
-				let id = ProofAddressMapping::<T>::into_account_id(address);
+				let id = Self::into_account_id(address);
 				if let Some(from) = Self::into_account(id) {
 					Self::transfer_all(from, sender.clone(), true)?;
 				}
@@ -294,7 +294,6 @@ where
 	}
 }
 
-pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
 struct OriginAddressMapping;
 
 impl pallet_evm::AddressMapping<AccountId32> for OriginAddressMapping {
@@ -306,7 +305,7 @@ impl pallet_evm::AddressMapping<AccountId32> for OriginAddressMapping {
 	}
 }
 
-impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T>
+impl<T> pallet_evm::AddressMapping<AccountId32> for Pallet<T>
 where
 	T: Config,
 {
