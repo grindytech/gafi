@@ -2,7 +2,7 @@ use devnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
-	AddressMappingConfig, FaucetConfig, TxHandlerConfig,
+	FaucetConfig, TxHandlerConfig,
 	WASM_BINARY, PoolConfig, PalletCacheConfig,
 };
 use sc_service::{ChainType, Properties};
@@ -169,7 +169,6 @@ fn gaki_testnet_genesis(
 		base_fee: Default::default(),
 		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
 		staking_pool: StakingPoolConfig { services: staking_services },
-		address_mapping: AddressMappingConfig {bond_deposit: bond_existential_deposit},
 		faucet: FaucetConfig {
 			genesis_accounts: vec![
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
