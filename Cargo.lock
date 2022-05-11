@@ -200,7 +200,7 @@ dependencies = [
  "parking",
  "polling",
  "slab",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "waker-fn",
  "winapi 0.3.9",
 ]
@@ -776,9 +776,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.17"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47582c09be7c8b32c0ab3a6181825ababb713fde6fff20fc573a3870dd45c6a0"
+checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
 dependencies = [
  "atty",
  "bitflags",
@@ -793,9 +793,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.7"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3aab4734e083b809aaf5794e14e756d1c798d2c69c7f7de7a09a2f5214993c1"
+checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1561,7 +1561,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -1580,7 +1580,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -1594,7 +1594,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -1611,7 +1611,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1650,7 +1650,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1757,7 +1757,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -1769,7 +1769,7 @@ dependencies = [
 [[package]]
 name = "fp-dynamic-fee"
 version = "1.0.0"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "async-trait",
  "sp-core",
@@ -1779,7 +1779,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "evm",
  "parity-scale-codec",
@@ -1791,7 +1791,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1808,7 +1808,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -1824,7 +1824,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -2710,7 +2710,7 @@ dependencies = [
  "httpdate",
  "itoa 1.0.1",
  "pin-project-lite 0.2.9",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "tokio",
  "tower-service",
  "tracing",
@@ -3386,7 +3386,7 @@ dependencies = [
  "log",
  "rand 0.8.5",
  "smallvec",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "void",
 ]
 
@@ -3594,7 +3594,7 @@ dependencies = [
  "libc",
  "libp2p-core",
  "log",
- "socket2 0.4.5",
+ "socket2 0.4.4",
 ]
 
 [[package]]
@@ -4424,7 +4424,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -4458,7 +4458,7 @@ dependencies = [
 [[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "async-trait",
  "fp-dynamic-fee",
@@ -4477,7 +4477,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -4505,7 +4505,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "evm",
  "fp-evm",
@@ -4531,7 +4531,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fp-evm",
  "num",
@@ -4540,7 +4540,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fp-evm",
  "tiny-keccak",
@@ -4549,7 +4549,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#2b00268a2daff22fe173afbb70368d72d90d01ca"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.19#0c6ed83007aff4a8e4acf2a0867ece2863d8e586"
 dependencies = [
  "fp-evm",
  "ripemd",
@@ -7065,12 +7065,12 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.4.5"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca642ba17f8b2995138b1d7711829c92e98c0a25ea019de790f4f09279c4e296"
+checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
 dependencies = [
  "libc",
- "windows-sys",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -8164,7 +8164,7 @@ dependencies = [
  "parking_lot 0.12.0",
  "pin-project-lite 0.2.9",
  "signal-hook-registry",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "winapi 0.3.9",
 ]
 

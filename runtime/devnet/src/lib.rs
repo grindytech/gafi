@@ -465,8 +465,9 @@ parameter_types! {
 impl game_creator::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
 }
 
 impl pallet_pool::Config for Runtime {
