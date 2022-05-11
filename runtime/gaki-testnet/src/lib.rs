@@ -491,7 +491,6 @@ impl pallet_pool_names::Config for Runtime {
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
     type Slashed = ();
-	type ForceOrigin =  frame_system::EnsureRoot<AccountId>;
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
