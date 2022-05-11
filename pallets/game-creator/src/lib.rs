@@ -68,6 +68,19 @@ pub mod pallet {
 			ContractOwner::<T>::insert(contract, sender.clone());
 			Ok(())
 		}
+
+		#[pallet::weight(0)]
+		pub fn change_ownership(
+			origin: OriginFor<T>,
+			contract: H160,
+			new_owner: T::AccountId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::verify_owner(&sender, &contract)?;
+
+			ContractOwner::<T>::insert(contract, new_owner);
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {

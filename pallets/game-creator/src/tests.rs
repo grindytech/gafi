@@ -101,3 +101,59 @@ fn claim_contract_not_owner_fail() {
         );
     })
 }
+
+#[test]
+fn change_ownership_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+        let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
+
+        let contract_address = deploy_contract(evm_acc);
+
+        make_deposit(&sub_acc, 1_000 * unit(GAKI));
+        assert_ok!(Pallet::<Test>::claim_contract(
+            Origin::signed(sub_acc.clone()),
+            contract_address
+        ));
+
+        let new_owner = AccountId32::from([0u8; 32]);
+
+        assert_ok!(Pallet::<Test>::change_ownership(
+            Origin::signed(sub_acc.clone()),
+            contract_address,
+            new_owner.clone()
+        ));
+
+        assert_eq!(
+            ContractOwner::<Test>::get(contract_address),
+            Some(new_owner.clone())
+        );
+    })
+}
+
+#[test]
+fn change_ownership_not_owner_fail() {
+    ExtBuilder::default().build_and_execute(|| {
+        let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+        let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
+
+        let contract_address = deploy_contract(evm_acc);
+
+        make_deposit(&sub_acc, 1_000 * unit(GAKI));
+        assert_ok!(Pallet::<Test>::claim_contract(
+            Origin::signed(sub_acc.clone()),
+            contract_address
+        ));
+
+        let new_owner = AccountId32::from([0u8; 32]);
+
+        assert_err!(
+            Pallet::<Test>::change_ownership(
+                Origin::signed(AccountId32::from([1u8; 32])),
+                contract_address,
+                new_owner.clone()
+            ),
+            Error::<Test>::NotContractOwner
+        );
+    })
+}
