@@ -1,17 +1,9 @@
-
-//! ### Dispatchable Functions
-//!
-//! * `set_name` - Set the associated name of an account; a small deposit is reserved if not already
-//!   taken.
-//! * `clear_name` - Remove an account's associated name; the deposit is returned.
-//! * `kill_name` - Forcibly remove the associated name; the deposit is lost.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{traits::{Currency, OnUnbalanced, ReservableCurrency}};
+use frame_support::traits::{Currency, OnUnbalanced, ReservableCurrency};
 
 pub use pallet::*;
-use sp_runtime::traits::{Zero};
+use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
 pub use gafi_primitives::constant::ID;
 
@@ -71,14 +63,13 @@ pub mod pallet {
 		NameKilled { target: ID, deposit: BalanceOf<T> },
 	}
 
-	/// Error for the nicks pallet.
 	#[pallet::error]
 	pub enum Error<T> {
 		/// A name is too short.
 		TooShort,
 		/// A name is too long.
 		TooLong,
-		/// An account isn't named.
+		/// A pool isn't named.
 		Unnamed,
 	}
 
@@ -93,12 +84,12 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Set an account's name. The name should be a UTF-8-encoded string by convention, though
+		/// Set a pool's name. The name should be a UTF-8-encoded string by convention, though
 		/// we don't check it.
 		///
 		/// The name may not be more than `T::MaxLength` bytes, nor less than `T::MinLength` bytes.
 		///
-		/// If the account doesn't already have a name, then a fee of `ReservationFee` is reserved
+		/// If the pool doesn't already have a name, then a fee of `ReservationFee` is reserved
 		/// in the account.
 		///
 		/// The dispatch origin for this call must be _Signed_.
@@ -132,7 +123,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Clear an account's name and return the deposit. Fails if the account was not named.
+		/// Clear a pool's name and return the deposit. Fails if the pool was not named.
 		///
 		/// The dispatch origin for this call must be _Signed_.
 		///
@@ -142,77 +133,16 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		#[pallet::weight(70_000_000)]
-		pub fn clear_name(origin: OriginFor<T>, poolId: ID) -> DispatchResult {
+		#[pallet::weight(0)]
+		pub fn clear_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let deposit = <NameOf<T>>::take(&poolId).ok_or(Error::<T>::Unnamed)?.1;
+			let deposit = <NameOf<T>>::take(&pool_id).ok_or(Error::<T>::Unnamed)?.1;
 
 			let err_amount = T::Currency::unreserve(&sender, deposit);
 			debug_assert!(err_amount.is_zero());
 
-			Self::deposit_event(Event::<T>::NameCleared { pool: poolId, deposit });
-			Ok(())
-		}
-
-		/// Remove an account's name and take charge of the deposit.
-		///
-		/// Fails if `target` has not been named. The deposit is dealt with through `T::Slashed`
-		/// imbalance handler.
-		///
-		/// The dispatch origin for this call must match `T::ForceOrigin`.
-		///
-		/// # <weight>
-		/// - O(1).
-		/// - One unbalanced handler (probably a balance transfer)
-		/// - One storage read/write.
-		/// - One event.
-		/// # </weight>
-		// #[pallet::weight(70_000_000)]
-		// pub fn kill_name(
-		// 	origin: OriginFor<T>,
-		// 	target: ID,
-		// ) -> DispatchResult {
-		// 	T::ForceOrigin::ensure_origin(origin)?;
-
-		// 	// Figure out who we're meant to be clearing.
-		// 	let target = T::Lookup::lookup(target)?;
-		// 	// Grab their deposit (and check that they have one).
-		// 	let deposit = <NameOf<T>>::take(&target).ok_or(Error::<T>::Unnamed)?.1;
-		// 	// Slash their deposit from them.
-		// 	T::Slashed::on_unbalanced(T::Currency::slash_reserved(&target, deposit).0);
-
-		// 	Self::deposit_event(Event::<T>::NameKilled { target, deposit });
-		// 	Ok(())
-		// }
-
-		/// Set a third-party account's name with no deposit.
-		///
-		/// No length checking is done on the name.
-		///
-		/// The dispatch origin for this call must match `T::ForceOrigin`.
-		///
-		/// # <weight>
-		/// - O(1).
-		/// - At most one balance operation.
-		/// - One storage read/write.
-		/// - One event.
-		/// # </weight>
-		#[pallet::weight(70_000_000)]
-		pub fn force_name(
-			origin: OriginFor<T>,
-			target: ID,
-			name: Vec<u8>,
-		) -> DispatchResult {
-			// T::ForceOrigin::ensure_origin(origin)?;
-
-			// let bounded_name: BoundedVec<_, _> =
-			// 	name.try_into().map_err(|()| Error::<T>::TooLong)?;
-			// let target = T::Lookup::lookup(target)?;
-			// let deposit = <NameOf<T>>::get(&target).map(|x| x.1).unwrap_or_else(Zero::zero);
-			// <NameOf<T>>::insert(&target, (bounded_name, deposit));
-
-			// Self::deposit_event(Event::<T>::NameForced { target });
+			Self::deposit_event(Event::<T>::NameCleared { pool: pool_id, deposit });
 			Ok(())
 		}
 	}
