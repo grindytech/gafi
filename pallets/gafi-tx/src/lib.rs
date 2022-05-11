@@ -25,6 +25,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
+	game_creator::GetGameCreator,
 	pool::{PlayerTicket, TicketType},
 };
 pub use pallet::*;
@@ -74,6 +75,12 @@ pub mod pallet {
 
 		/// To use tickets
 		type PlayerTicket: PlayerTicket<Self::AccountId>;
+
+		/// percentage of transaction fee reward to game-creator
+		#[pallet::constant]
+		type GameCreatorReward: Get<u8>;
+
+		type GetGameCreator: GetGameCreator<Self::AccountId>;
 	}
 
 	//** STORAGE **//
@@ -145,6 +152,10 @@ pub mod pallet {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoBalanceFail),
 			}
+		}
+
+		pub fn u128_to_balance(input: u128) -> BalanceOf<T> {
+			input.try_into().ok().unwrap_or_default()
 		}
 
 		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
@@ -242,7 +253,9 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		let mut service_fee = corrected_fee;
+		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
+		// get transaction service based on player's service
 		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
 				match ticket {
@@ -269,6 +282,20 @@ where
 				}
 			}
 		}
+
+		if let Some(contract) = target {
+			if let Some(creator) = T::GetGameCreator::get_game_creator(&contract) {
+				let reward = service_fee
+					.saturating_mul(U256::from(T::GameCreatorReward::get()))
+					.checked_div(U256::from(100u64))
+					.unwrap_or_else(|| U256::from(0u64));
+				<T as Config>::Currency::deposit_into_existing(
+					&creator,
+					Pallet::<T>::u128_to_balance(reward.as_u128()),
+				);
+			}
+		}
+
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(
 			who,
 			target,

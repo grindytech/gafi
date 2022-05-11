@@ -434,12 +434,18 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;	
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30;
+}
+
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 parameter_types! {

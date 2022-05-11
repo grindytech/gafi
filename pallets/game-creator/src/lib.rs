@@ -3,12 +3,13 @@ pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{
-	fungible::MutateHold, BalanceStatus, Currency, ExistenceRequirement, ReservableCurrency,
+	BalanceStatus, Currency, ReservableCurrency,
 };
 use frame_system::pallet_prelude::*;
 use pallet_evm::AddressMapping;
 use pallet_evm::GetContractCreator;
 use sp_core::H160;
+use gafi_primitives::game_creator::GetGameCreator;
 
 #[cfg(test)]
 mod mock;
@@ -128,6 +129,12 @@ pub mod pallet {
 				Some(address) => return Ok(T::AddressMapping::into_account_id(address)),
 				None => Err(Error::<T>::ContractNotFound),
 			}
+		}
+	}
+
+	impl<T: Config> GetGameCreator<T::AccountId> for Pallet<T> {
+		fn get_game_creator(contract: &H160) -> Option<T::AccountId> {
+			ContractOwner::<T>::get(contract)
 		}
 	}
 }
