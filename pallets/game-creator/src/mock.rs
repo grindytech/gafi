@@ -112,8 +112,11 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const GAME_CREATE_FEE: u128 = 1_000_0000u128;
+
 parameter_types! {
 	pub MaxContractOwned: u32 = 100;
+	pub GameCreatorFee: u128 = GAME_CREATE_FEE;
 }
 
 impl game_creator::Config for Test {
@@ -122,6 +125,7 @@ impl game_creator::Config for Test {
 	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;
 	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
 }
 
 parameter_types! {

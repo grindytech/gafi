@@ -51,10 +51,10 @@ fn claim_contract_works() {
     ExtBuilder::default().build_and_execute(|| {
         let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
         let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
-
+        let sub_acc_balance = 1_000 * unit(GAKI);
         let contract_address = deploy_contract(evm_acc);
 
-        make_deposit(&sub_acc, 1_000 * unit(GAKI));
+        make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
             Origin::signed(sub_acc.clone()),
             contract_address
@@ -63,6 +63,8 @@ fn claim_contract_works() {
             ContractOwner::<Test>::get(contract_address),
             Some(sub_acc.clone())
         );
+
+        assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance - GAME_CREATE_FEE);
     })
 }
 
@@ -107,16 +109,17 @@ fn change_ownership_works() {
     ExtBuilder::default().build_and_execute(|| {
         let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
         let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
-
+        let sub_acc_balance = 1_000 * unit(GAKI);
         let contract_address = deploy_contract(evm_acc);
 
-        make_deposit(&sub_acc, 1_000 * unit(GAKI));
+        make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
             Origin::signed(sub_acc.clone()),
             contract_address
         ));
 
         let new_owner = AccountId32::from([0u8; 32]);
+        make_deposit(&new_owner, 1_000 * unit(GAKI));
 
         assert_ok!(Pallet::<Test>::change_ownership(
             Origin::signed(sub_acc.clone()),
@@ -128,6 +131,8 @@ fn change_ownership_works() {
             ContractOwner::<Test>::get(contract_address),
             Some(new_owner.clone())
         );
+
+        assert_eq!(Balances::free_balance(&sub_acc), sub_acc_balance - GAME_CREATE_FEE);
     })
 }
 
@@ -146,6 +151,7 @@ fn change_ownership_not_owner_fail() {
         ));
 
         let new_owner = AccountId32::from([0u8; 32]);
+        make_deposit(&new_owner, 1_000 * unit(GAKI));
 
         assert_err!(
             Pallet::<Test>::change_ownership(
@@ -155,5 +161,58 @@ fn change_ownership_not_owner_fail() {
             ),
             Error::<Test>::NotContractOwner
         );
+    })
+}
+
+#[test]
+fn withdraw_contract_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+        let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
+        let sub_acc_balance = 1_000 * unit(GAKI);
+        let contract_address = deploy_contract(evm_acc);
+
+        make_deposit(&sub_acc, sub_acc_balance);
+        assert_ok!(Pallet::<Test>::claim_contract(
+            Origin::signed(sub_acc.clone()),
+            contract_address
+        ));
+
+        assert_ok!(Pallet::<Test>::withdraw_contract(Origin::signed(sub_acc.clone()), contract_address));
+
+        assert_eq!(ContractOwner::<Test>::get(contract_address), None);
+        assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance);
+    })
+}
+
+#[test]
+fn withdraw_afer_change_ownership_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+        let sub_acc = ProofAddressMapping::into_account_id(evm_acc);
+        let sub_acc_balance = 1_000 * unit(GAKI);
+        let contract_address = deploy_contract(evm_acc);
+
+        make_deposit(&sub_acc, sub_acc_balance);
+        assert_ok!(Pallet::<Test>::claim_contract(
+            Origin::signed(sub_acc.clone()),
+            contract_address
+        ));
+
+        let new_owner = AccountId32::from([0u8; 32]);
+        let new_owner_balance = 100 * unit(GAKI); 
+        make_deposit(&new_owner, new_owner_balance);
+
+        assert_ok!(Pallet::<Test>::change_ownership(
+            Origin::signed(sub_acc.clone()),
+            contract_address,
+            new_owner.clone()
+        ));
+
+        assert_ok!(Pallet::<Test>::withdraw_contract(Origin::signed(new_owner.clone()), contract_address));
+
+        assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance - GAME_CREATE_FEE);
+        assert_eq!(Balances::free_balance(new_owner.clone()), new_owner_balance + GAME_CREATE_FEE);
+
     })
 }

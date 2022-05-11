@@ -460,6 +460,7 @@ impl pallet_cache::Config for Runtime {
 
 parameter_types! {
 	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
 }
 
 impl game_creator::Config for Runtime {
@@ -468,6 +469,7 @@ impl game_creator::Config for Runtime {
 	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;
 	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
 }
 
 impl pallet_pool::Config for Runtime {
