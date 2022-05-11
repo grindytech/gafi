@@ -5,7 +5,10 @@ use frame_support::traits::{Currency, OnUnbalanced, ReservableCurrency};
 pub use pallet::*;
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
-pub use gafi_primitives::constant::ID;
+pub use gafi_primitives::{
+	constant::ID,
+	name::Name
+};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
@@ -35,6 +38,9 @@ pub mod pallet {
 		/// Reservation fee.
 		#[pallet::constant]
 		type ReservationFee: Get<BalanceOf<Self>>;
+
+		/// The origin which may forcibly set or remove a name. Root can always do this.
+		type ForceOrigin: EnsureOrigin<Self::Origin>;
 
 		/// What to do with slashed funds.
 		type Slashed: OnUnbalanced<NegativeImbalanceOf<Self>>;
@@ -83,7 +89,9 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> {}
+
+	impl<T: Config> Name<OriginFor<T>> for Pallet<T> {
 		/// Set a pool's name. The name should be a UTF-8-encoded string by convention, though
 		/// we don't check it.
 		///
@@ -100,9 +108,8 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		// TODO: Create weight file for this.
-		#[pallet::weight(0)]
-		pub fn set_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
+
+		fn set_name(origin: OriginFor<T>,pool_id: ID, name: Vec<u8>) -> DispatchResult{
 			let sender = ensure_signed(origin)?;
 
 			let bounded_name: BoundedVec<_, _> =
@@ -133,8 +140,7 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		#[pallet::weight(0)]
-		pub fn clear_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
+		fn clear_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let deposit = <NameOf<T>>::take(&pool_id).ok_or(Error::<T>::Unnamed)?.1;
@@ -143,6 +149,35 @@ pub mod pallet {
 			debug_assert!(err_amount.is_zero());
 
 			Self::deposit_event(Event::<T>::NameCleared { pool: pool_id, deposit });
+			Ok(())
+		}
+
+		/// Remove an account's name and take charge of the deposit.
+		///
+		/// Fails if `target` has not been named. The deposit is dealt with through `T::Slashed`
+		/// imbalance handler.
+		///
+		/// The dispatch origin for this call must match `T::ForceOrigin`.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - One unbalanced handler (probably a balance transfer)
+		/// - One storage read/write.
+		/// - One event.
+		/// # </weight>
+		fn kill_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			T::ForceOrigin::ensure_origin(origin)?;
+
+			// Grab their deposit (and check that they have one).
+			let deposit = <NameOf<T>>::take(&pool_id).ok_or(Error::<T>::Unnamed)?.1;
+			// Slash their deposit from them.
+			T::Slashed::on_unbalanced(T::Currency::slash_reserved(&sender, deposit).0);
+
+			Self::deposit_event(Event::<T>::NameKilled { target: pool_id, deposit });
 			Ok(())
 		}
 	}

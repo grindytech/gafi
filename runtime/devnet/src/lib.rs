@@ -413,6 +413,7 @@ parameter_types! {
 impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type PoolName = PoolName;
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
@@ -429,7 +430,7 @@ impl proof_address_mapping::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
-	type ReservationFee = Fee;	
+	type ReservationFee = Fee;
 }
 
 impl gafi_tx::Config for Runtime {
@@ -477,7 +478,7 @@ impl pallet_pool_names::Config for Runtime {
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
     type Slashed = ();
-	type ForceOrigin =  frame_system::EnsureRoot<AccountId>;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;

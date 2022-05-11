@@ -14,6 +14,14 @@ fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
 }
 
+fn new_sudo_account(balance: u128) -> AccountId32 {
+	let ALICE: AccountId32 =
+		AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+	make_deposit(&ALICE, balance);
+	assert_eq!(Balances::free_balance(&ALICE), balance);
+	return ALICE;
+}
+
 fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
     let acc: AccountId32 = AccountId32::from(account);
     make_deposit(&acc, balance);
@@ -71,6 +79,29 @@ fn normal_operation_should_work() {
 		assert_eq!(Balances::free_balance(account.clone()), 1_000_000 * unit(GAKI));
 	});
 }
+
+#[test]
+	fn kill_name_should_work() {
+		ExtBuilder::default().build_and_execute(|| {
+			run_to_block(1);
+			let account_balance = 1_001_000 * unit(GAKI);
+			let account = new_account([0_u8; 32], account_balance);
+			let pool_value = 1000 * unit(GAKI);
+			let pool_id = create_pool(
+				account.clone(),
+				vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+				pool_value,
+				10,
+				100,
+			);
+			let sudo_account = new_sudo_account(account_balance);
+			assert_ok!(PoolNames::set_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
+			assert_eq!(Balances::total_balance(&account), 1_000_000 * unit(GAKI));
+			assert_ok!(PoolNames::kill_name(Origin::root(), pool_id));
+			assert_eq!(Balances::total_balance(&account), 1_000_000 * unit(GAKI) - unit(GAKI));
+			assert_eq!(<NameOf<Test>>::get(pool_id), None);
+		});
+	}
 
 #[test]
 fn error_catching_should_work() {

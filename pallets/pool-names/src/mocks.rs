@@ -102,6 +102,7 @@ impl pallet_pool_names::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId32>;
 	type Slashed = ();
 	type MinLength = ConstU32<3>;
 	type MaxLength = ConstU32<16>;
