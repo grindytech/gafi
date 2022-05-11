@@ -72,6 +72,7 @@ pub use pallet_pool;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
+pub use pallet_pool_names;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -482,6 +483,21 @@ impl pallet_pool::Config for Runtime {
 	type Cache = PalletCache;
 }
 
+parameter_types! {
+	pub ReservationFee:u128 = 1 * unit(GAKI);
+	pub MinLength: u32= 8;
+	pub MaxLength: u32 = 32;
+}
+
+impl pallet_pool_names::Config for Runtime {
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+    type Slashed = ();
+	type MinLength = MinLength;
+	type MaxLength = MaxLength;
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -512,6 +528,7 @@ construct_runtime!(
 		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
+		PoolName: pallet_pool_names
 	}
 );
 

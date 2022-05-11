@@ -1190,6 +1190,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-player",
  "pallet-pool",
+ "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-timestamp",
@@ -2342,6 +2343,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-player",
  "pallet-pool",
+ "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-sudo",
@@ -4630,6 +4632,25 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-pool-names"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sponsored-pool",
 ]
 
 [[package]]
