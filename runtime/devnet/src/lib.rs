@@ -534,7 +534,7 @@ construct_runtime!(
 		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
-		PoolName: pallet_pool_names
+		PoolName: pallet_pool_names,
 	}
 );
 

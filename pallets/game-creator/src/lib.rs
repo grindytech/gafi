@@ -1,15 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-pub use pallet::*;
-
-use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	BalanceStatus, Currency, ReservableCurrency,
 };
+use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
-use pallet_evm::AddressMapping;
-use pallet_evm::GetContractCreator;
+use pallet_evm::{AddressMapping, GetContractCreator};
 use sp_core::H160;
 use gafi_primitives::game_creator::GetGameCreator;
+pub use pallet::*;
 
 #[cfg(test)]
 mod mock;

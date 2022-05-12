@@ -8029,6 +8029,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "gafi-tx",
+ "game-creator",
  "hex",
  "hex-literal 0.3.4",
  "more-asserts",

@@ -447,12 +447,18 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30u8;
+}
+
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 parameter_types! {
@@ -541,7 +547,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
 		PoolName: pallet_pool_names,
-		GameCreate: 
+		GameCreator: game_creator, 
 	}
 );
 

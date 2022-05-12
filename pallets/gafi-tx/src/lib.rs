@@ -289,7 +289,7 @@ where
 					.saturating_mul(U256::from(T::GameCreatorReward::get()))
 					.checked_div(U256::from(100u64))
 					.unwrap_or_else(|| U256::from(0u64));
-				<T as Config>::Currency::deposit_into_existing(
+				let _ = <T as Config>::Currency::deposit_into_existing(
 					&creator,
 					Pallet::<T>::u128_to_balance(reward.as_u128()),
 				);

@@ -56,10 +56,25 @@ frame_support::construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 impl pallet_randomness_collective_flip::Config for Test {}
+
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
+}
+
+impl game_creator::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
+}
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  PREFIX;
@@ -225,12 +240,18 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30u8;
+}
+
 impl gafi_tx::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 // Build genesis storage according to the mock runtime.

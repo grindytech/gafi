@@ -1,5 +1,3 @@
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_core::H160;
 
 pub trait GetGameCreator<AccountId> {

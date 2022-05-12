@@ -19,7 +19,6 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 scale-info = {version = "2.0.1", default-features = false, features = ["derive"]}
 
 # Frontier
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
 pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
 
 # Substrate
@@ -30,11 +29,13 @@ pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https
 sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local
-gafi-primitives = {version = "4.0.0-dev", default-version = false, path = "../../primitives"}
+gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
 
 [dev-dependencies]
+#Frontier
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+
 # Substrate
-pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-io = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
@@ -42,7 +43,6 @@ sp-runtime = {version = "6.0.0", default-features = false, git = "https://github
 sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local
-gafi-primitives = {version = "4.0.0-dev", default-version = false, path = "../../primitives"}
 proof-address-mapping = {version = "4.0.0-dev", default-version = false, path = "../address-mapping"}
 
 [features]
@@ -55,11 +55,11 @@ std = [
   "frame-benchmarking/std",
   "pallet-balances/std",
   "pallet-timestamp/std",
-  "pallet-ethereum/std",
   "pallet-evm/std",
   "sp-std/std",
   "proof-address-mapping/std",
   "gafi-primitives/std",
+  "pallet-ethereum/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

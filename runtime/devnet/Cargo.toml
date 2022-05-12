@@ -103,6 +103,7 @@ runtime-benchmarks = [
   "proof-address-mapping/runtime-benchmarks",
   "pallet-faucet/runtime-benchmarks",
   "sponsored-pool/runtime-benchmarks",
+  "game-creator/runtime-benchmarks",
 ]
 std = [
   "codec/std",

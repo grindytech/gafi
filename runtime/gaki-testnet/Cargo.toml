@@ -76,6 +76,7 @@ sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../..
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
+
 # unit test
 [dev.dependencies]
 sp-io = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
