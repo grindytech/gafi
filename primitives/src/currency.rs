@@ -31,14 +31,14 @@ impl TokenInfo for GafiCurrency {
 	fn token_info(token: NativeToken) -> Token {
 		let gaki: Token = Token {
 			id: 1,
-			name: b"Gafi Native Token".to_vec(),
-			symbol: "GAFI".as_bytes().to_vec(),
+			name: b"GAKI Token".to_vec(),
+			symbol: "GAKI".as_bytes().to_vec(),
 			decimals: 18,
 		};
 		let gafi: Token = Token {
 			id: 2,
-			name: b"Gaki Native Token".to_vec(),
-			symbol: "GAKI".as_bytes().to_vec(),
+			name: b"GAFI Token".to_vec(),
+			symbol: "GAFI".as_bytes().to_vec(),
 			decimals: 18,
 		};
 
@@ -58,14 +58,17 @@ pub fn centi(token: NativeToken) -> u128 {
     unit(token) / 100
 }
 
+/// 1 milli = 0.001 unit
 pub fn milli(token: NativeToken) -> u128 {
     unit(token) / 1000
 }
 
+/// 1 millicent = 0.00001 unit
 pub fn millicent(token: NativeToken) -> u128 {
     centi(token) / 1000
 }
 
+/// 1 microcent = 0.000001 unit
 pub fn microcent(token: NativeToken) -> u128 {
     milli(token) / 1000
 }
