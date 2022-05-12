@@ -9,3 +9,5 @@ pub mod constant;
 pub mod cache;
 
 pub mod player;
+
+pub mod game_creator;

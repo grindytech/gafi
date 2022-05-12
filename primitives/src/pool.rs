@@ -1,6 +1,5 @@
 use crate::{
 	constant::ID,
-	currency::{unit, NativeToken::GAKI},
 };
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]

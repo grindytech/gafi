@@ -55,14 +55,16 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
+	cache::Cache,
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	player::TicketInfo,
-	cache::Cache,
 	pool::TicketType,
 };
+use sp_std::if_std;
 
 // import local pallets
 pub use gafi_tx;
+pub use game_creator;
 pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
@@ -432,12 +434,18 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;	
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30;
+}
+
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 parameter_types! {
@@ -455,6 +463,20 @@ impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
+}
+
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
+}
+
+impl game_creator::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -511,7 +533,8 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping,
 		PalletCache: pallet_cache,
 		Faucet: pallet_faucet,
-		PoolName: pallet_pool_names
+		GameCreator: game_creator,
+		PoolName: pallet_pool_names,
 	}
 );
 

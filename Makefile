@@ -1,7 +1,7 @@
 
 
 .PHONY: build-dev
-build:
+build-dev:
 	cargo build --release --features with-development
 
 .PHONY: build-gaki

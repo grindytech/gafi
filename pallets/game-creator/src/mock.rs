@@ -1,19 +1,25 @@
-use crate as proof_address_mapping;
-use frame_support::parameter_types;
+use crate::{self as game_creator};
+use frame_support::{
+	dispatch::Vec,
+	traits::{Currency, OnFinalize, OnInitialize},
+};
+use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
-
-use frame_support::traits::{Currency, OnFinalize, OnInitialize};
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
+pub use pallet_balances::Call as BalancesCall;
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, EVMCurrencyAdapter};
-pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+pub const MAX_PLAYER: u32 = 1000;
+pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -24,10 +30,11 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		GameCreator: game_creator::{Pallet, Storage, Event<T>},
+		ProofAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -54,6 +61,42 @@ impl pallet_evm::Config for Test {
 	type FindAuthor = ();
 }
 
+impl pallet_ethereum::Config for Test {
+	type Event = Event;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+}
+
+parameter_types! {
+	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
+	pub Fee: u128 = 1 *  unit(GAKI);
+}
+
+impl proof_address_mapping::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type MessagePrefix = Prefix;
+	type ReservationFee = Fee;
+}
+
+pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
+
+parameter_types! {
+	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
+}
+
+impl pallet_balances::Config for Test {
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type Balance = u128;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+}
+
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
@@ -69,41 +112,20 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_ethereum::Config for Test {
-	type Event = Event;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-}
+pub const GAME_CREATE_FEE: u128 = 1_000_0000u128;
 
 parameter_types! {
-	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
-	pub ReservationFee: u64 = RESERVATION_FEE;
+	pub MaxContractOwned: u32 = 100;
+	pub GameCreatorFee: u128 = GAME_CREATE_FEE;
 }
 
-impl proof_address_mapping::Config for Test {
+impl game_creator::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type WeightInfo = ();
-	type MessagePrefix = Prefix;
-	type ReservationFee = ReservationFee;
-}
-
-pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
-pub const RESERVATION_FEE: u64 = 1000;
-
-parameter_types! {
-	pub ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
-}
-
-impl pallet_balances::Config for Test {
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = u64;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
 }
 
 parameter_types! {
@@ -123,7 +145,7 @@ impl system::Config for Test {
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -138,10 +160,12 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }
 
 pub fn run_to_block(n: u64) {
@@ -151,22 +175,36 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
 pub struct ExtBuilder {
+	balances: Vec<(AccountId32, u128)>,
+	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
+			balances: vec![],
+			time_service: TIME_SERVICE,
 		}
 	}
 }
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
+
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext
