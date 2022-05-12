@@ -85,7 +85,7 @@ use super::*;
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
 		/// Manage pool name
-		type PoolName: Name<OriginFor<Self>>;
+		type PoolName: Name<Self::AccountId>;
 
 		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
@@ -299,14 +299,46 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
 			ensure!(
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner
 			);
 
-			T::PoolName::set_name(origin, pool_id, name)?;
+			T::PoolName::set_name(sender, pool_id, name)?;
 
 			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn clear_pool_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+
+			T::PoolName::clear_name(sender, pool_id)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn kill_pool_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+		) -> DispatchResult {
+			ensure_root(origin.clone())?;
+
+			match Pools::<T>::get(pool_id) {
+				None => Err(<Error<T>>::PoolNotExist.into()),
+				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
+			}
 		}
 
 	}
