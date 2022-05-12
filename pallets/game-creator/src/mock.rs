@@ -1,4 +1,4 @@
-use crate::{self as game_creator};
+pub use crate::{self as game_creator};
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},

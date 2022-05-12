@@ -3,7 +3,7 @@
 use super::*;
 #[allow(unused)]
 use crate::Pallet as Mapping;
-use crate::{Call, Config, ProofAddressMapping};
+use crate::{Call, Config};
 use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::traits::Currency;
@@ -60,7 +60,7 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u64) -> T::Accou
 }
 
 fn init_funded_h160<T: Config>(address: H160) {
-	let account_id = ProofAddressMapping::<T>::into_account_id(address);
+	let account_id = Pallet::<T>::into_account_id(address);
 	let account = into_account::<T>(account_id).unwrap();
 	let balance_amount = 1000_000_000u64.try_into().ok().unwrap();
 	<T as pallet::Config>::Currency::make_free_balance_be(&account, balance_amount);
