@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{Currency, OnFinalize, OnInitialize, ConstU32},
 };
 use frame_support::{
 	parameter_types,
@@ -56,6 +56,7 @@ frame_support::construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -168,6 +169,7 @@ impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = ();
@@ -207,6 +209,21 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
+
+pub const RESERVATION_FEE: u128 = 2;
+
+parameter_types! {
+	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+}
+impl pallet_pool_names::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;

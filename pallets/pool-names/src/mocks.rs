@@ -22,12 +22,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
-		SponsoredPool: sponsored_pool,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
-
-impl pallet_randomness_collective_flip::Config for Test {}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -79,21 +75,7 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub MaxPoolOwned: u32 =  10;
-	pub MaxPoolTarget: u32 =  10;
-}
-
-impl sponsored_pool::Config for Test {
-	type Event = Event;
-	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
-	type MaxPoolOwned = MaxPoolOwned;
-	type MaxPoolTarget = MaxPoolTarget;
-	type WeightInfo = ();
-}
-
-const RESERVATION_FEE: u128 = 1;
+pub const RESERVATION_FEE: u128 = 1;
 
 parameter_types! {
 	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);

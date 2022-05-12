@@ -5,7 +5,10 @@ use frame_support::traits::{Currency, OnUnbalanced, ReservableCurrency};
 pub use pallet::*;
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
-pub use gafi_primitives::constant::ID;
+pub use gafi_primitives::{
+	constant::ID,
+	name::Name
+};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
@@ -22,7 +25,6 @@ mod tests;
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -75,6 +77,7 @@ pub mod pallet {
 
 	/// The lookup table for names.
 	#[pallet::storage]
+	#[pallet::getter(fn name_of)]
 	pub(super) type NameOf<T: Config> =
 		StorageMap<_, Twox64Concat, ID, (BoundedVec<u8, T::MaxLength>, BalanceOf<T>)>;
 
@@ -83,7 +86,9 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> {}
+
+	impl<T: Config> Name<AccountIdOf<T>> for Pallet<T> {
 		/// Set a pool's name. The name should be a UTF-8-encoded string by convention, though
 		/// we don't check it.
 		///
@@ -100,11 +105,8 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		// TODO: Create weight file for this.
-		#[pallet::weight(0)]
-		pub fn set_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
 
+		fn set_name(account_id: AccountIdOf<T>,pool_id: ID, name: Vec<u8>) -> DispatchResult{
 			let bounded_name: BoundedVec<_, _> =
 				name.try_into().map_err(|()| Error::<T>::TooLong)?;
 			ensure!(bounded_name.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);
@@ -114,7 +116,7 @@ pub mod pallet {
 				deposit
 			} else {
 				let deposit = T::ReservationFee::get();
-				T::Currency::reserve(&sender, deposit)?;
+				T::Currency::reserve(&account_id, deposit)?;
 				Self::deposit_event(Event::<T>::NameSet { pool: pool_id });
 				deposit
 			};
@@ -133,16 +135,37 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		#[pallet::weight(0)]
-		pub fn clear_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-
+		fn clear_name(account_id: AccountIdOf<T>, pool_id: ID) -> DispatchResult {
 			let deposit = <NameOf<T>>::take(&pool_id).ok_or(Error::<T>::Unnamed)?.1;
 
-			let err_amount = T::Currency::unreserve(&sender, deposit);
+			let err_amount = T::Currency::unreserve(&account_id, deposit);
 			debug_assert!(err_amount.is_zero());
 
 			Self::deposit_event(Event::<T>::NameCleared { pool: pool_id, deposit });
+			Ok(())
+		}
+
+		/// Remove a name and take charge of the deposit.
+		///
+		/// Fails if `target` has not been named. The deposit is dealt with through `T::Slashed`
+		/// imbalance handler.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - One unbalanced handler (probably a balance transfer)
+		/// - One storage read/write.
+		/// - One event.
+		/// # </weight>
+		fn kill_name(
+			account_id: AccountIdOf<T>,
+			target: ID,
+		) -> DispatchResult {
+			// Grab their deposit (and check that they have one).
+			let deposit = <NameOf<T>>::take(&target).ok_or(Error::<T>::Unnamed)?.1;
+			// Slash their deposit from them.
+			T::Slashed::on_unbalanced(T::Currency::slash_reserved(&account_id, deposit).0);
+
+			Self::deposit_event(Event::<T>::NameKilled { target, deposit });
 			Ok(())
 		}
 	}

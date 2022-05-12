@@ -4644,14 +4644,12 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
- "pallet-randomness-collective-flip",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
 ]
 
 [[package]]
@@ -7784,6 +7782,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
+ "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -8038,6 +8037,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-pool",
+ "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",

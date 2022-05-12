@@ -26,6 +26,7 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
 	constant::ID,
+	name::Name,
 	pool::{Level, Service, StaticPool, StaticService},
 };
 pub use pallet::*;
@@ -61,7 +62,8 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+
+use super::*;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -81,6 +83,9 @@ pub mod pallet {
 
 		/// To make the random pool id
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+
+		/// Manage pool name
+		type PoolName: Name<Self::AccountId>;
 
 		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
@@ -147,7 +152,7 @@ pub mod pallet {
 		///
 		/// Parameters:
 		/// - `targets`: smart-contract addresses
-		/// - `value`: the amount token deposit to the pool 
+		/// - `value`: the amount token deposit to the pool
 		/// - `discount`: transaction fee discount
 		/// - `tx_limit`: the number of discounted transaction per period of time
 		///
@@ -285,6 +290,57 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::weight(0)]
+		pub fn set_pool_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			name: Vec<u8>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+
+			T::PoolName::set_name(sender, pool_id, name)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn clear_pool_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+
+			T::PoolName::clear_name(sender, pool_id)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn kill_pool_name(
+			origin: OriginFor<T>,
+			pool_id: ID,
+		) -> DispatchResult {
+			ensure_root(origin.clone())?;
+
+			match Pools::<T>::get(pool_id) {
+				None => Err(<Error<T>>::PoolNotExist.into()),
+				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
+			}
+		}
+
 	}
 
 	impl<T: Config> Pallet<T> {
