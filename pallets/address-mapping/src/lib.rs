@@ -73,6 +73,9 @@ pub mod pallet {
 		/// Message Prefix for signing messages using ecdsa signature
 		#[pallet::constant]
 		type MessagePrefix: Get<&'static [u8]>;
+
+		#[pallet::constant]
+		type ReservationFee: Get<BalanceOf<Self>>;
 	}
 
 	// holding AccountId32 address that bonded for H160 address
@@ -82,32 +85,6 @@ pub mod pallet {
 	// holding H160 address that bonded for AccountId32 address
 	#[pallet::storage]
 	pub type Id32Mapping<T: Config> = StorageMap<_, Twox64Concat, AccountId32, H160>;
-
-	// holding the existential deposit amount needed to make the bonding
-	#[pallet::storage]
-	pub type BondExistentialDeposit<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-	//** Genesis Conguration **//
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub bond_deposit: BalanceOf<T>,
-	}
-
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			// 1 unit with decimals = 18
-			let bond_deposit: BalanceOf<T> = 1_000_000_000_000_000_000u128.try_into().ok().unwrap();
-			Self { bond_deposit }
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-			<BondExistentialDeposit<T>>::put(self.bond_deposit);
-		}
-	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -167,9 +144,9 @@ pub mod pallet {
 				Self::verify_bond(sender.clone(), signature, address.to_fixed_bytes()),
 				<Error<T>>::SignatureOrAddressNotCorrect,
 			);
-			<T as pallet::Config>::Currency::reserve(&sender, <BondExistentialDeposit<T>>::get())?;
+			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
 			if withdraw {
-				let id = ProofAddressMapping::<T>::into_account_id(address);
+				let id = Self::into_account_id(address);
 				if let Some(from) = Self::into_account(id) {
 					Self::transfer_all(from, sender.clone(), true)?;
 				}
@@ -197,7 +174,7 @@ pub mod pallet {
 			ensure!(evm_address != None, <Error<T>>::NonbondAccount);
 			let id32_address = <H160Mapping<T>>::get(evm_address.unwrap());
 			ensure!(id32_address != None, <Error<T>>::NonbondAccount);
-			<T as pallet::Config>::Currency::unreserve(&sender, <BondExistentialDeposit<T>>::get());
+			<T as pallet::Config>::Currency::unreserve(&sender, T::ReservationFee::get());
 
 			Self::remove_pair_bond(evm_address.unwrap(), id32_address.unwrap());
 			Self::deposit_event(Event::Unbonded { sender, address: evm_address.unwrap() });
@@ -294,7 +271,6 @@ where
 	}
 }
 
-pub struct ProofAddressMapping<T>(sp_std::marker::PhantomData<T>);
 struct OriginAddressMapping;
 
 impl pallet_evm::AddressMapping<AccountId32> for OriginAddressMapping {
@@ -306,7 +282,7 @@ impl pallet_evm::AddressMapping<AccountId32> for OriginAddressMapping {
 	}
 }
 
-impl<T> pallet_evm::AddressMapping<AccountId32> for ProofAddressMapping<T>
+impl<T> pallet_evm::AddressMapping<AccountId32> for Pallet<T>
 where
 	T: Config,
 {
@@ -316,16 +292,5 @@ where
 		} else {
 			OriginAddressMapping::into_account_id(address)
 		}
-	}
-}
-
-#[cfg(feature = "std")]
-impl<T: Config> GenesisConfig<T> {
-	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
-	}
-
-	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
 	}
 }

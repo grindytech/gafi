@@ -1,5 +1,24 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use crate::weights::WeightInfo;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
@@ -9,7 +28,6 @@ pub use gafi_primitives::{
 	constant::ID,
 	pool::{Level, Service, StaticPool, StaticService},
 };
-use crate::weights::WeightInfo;
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -21,7 +39,7 @@ use sp_std::vec::Vec;
 #[derive(
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct SponsoredPool<AccountId> {
+struct SponsoredPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
@@ -55,16 +73,20 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
+		/// To make the random pool id
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
+		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
 		type MaxPoolOwned: Get<u32>;
 
+		/// The maximum number of contract address can added to the pool
 		#[pallet::constant]
 		type MaxPoolTarget: Get<u32>;
 
@@ -77,16 +99,19 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Holding the all the pool data
 	#[pallet::storage]
 	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
 
+	/// Holding the pool owned
 	#[pallet::storage]
 	#[pallet::getter(fn pool_owned)]
-	pub type PoolOwned<T: Config> =
+	pub(super) type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
+	/// Holding the contract addresses
 	#[pallet::storage]
-	pub type Targets<T: Config> =
+	pub(super) type Targets<T: Config> =
 		StorageMap<_, Twox64Concat, ID, BoundedVec<H160, T::MaxPoolTarget>, ValueQuery>;
 
 	#[pallet::event]
@@ -98,10 +123,14 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Generate the pool id that duplicated
 		PoolIdExisted,
+		/// Can not convert u128 to balance
 		ConvertBalanceFail,
+		/// Can not convert pool id to account
 		IntoAccountFail,
 		IntoU32Fail,
+		/// Origin not the owner
 		NotTheOwner,
 		PoolNotExist,
 		ExceedMaxPoolOwned,
@@ -110,6 +139,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		/// Create Pool
+		///
+		/// Create new pool and deposit amount of `value` to the pool,
+		/// the origin must be Signed
+		///
+		/// Parameters:
+		/// - `targets`: smart-contract addresses
+		/// - `value`: the amount token deposit to the pool 
+		/// - `discount`: transaction fee discount
+		/// - `tx_limit`: the number of discounted transaction per period of time
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u32))]
 		pub fn create_pool(
 			origin: OriginFor<T>,
@@ -168,6 +210,15 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Withdraw Pool
+		///
+		/// withdraw all the balances remain in the pool and destroy the pool,
+		/// the origin as the owner of the pool must be Signed
+		///
+		/// Parameters:
+		/// - `pool_id`: the id of the pool
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u32))]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -193,6 +244,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// New Targets
+		///
+		/// change the contract addresses by replace old addresses with the new one
+		/// the origin as the owner of the pool must be Signed
+		///
+		/// Parameters:
+		/// - `pool_id`: the id of the pool
+		/// - `targets`: new smart-contract addresses
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::new_targets(50u32))]
 		pub fn new_targets(
 			origin: OriginFor<T>,
@@ -227,7 +288,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn gen_id() -> Result<ID, Error<T>> {
+		fn gen_id() -> Result<ID, Error<T>> {
 			let payload = (
 				T::Randomness::random(&b""[..]).0,
 				<frame_system::Pallet<T>>::block_number(),
@@ -235,7 +296,7 @@ pub mod pallet {
 			Ok(payload.using_encoded(blake2_256))
 		}
 
-		pub fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
+		pub(super) fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
 			let id = Self::gen_id()?;
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(NewPool::<T::AccountId> { id, account }),
@@ -243,35 +304,28 @@ pub mod pallet {
 			}
 		}
 
-		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
+		fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(account),
 				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}
 
-		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
-			match input.try_into().ok() {
-				Some(val) => Ok(val),
-				None => Err(<Error<T>>::ConvertBalanceFail),
-			}
-		}
-
-		pub fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
+		fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoU32Fail),
 			}
 		}
 
-		pub fn balance_try_to_u128(input: BalanceOf<T>) -> Result<u128, Error<T>> {
+		fn balance_try_to_u128(input: BalanceOf<T>) -> Result<u128, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::ConvertBalanceFail),
 			}
 		}
 
-		pub fn transfer_all(
+		fn transfer_all(
 			from: &T::AccountId,
 			to: &T::AccountId,
 			keep_alive: bool,
@@ -294,16 +348,12 @@ pub mod pallet {
 			)
 		}
 
-		pub fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
+		fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
 			match Pools::<T>::get(pool_id) {
 				Some(pool) => Ok(pool.owner == *owner),
 				None => Err(<Error<T>>::PoolNotExist),
 			}
 		}
-
-		// pub fn get_last_pool_id() -> ID {
-		// 	Pools::<T>::get().
-		// }
 	}
 
 	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
@@ -328,4 +378,3 @@ pub mod pallet {
 		}
 	}
 }
-

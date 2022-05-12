@@ -1,7 +1,9 @@
 use devnet::{
-	AccountId, AddressMappingConfig, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig,
-	FaucetConfig, GenesisConfig, GrandpaConfig, PalletCacheConfig, PoolConfig, Signature,
-	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig,
+	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
+	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
+	FaucetConfig, TxHandlerConfig,
+	WASM_BINARY, PoolConfig, PalletCacheConfig,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
 use gafi_primitives::pool::{FlexService, Level};
@@ -238,16 +240,8 @@ fn dev_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig {
-			max_player: MAX_PLAYER,
-			services: upfront_services,
-		},
-		staking_pool: StakingPoolConfig {
-			services: staking_services,
-		},
-		address_mapping: AddressMappingConfig {
-			bond_deposit: bond_existential_deposit,
-		},
+		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
+		staking_pool: StakingPoolConfig { services: staking_services },
 		faucet: FaucetConfig {
 			genesis_accounts: vec![
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
