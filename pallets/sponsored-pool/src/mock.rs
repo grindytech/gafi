@@ -4,13 +4,14 @@
 */
 
 use crate::{self as sponsored_pool};
-use frame_support::{parameter_types, traits::GenesisBuild};
+use frame_support::{parameter_types, traits::{GenesisBuild, ConstU32}};
 use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -36,6 +37,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
+		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
@@ -118,10 +120,26 @@ impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = ();
 }
+
+pub const RESERVATION_FEE: u128 = 2;
+
+parameter_types! {
+	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+}
+impl pallet_pool_names::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

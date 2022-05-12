@@ -415,6 +415,7 @@ parameter_types! {
 impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type PoolName = PoolName;
 	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
@@ -431,7 +432,7 @@ impl proof_address_mapping::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
-	type ReservationFee = Fee;	
+	type ReservationFee = Fee;
 }
 
 parameter_types! {

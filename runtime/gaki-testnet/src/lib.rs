@@ -429,6 +429,7 @@ impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type PoolName = PoolName;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
@@ -547,7 +548,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
 		PoolName: pallet_pool_names,
-		GameCreator: game_creator, 
+		GameCreator: game_creator,
 	}
 );
 
