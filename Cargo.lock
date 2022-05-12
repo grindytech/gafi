@@ -2227,6 +2227,7 @@ dependencies = [
  "frame-system",
  "futures 0.3.21",
  "gafi-primitives",
+ "gaki-testnet",
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "jsonrpc-pubsub",

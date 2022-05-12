@@ -289,10 +289,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-// parameter_types! {
-// 	pub TransactionByteFee: Balance = 2 * milli(GAKI); // 0.002 GAKI
-// }
-
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type OperationalFeeMultiplier = ConstU8<5>;

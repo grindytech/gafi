@@ -5,16 +5,16 @@ use devnet::{
 	FaucetConfig, TxHandlerConfig,
 	WASM_BINARY, PoolConfig, PalletCacheConfig,
 };
+use gafi_primitives::currency::{microcent, unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
+use gafi_primitives::pool::{FlexService, Level};
 use sc_service::{ChainType, Properties};
+use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::{collections::BTreeMap};
-use serde_json::json;
-use gafi_primitives::{currency::{NativeToken::GAKI, unit, GafiCurrency, TokenInfo}};
-use gafi_primitives::{pool::{Level, FlexService}};
 use sp_std::*;
+use std::collections::BTreeMap;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -51,18 +51,18 @@ pub fn gaki_config() -> Result<ChainSpec, String> {
 pub fn gaki_dev_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-	let mut props : Properties = Properties::new();
-	let aux = GafiCurrency::token_info(GAKI);
-	let symbol = json!( String::from_utf8(aux.symbol).unwrap_or("GAKI".to_string()));
-	let name  =json!( String::from_utf8(aux.name).unwrap_or("Gafi Network Kusama".to_string()));
-	let decimals  =json!(aux.decimals);
-    props.insert("tokenSymbol".to_string(), symbol);
-    props.insert("tokenName".to_string(), name);
+	let mut props: Properties = Properties::new();
+	let gaki = GafiCurrency::token_info(GAKI);
+	let symbol = json!(String::from_utf8(gaki.symbol).unwrap_or("GAKI".to_string()));
+	let name = json!(String::from_utf8(gaki.name).unwrap_or("GAKI Token".to_string()));
+	let decimals = json!(gaki.decimals);
+	props.insert("tokenSymbol".to_string(), symbol);
+	props.insert("tokenName".to_string(), name);
 	props.insert("tokenDecimals".to_string(), decimals);
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Development",
+		"Gaki Development",
 		// ID
 		"dev",
 		ChainType::Development,
@@ -108,20 +108,41 @@ fn gaki_testnet_genesis(
 	// Pool config
 	const MAX_PLAYER: u32 = 1000;
 	let upfront_services = [
-		(Level::Basic, FlexService::new(100_u32, 30_u8, 5 * unit(GAKI))),
-		(Level::Medium, FlexService::new(100_u32, 50_u8, 7 * unit(GAKI))),
-		(Level::Advance, FlexService::new(100_u32, 70_u8, 10 * unit(GAKI))),
+		(
+			Level::Basic,
+			FlexService::new(100_u32, 30_u8, 5 * unit(GAKI)),
+		),
+		(
+			Level::Medium,
+			FlexService::new(100_u32, 50_u8, 7 * unit(GAKI)),
+		),
+		(
+			Level::Advance,
+			FlexService::new(100_u32, 70_u8, 10 * unit(GAKI)),
+		),
 	];
 	let staking_services = [
-		(Level::Basic, FlexService::new(100_u32, 30_u8, 1000 * unit(GAKI))),
-		(Level::Medium, FlexService::new(100_u32, 50_u8, 1500 * unit(GAKI))),
-		(Level::Advance, FlexService::new(100_u32, 70_u8, 2000 * unit(GAKI))),
+		(
+			Level::Basic,
+			FlexService::new(100_u32, 30_u8, 1000 * unit(GAKI)),
+		),
+		(
+			Level::Medium,
+			FlexService::new(100_u32, 50_u8, 1500 * unit(GAKI)),
+		),
+		(
+			Level::Advance,
+			FlexService::new(100_u32, 70_u8, 2000 * unit(GAKI)),
+		),
 	];
-	const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
+	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
 	let bond_existential_deposit: u128 = unit(GAKI);
 
 	// pallet-faucet
 	let faucet_amount: u128 = 1500 * unit(GAKI);
+
+	// pallet gafi-tx
+	let min_gas_price: U256 = U256::from(4_u128.saturating_mul(microcent(GAKI))); //0.000004 GAKI
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -130,13 +151,20 @@ fn gaki_testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// each genesis account hold 1M GAKI token
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1_000_000 * unit(GAKI))).collect(),
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1_000_000 * unit(GAKI)))
+				.collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		},
 		grandpa: GrandpaConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+			authorities: initial_authorities
+				.iter()
+				.map(|x| (x.1.clone(), 1))
+				.collect(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -170,16 +198,11 @@ fn gaki_testnet_genesis(
 		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
 		staking_pool: StakingPoolConfig { services: staking_services },
 		faucet: FaucetConfig {
-			genesis_accounts: vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-			],
+			genesis_accounts: endowed_accounts,
 			faucet_amount,
 		},
 		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(100_000_000_000u128),
+			gas_price: min_gas_price,
 		},
 		pool: PoolConfig {
 			time_service: TIME_SERVICE,

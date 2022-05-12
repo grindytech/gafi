@@ -11,7 +11,7 @@ var randomBytes = require('randombytes');
 const { BigNumber } = require('@ethersproject/bignumber');
 const { ethers, keccak256 } = require("ethers");
 const { arrayify, BytesLike } = require("@ethersproject/bytes");
-const utils = require('./utils');
+const utils = require('../utils/utils');
 
 const test1 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
 const test2 = web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
