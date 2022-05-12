@@ -14,14 +14,6 @@ fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
 }
 
-fn new_sudo_account(balance: u128) -> AccountId32 {
-	let ALICE: AccountId32 =
-		AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-	make_deposit(&ALICE, balance);
-	assert_eq!(Balances::free_balance(&ALICE), balance);
-	return ALICE;
-}
-
 fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
     let acc: AccountId32 = AccountId32::from(account);
     make_deposit(&acc, balance);

@@ -68,6 +68,7 @@ pub use gafi_tx;
 pub use sponsored_pool;
 pub use pallet_cache;
 pub use pallet_pool_names;
+pub use game_creator;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -447,12 +448,18 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30u8;
+}
+
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 parameter_types! {
@@ -480,6 +487,20 @@ impl pallet_pool::Config for Runtime {
 	type SponsoredPool = SponsoredPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
 	type Cache = PalletCache;
+}
+
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
+}
+
+impl game_creator::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
 }
 
 parameter_types! {
@@ -526,7 +547,8 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
-		PoolName: pallet_pool_names
+		PoolName: pallet_pool_names,
+		GameCreator: game_creator,
 	}
 );
 
