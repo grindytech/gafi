@@ -16,10 +16,11 @@ use scale_info::prelude::string::String;
 use sp_core::bytes::from_hex;
 use sp_core::{H160, U256};
 use sp_std::str::FromStr;
+use mock::*;
 
-fn make_free_balance<T: Config>(acc: T::AccountId, balance: u64) {
+fn make_free_balance<T: Config>(acc: &T::AccountId, balance: u64) {
     let balance_amount = balance.try_into().ok().unwrap();
-    <T as pallet::Config>::Currency::make_free_balance_be(&acc, balance_amount);
+    <T as pallet::Config>::Currency::make_free_balance_be(acc, balance_amount);
     <T as pallet::Config>::Currency::issue(balance_amount);
 }
 
@@ -30,7 +31,7 @@ fn string_to_static_str(s: String) -> &'static str {
 fn new_funded_account<T: Config>(index: u32, seed: u32, balance: u64) -> T::AccountId {
     let name: String = format!("{}{}", index, seed);
     let user = account(string_to_static_str(name), index, seed);
-    make_free_balance::<T>(user, balance);
+    make_free_balance::<T>(&user, balance);
     return user;
 }
 
@@ -47,7 +48,7 @@ fn deploy_contract<T: Config>(caller: H160) -> H160 {
         None,
         None,
         vec![],
-        <Runtime as pallet_evm::Config>::Runner::config(),
+        <Runtime as pallet_evm::Config>::config(),
     )
     .unwrap();
     assert_eq!(
@@ -56,6 +57,18 @@ fn deploy_contract<T: Config>(caller: H160) -> H160 {
     );
 
     result.value
+}
+
+benchmarks! {
+    claim_contract {
+    	let s in 0 .. 1;
+        let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
+        let sub_acc = T::AddressMapping::into_account_id(evm_acc);
+        make_free_balance::<T>(&sub_acc, 1000_000_000_000_u64);
+
+        let contract = deploy_contract::<T>(evm_acc);
+
+    }: _(RawOrigin::Signed(sub_acc), contract)
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -217,17 +230,6 @@ mod mock {
     }
 }
 
-benchmarks! {
 
-    // claim_contract {
-    // 	let s in 0 .. 1;
-    //     let evm_acc = H160::from_str("0x4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11").unwrap();
-    //     let sub_acc = T::AddressMapping::into_account_id(evm_acc);
 
-    //     let contract = deploy_contract(evm_acc);
-
-    // }: _(RawOrigin::Signed(caller), signature, address, withdraw)
-
-}
-
-impl_benchmark_test_suite!(GameCreator, crate::mock::new_test_ext(), crate::mock::Test,);
+// impl_benchmark_test_suite!(GameCreator, crate::mock::new_test_ext(), crate::mock::Test,);
