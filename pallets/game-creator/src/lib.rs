@@ -4,7 +4,7 @@ use frame_support::traits::{
 };
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
-use pallet_evm::{AddressMapping, GetContractCreator};
+use pallet_evm::{AddressMapping, ContractCreator};
 use sp_core::H160;
 use gafi_primitives::game_creator::GetGameCreator;
 pub use pallet::*;
@@ -36,7 +36,7 @@ pub mod pallet {
 
 		type Currency: ReservableCurrency<Self::AccountId>;
 
-		type ContractCreator: GetContractCreator;
+		type ContractCreator: ContractCreator;
 
 		#[pallet::constant]
 		type ReservationFee: Get<BalanceOf<Self>>;
@@ -123,7 +123,7 @@ pub mod pallet {
 		}
 
 		fn get_contract_creator(contract: &H160) -> Result<T::AccountId, Error<T>> {
-			match T::ContractCreator::get_contract_creator(contract) {
+			match T::ContractCreator::get_creator(contract) {
 				Some(address) => return Ok(T::AddressMapping::into_account_id(address)),
 				None => Err(Error::<T>::ContractNotFound),
 			}
