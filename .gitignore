@@ -17,9 +17,10 @@
 # direnv cache
 .direnv
 
-# ignore weights
 raw.json
-pallets/benchmarks/
+
+# benchmarking
+benchmarking/**/weights.rs
 
 # nodejs ignore
 node_modules

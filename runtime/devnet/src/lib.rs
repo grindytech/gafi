@@ -937,6 +937,7 @@ impl_runtime_apis! {
 			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
+			use game_creator::Pallet as GameCreatorBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
@@ -946,6 +947,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
+			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -963,6 +965,7 @@ impl_runtime_apis! {
 			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
+			use game_creator::Pallet as GameCreatorBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -976,6 +979,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
 			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
+			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
