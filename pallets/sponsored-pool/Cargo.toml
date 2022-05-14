@@ -36,6 +36,8 @@ sp-core = {default-features = false, version = "6.0.0", git = "https://github.co
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
+pallet-pool-names = {default-features = false, version = "4.0.0-dev", path = "../pool-names"}
+
 [features]
 default = ["std"]
 std = [

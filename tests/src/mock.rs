@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{Currency, OnFinalize, OnInitialize, ConstU32},
 };
 use frame_support::{
 	parameter_types,
@@ -56,10 +56,27 @@ frame_support::construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
+		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 impl pallet_randomness_collective_flip::Config for Test {}
+
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
+}
+
+impl game_creator::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  PREFIX;
@@ -153,6 +170,7 @@ impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = ();
@@ -193,6 +211,21 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const RESERVATION_FEE: u128 = 2;
+
+parameter_types! {
+	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+}
+impl pallet_pool_names::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
+
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 24;
@@ -225,12 +258,18 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub GameCreatorReward: u8 = 30u8;
+}
+
 impl gafi_tx::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 // Build genesis storage according to the mock runtime.

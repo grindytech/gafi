@@ -17,15 +17,15 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 
 # Frontier
-fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
 
 # Substrate
 frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
@@ -65,14 +65,16 @@ gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../.
 
 # Local pallets
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
+game-creator = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-creator"}
+pallet-cache = {versopm = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
+pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool-names"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
 sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
-pallet-cache = {versopm = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 
 # unit test
 [dev.dependencies]
@@ -145,4 +147,6 @@ std = [
   "pallet-scheduler/std",
   "sponsored-pool/std",
   "pallet-cache/std",
+  "pallet-pool-names/std",
+  "game-creator/std",
 ]

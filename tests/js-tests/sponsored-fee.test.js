@@ -39,6 +39,8 @@ describe('Contract', () => {
         let receipt = await utils.create_new_contract(alice_pair);
         ERC20_ADDRESS = receipt.contractAddress;
         let after_balance = await web3.eth.getBalance(alice_pair.address);
+
+        console.log("ERC20_ADDRESS: ", ERC20_ADDRESS);
     }).timeout(3600000);
 
     it('it should trasfer erc20 token', async () => {
