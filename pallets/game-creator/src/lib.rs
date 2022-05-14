@@ -1,13 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::traits::{
-	BalanceStatus, Currency, ReservableCurrency,
-};
 use frame_support::pallet_prelude::*;
+use frame_support::traits::{BalanceStatus, Currency, ReservableCurrency};
 use frame_system::pallet_prelude::*;
-use pallet_evm::{AddressMapping, GetContractCreator};
-use sp_core::H160;
 use gafi_primitives::game_creator::GetGameCreator;
 pub use pallet::*;
+use pallet_evm::{AddressMapping, ContractCreator};
+use sp_core::H160;
 
 #[cfg(test)]
 mod mock;
@@ -15,8 +13,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -36,10 +37,13 @@ pub mod pallet {
 
 		type Currency: ReservableCurrency<Self::AccountId>;
 
-		type ContractCreator: GetContractCreator;
+		type ContractCreator: ContractCreator;
 
 		#[pallet::constant]
 		type ReservationFee: Get<BalanceOf<Self>>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	//** STORAGE  **//
@@ -63,7 +67,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim_contract(100u32))]
 		pub fn claim_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(
@@ -76,7 +80,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::change_ownership(100u32))]
 		pub fn change_ownership(
 			origin: OriginFor<T>,
 			contract: H160,
@@ -96,7 +100,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_contract(100u32))]
 		pub fn withdraw_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::verify_owner(&sender, &contract)?;
@@ -123,7 +127,7 @@ pub mod pallet {
 		}
 
 		fn get_contract_creator(contract: &H160) -> Result<T::AccountId, Error<T>> {
-			match T::ContractCreator::get_contract_creator(contract) {
+			match T::ContractCreator::get_creator(contract) {
 				Some(address) => return Ok(T::AddressMapping::into_account_id(address)),
 				None => Err(Error::<T>::ContractNotFound),
 			}

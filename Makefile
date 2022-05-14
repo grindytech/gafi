@@ -29,7 +29,7 @@ check_benchmark:
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks
+	cargo build --release --features runtime-benchmarks --features with-development
 
 .PHONY: benchmark_pool
 benchmark_pool:
@@ -40,7 +40,7 @@ benchmark_pool:
     --extrinsic '*' \
     --steps 20 \
     --repeat 10 \
-    --output ./pallets/benchmarks/pool/weights.rs
+    --output ./benchmarking/pool/weights.rs
 
 
 
@@ -53,7 +53,7 @@ benchmark_staking_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./pallets/benchmarks/staking_pool/weights.rs
+    --output ./benchmarking/staking_pool/weights.rs
 
 .PHONY: benchmark_upfront_pool
 benchmark_upfront_pool:
@@ -64,7 +64,7 @@ benchmark_upfront_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./pallets/benchmarks/upfront_pool/weights.rs
+    --output ./benchmarking/upfront_pool/weights.rs
 
 .PHONY: benchmark_sponsored_pool
 benchmark_sponsored_pool:
@@ -75,7 +75,7 @@ benchmark_sponsored_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./pallets/benchmarks/sponsored_pool/weights.rs
+    --output ./benchmarking/sponsored_pool/weights.rs
 
 .PHONY: benchmark_faucet
 benchmark_faucet:
@@ -86,4 +86,16 @@ benchmark_faucet:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./pallets/benchmarks/pallet-faucet/weights.rs
+    --output ./benchmarking/pallet-faucet/weights.rs
+
+.PHONY: benchmark_game_creator
+benchmark_game_creator:
+	./target/release/gafi-node benchmark pallet \
+    --chain dev \
+    --wasm-execution compiled \
+    --pallet game_creator \
+    --extrinsic '*' \
+     --steps 20 \
+    --repeat 10 \
+    --output ./benchmarking/game-creator/weights.rs
+

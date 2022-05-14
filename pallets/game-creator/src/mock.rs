@@ -1,4 +1,4 @@
-use crate::{self as game_creator};
+pub use crate::{self as game_creator};
 use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
@@ -126,6 +126,7 @@ impl game_creator::Config for Test {
 	type MaxContractOwned = MaxContractOwned;
 	type ContractCreator = EVM;
 	type ReservationFee = GameCreatorFee;
+	type WeightInfo = ();
 }
 
 parameter_types! {

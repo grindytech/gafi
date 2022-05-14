@@ -19,31 +19,26 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 scale-info = {version = "2.0.1", default-features = false, features = ["derive"]}
 
 # Frontier
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
 
 # Substrate
-frame-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
-frame-support = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-frame-system = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+proof-address-mapping = {default-features = false, version = "4.0.0-dev", path = "../address-mapping"}
 
 [dev-dependencies]
-#Frontier
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-
 # Substrate
-pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 sp-io = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-
-# Local
-proof-address-mapping = {version = "4.0.0-dev", default-version = false, path = "../address-mapping"}
 
 [features]
 default = ["std"]
@@ -60,6 +55,9 @@ std = [
   "proof-address-mapping/std",
   "gafi-primitives/std",
   "pallet-ethereum/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
