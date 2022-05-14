@@ -501,6 +501,7 @@ impl game_creator::Config for Runtime {
 	type MaxContractOwned = MaxContractOwned;
 	type ContractCreator = EVM;
 	type ReservationFee = GameCreatorFee;
+	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
 }
 
 parameter_types! {

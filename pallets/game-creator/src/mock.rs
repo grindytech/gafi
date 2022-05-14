@@ -126,6 +126,7 @@ impl game_creator::Config for Test {
 	type MaxContractOwned = MaxContractOwned;
 	type ContractCreator = EVM;
 	type ReservationFee = GameCreatorFee;
+	type WeightInfo = ();
 }
 
 parameter_types! {
