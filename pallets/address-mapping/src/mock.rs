@@ -1,5 +1,4 @@
 use crate as proof_address_mapping;
-use crate::{ProofAddressMapping};
 use frame_support::parameter_types;
 use frame_system as system;
 
@@ -28,14 +27,13 @@ frame_support::construct_runtime!(
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		PalletAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
+		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	// pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
 impl pallet_evm::Config for Test {
@@ -44,7 +42,7 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -78,6 +76,7 @@ impl pallet_ethereum::Config for Test {
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Aurora Network account:";
+	pub ReservationFee: u64 = RESERVATION_FEE;
 }
 
 impl proof_address_mapping::Config for Test {
@@ -85,10 +84,11 @@ impl proof_address_mapping::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type MessagePrefix = Prefix;
+	type ReservationFee = ReservationFee;
 }
 
 pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
-pub const EXISTENTIAL_BOND_DEPOSIT: u64 = 1000;
+pub const RESERVATION_FEE: u64 = 1000;
 
 parameter_types! {
 	pub ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
@@ -155,13 +155,11 @@ pub fn run_to_block(n: u64) {
 }
 
 pub struct ExtBuilder {
-	bond_deposit: u64,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			bond_deposit: EXISTENTIAL_BOND_DEPOSIT,
 		}
 	}
 }
@@ -169,12 +167,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-
-		let _ = proof_address_mapping::GenesisConfig::<Test> {
-			bond_deposit: self.bond_deposit,
-		}
-		.assimilate_storage(&mut storage);
 
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext

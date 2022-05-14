@@ -1,0 +1,47 @@
+[package]
+name = "pallet-pool-names"
+version = "4.0.0-dev"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://substrate.io"
+repository = "https://github.com/cryptoviet/gafi"
+description = "Pallet for pool names management"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+
+# Local
+gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+
+[dev-dependencies]
+pallet-balances = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"frame-support/std",
+	"frame-system/std",
+	"gafi-primitives/std",
+	"sp-io/std",
+	"sp-core/std",
+	"pallet-balances/std",
+	"sp-std/std",
+]
+
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+try-runtime = ["frame-support/try-runtime"]

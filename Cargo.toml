@@ -13,6 +13,7 @@ members = [
   'pallets/pallet-faucet',
   'pallets/sponsored-pool',
   'pallets/pallet-cache',
+  'pallets/game-creator',
   'tests',
   'primitives',
 ]

@@ -67,10 +67,11 @@ pub use staking_pool;
 pub use gafi_tx;
 pub use sponsored_pool;
 pub use pallet_cache;
+pub use pallet_pool_names;
+pub use game_creator;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
-use proof_address_mapping::ProofAddressMapping;
 
 mod precompiles;
 use precompiles::FrontierPrecompiles;
@@ -323,7 +324,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressRoot<AccountId>;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -428,6 +429,7 @@ impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type PoolName = PoolName;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
@@ -435,6 +437,7 @@ impl sponsored_pool::Config for Runtime {
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
+	pub Fee: u128 = 1 * unit(GAKI);
 }
 
 impl proof_address_mapping::Config for Runtime {
@@ -442,14 +445,21 @@ impl proof_address_mapping::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
+	type ReservationFee = Fee;
+}
+
+parameter_types! {
+	pub GameCreatorReward: u8 = 30u8;
 }
 
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = ();
-	type AddressMapping = ProofAddressMapping<Self>;
+	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = GameCreator;
 }
 
 parameter_types! {
@@ -479,6 +489,36 @@ impl pallet_pool::Config for Runtime {
 	type Cache = PalletCache;
 }
 
+parameter_types! {
+	pub MaxContractOwned: u32 = 1000;
+	pub GameCreatorFee: u128 = 5 * unit(GAKI);
+}
+
+impl game_creator::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = ProofAddressMapping;
+	type MaxContractOwned = MaxContractOwned;
+	type ContractCreator = EVM;
+	type ReservationFee = GameCreatorFee;
+	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
+}
+
+parameter_types! {
+	pub ReservationFee:u128 = unit(GAKI).into();
+	pub MinLength: u32= 8;
+	pub MaxLength: u32 = 32;
+}
+
+impl pallet_pool_names::Config for Runtime {
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+    type Slashed = ();
+	type MinLength = MinLength;
+	type MaxLength = MaxLength;
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -505,9 +545,11 @@ construct_runtime!(
 		StakingPool: staking_pool,
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
-		AddressMapping: proof_address_mapping,
+		ProofAddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
+		PoolName: pallet_pool_names,
+		GameCreator: game_creator,
 	}
 );
 

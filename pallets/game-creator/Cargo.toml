@@ -1,0 +1,64 @@
+[package]
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+description = "FRAME pallet template for defining custom runtime logic."
+edition = "2021"
+homepage = "https://substrate.io/"
+license = "Unlicense"
+name = "game-creator"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+version = "4.0.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+  "derive",
+]}
+scale-info = {version = "2.0.1", default-features = false, features = ["derive"]}
+
+# Frontier
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+
+# Substrate
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+
+# Local
+gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+proof-address-mapping = {default-features = false, version = "4.0.0-dev", path = "../address-mapping"}
+
+[dev-dependencies]
+# Substrate
+sp-io = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "pallet-balances/std",
+  "pallet-timestamp/std",
+  "pallet-evm/std",
+  "sp-std/std",
+  "proof-address-mapping/std",
+  "gafi-primitives/std",
+  "pallet-ethereum/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+]
+
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+try-runtime = ["frame-support/try-runtime"]

@@ -1,3 +1,21 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 CryptoViet.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::pallet_prelude::*;
@@ -17,12 +35,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+
+	/// Wrap data with the timestamp at the time when data insert into Cache
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub(super) struct WrapData<Data> {
@@ -31,11 +48,8 @@ pub mod pallet {
 	}
 
 	impl<Data> WrapData<Data> {
-		fn new(data: Data, now: u128) -> Self {
-			WrapData {
-				data,
-				timestamp: now,
-			}
+		fn new(data: Data, timestamp: u128) -> Self {
+			WrapData { data, timestamp }
 		}
 	}
 
@@ -54,10 +68,14 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
-		type Data: Parameter + MaxEncodedLen + Copy + TypeInfo;
-		type Action: Parameter + MaxEncodedLen + Copy + TypeInfo;
-
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The Data contain the data that need to be storage to cache
+		type Data: Parameter + MaxEncodedLen + Copy + TypeInfo;
+
+		/// The Action is the name of action use to query
+		type Action: Parameter + MaxEncodedLen + Copy + TypeInfo;
 	}
 
 	//** Genesis Conguration **//
@@ -92,6 +110,7 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Holding the flag(Left or Right) to support Cache in insert and clean
 	#[pallet::type_value]
 	pub(super) fn DefaultDataFlag() -> Flag {
 		Flag::Left
@@ -99,14 +118,17 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type DataFlag<T: Config> = StorageValue<_, Flag, ValueQuery, DefaultDataFlag>;
 
+	/// Holding the data that insert in Cache by keys AccountId and Action
 	#[pallet::storage]
 	pub(super) type DataLeft<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::Action, WrapData<T::Data>>;
+
+	/// Holding the data that insert in Cache by keys AccountId and Action
 	#[pallet::storage]
 	pub(super) type DataRight<T: Config> =
-	StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::Action, WrapData<T::Data>>;
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::Action, WrapData<T::Data>>;
 
-	/// Holding the mark time to check if correct time to charge service fee
+	/// Holding the mark time clean cache
 	/// The default value is at the time chain launched
 	#[pallet::type_value]
 	pub fn DefaultMarkTime<T: Config>() -> u128 {
@@ -116,11 +138,10 @@ pub mod pallet {
 	#[pallet::getter(fn mark_time)]
 	pub type MarkTime<T: Config> = StorageValue<_, u128, ValueQuery, DefaultMarkTime<T>>;
 
-	/// Honding the specific period of time to clean data
+	/// Honding the specific period of time to clean cache
 	/// The default value is 1 hours
 	#[pallet::type_value]
 	pub fn DefaultCleanTime() -> u128 {
-		// 1 hour
 		3_600_000u128
 	}
 	#[pallet::storage]
@@ -166,6 +187,15 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Cache<T::AccountId, T::Action, T::Data> for Pallet<T> {
+
+		/// Store data to cache by AccountId and action name
+		///
+		/// Parameters:
+		/// - `id`: data owner
+		/// - `action`: The action name
+		///	- `data`: The data to store in the cache
+		/// 
+		/// Weight: `O(1)`
 		fn insert(id: &T::AccountId, action: T::Action, data: T::Data) {
 			let _now = Self::get_timestamp();
 			let wrap_data = WrapData::new(data, _now);
@@ -176,8 +206,15 @@ pub mod pallet {
 			}
 		}
 
+		/// Get valid data in cache by AccountId and action name
+		///
+		/// Parameters:
+		/// - `id`: data owner
+		///	- `action`: action name
+		/// 
+		/// Weight: `O(1)`
 		fn get(id: &T::AccountId, action: T::Action) -> Option<T::Data> {
-			let get_wrap_data = || -> Option<WrapData<T::Data>>{
+			let get_wrap_data = || -> Option<WrapData<T::Data>> {
 				if let Some(data) = DataLeft::<T>::get(id, action) {
 					return Some(data);
 				} else if let Some(data) = DataRight::<T>::get(id, action) {

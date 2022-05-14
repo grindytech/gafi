@@ -34,9 +34,9 @@ hex = { version = "0.4" }
 serde_json = "1.0.59"
 
 # Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.19"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
 
 # Substrate
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
@@ -58,6 +58,8 @@ pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pal
 gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallets/pallet-cache"}
+pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../pallets/pool-names"}
+game-creator = {version = "4.0.0-dev", default-features = false, path = "../pallets/game-creator"}
 
 [features]
 default = ["std"]
@@ -85,4 +87,5 @@ std = [
   'utils/std',
   'gafi-primitives/std',
   'pallet-cache/std',
+  'game-creator/std',
 ]
