@@ -72,4 +72,44 @@ benchmarks! {
 		];
 	}: _(RawOrigin::Signed(caller), pool_id, targets)
 
+	set_pool_name {
+		let s in 0 .. 10 as u32;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		let targets = vec![
+			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
+		];
+		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
+		let discount = 30_u8;
+		let tx_limit = 100_u32;
+		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
+	}: _(RawOrigin::Signed(caller), pool_id, b"Test pool".to_vec())
+
+	clear_pool_name {
+		let s in 0 .. 10 as u32;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		let targets = vec![
+			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
+		];
+		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
+		let discount = 30_u8;
+		let tx_limit = 100_u32;
+		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
+		SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
+	}: _(RawOrigin::Signed(caller), pool_id)
+
+	kill_pool_name {
+		let s in 0 .. 10 as u32;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		let targets = vec![
+			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
+		];
+		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
+		let discount = 30_u8;
+		let tx_limit = 100_u32;
+		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
+		SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
+	}: _(RawOrigin::Root, pool_id)
 }
