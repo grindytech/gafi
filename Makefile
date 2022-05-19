@@ -75,7 +75,7 @@ benchmark_sponsored_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/sponsored_pool/weights.rs
+    --output ./benchmarking/sponsored-pool/weights.rs
 
 .PHONY: benchmark_faucet
 benchmark_faucet:
