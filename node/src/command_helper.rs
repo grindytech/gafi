@@ -24,14 +24,15 @@ use std::{sync::Arc, time::Duration};
 use codec::Encode;
 use frame_system::Call as SystemCall;
 
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet as runtime;
+
 #[cfg(feature = "manual-seal")]
 use template_runtime as runtime;
 
 #[cfg(feature = "with-development")]
 use devnet as runtime;
-
-#[cfg(feature = "with-gaki-runtime")]
-use gaki_testnet as runtime;
 
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
