@@ -3,6 +3,7 @@
 use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
 pub use crate::weights::WeightInfo;
+use gafi_primitives::cache::Cache;
 
 #[cfg(test)]
 mod mock;
@@ -39,6 +40,9 @@ pub mod pallet {
 		/// Number of accounts that will send the tokens for user.
 		#[pallet::constant]
 		type MaxGenesisAccount: Get<u32>;
+
+		/// Add Cache
+		type Cache: Cache<Self::AccountId, AccountOf<Self>, u128>;
 	}
 
 	#[pallet::pallet]
@@ -107,9 +111,11 @@ pub mod pallet {
 		pub fn faucet(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
+			let faucet_amount = FaucetAmount::<T>::get();
+			ensure!(Self::get_cache(&sender) == None, <Error<T>>::DontBeGreedy);
 
 			ensure!(
-				T::Currency::free_balance(&sender) < (FaucetAmount::<T>::get() / 10u128.try_into().ok().unwrap()),
+				T::Currency::free_balance(&sender) < (faucet_amount / 10u128.try_into().ok().unwrap()),
 				<Error<T>>::DontBeGreedy
 			);
 
@@ -117,10 +123,13 @@ pub mod pallet {
 				match T::Currency::transfer(
 					&account,
 					&sender,
-					FaucetAmount::<T>::get(),
+					faucet_amount,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(_) => return Ok(()),
+					Ok(_) => {
+						Self::insert_cache(sender, faucet_amount);
+						return Ok(())
+					},
 					Err(_) => continue,
 				}
 			}
@@ -156,6 +165,23 @@ pub mod pallet {
 			Self::deposit_event(Event::Transferred(from, genesis_accounts[0].clone(), amount));
 
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn insert_cache(sender: T::AccountId, faucet_amount: BalanceOf<T>)-> Option<()> {
+			match faucet_amount.try_into(){
+				Ok(value) => Some(T::Cache::insert(&sender, sender.clone(), value)),
+				Err(_) => None,
+			}
+
+		}
+
+		fn get_cache(sender: &T::AccountId) -> Option<u128> {
+			if let Some(faucet_cache) = T::Cache::get(&sender, sender.clone()) {
+				return Some(faucet_cache);
+			}
+			None
 		}
 	}
 }

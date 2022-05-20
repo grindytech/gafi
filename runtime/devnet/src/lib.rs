@@ -8,10 +8,13 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::Parameter;
+use pallet_faucet::FaucetAmount;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
@@ -451,6 +454,19 @@ impl gafi_tx::Config for Runtime {
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
+
+}
+
+impl pallet_cache::Config for Runtime {
+	type Event = Event;
+	type Data = AccountId;
+	type Action = Balance;
+}
+
+impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = TicketType;
 }
 
 impl pallet_faucet::Config for Runtime {
@@ -458,12 +474,7 @@ impl pallet_faucet::Config for Runtime {
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
-}
-
-impl pallet_cache::Config for Runtime {
-	type Event = Event;
-	type Data = TicketInfo;
-	type Action = TicketType;
+	type Cache = PalletCacheFaucet;
 }
 
 parameter_types! {
@@ -533,7 +544,8 @@ construct_runtime!(
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
-		PalletCache: pallet_cache,
+		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		PalletCacheFaucet: pallet_cache,
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,

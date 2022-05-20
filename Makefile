@@ -13,7 +13,10 @@ run-dev:
 	./target/release/gafi-node \
     --tmp \
     --dev \
-    --rpc-port 9933
+    --rpc-port 9933 \
+    --ws-external \
+    --rpc-methods=Unsafe \
+    --rpc-external \
 
 .PHONY: test
 test:
