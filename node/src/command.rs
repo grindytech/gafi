@@ -15,19 +15,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Parser;
-use devnet::Block;
-use frame_benchmarking_cli::BenchmarkCmd;
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sc_service::PartialComponents;
 use std::sync::Arc;
 
-use crate::service::frontier_database_dir;
+use clap::Parser;
+use frame_benchmarking_cli::BenchmarkCmd;
+use devnet::Block;
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
+
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
-	service,
+	service::{self, frontier_database_dir},
 };
 
 impl SubstrateCli for Cli {
@@ -57,18 +57,8 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			#[cfg(feature = "with-development")]
-			"" | "local" => Box::new(chain_spec::dev::local_testnet_config()?),
-
-			#[cfg(feature = "with-development")]
 			"dev" => Box::new(chain_spec::dev::development_config()?),
-
-			#[cfg(feature = "with-gaki-runtime")]
-			"dev" => Box::new(chain_spec::gaki_testnet::gaki_dev_config()?),
-
-			#[cfg(feature = "with-gaki-runtime")]
-			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
-
+			"" | "local" => Box::new(chain_spec::dev::development_config()?),
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
@@ -166,7 +156,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
 			runner.sync_run(|config| {
 				let PartialComponents {
 					client, backend, ..

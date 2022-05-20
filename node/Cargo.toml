@@ -19,6 +19,7 @@ name = "gafi-node"
 [dependencies]
 async-trait = "0.1"
 clap = {version = "3.1", features = ["derive"]}
+codec = {package = "parity-scale-codec", version = "3.1", features = ["derive"]}
 futures = '0.3'
 hex-literal = '0.3'
 jsonrpc-core = "18.0.0"
@@ -32,6 +33,7 @@ fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "gaf
 fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
+fp-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 fp-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}

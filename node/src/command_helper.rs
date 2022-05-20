@@ -19,18 +19,19 @@
 //! Contains code to setup the command invocations in [`super::command`] which would
 //! otherwise bloat that module.
 
-use crate::service::FullClient;
+use std::{sync::Arc, time::Duration};
 
+use codec::Encode;
+use frame_system::Call as SystemCall;
 use devnet as runtime;
-use runtime::SystemCall;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
-use sp_core::{Encode, Pair};
+use sp_core::{sr25519, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
-use sp_runtime::{OpaqueExtrinsic, SaturatedConversion};
+use sp_runtime::{generic::Era, AccountId32, OpaqueExtrinsic, SaturatedConversion};
 
-use std::{sync::Arc, time::Duration};
+use crate::service::FullClient;
 
 /// Generates extrinsics for the `benchmark overhead` command.
 ///
@@ -66,11 +67,15 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 /// Note: Should only be used for benchmarking.
 pub fn create_benchmark_extrinsic(
 	client: &FullClient,
-	sender: sp_core::sr25519::Pair,
+	sender: sr25519::Pair,
 	call: runtime::Call,
 	nonce: u32,
 ) -> runtime::UncheckedExtrinsic {
-	let genesis_hash = client.block_hash(0).ok().flatten().expect("Genesis block exists; qed");
+	let genesis_hash = client
+		.block_hash(0)
+		.ok()
+		.flatten()
+		.expect("Genesis block exists; qed");
 	let best_hash = client.chain_info().best_hash;
 	let best_block = client.chain_info().best_number;
 
@@ -83,7 +88,7 @@ pub fn create_benchmark_extrinsic(
 		frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
 		frame_system::CheckTxVersion::<runtime::Runtime>::new(),
 		frame_system::CheckGenesis::<runtime::Runtime>::new(),
-		frame_system::CheckEra::<runtime::Runtime>::from(sp_runtime::generic::Era::mortal(
+		frame_system::CheckEra::<runtime::Runtime>::from(Era::mortal(
 			period,
 			best_block.saturated_into(),
 		)),
@@ -110,7 +115,7 @@ pub fn create_benchmark_extrinsic(
 
 	runtime::UncheckedExtrinsic::new_signed(
 		call.clone(),
-		sp_runtime::AccountId32::from(sender.public()).into(),
+		AccountId32::from(sender.public()).into(),
 		runtime::Signature::Sr25519(signature.clone()),
 		extra.clone(),
 	)
