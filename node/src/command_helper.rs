@@ -23,7 +23,7 @@ use std::{sync::Arc, time::Duration};
 
 use codec::Encode;
 use frame_system::Call as SystemCall;
-use devnet as runtime;
+use template_runtime as runtime;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sp_core::{sr25519, Pair};

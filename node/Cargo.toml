@@ -24,6 +24,7 @@ futures = '0.3'
 hex-literal = '0.3'
 jsonrpc-core = "18.0.0"
 jsonrpc-pubsub = "18.0.0"
+log = "0.4.8"
 serde_json = "1.0.59"
 
 # Frontier
@@ -83,26 +84,27 @@ frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = 
 frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local Dependencies
-devnet = {path = "../runtime/devnet", optional = true}
-gafi-primitives = {path = "../primitives"}
-gaki-testnet = {path = "../runtime/gaki-testnet", optional = true}
+devnet = {path = "../runtime/devnet"}
+gafi-primitives = {path = "../primitives", default-features = false, features = ["std"]}
+gaki-testnet = {path = "../runtime/gaki-testnet", default-features = false, features = ["std"]}
+template-runtime = {path = "../runtime/template", default-features = false, features = ["std"]}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 [features]
-aura = ["devnet/aura"]
+aura = ["template-runtime/aura"]
 default = ["aura"]
-manual-seal = ["devnet/manual-seal"]
+manual-seal = ["template-runtime/manual-seal"]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = [
-  "devnet/runtime-benchmarks",
-]
+# runtime-benchmarks = [
+#   "devnet/runtime-benchmarks",
+# ]
 
-with-development = [
-  "devnet",
-]
+# with-development = [
+#   "devnet",
+# ]
 
-with-gaki-runtime = [
-  "gaki-testnet",
-]
+# with-gaki-runtime = [
+#   "gaki-testnet",
+# ]

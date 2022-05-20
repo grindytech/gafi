@@ -27,7 +27,7 @@ use fc_rpc::{
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
-use devnet::{opaque::Block, AccountId, Balance, Hash, Index};
+use template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -165,7 +165,7 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		Some(devnet::TransactionConverter),
+		Some(template_runtime::TransactionConverter),
 		network.clone(),
 		signers,
 		overrides.clone(),

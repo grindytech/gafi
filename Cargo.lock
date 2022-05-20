@@ -2279,6 +2279,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "jsonrpc-pubsub",
+ "log",
  "pallet-base-fee",
  "pallet-dynamic-fee",
  "pallet-ethereum",
@@ -2317,6 +2318,7 @@ dependencies = [
  "sp-timestamp",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
+ "template-runtime",
 ]
 
 [[package]]
@@ -8118,6 +8120,51 @@ dependencies = [
  "redox_syscall 0.2.13",
  "remove_dir_all",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "template-runtime"
+version = "0.0.0"
+dependencies = [
+ "fp-rpc",
+ "fp-self-contained",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "pallet-aura",
+ "pallet-balances",
+ "pallet-base-fee",
+ "pallet-dynamic-fee",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-sha3fips",
+ "pallet-evm-precompile-simple",
+ "pallet-grandpa",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
 ]
 
 [[package]]

@@ -19,7 +19,7 @@ use std::sync::Arc;
 
 use clap::Parser;
 use frame_benchmarking_cli::BenchmarkCmd;
-use devnet::Block;
+use template_runtime::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 
@@ -57,16 +57,21 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
+
+			#[cfg(feature = "with-development")]
 			"dev" => Box::new(chain_spec::dev::development_config()?),
+
+			#[cfg(feature = "with-development")]
 			"" | "local" => Box::new(chain_spec::dev::development_config()?),
-			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+
+			path => Box::new(chain_spec::template::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&devnet::VERSION
+		&template_runtime::VERSION
 	}
 }
 
