@@ -291,7 +291,7 @@ use super::*;
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
 		pub fn set_pool_name(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -310,7 +310,7 @@ use super::*;
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
 		pub fn clear_pool_name(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -328,7 +328,7 @@ use super::*;
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
 		pub fn kill_pool_name(
 			origin: OriginFor<T>,
 			pool_id: ID,
