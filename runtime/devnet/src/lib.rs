@@ -131,8 +131,8 @@ pub mod opaque {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("template-runtime"),
-	impl_name: create_runtime_str!("template_runtime"),
+	spec_name: create_runtime_str!("devnet"),
+	impl_name: create_runtime_str!("devnet"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,

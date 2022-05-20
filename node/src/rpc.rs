@@ -27,7 +27,15 @@ use fc_rpc::{
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
+
+#[cfg(feature = "manual-seal")]
 use template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
+
+#[cfg(feature = "with-development")]
+use devnet::{opaque::Block, AccountId, Balance, Hash, Index};
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet::{opaque::Block, AccountId, Balance, Hash, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -165,7 +173,12 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
+		#[cfg(feature = "manual-seal")]
 		Some(template_runtime::TransactionConverter),
+		#[cfg(feature = "with-development")]
+		Some(devnet::TransactionConverter),
+		#[cfg(feature = "with-gaki-runtime")]
+		Some(gaki_testnet::TransactionConverter),
 		network.clone(),
 		signers,
 		overrides.clone(),

@@ -19,7 +19,18 @@ use std::sync::Arc;
 
 use clap::Parser;
 use frame_benchmarking_cli::BenchmarkCmd;
-use template_runtime::Block;
+
+#[cfg(feature = "manual-seal")]
+use template_runtime as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet as runtime;
+
+use runtime::Block;
+
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 
@@ -64,14 +75,15 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "with-development")]
 			"" | "local" => Box::new(chain_spec::dev::development_config()?),
 
-			path => Box::new(chain_spec::template::ChainSpec::from_json_file(
+			#[cfg(feature = "with-development")]
+			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&template_runtime::VERSION
+		&runtime::VERSION
 	}
 }
 

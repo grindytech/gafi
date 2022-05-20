@@ -1,6 +1,4 @@
-
-
-use gaki_testnet::{
+use super::gaki_testnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,

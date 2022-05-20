@@ -20,8 +20,27 @@ use fc_consensus::FrontierBlockImport;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+
+#[cfg(feature = "manual-seal")]
+use template_runtime as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet as runtime;
+
 // Runtime
-use template_runtime::{opaque::Block, RuntimeApi};
+// #[cfg(feature = "manual-seal")]
+use runtime::{opaque::Block, RuntimeApi};
+
+// #[cfg(feature = "with-development")]
+// use devnet::{opaque::Block, RuntimeApi};
+
+// #[cfg(feature = "with-gaki-runtime")]
+// use gaki_testnet::{opaque::Block, RuntimeApi};
+
+
 
 use crate::cli::Cli;
 #[cfg(feature = "manual-seal")]
@@ -39,11 +58,11 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		template_runtime::api::dispatch(method, data)
+		runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		template_runtime::native_version()
+		runtime::native_version()
 	}
 }
 
@@ -676,8 +695,10 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				&self,
 				inherent_data: &mut sp_inherents::InherentData,
 			) -> Result<(), sp_inherents::Error> {
+
+				
 				TIMESTAMP.with(|x| {
-					*x.borrow_mut() += template_runtime::SLOT_DURATION;
+					*x.borrow_mut() += runtime::SLOT_DURATION;
 					inherent_data.put_data(INHERENT_IDENTIFIER, &*x.borrow())
 				})
 			}
