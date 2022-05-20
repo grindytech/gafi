@@ -68,15 +68,25 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
+			#[cfg(feature = "with-development")]
+			"" | "local" => Box::new(chain_spec::dev::local_testnet_config()?),
 
 			#[cfg(feature = "with-development")]
 			"dev" => Box::new(chain_spec::dev::development_config()?),
 
-			#[cfg(feature = "with-development")]
-			"" | "local" => Box::new(chain_spec::dev::development_config()?),
+			#[cfg(feature = "with-gaki-runtime")]
+			"dev" => Box::new(chain_spec::gaki_testnet::gaki_dev_config()?),
+
+			#[cfg(feature = "with-gaki-runtime")]
+			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
 
 			#[cfg(feature = "with-development")]
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+				std::path::PathBuf::from(path),
+			)?),
+
+			#[cfg(feature = "with-gaki-runtime")]
+			path => Box::new(chain_spec::gaki_testnet::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})

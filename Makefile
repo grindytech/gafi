@@ -20,7 +20,7 @@ run-dev:
 
 .PHONY: test
 test:
-	cargo test
+	cargo test --features with-development
 
 .PHONY: check
 check:
