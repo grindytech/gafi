@@ -15,19 +15,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Parser;
-use devnet::Block;
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sc_service::PartialComponents;
 use std::sync::Arc;
+
+use clap::Parser;
 use frame_benchmarking_cli::BenchmarkCmd;
 
-use crate::service::frontier_database_dir;
+#[cfg(feature = "manual-seal")]
+use devnet as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet as runtime;
+
+use runtime::Block;
+
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
+
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
-	service,
+	service::{self, frontier_database_dir},
 };
 
 impl SubstrateCli for Cli {
@@ -66,9 +77,24 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "with-gaki-runtime")]
 			"dev" => Box::new(chain_spec::gaki_testnet::gaki_dev_config()?),
 
+			
 			#[cfg(feature = "with-gaki-runtime")]
 			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
+			
+			#[cfg(feature = "manual-seal")]
+			"dev" => Box::new(chain_spec::dev::development_config()?),
 
+			#[cfg(feature = "with-development")]
+			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+				std::path::PathBuf::from(path),
+			)?),
+
+			#[cfg(feature = "with-gaki-runtime")]
+			path => Box::new(chain_spec::gaki_testnet::ChainSpec::from_json_file(
+				std::path::PathBuf::from(path),
+			)?),
+
+			#[cfg(feature = "manual-seal")]
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
@@ -76,7 +102,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&devnet::VERSION
+		&runtime::VERSION
 	}
 }
 
@@ -151,8 +177,12 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, backend, .. } =
-					service::new_partial(&config, &cli)?;
+				let PartialComponents {
+					client,
+					task_manager,
+					backend,
+					..
+				} = service::new_partial(&config, &cli)?;
 				let aux_revert = Box::new(move |client, _, blocks| {
 					sc_finality_grandpa::revert(client, blocks)?;
 					Ok(())
@@ -162,9 +192,10 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
 			runner.sync_run(|config| {
-				let PartialComponents { client, backend, .. } = service::new_partial(&config, &cli)?;
+				let PartialComponents {
+					client, backend, ..
+				} = service::new_partial(&config, &cli)?;
 
 				// This switch needs to be in the client, since the client decides
 				// which sub-commands it wants to support.
@@ -175,26 +206,32 @@ pub fn run() -> sc_cli::Result<()> {
 								"Runtime benchmarking wasn't enabled when building the node. \
 							You can enable it with `--features runtime-benchmarks`."
 									.into(),
-							)
+							);
 						}
 
 						cmd.run::<Block, service::ExecutorDispatch>(config)
-					},
+					}
 					BenchmarkCmd::Block(cmd) => cmd.run(client),
 					BenchmarkCmd::Storage(cmd) => {
 						let db = backend.expose_db();
 						let storage = backend.expose_storage();
 
 						cmd.run(config, client, db, storage)
-					},
+					}
 					BenchmarkCmd::Overhead(cmd) => {
 						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
 
-						cmd.run(config, client, inherent_benchmark_data()?, Arc::new(ext_builder))
-					},
+						cmd.run(
+							config,
+							client,
+							inherent_benchmark_data()?,
+							Arc::new(ext_builder),
+						)
+					}
+					BenchmarkCmd::Machine(cmd) => cmd.run(&config),
 				}
 			})
-		},
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.base)?;
 			runner.run_node_until_exit(|config| async move {
