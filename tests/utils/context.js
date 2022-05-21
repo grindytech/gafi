@@ -3,11 +3,10 @@
 const Web3 = require("web3");
 const { ethers } = require("ethers");
 const { JsonRpcResponse } = require("web3-core-helpers");
-const { spawn, ChildProcess } = require("child_process");
+const { spawn, ChildProcess, exec } = require("child_process");
 
-const PORT = 19931;
-const RPC_PORT = 19932;
-const WS_PORT = 19933;
+const RPC_PORT = 9933;
+const WS_PORT = 9944;
 
 const DISPLAY_LOG = process.env.FRONTIER_LOG || false;
 const FRONTIER_LOG = process.env.FRONTIER_LOG || "info";
@@ -74,7 +73,6 @@ async function startFrontierNode(provider) {
 		`--no-grandpa`,
 		`--force-authoring`,
 		`-l${FRONTIER_LOG}`,
-		`--port=${PORT}`,
 		`--rpc-port=${RPC_PORT}`,
 		`--ws-port=${WS_PORT}`,
 		`--tmp`,
@@ -132,7 +130,7 @@ async function startFrontierNode(provider) {
 	}
 
 	let ethersjs = new ethers.providers.StaticJsonRpcProvider(`http://localhost:${RPC_PORT}`, {
-		chainId: 42,
+		chainId: 1337,
 		name: "frontier-dev",
 	});
 
@@ -161,11 +159,10 @@ function describeWithFrontier(title, cb, provider) {
 	});
 }
 
-
 module.exports = {
 	describeWithFrontier,
-	PORT,
 	RPC_PORT,
 	WS_PORT,
 	customRequest,
+	createAndFinalizeBlock,
 }

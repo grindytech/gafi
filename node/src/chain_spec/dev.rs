@@ -218,18 +218,37 @@ fn dev_genesis(
 		evm: EVMConfig {
 			accounts: {
 				let mut map = BTreeMap::new();
-				// H160 address of Alice dev account
-				// Derived from SS58 (42 prefix) address
-				// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
-				// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
-				// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
 				map.insert(
 					H160::from_slice(&hex_literal::hex!(
 						"4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11" //base
 					)),
 					fp_evm::GenesisAccount {
 						nonce: U256::zero(),
-						balance: U256::from(1000 * unit(GAKI)),
+						balance: U256::from(1_000_000 * unit(GAKI)),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
+					},
+				);
+
+				map.insert(
+					H160::from_slice(&hex_literal::hex!(
+						"F0B9EaA0fAaC58d5d4F3224958D75a5370672231"
+					)),
+					fp_evm::GenesisAccount {
+						nonce: U256::zero(),
+						balance: U256::from(1_000_000 * unit(GAKI)),
+						code: vec![],
+						storage: std::collections::BTreeMap::new(),
+					},
+				);
+
+				map.insert(
+					H160::from_slice(&hex_literal::hex!(
+						"D910E83396231988F79df2f1175a90e15d26aB71"
+					)),
+					fp_evm::GenesisAccount {
+						nonce: U256::zero(),
+						balance: U256::from(1_000_000 * unit(GAKI)),
 						code: vec![],
 						storage: std::collections::BTreeMap::new(),
 					},
