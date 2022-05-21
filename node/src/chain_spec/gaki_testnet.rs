@@ -1,4 +1,4 @@
-use devnet::{
+use gaki_testnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig,
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
