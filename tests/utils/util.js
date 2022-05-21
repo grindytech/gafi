@@ -5,8 +5,8 @@ chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const wsProvider = new WsProvider(process.env.WS_API);
-const web3 = new Web3(process.env.RPC_API);
 const { Keyring } = require('@polkadot/api');
+const { customRequest } = require('./context');
 
 var ERC20ABI = require('../build/contracts/GAKI.json');
 const { u8aToHex } = require('@polkadot/util');
@@ -19,24 +19,26 @@ async function add_additional_gas(contract, address) {
     return BigNumber.from(gas_limit.toString()).add(additional_gas).toString();
 }
 
-async function create_new_contract(account) {
+async function create_new_contract(context, account) {
     const arguments = [
     ];
-    const contract = new web3.eth.Contract(ERC20ABI.abi);
+    const contract = new context.web3.eth.Contract(ERC20ABI.abi);
     const contract_data = await contract.deploy({
         data: ERC20ABI.bytecode,
         arguments: arguments
     });
-    const nonce = await web3.eth.getTransactionCount(account.address, "pending");
+    const nonce = await context.web3.eth.getTransactionCount(account.address, "pending");
     const options = {
         data: contract_data.encodeABI(),
         gas: await add_additional_gas(contract_data, account.address),
-        gasPrice: await web3.eth.getGasPrice(),
+        gasPrice: await context.web3.eth.getGasPrice(),
         nonce,
     };
-    const signed = await web3.eth.accounts.signTransaction(options, account.privateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-    return receipt;
+
+    const signed = await context.web3.eth.accounts.signTransaction(options, account.privateKey);
+
+    const tx_hash = (await customRequest(context.web3, "eth_sendRawTransaction", [signed.rawTransaction])).result;
+    return tx_hash;
 }
 
 async function transfer_erc20(token_address, account, target, amount) {

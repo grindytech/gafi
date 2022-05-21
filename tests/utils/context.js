@@ -17,7 +17,7 @@ const BINARY_PATH = `../target/${FRONTIER_BUILD}/gafi-node`;
 const SPAWNING_TIME = 60000;
 
 async function customRequest(web3, method, params) {
-	return new Promise < JsonRpcResponse > ((resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		web3.currentProvider.send(
 			{
 				jsonrpc: "2.0",
@@ -70,6 +70,7 @@ async function startFrontierNode(provider) {
 		`--execution=Native`, // Faster execution using native
 		`--no-telemetry`,
 		`--no-prometheus`,
+		`--sealing=Manual`,
 		`--no-grandpa`,
 		`--force-authoring`,
 		`-l${FRONTIER_LOG}`,
@@ -79,7 +80,6 @@ async function startFrontierNode(provider) {
 		`--tmp`,
 	];
 
-	console.log("args: ", args);
 	const binary = spawn(cmd, args);
 
 	binary.on("error", (err) => {
@@ -167,4 +167,5 @@ module.exports = {
 	PORT,
 	RPC_PORT,
 	WS_PORT,
+	customRequest,
 }
