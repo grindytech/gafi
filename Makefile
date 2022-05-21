@@ -22,9 +22,13 @@ run-dev:
 test:
 	cargo test --features with-development
 
-.PHONY: check
-check:
-	cargo check --release
+.PHONY: check-dev
+check-dev:
+	cargo check --release --features with-development
+
+.PHONY: check-gaki
+check-gaki:
+	cargo check --release --features with-gaki-runtime
 
 .PHONY: check_benchmark
 check_benchmark:
@@ -44,8 +48,6 @@ benchmark_pool:
     --steps 20 \
     --repeat 10 \
     --output ./benchmarking/pool/weights.rs
-
-
 
 .PHONY: benchmark_staking_pool
 benchmark_staking_pool:

@@ -49,8 +49,8 @@ pallet-transaction-payment = {default-features = false, git = "https://github.co
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", features = ["wasmtime"]}
 sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sc-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
-sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
-sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
+sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", optional = true}
+sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", optional = true}
 sc-executor = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", features = ["wasmtime"]}
 sc-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sc-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
@@ -84,8 +84,8 @@ frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = 
 frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local Dependencies
-gafi-primitives = {path = "../primitives", default-features = false}
 devnet = {path = "../runtime/devnet", default-features = false, features = ["std"], optional = true}
+gafi-primitives = {path = "../primitives", default-features = false}
 gaki-testnet = {path = "../runtime/gaki-testnet", default-features = false, features = ["std"], optional = true}
 template-runtime = {path = "../runtime/template", default-features = false, features = ["std"]}
 
@@ -93,9 +93,19 @@ template-runtime = {path = "../runtime/template", default-features = false, feat
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 [features]
-aura = ["template-runtime/aura"]
+aura = [
+  "sc-consensus-aura",
+  "devnet/aura",
+  "gaki-testnet/aura",
+  "template-runtime/aura",
+]
 default = ["aura"]
-manual-seal = ["devnet/manual-seal"]
+manual-seal = [
+  "sc-consensus-manual-seal",
+  "template-runtime/manual-seal",
+  "devnet/manual-seal",
+  "gaki-testnet/manual-seal",
+]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
   "devnet/runtime-benchmarks",
