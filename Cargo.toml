@@ -4,6 +4,7 @@ members = [
   'utils',
   'runtime/devnet',
   'runtime/gaki-testnet',
+  'runtime/template',
   'pallets/player',
   'pallets/upfront-pool',
   'pallets/pool',
