@@ -29,13 +29,15 @@ use fp_storage::EthereumStorageSchema;
 // Runtime
 
 #[cfg(feature = "manual-seal")]
-use template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
+use devnet as runtime;
 
 #[cfg(feature = "with-development")]
-use devnet::{opaque::Block, AccountId, Balance, Hash, Index};
+use devnet as runtime;
 
 #[cfg(feature = "with-gaki-runtime")]
-use gaki_testnet::{opaque::Block, AccountId, Balance, Hash, Index};
+use gaki_testnet as runtime;
+
+use runtime::{opaque::Block, AccountId, Balance, Hash, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -173,12 +175,7 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		#[cfg(feature = "manual-seal")]
-		Some(template_runtime::TransactionConverter),
-		#[cfg(feature = "with-development")]
-		Some(devnet::TransactionConverter),
-		#[cfg(feature = "with-gaki-runtime")]
-		Some(gaki_testnet::TransactionConverter),
+		Some(runtime::TransactionConverter),
 		network.clone(),
 		signers,
 		overrides.clone(),

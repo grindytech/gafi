@@ -21,7 +21,7 @@ use clap::Parser;
 use frame_benchmarking_cli::BenchmarkCmd;
 
 #[cfg(feature = "manual-seal")]
-use template_runtime as runtime;
+use devnet as runtime;
 
 #[cfg(feature = "with-development")]
 use devnet as runtime;
@@ -77,12 +77,12 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "with-gaki-runtime")]
 			"dev" => Box::new(chain_spec::gaki_testnet::gaki_dev_config()?),
 
-			#[cfg(feature = "manual-seal")]
-			"dev" => Box::new(chain_spec::template::development_config()?),
 			
 			#[cfg(feature = "with-gaki-runtime")]
 			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
-
+			
+			#[cfg(feature = "manual-seal")]
+			"dev" => Box::new(chain_spec::dev::development_config()?),
 
 			#[cfg(feature = "with-development")]
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
@@ -95,7 +95,7 @@ impl SubstrateCli for Cli {
 			)?),
 
 			#[cfg(feature = "manual-seal")]
-			path => Box::new(chain_spec::template::ChainSpec::from_json_file(
+			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})

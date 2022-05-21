@@ -29,7 +29,7 @@ use frame_system::Call as SystemCall;
 use gaki_testnet as runtime;
 
 #[cfg(feature = "manual-seal")]
-use template_runtime as runtime;
+use devnet as runtime;
 
 #[cfg(feature = "with-development")]
 use devnet as runtime;

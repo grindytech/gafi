@@ -5,4 +5,4 @@ pub mod dev;
 pub mod gaki_testnet;
 
 #[cfg(feature = "manual-seal")]
-pub mod template;
+pub mod dev;

@@ -22,7 +22,7 @@ use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 
 #[cfg(feature = "manual-seal")]
-use template_runtime as runtime;
+use devnet as runtime;
 
 #[cfg(feature = "with-development")]
 use devnet as runtime;
