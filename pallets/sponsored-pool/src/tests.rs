@@ -67,13 +67,18 @@ fn create_pool_works() {
         let account = new_account([0_u8; 32], account_balance);
         let pool_value = 1000 * unit(GAKI);
         create_pool(
-            account,
+            account.clone(),
             account_balance,
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
             100,
         );
+
+        let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
+        let pool_acc = AccountId32::from(pool_id);
+
+        assert_eq!(Balances::free_balance(pool_acc), pool_value);
     })
 }
 

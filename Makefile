@@ -1,4 +1,7 @@
 
+.PHONY: build-test
+build-test:
+	cargo build --release --no-default-features --features manual-seal,rpc_binary_search_estimate
 
 .PHONY: build-dev
 build-dev:
@@ -15,13 +18,32 @@ run-dev:
     --dev \
     --rpc-port 9933
 
+.PHONY: run-manual-seal
+run-manual-seal:
+	./target/release/gafi-node \
+    --chain=dev \
+    --validator \
+    --execution=Native \
+    --no-telemetry \
+    --no-prometheus \
+    --sealing=Manual \
+    --no-grandpa \
+    --force-authoring \
+    --rpc-port=9933 \
+    --ws-port=9944 \
+    --tmp
+
 .PHONY: test
 test:
-	cargo test
+	cargo test --features with-development
 
-.PHONY: check
-check:
-	cargo check --release
+.PHONY: check-dev
+check-dev:
+	cargo check --release --features with-development
+
+.PHONY: check-gaki
+check-gaki:
+	cargo check --release --features with-gaki-runtime
 
 .PHONY: check_benchmark
 check_benchmark:
@@ -41,8 +63,6 @@ benchmark_pool:
     --steps 20 \
     --repeat 10 \
     --output ./benchmarking/pool/weights.rs
-
-
 
 .PHONY: benchmark_staking_pool
 benchmark_staking_pool:

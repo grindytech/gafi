@@ -22,7 +22,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify
+		PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiSignature,
@@ -36,39 +36,43 @@ use sp_version::RuntimeVersion;
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, ConstU8, FindAuthor, KeyOwnerProofSystem, Randomness, EqualPrivilegeOnly},
+	traits::{ConstU32, ConstU8, FindAuthor, KeyOwnerProofSystem, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
 	ConsensusEngineId, StorageValue,
 };
+pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use pallet_evm::FeeCalculator;
 use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-use pallet_evm::FeeCalculator;
 
-pub use gafi_primitives::{currency::{centi, microcent, milli, unit, NativeToken::GAKI},
-	pool::{FlexPool, StaticPool, TicketType},
+pub use gafi_primitives::{
+	cache::Cache,
+	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	player::TicketInfo,
+	pool::TicketType,
 };
+use sp_std::if_std;
 
 // import local pallets
+pub use gafi_tx;
+pub use game_creator;
+pub use pallet_cache;
 pub use pallet_faucet;
-pub use upfront_pool;
 pub use pallet_player;
 pub use pallet_pool;
-pub use staking_pool;
-pub use gafi_tx;
 pub use sponsored_pool;
-pub use pallet_cache;
+pub use staking_pool;
+pub use upfront_pool;
 pub use pallet_pool_names;
-pub use game_creator;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -127,19 +131,19 @@ pub mod opaque {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("gaki-testnet"),
-	impl_name: create_runtime_str!("gaki-testnet"),
+	spec_name: create_runtime_str!("devnet"),
+	impl_name: create_runtime_str!("devnet"),
 	authoring_version: 1,
-	spec_version: 2,
+	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK; // 6 seconds
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 // Time is measured by number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -149,7 +153,10 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+	NativeVersion {
+		runtime_version: VERSION,
+		can_author_with: Default::default(),
+	}
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -351,7 +358,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 =  centi(GAKI).into(); //0.01 GAKI
+	pub DefaultBaseFeePerGas: U256 = centi(GAKI).into(); //0.01 GAKI
 }
 
 pub struct BaseFeeThreshold;
@@ -375,26 +382,6 @@ impl pallet_base_fee::Config for Runtime {
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
-
-parameter_types! {
-    pub MaximumSchedulerWeight: Weight = 10_000_000;
-    pub const MaxScheduledPerBlock: u32 = 50;
-}
-
-impl pallet_scheduler::Config for Runtime {
-    type Event = Event;
-    type Origin = Origin;
-    type PalletsOrigin = OriginCaller;
-    type Call = Call;
-    type MaximumWeight = MaximumSchedulerWeight;
-    type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
-    type MaxScheduledPerBlock = MaxScheduledPerBlock;
-    type WeightInfo = ();
-    type OriginPrivilegeCmp = EqualPrivilegeOnly;
-	type PreimageProvider = ();
-	type NoPreimagePostponement = ();
-}
-
 
 impl pallet_player::Config for Runtime {
 	type Event = Event;
@@ -421,15 +408,15 @@ impl staking_pool::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxPoolOwned: u32 = 10;
-	pub const MaxPoolTarget: u32 = 10;
+	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 =  10;
 }
 
 impl sponsored_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
 	type PoolName = PoolName;
+	type Currency = Balances;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
@@ -449,7 +436,7 @@ impl proof_address_mapping::Config for Runtime {
 }
 
 parameter_types! {
-	pub GameCreatorReward: u8 = 30u8;
+	pub GameCreatorReward: u8 = 30;
 }
 
 impl gafi_tx::Config for Runtime {
@@ -479,16 +466,6 @@ impl pallet_cache::Config for Runtime {
 	type Action = TicketType;
 }
 
-impl pallet_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type SponsoredPool = SponsoredPool;
-	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-	type Cache = PalletCache;
-}
-
 parameter_types! {
 	pub MaxContractOwned: u32 = 1000;
 	pub GameCreatorFee: u128 = 5 * unit(GAKI);
@@ -504,8 +481,18 @@ impl game_creator::Config for Runtime {
 	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
 }
 
+impl pallet_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+	type SponsoredPool = SponsoredPool;
+	type Cache = PalletCache;
+}
+
 parameter_types! {
-	pub ReservationFee:u128 = unit(GAKI).into();
+	pub ReservationFee:u128 = 1 * unit(GAKI);
 	pub MinLength: u32= 8;
 	pub MaxLength: u32 = 32;
 }
@@ -538,7 +525,7 @@ construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
-		Scheduler: pallet_scheduler,
+
 		Player: pallet_player,
 		Pool: pallet_pool,
 		UpfrontPool: upfront_pool,
@@ -546,10 +533,10 @@ construct_runtime!(
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
-		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
-		PoolName: pallet_pool_names,
+		Faucet: pallet_faucet,
 		GameCreator: game_creator,
+		PoolName: pallet_pool_names,
 	}
 );
 
@@ -589,6 +576,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -602,6 +590,8 @@ pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -650,12 +640,21 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
-				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
-			),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
 			_ => None,
 		}
 	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!([pallet_evm, EVM]);
 }
 
 impl_runtime_apis! {
@@ -945,14 +944,20 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
+			use game_creator::Pallet as GameCreatorBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
+			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
+			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -967,7 +972,10 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
 			use pallet_pool::Pallet as PoolBench;
+			use pallet_faucet::Pallet as FaucetBench;
+			use game_creator::Pallet as GameCreatorBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -979,6 +987,9 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
+			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
