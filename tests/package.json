@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "truffle compile",
     "test": "mocha --reporter spec js-tests/*",
     "scripts": "mocha --reporter spec scripts/*",
     "sponsored": "mocha --reporter spec js-tests/sponsored-fee.test.js",

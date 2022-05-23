@@ -18,6 +18,21 @@ run-dev:
     --dev \
     --rpc-port 9933
 
+.PHONY: run-manual-seal
+run-manual-seal:
+	./target/release/gafi-node \
+    --chain=dev \
+    --validator \
+    --execution=Native \
+    --no-telemetry \
+    --no-prometheus \
+    --sealing=Manual \
+    --no-grandpa \
+    --force-authoring \
+    --rpc-port=9933 \
+    --ws-port=9944 \
+    --tmp
+
 .PHONY: test
 test:
 	cargo test --features with-development
