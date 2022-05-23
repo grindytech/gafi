@@ -188,7 +188,7 @@ pub mod pallet {
 					if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
 						&sponsor,
 						fee,
-						WithdrawReasons::FEE,
+						WithdrawReasons::Fee,
 						ExistenceRequirement::KeepAlive,
 					) {
 						return Some(player_fee);

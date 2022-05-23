@@ -41,6 +41,12 @@ async function create_new_contract(context, account) {
     return receipt.result;
 }
 
+async function get_erc20_balance(context, token_address, target ) {
+    const erc20_contract = new context.web3.eth.Contract(ERC20ABI.abi, token_address);
+    const balance = await erc20_contract.methods.balanceOf(target).call();
+    return balance;
+}
+
 async function transfer_erc20(context, token_address, account, target, amount) {
     const erc20_contract = new context.web3.eth.Contract(ERC20ABI.abi, token_address);
     const contract = await erc20_contract.methods.transfer(target, amount);
@@ -56,7 +62,9 @@ async function transfer_erc20(context, token_address, account, target, amount) {
 
     const signed = await context.web3.eth.accounts.signTransaction(options, account.privateKey);
     const tx_hash = (await customRequest(context.web3, "eth_sendRawTransaction", [signed.rawTransaction])).result;
-    return tx_hash;
+    await createAndFinalizeBlock(context.web3);
+    const receipt = (await customRequest(context.web3, "eth_getTransactionReceipt", [tx_hash]));
+    return receipt.result;
 }
 
 /// map account to alice
@@ -125,4 +133,5 @@ module.exports = {
     join_pool,
     leave_pool,
     create_pool,
+    get_erc20_balance,
 }

@@ -53,7 +53,7 @@ function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
     }).timeout(10000);
 }
 
-describeWithFrontier("Service Fee", (context) => {
+describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     it('show total fee spent when ouside the pool', async () => {
         let account = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
