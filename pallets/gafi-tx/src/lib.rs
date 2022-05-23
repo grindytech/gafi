@@ -182,17 +182,14 @@ pub mod pallet {
 					.checked_div(U256::from(100u64))
 					.unwrap_or_else(|| U256::from(0u64));
 
-				let player_fee = service_fee.saturating_sub(sponsor_fee);
-
-				if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128()) {
-					if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
-						&sponsor,
-						fee,
-						WithdrawReasons::Fee,
-						ExistenceRequirement::KeepAlive,
-					) {
-						return Some(player_fee);
-					}
+				let fee = Pallet::<T>::u128_to_balance(sponsor_fee.as_u128());
+				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+					&sponsor,
+					fee,
+					WithdrawReasons::FEE,
+					ExistenceRequirement::KeepAlive,
+				) {
+					return Some(service_fee.saturating_sub(sponsor_fee));
 				}
 			}
 			None
@@ -282,6 +279,7 @@ where
 			}
 		}
 
+		// reward game's creator
 		if let Some(contract) = target {
 			if let Some(creator) = T::GetGameCreator::get_game_creator(&contract) {
 				let reward = service_fee

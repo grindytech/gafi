@@ -65,8 +65,8 @@ async function startFrontierNode(provider) {
 	const cmd = BINARY_PATH;
 	const args = [
 		`--chain=dev`,
-		`--validator`, // Required by manual sealing to author the blocks
-		`--execution=Native`, // Faster execution using native
+		`--validator`,
+		`--execution=Native`,
 		`--no-telemetry`,
 		`--no-prometheus`,
 		`--sealing=Manual`,
