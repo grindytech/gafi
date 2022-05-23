@@ -19,9 +19,9 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 
 # Frontier
 fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
+hex-literal = {version = "0.3.4", optional = true}
 pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
 pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-hex-literal = { version = "0.3.4", optional = true }
 
 # Substrate
 frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", optional = true}
@@ -37,18 +37,24 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local
-gafi-primitives = { default-features = false, version = "4.0.0-dev", path = "../../primitives" }
-utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
+gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+utils = {default-features = false, version = "4.0.0-dev", path = "../../utils"}
 
 [dev-dependencies]
+hex-literal = "0.2.1"
+
+# Substrate
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
+parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
-hex-literal = "0.2.1"
-parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1" }
-upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../staking-pool" }
+
+# Local
+game-creator = {default-features = false, version = "4.0.0-dev", path = "../game-creator"}
+proof-address-mapping = {default-features = false, version = "4.0.0-dev", path = "../address-mapping"}
+staking-pool = {default-features = false, version = "4.0.0-dev", path = "../staking-pool"}
+upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../upfront-pool"}
 
 [features]
 default = ["std"]
@@ -69,8 +75,9 @@ std = [
   'pallet-transaction-payment/std',
   'gafi-primitives/std',
   'utils/std',
+  'game-creator/std',
+  'proof-address-mapping/std',
 ]
-
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "hex-literal"]
 try-runtime = ["frame-support/try-runtime"]
