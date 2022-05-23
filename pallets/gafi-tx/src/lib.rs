@@ -168,11 +168,11 @@ pub mod pallet {
 		pub fn correct_and_deposit_fee_sponsored(
 			pool_id: ID,
 			targets: Vec<H160>,
-			target: Option<H160>,
+			target: H160,
 			service_fee: U256,
 			discount: u8,
 		) -> Option<U256> {
-			if !Self::is_target(targets, target) {
+			if !Self::is_target(targets, &target) {
 				return None;
 			}
 
@@ -198,11 +198,8 @@ pub mod pallet {
 			None
 		}
 
-		fn is_target(targets: Vec<H160>, target: Option<H160>) -> bool {
-			if let Some(tar) = target {
-				return targets.contains(&tar);
-			}
-			false
+		fn is_target(targets: Vec<H160>, target: &H160) -> bool {
+			targets.contains(target)
 		}
 
 		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
@@ -269,14 +266,16 @@ where
 					}
 					TicketType::Sponsored(pool_id) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
-						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
-							pool_id,
-							targets,
-							target,
-							service_fee,
-							service.discount,
-						) {
-							service_fee = fee;
+						if let Some(contract) = target {
+							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
+								pool_id,
+								targets,
+								contract,
+								service_fee,
+								service.discount,
+							) {
+								service_fee = fee;
+							}
 						}
 					}
 				}
