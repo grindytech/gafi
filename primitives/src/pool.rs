@@ -1,6 +1,4 @@
-use crate::{
-	constant::ID,
-};
+use crate::constant::ID;
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
@@ -109,5 +107,19 @@ impl<AccountId> MasterPool<AccountId> for () {
 	}
 	fn get_marktime() -> u128 {
 		u128::default()
+	}
+}
+
+impl<AccountId> PlayerTicket<AccountId> for () {
+	fn use_ticket(_player: AccountId) -> Option<TicketType> {
+		None
+	}
+
+	fn get_service(_ticket: TicketType) -> Option<Service> {
+		None
+	}
+
+	fn get_targets(_pool_id: ID) -> Vec<H160> {
+		[].to_vec()
 	}
 }
