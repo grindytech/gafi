@@ -75,26 +75,30 @@ pub mod pallet {
 		type Data: Parameter + MaxEncodedLen + Copy + TypeInfo;
 
 		/// The Action is the name of action use to query
-		type Action: Parameter + MaxEncodedLen + Copy + TypeInfo;
+		type Action: Parameter + MaxEncodedLen + Clone + TypeInfo;
 	}
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
+		pub phantom: PhantomData<T>,
+		pub phantom_i: PhantomData<I>,
 		pub clean_time: u128,
 	}
 
 	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
+	impl<T: Config<I>, I: 'static> Default for GenesisConfig<T, I> {
 		fn default() -> Self {
 			Self {
+				phantom: Default::default(),
+				phantom_i: Default::default(),
 				clean_time: 3_600_000u128,
 			}
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config<I>,  I: 'static> GenesisBuild<T, I> for GenesisConfig {
+	impl<T: Config<I>,  I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
 			<CleanTime<T, I>>::put(self.clean_time);
 			let _now: u128 = <timestamp::Pallet<T>>::get()
@@ -215,9 +219,9 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		fn get(id: &T::AccountId, action: T::Action) -> Option<T::Data> {
 			let get_wrap_data = || -> Option<WrapData<T::Data>> {
-				if let Some(data) = DataLeft::<T, I>::get(id, action) {
+				if let Some(data) = DataLeft::<T, I>::get(id, action.clone()) {
 					return Some(data);
-				} else if let Some(data) = DataRight::<T, I>::get(id, action) {
+				} else if let Some(data) = DataRight::<T, I>::get(id, action.clone()) {
 					return Some(data);
 				}
 				None

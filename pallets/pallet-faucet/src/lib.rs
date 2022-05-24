@@ -94,6 +94,7 @@ pub mod pallet {
 		TransferToSelf,
 		NotEnoughBalance,
 		DontBeGreedy,
+		PleaseWait
 	}
 
 	#[pallet::call]
@@ -112,7 +113,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
 			let faucet_amount = FaucetAmount::<T>::get();
-			ensure!(Self::get_cache(&sender) == None, <Error<T>>::DontBeGreedy);
+			ensure!(Self::get_cache(&sender) == None, <Error<T>>::PleaseWait);
 
 			ensure!(
 				T::Currency::free_balance(&sender) < (faucet_amount / 10u128.try_into().ok().unwrap()),

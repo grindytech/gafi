@@ -4611,6 +4611,7 @@ dependencies = [
  "gafi-primitives",
  "pallet-balances",
  "pallet-cache",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

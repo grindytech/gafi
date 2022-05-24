@@ -466,10 +466,10 @@ parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
 }
 
-impl pallet_cache::Config for Runtime {
+impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 	type Event = Event;
-	type Data = AccountId;
-	type Action = Balance;
+	type Data = Balance;
+	type Action = AccountId;
 }
 
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
@@ -556,7 +556,7 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping,
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		PalletCacheFaucet: pallet_cache,
+		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		PoolName: pallet_pool_names,
 		GameCreator: game_creator,
 	}

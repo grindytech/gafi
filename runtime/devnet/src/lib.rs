@@ -457,10 +457,10 @@ parameter_types! {
 
 }
 
-impl pallet_cache::Config for Runtime {
+impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 	type Event = Event;
-	type Data = AccountId;
-	type Action = Balance;
+	type Data = Balance;
+	type Action = AccountId;
 }
 
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
@@ -545,7 +545,7 @@ construct_runtime!(
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
 		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		PalletCacheFaucet: pallet_cache,
+		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
