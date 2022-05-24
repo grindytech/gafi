@@ -69,10 +69,10 @@ pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
 pub use pallet_pool;
+pub use pallet_pool_names;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
-pub use pallet_pool_names;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -500,7 +500,7 @@ parameter_types! {
 impl pallet_pool_names::Config for Runtime {
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
-    type Slashed = ();
+	type Slashed = ();
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
@@ -941,23 +941,9 @@ impl_runtime_apis! {
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
-			use upfront_pool::Pallet as UpfrontBench;
-			use proof_address_mapping::Pallet as AddressMappingBench;
-			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
-			use pallet_pool::Pallet as PoolBench;
-			use pallet_faucet::Pallet as FaucetBench;
-			use game_creator::Pallet as GameCreatorBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
-			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
-			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
-			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
-			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
-			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -967,29 +953,11 @@ impl_runtime_apis! {
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-			use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
-			use upfront_pool::Pallet as UpfrontBench;
-			use proof_address_mapping::Pallet as AddressMappingBench;
-			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
-			use pallet_pool::Pallet as PoolBench;
-			use pallet_faucet::Pallet as FaucetBench;
-			use game_creator::Pallet as GameCreatorBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
-
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
-			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
-			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
-			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
-			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
-			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
