@@ -47,7 +47,7 @@ check-gaki:
 
 .PHONY: check_benchmark
 check_benchmark:
-	cargo check --release --features runtime-benchmarks
+	cargo check --release --features runtime-benchmarks --features with-development
 
 .PHONY: benchmark
 benchmark:
