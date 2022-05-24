@@ -168,11 +168,11 @@ pub mod pallet {
 		pub fn correct_and_deposit_fee_sponsored(
 			pool_id: ID,
 			targets: Vec<H160>,
-			target: Option<H160>,
+			target: H160,
 			service_fee: U256,
 			discount: u8,
 		) -> Option<U256> {
-			if !Self::is_target(targets, target) {
+			if !Self::is_target(targets, &target) {
 				return None;
 			}
 
@@ -182,27 +182,21 @@ pub mod pallet {
 					.checked_div(U256::from(100u64))
 					.unwrap_or_else(|| U256::from(0u64));
 
-				let player_fee = service_fee.saturating_sub(sponsor_fee);
-
-				if let Ok(fee) = Pallet::<T>::u128_try_to_balance(sponsor_fee.as_u128()) {
-					if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
-						&sponsor,
-						fee,
-						WithdrawReasons::FEE,
-						ExistenceRequirement::KeepAlive,
-					) {
-						return Some(player_fee);
-					}
+				let fee = Pallet::<T>::u128_to_balance(sponsor_fee.as_u128());
+				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+					&sponsor,
+					fee,
+					WithdrawReasons::FEE,
+					ExistenceRequirement::KeepAlive,
+				) {
+					return Some(service_fee.saturating_sub(sponsor_fee));
 				}
 			}
 			None
 		}
 
-		fn is_target(targets: Vec<H160>, target: Option<H160>) -> bool {
-			if let Some(tar) = target {
-				return targets.contains(&tar);
-			}
-			false
+		fn is_target(targets: Vec<H160>, target: &H160) -> bool {
+			targets.contains(target)
 		}
 
 		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
@@ -269,20 +263,23 @@ where
 					}
 					TicketType::Sponsored(pool_id) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
-						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
-							pool_id,
-							targets,
-							target,
-							service_fee,
-							service.discount,
-						) {
-							service_fee = fee;
+						if let Some(contract) = target {
+							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
+								pool_id,
+								targets,
+								contract,
+								service_fee,
+								service.discount,
+							) {
+								service_fee = fee;
+							}
 						}
 					}
 				}
 			}
 		}
 
+		// reward game's creator
 		if let Some(contract) = target {
 			if let Some(creator) = T::GetGameCreator::get_game_creator(&contract) {
 				let reward = service_fee

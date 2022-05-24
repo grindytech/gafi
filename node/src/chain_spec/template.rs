@@ -1,20 +1,13 @@
-use devnet::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
-	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
-	FaucetConfig, TxHandlerConfig,
-	WASM_BINARY, PoolConfig, PalletCacheConfig, PalletCacheFaucetConfig
+use template_runtime::{
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
-use gafi_primitives::pool::{FlexService, Level};
-use sc_service::{ChainType, Properties};
-use serde_json::json;
+use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use sp_std::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, str::FromStr};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -47,15 +40,6 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-	let mut props: Properties = Properties::new();
-	let gaki = GafiCurrency::token_info(GAKI);
-	let symbol = json!(String::from_utf8(gaki.symbol).unwrap_or("GAKI".to_string()));
-	let name = json!(String::from_utf8(gaki.name).unwrap_or("GAKI Token".to_string()));
-	let decimals = json!(gaki.decimals);
-	props.insert("tokenSymbol".to_string(), symbol);
-	props.insert("tokenName".to_string(), name);
-	props.insert("tokenDecimals".to_string(), decimals);
-
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Development",
@@ -63,7 +47,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		"dev",
 		ChainType::Development,
 		move || {
-			dev_genesis(
+			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
@@ -87,7 +71,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		None,
 		None,
 		// Properties
-		Some(props),
+		None,
 		// Extensions
 		None,
 	))
@@ -103,7 +87,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		"local_testnet",
 		ChainType::Local,
 		move || {
-			dev_genesis(
+			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![
@@ -145,61 +129,24 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 }
 
 /// Configure initial storage state for FRAME modules.
-fn dev_genesis(
+fn testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
-	// Pool config
-	const MAX_PLAYER: u32 = 1000;
-	let upfront_services = [
-		(
-			Level::Basic,
-			FlexService::new(10_u32, 30_u8, 5 * unit(GAKI)),
-		),
-		(
-			Level::Medium,
-			FlexService::new(10_u32, 50_u8, 7 * unit(GAKI)),
-		),
-		(
-			Level::Advance,
-			FlexService::new(10_u32, 70_u8, 10 * unit(GAKI)),
-		),
-	];
-	let staking_services = [
-		(
-			Level::Basic,
-			FlexService::new(10_u32, 30_u8, 1000 * unit(GAKI)),
-		),
-		(
-			Level::Medium,
-			FlexService::new(10_u32, 50_u8, 1500 * unit(GAKI)),
-		),
-		(
-			Level::Advance,
-			FlexService::new(10_u32, 70_u8, 2000 * unit(GAKI)),
-		),
-	];
-	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
-	let bond_existential_deposit: u128 = unit(GAKI);
-	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
-
-	// pallet-faucet
-	let faucet_amount: u128 = 1500 * unit(GAKI);
-
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
 		},
 		balances: BalancesConfig {
-			// each genesis account hold 1M GAKI token
+			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1_000_000 * unit(GAKI)))
+				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
 		aura: AuraConfig {
@@ -219,38 +166,31 @@ fn dev_genesis(
 			accounts: {
 				let mut map = BTreeMap::new();
 				map.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"4e9A2Eee2caF9096161f9A5c3F0b0DE8f648AA11" //base
-					)),
+					// H160 address of Alice dev account
+					// Derived from SS58 (42 prefix) address
+					// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+					// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+					// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
+					H160::from_str("d43593c715fdd31c61141abd04a99fd6822c8558")
+						.expect("internal H160 is valid; qed"),
 					fp_evm::GenesisAccount {
-						nonce: U256::zero(),
-						balance: U256::from(1_000_000 * unit(GAKI)),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
 					},
 				);
-
 				map.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"F0B9EaA0fAaC58d5d4F3224958D75a5370672231"
-					)),
+					// H160 address of CI test runner account
+					H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b")
+						.expect("internal H160 is valid; qed"),
 					fp_evm::GenesisAccount {
-						nonce: U256::zero(),
-						balance: U256::from(1_000_000 * unit(GAKI)),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
-					},
-				);
-
-				map.insert(
-					H160::from_slice(&hex_literal::hex!(
-						"D910E83396231988F79df2f1175a90e15d26aB71"
-					)),
-					fp_evm::GenesisAccount {
-						nonce: U256::zero(),
-						balance: U256::from(1_000_000 * unit(GAKI)),
-						code: vec![],
-						storage: std::collections::BTreeMap::new(),
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
 					},
 				);
 				map
@@ -259,32 +199,5 @@ fn dev_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
-		staking_pool: StakingPoolConfig { services: staking_services },
-		faucet: FaucetConfig {
-			genesis_accounts: vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-			],
-			faucet_amount,
-		},
-		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(min_gas_price),
-		},
-		pool: PoolConfig {
-			time_service: TIME_SERVICE,
-		},
-		pallet_cache: PalletCacheConfig {
-			clean_time: TIME_SERVICE,
-			phantom: Default::default(),
-			phantom_i: Default::default(),
-		},
-		pallet_cache_faucet: PalletCacheFaucetConfig {
-			clean_time: TIME_SERVICE,
-			phantom: Default::default(),
-			phantom_i: Default::default(),
-		},
 	}
 }

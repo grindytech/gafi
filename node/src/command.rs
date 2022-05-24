@@ -15,19 +15,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Parser;
-use devnet::Block;
-use frame_benchmarking_cli::BenchmarkCmd;
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sc_service::PartialComponents;
 use std::sync::Arc;
 
-use crate::service::frontier_database_dir;
+use clap::Parser;
+use frame_benchmarking_cli::BenchmarkCmd;
+
+#[cfg(feature = "manual-seal")]
+use devnet as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
+
+#[cfg(feature = "with-gaki-runtime")]
+use gaki_testnet as runtime;
+
+use runtime::Block;
+
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
+
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
-	service,
+	service::{self, frontier_database_dir},
 };
 
 impl SubstrateCli for Cli {
@@ -66,9 +77,24 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "with-gaki-runtime")]
 			"dev" => Box::new(chain_spec::gaki_testnet::gaki_dev_config()?),
 
+			
 			#[cfg(feature = "with-gaki-runtime")]
 			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
+			
+			#[cfg(feature = "manual-seal")]
+			"dev" => Box::new(chain_spec::dev::development_config()?),
 
+			#[cfg(feature = "with-development")]
+			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+				std::path::PathBuf::from(path),
+			)?),
+
+			#[cfg(feature = "with-gaki-runtime")]
+			path => Box::new(chain_spec::gaki_testnet::ChainSpec::from_json_file(
+				std::path::PathBuf::from(path),
+			)?),
+
+			#[cfg(feature = "manual-seal")]
 			path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
@@ -76,7 +102,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&devnet::VERSION
+		&runtime::VERSION
 	}
 }
 
@@ -166,7 +192,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
 			runner.sync_run(|config| {
 				let PartialComponents {
 					client, backend, ..
