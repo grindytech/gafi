@@ -453,17 +453,24 @@ parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
 }
 
+impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
+	type Event = Event;
+	type Data = Balance;
+	type Action = AccountId;
+}
+
+impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = TicketType;
+}
+
 impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
-}
-
-impl pallet_cache::Config for Runtime {
-	type Event = Event;
-	type Data = TicketInfo;
-	type Action = TicketType;
+	type Cache = PalletCacheFaucet;
 }
 
 parameter_types! {
@@ -533,7 +540,8 @@ construct_runtime!(
 		SponsoredPool: sponsored_pool,
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
-		PalletCache: pallet_cache,
+		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,

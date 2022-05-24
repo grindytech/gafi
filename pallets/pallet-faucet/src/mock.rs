@@ -26,6 +26,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Faucet: pallet_faucet::{Pallet, Call, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 	}
 );
 
@@ -48,6 +50,24 @@ impl pallet_balances::Config for Test {
 }
 
 pub const FAUCET_BALANCE: u64 = 1_000_000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+impl pallet_cache::Config for Test {
+	type Event = Event;
+	type Action = AccountId32;
+	type Data = u128;
+}
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
@@ -58,6 +78,7 @@ impl pallet_faucet::Config for Test {
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = ();
+	type Cache = PalletCache;
 }
 
 parameter_types! {
