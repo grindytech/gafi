@@ -9,6 +9,7 @@ const { Keyring } = require('@polkadot/api');
 const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
 const { describeWithFrontier, WS_PORT, RPC_PORT, createAndFinalizeBlock } = require('../utils/context');
+const { step } = require("mocha-steps");
 
 var NormalFee;
 var ERC20_ADDRESS;
@@ -17,7 +18,7 @@ const DISCOUNT = 60;
 const TX_LIMIT = 10;
 
 function delay(interval) {
-    return it(`should delay ${interval}`, done => {
+    return step(`should delay ${interval}`, done => {
         setTimeout(() => done(), interval)
     }).timeout(interval + 100)
 }
@@ -30,13 +31,13 @@ function percentage_of(oldNumber, newNumber) {
 /// Alice is the pool owner, Bob is the player
 describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
-    it('it should create new erc20 token', async () => {
+    step('step should create new erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         let receipt = await utils.create_new_contract(context, account_1);
         ERC20_ADDRESS = receipt.contractAddress;
     }).timeout(20000);
 
-    it('it should trasfer erc20 token', async () => {
+    step('step should trasfer erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         let token_balance = "10000000000000";
@@ -45,7 +46,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         assert.deepEqual(balance.toString(), token_balance, "transfer balance not correct");
     }).timeout(20000);
 
-    it('it should trasfer erc20 token to get normal fee', async () => {
+    step('step should trasfer erc20 token to get normal fee', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         let token_balance = "10000000000000";
@@ -56,7 +57,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         console.log(`NormalFee: ${NormalFee}`);
     }).timeout(20000);
 
-    it('it should mapping addresses', async () => {
+    step('step should mapping addresses', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
         const api = await ApiPromise.create({ provider: wsProvider });
@@ -64,7 +65,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         await utils.proof_address_mapping(context, account_1, Alice);
     }).timeout(20000);
 
-    it('it should mapping addresses', async () => {
+    step('step should mapping addresses', async () => {
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
         const api = await ApiPromise.create({ provider: wsProvider });
@@ -72,7 +73,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         await utils.proof_address_mapping(context, account_2, Bob);
     }).timeout(20000);
 
-    it('it should create new pool', async () => {
+    step('step should create new pool', async () => {
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         let value = "1000000000000000000000"; // 1000 GAKI
         let discount = DISCOUNT;
@@ -87,7 +88,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         await utils.create_pool(context, Alice, argument);
     }).timeout(20000);
 
-    it('it should get owned pools before create new pool', async () => {
+    step('step should get owned pools before create new pool', async () => {
         const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
         const api = await ApiPromise.create({ provider: wsProvider });
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
@@ -95,18 +96,18 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         NewPool = pools[pools.length - 1];
     })
 
-    it('leave any pool before join sponsored pool works', async () => {
+    step('leave any pool before join sponsored pool works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.leave_pool(context, Bob);
     }).timeout(20000);
 
 
-    it('join sponsored sponsored works', async () => {
+    step('join sponsored sponsored works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.join_pool(context, Bob, { Sponsored: NewPool });
     }).timeout(20000);
 
-    it('discount on sponsored pool works', async () => {
+    step('discount on sponsored pool works', async () => {
         const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
         const api = await ApiPromise.create({ provider: wsProvider });
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -134,7 +135,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     }).timeout(20000);
 
-    it('Discount with tx limit works', async () => {
+    step('Discount with tx limit works', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
 
