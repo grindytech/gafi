@@ -2,6 +2,7 @@ require('dotenv').config();
 const Web3 = require('web3');
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
+const { step } = require("mocha-steps");
 var assert = require('assert');
 const { describeWithFrontier, RPC_PORT, createAndFinalizeBlock, describe_with_frontier} = require('../utils/context');
 const util = require('../utils/util');
@@ -25,7 +26,7 @@ describeWithFrontier("Frontier RPC (EthFilterApi)", (context) => {
         return (1 - (oldNumber / newNumber)) * 100
     }
 
-    it('it should create new erc20 token', async () => {
+    step('it should create new erc20 token', async () => {
         const base_account = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         let before_balance = await context.web3.eth.getBalance(base_account.address);
         console.log("before_balance: ", before_balance);
