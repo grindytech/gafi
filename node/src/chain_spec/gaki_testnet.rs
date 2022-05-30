@@ -3,7 +3,7 @@ use gaki_testnet::{
 	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
 	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
 	FaucetConfig, TxHandlerConfig,
-	WASM_BINARY, PoolConfig, PalletCacheConfig,
+	WASM_BINARY, PoolConfig, PalletCacheConfig, PalletCacheFaucetConfig
 };
 use gafi_primitives::currency::{microcent, unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
 use gafi_primitives::pool::{FlexService, Level};
@@ -209,6 +209,13 @@ fn gaki_testnet_genesis(
 		},
 		pallet_cache: PalletCacheConfig {
 			clean_time: TIME_SERVICE,
+			phantom: Default::default(),
+			phantom_i: Default::default(),
+		},
+		pallet_cache_faucet: PalletCacheFaucetConfig {
+			clean_time: TIME_SERVICE,
+			phantom: Default::default(),
+			phantom_i: Default::default(),
 		},
 	}
 }

@@ -9,9 +9,10 @@ const { Keyring } = require('@polkadot/api');
 const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
 const { describeWithFrontier, WS_PORT, RPC_PORT } = require('../utils/context');
+const { step } = require("mocha-steps");
 
 function delay(interval) {
-    return it(`should delay ${interval}`, done => {
+    return step(`should delay ${interval}`, done => {
         setTimeout(() => done(), interval)
     }).timeout(interval + 100)
 }
@@ -23,17 +24,17 @@ function percentage_of(oldNumber, newNumber) {
 }
 
 function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
-    it('leave pool works', async () => {
+    step('leave pool works', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.leave_pool(context, alice);
     }).timeout(10000);
 
-    it(`join pool works`, async () => {
+    step(`join pool works`, async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.join_pool(context, alice, ticket);
     }).timeout(10000);
 
-    it('Discount with tx limit works', async () => {
+    step('Discount with tx limit works', async () => {
         let account2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         let count = 0;
         for (let i = 0; i < 12; i++) {
@@ -55,7 +56,7 @@ function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
 
 describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
-    it('show total fee spent when ouside the pool', async () => {
+    step('show total fee spent when ouside the pool', async () => {
         let account = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         let before_balance = await context.web3.eth.getBalance(account.address);
 
@@ -66,7 +67,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         console.log("Normal fee: ", nomal_fee);
     }).timeout(10000);
 
-    it('it should mapping addresses', async () => {
+    step('step should mapping addresses', async () => {
         let account2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.proof_address_mapping(context, account2, alice);

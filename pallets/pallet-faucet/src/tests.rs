@@ -37,6 +37,15 @@ fn faucet_fail() {
 }
 
 #[test]
+fn faucet_should_fail_when_still_in_cache_time() {
+	ExtBuilder::default().build_and_execute(|| {
+		let sender = AccountId32::new([11;32]);
+		assert_ok!(Faucet::faucet(Origin::signed(sender.clone())));
+		assert_err!(Faucet::faucet(Origin::signed(sender.clone())), <Error<Test>>::PleaseWait);
+	})
+}
+
+#[test]
 fn donate_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11;32]);

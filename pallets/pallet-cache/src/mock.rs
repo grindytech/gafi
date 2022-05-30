@@ -159,6 +159,8 @@ impl ExtBuilder {
 		GenesisBuild::<Test>::assimilate_storage(
 			&pallet_cache::GenesisConfig {
 				clean_time: self.time_service,
+				phantom: Default::default(),
+				phantom_i: Default::default()
 			},
 			&mut storage,
 		)
