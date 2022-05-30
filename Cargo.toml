@@ -4,6 +4,7 @@ members = [
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
+  'utils/dummy',
   'runtime/devnet',
   'runtime/gaki-testnet',
   'runtime/template',

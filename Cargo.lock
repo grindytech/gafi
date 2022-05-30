@@ -2546,7 +2546,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gu-dummy",
  "hex-literal 0.2.2",
+ "pallet-balances",
  "parity-scale-codec",
  "parity-secp256k1",
  "rustc-hex",
@@ -2578,6 +2580,21 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "gu-dummy"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
