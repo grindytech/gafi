@@ -7935,6 +7935,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gu-convertor",
  "pallet-balances",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",

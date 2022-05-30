@@ -26,3 +26,13 @@ where
 {
     input.try_into().ok().unwrap_or_default()
 }
+
+pub fn balance_try_to_u128<C, A>(input: BalanceOf<C, A>) -> Result<u128, DispatchError>
+where
+    C: Currency<A>,
+{
+    match input.try_into().ok() {
+        Some(val) => Ok(val),
+        None => Err(DispatchError::Other("Can not convert balance to u128")),
+    }
+}
