@@ -24,7 +24,6 @@ sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
-gu-dummy = {default-features = false, version = "4.0.0-dev", path = "../dummy"}
 
 [dev-dependencies]
 hex-literal = "0.2.1"
@@ -47,5 +46,4 @@ std = [
   "frame-support/std",
   "gafi-primitives/std",
   "pallet-balances/std",
-  "gu-dummy/std",
 ]

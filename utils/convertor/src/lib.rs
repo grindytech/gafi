@@ -5,12 +5,6 @@ use gafi_primitives::constant::ID;
 use sp_runtime::DispatchError;
 use codec::{Decode};
 
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
-
 #[derive(Debug)]
 pub enum ConvertError {
     TryIntoBalanceFail,

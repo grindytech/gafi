@@ -3,6 +3,9 @@
 pub use pallet::*;
 use frame_support::traits::Currency;
 
+#[cfg(test)]
+pub mod mock;
+
 #[frame_support::pallet]
 pub mod pallet {
 
