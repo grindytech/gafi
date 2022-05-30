@@ -35,7 +35,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
-use gu_convertor::balance_try_to_u128;
+use gu_convertor::{balance_try_to_u128, into_account};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -232,20 +232,23 @@ use super::*;
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner
 			);
-			let pool = Self::into_account(pool_id)?;
-			Self::transfer_all(&pool, &sender, false)?;
-			PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
-				if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
-					pool_owned.swap_remove(ind);
-					return Ok(());
-				}
-				Err(())
-			})
-			.map_err(|_| <Error<T>>::PoolNotExist)?;
-			Pools::<T>::remove(pool_id);
-			Targets::<T>::remove(pool_id);
-			Self::deposit_event(Event::Withdrew { id: pool_id });
-			Ok(())
+			if let Some(pool) = into_account::<T::AccountId>(pool_id) {
+				Self::transfer_all(&pool, &sender, false)?;
+				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
+					if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
+						pool_owned.swap_remove(ind);
+						return Ok(());
+					}
+					Err(())
+				})
+				.map_err(|_| <Error<T>>::PoolNotExist)?;
+				Pools::<T>::remove(pool_id);
+				Targets::<T>::remove(pool_id);
+				Self::deposit_event(Event::Withdrew { id: pool_id });
+				Ok(())
+			} else {
+				return Err(Error::<T>::IntoAccountFail.into());
+			}
 		}
 
 		/// New Targets
@@ -355,13 +358,6 @@ use super::*;
 			let id = Self::gen_id()?;
 			match T::AccountId::decode(&mut &id[..]) {
 				Ok(account) => Ok(NewPool::<T::AccountId> { id, account }),
-				Err(_) => Err(<Error<T>>::IntoAccountFail),
-			}
-		}
-
-		fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
-			match T::AccountId::decode(&mut &id[..]) {
-				Ok(account) => Ok(account),
 				Err(_) => Err(<Error<T>>::IntoAccountFail),
 			}
 		}

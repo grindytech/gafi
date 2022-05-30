@@ -1,7 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::traits::Currency;
+use gafi_primitives::constant::ID;
 use sp_runtime::DispatchError;
+use codec::{Decode};
 
 #[derive(Debug)]
 pub enum ConvertError {
@@ -34,5 +36,14 @@ where
     match input.try_into().ok() {
         Some(val) => Ok(val),
         None => Err(DispatchError::Other("Can not convert balance to u128")),
+    }
+}
+
+pub fn into_account<AccountId>(id: ID) -> Option<AccountId> 
+    where AccountId: Decode,
+{
+    match AccountId::decode(&mut &id[..]) {
+        Ok(account) => Some(account),
+        Err(_) => None,
     }
 }

@@ -30,6 +30,7 @@ use sp_core::crypto::AccountId32;
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
 use gu_ethereum::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
+use gu_convertor::into_account;
 
 #[cfg(test)]
 mod mock;
@@ -147,7 +148,7 @@ pub mod pallet {
 			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
 			if withdraw {
 				let id = Self::into_account_id(address);
-				if let Some(from) = Self::into_account(id) {
+				if let Some(from) = into_account::<T::AccountId>(id.into()) {
 					Self::transfer_all(from, sender.clone(), true)?;
 				}
 			}
@@ -262,13 +263,6 @@ where
 		<Id32Mapping<T>>::remove(origin_account_id);
 	}
 
-	pub fn into_account(id: AccountId32) -> Option<T::AccountId> {
-		let bytes: [u8; 32] = id.into();
-		match T::AccountId::decode(&mut &bytes[..]) {
-			Ok(acc) => Some(acc),
-			Err(_) => None,
-		}
-	}
 }
 
 struct OriginAddressMapping;
