@@ -29,7 +29,7 @@ use pallet_evm::AddressMapping;
 use sp_core::crypto::AccountId32;
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
-use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
+use gu_ethereum::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 
 #[cfg(test)]
 mod mock;

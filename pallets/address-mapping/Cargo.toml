@@ -37,7 +37,7 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local
-utils = {default-features = false, version = "4.0.0-dev", path = "../../utils" }
+gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../utils/ethereum" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
@@ -64,7 +64,7 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'utils/std',
+  'gu-ethereum/std',
 ]
 
 

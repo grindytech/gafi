@@ -2345,6 +2345,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "game-creator",
+ "gu-ethereum",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-balances",
@@ -2362,7 +2363,6 @@ dependencies = [
  "sp-std",
  "staking-pool",
  "upfront-pool",
- "utils",
 ]
 
 [[package]]
@@ -2536,6 +2536,40 @@ dependencies = [
  "futures-core",
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "gu-convertor"
+version = "4.0.0-dev"
+dependencies = [
+ "hex-literal 0.2.2",
+ "parity-scale-codec",
+ "parity-secp256k1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sha3 0.10.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "gu-ethereum"
+version = "4.0.0-dev"
+dependencies = [
+ "hex-literal 0.2.2",
+ "parity-scale-codec",
+ "parity-secp256k1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sha3 0.10.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5338,6 +5372,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gu-ethereum",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
  "pallet-balances",
@@ -5352,7 +5387,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "utils",
 ]
 
 [[package]]
@@ -8213,6 +8247,7 @@ dependencies = [
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
+ "gu-ethereum",
  "hex",
  "hex-literal 0.3.4",
  "more-asserts",
@@ -8238,7 +8273,6 @@ dependencies = [
  "sponsored-pool",
  "staking-pool",
  "upfront-pool",
- "utils",
 ]
 
 [[package]]
@@ -8789,23 +8823,6 @@ dependencies = [
  "idna 0.2.3",
  "matches",
  "percent-encoding 2.1.0",
-]
-
-[[package]]
-name = "utils"
-version = "4.0.0-dev"
-dependencies = [
- "hex-literal 0.2.2",
- "parity-scale-codec",
- "parity-secp256k1",
- "rustc-hex",
- "scale-info",
- "serde",
- "sha3 0.10.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
