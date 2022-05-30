@@ -1,10 +1,11 @@
 use crate::{mock::*, Pallet, Error,
-	 H160Mapping, AddressMapping, Id32Mapping, OriginAddressMapping};
+	 H160Mapping, AddressMapping, Id32Mapping, OriginAddressMapping, pallet};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{H160};
 use sp_runtime::{AccountId32};
 use std::{str::FromStr};
+use gu_currency::transfer_all;
 
 #[test]
 fn default_into_account_id_works() {
@@ -176,7 +177,7 @@ fn transfer_all_keep_alive_works() {
 			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 		}
 
-		assert_ok!(ProofAddressMapping::transfer_all(mapping_address.clone(), ALICE.clone(), true));
+		assert_ok!(transfer_all::<Test, <Test as pallet::Config>::Currency>(&mapping_address, &ALICE, true));
 
 		// evm_address balance should  
 		{
@@ -210,7 +211,7 @@ fn transfer_all_allow_death_works() {
 			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 		}
 
-		assert_ok!(ProofAddressMapping::transfer_all(mapping_address.clone(), ALICE.clone(), false));
+		assert_ok!(transfer_all::<Test, <Test as pallet::Config>::Currency>(&mapping_address, &ALICE, false));
 		// evm_address balance should  
 		{
 			assert_eq!(Balances::free_balance(&mapping_address), 0);

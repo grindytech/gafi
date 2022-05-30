@@ -36,6 +36,7 @@ use sp_core::H160;
 use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
 use gu_convertor::{balance_try_to_u128, into_account};
+use gu_currency::transfer_all;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -233,7 +234,7 @@ use super::*;
 				<Error<T>>::NotTheOwner
 			);
 			if let Some(pool) = into_account::<T::AccountId>(pool_id) {
-				Self::transfer_all(&pool, &sender, false)?;
+				transfer_all::<T, <T as pallet::Config>::Currency>(&pool, &sender, false)?;
 				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
 					if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
 						pool_owned.swap_remove(ind);
@@ -367,29 +368,6 @@ use super::*;
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoU32Fail),
 			}
-		}
-
-		fn transfer_all(
-			from: &T::AccountId,
-			to: &T::AccountId,
-			keep_alive: bool,
-		) -> DispatchResult {
-			let reducible_balance: u128 =
-				pallet_balances::pallet::Pallet::<T>::reducible_balance(from, keep_alive)
-					.try_into()
-					.ok()
-					.unwrap();
-			let existence = if keep_alive {
-				ExistenceRequirement::KeepAlive
-			} else {
-				ExistenceRequirement::AllowDeath
-			};
-			<T as pallet::Config>::Currency::transfer(
-				from,
-				to,
-				reducible_balance.try_into().ok().unwrap(),
-				existence,
-			)
 		}
 
 		fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {

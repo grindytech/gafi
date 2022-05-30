@@ -2560,6 +2560,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "gu-currency"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "hex-literal 0.2.2",
+ "pallet-balances",
+ "parity-scale-codec",
+ "parity-secp256k1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sha3 0.10.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "gu-ethereum"
 version = "4.0.0-dev"
 dependencies = [
@@ -5377,6 +5398,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gu-convertor",
+ "gu-currency",
  "gu-ethereum",
  "hex-literal 0.2.2",
  "hex-literal 0.3.4",
@@ -7938,6 +7960,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "gu-convertor",
+ "gu-currency",
  "pallet-balances",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
