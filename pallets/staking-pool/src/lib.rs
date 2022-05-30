@@ -28,6 +28,7 @@ use gafi_primitives::{
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use gu_convertor::{u128_try_to_balance};
 
 #[cfg(test)]
 mod mock;
@@ -140,7 +141,7 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		fn join(sender: T::AccountId, level: Level) -> DispatchResult {
 			let service = Self::get_service_by_level(level)?;
-			let staking_amount = Self::u128_try_to_balance(service.value)?;
+			let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
@@ -160,7 +161,7 @@ pub mod pallet {
 				let new_player_count =
 					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 				let service = Self::get_service_by_level(level)?;
-				let staking_amount = Self::u128_try_to_balance(service.value)?;
+				let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
 				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 				Self::unstake_pool(sender, new_player_count);
 				Ok(())
@@ -217,13 +218,6 @@ pub mod pallet {
 
 		pub fn moment_to_u128(input: T::Moment) -> u128 {
 			sp_runtime::SaturatedConversion::saturated_into(input)
-		}
-
-		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
-			match input.try_into().ok() {
-				Some(val) => Ok(val),
-				None => Err(<Error<T>>::IntoBalanceFail),
-			}
 		}
 
 		fn get_player_level(player: T::AccountId) -> Option<Level> {
