@@ -2,7 +2,9 @@ use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::{FlexPool, Level, TicketType};
+use gafi_primitives::{ticket::{TicketLevel, TicketType},
+	system_services::SystemPool,
+};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 
@@ -35,9 +37,9 @@ fn new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
 fn default_services_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
-		assert_eq!(UpfrontPool::get_service(Level::Basic).is_none(), false);
-		assert_eq!(UpfrontPool::get_service(Level::Medium).is_none(), false);
-		assert_eq!(UpfrontPool::get_service(Level::Advance).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(TicketLevel::Basic).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(TicketLevel::Medium).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(TicketLevel::Advance).is_none(), false);
 	})
 }
 
@@ -47,7 +49,7 @@ fn player_join_pool_should_works() {
 		run_to_block(10);
 		let count_before = PlayerCount::<Test>::get();
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 
 		let player = Tickets::<Test>::get(alice);
 		assert_ne!(player, None);
@@ -109,11 +111,11 @@ fn should_restrict_max_player() {
 		for account in accounts {
 			if count == max_player {
 				assert_err!(
-					UpfrontPool::join(account, Level::Basic),
+					UpfrontPool::join(account, TicketLevel::Basic),
 					<Error<Test>>::ExceedMaxPlayer
 				);
 			} else {
-				assert_ok!(UpfrontPool::join(account, Level::Basic));
+				assert_ok!(UpfrontPool::join(account, TicketLevel::Basic));
 				count = count + 1;
 			}
 		}
@@ -125,7 +127,7 @@ fn new_player_leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 		run_to_block(2);
 		assert_ok!(UpfrontPool::leave(alice));
 	})
@@ -136,7 +138,7 @@ fn should_move_newplayers_to_ingame() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 
 		{
 			let new_players_before = NewPlayers::<Test>::get();
@@ -160,7 +162,7 @@ fn get_player_level_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 
 		let level = UpfrontPool::get_player_level(alice.clone());
 		assert_eq!(level.is_none(), false);
@@ -172,7 +174,7 @@ fn get_player_service_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 
 		let serevice = UpfrontPool::get_player_service(alice.clone());
 		assert_eq!(serevice.is_none(), false);
@@ -184,13 +186,13 @@ fn charge_ingame_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), Level::Basic));
+		assert_ok!(UpfrontPool::join(alice.clone(), TicketLevel::Basic));
 
 		run_to_block(CIRCLE_BLOCK + 1); // move to ingame
 		let before_balance = Balances::free_balance(&alice);
 		let _ = UpfrontPool::charge_ingame();
 		let after_balance = Balances::free_balance(&alice);
-		let service = UpfrontPool::get_service(Level::Basic).unwrap();
+		let service = UpfrontPool::get_service(TicketLevel::Basic).unwrap();
 		assert_eq!(before_balance, after_balance + service.value);
 	})
 }

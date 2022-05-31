@@ -2,12 +2,13 @@ use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	pool::{FlexPool, Level, TicketType},
+	ticket::{TicketLevel, TicketType},
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
+use gafi_primitives::system_services::SystemPool;
 
-const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Advance];
+const LEVELS: [TicketLevel; 3] = [TicketLevel::Basic, TicketLevel::Medium, TicketLevel::Advance];
 
 fn join_pool(account: AccountId32, staking_amount: u128, ticket: TicketType) {
 	let base_balance = 1_000_000 * unit(GAKI);

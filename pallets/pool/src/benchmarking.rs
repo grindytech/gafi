@@ -10,7 +10,7 @@ use frame_system::RawOrigin;
 use frame_support::traits::Currency;
 use scale_info::prelude::string::String;
 use scale_info::prelude::format;
-use gafi_primitives::{pool::{Level, TicketType}};
+use gafi_primitives::{pool::{TicketLevel, TicketType}};
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
 
 fn string_to_static_str(s: String) -> &'static str {
@@ -28,12 +28,12 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u128) -> T::Acco
 }
 const MAX_TICKETS: usize = 6;
 
-const TICKETS: [TicketType; MAX_TICKETS] = [TicketType::Upfront(Level::Basic),
- TicketType::Upfront(Level::Medium),
-TicketType::Upfront(Level::Advance),
-TicketType::Staking(Level::Basic),
- TicketType::Staking(Level::Medium),
-TicketType::Staking(Level::Advance),
+const TICKETS: [TicketType; MAX_TICKETS] = [TicketType::Upfront(TicketLevel::Basic),
+ TicketType::Upfront(TicketLevel::Medium),
+TicketType::Upfront(TicketLevel::Advance),
+TicketType::Staking(TicketLevel::Basic),
+ TicketType::Staking(TicketLevel::Medium),
+TicketType::Staking(TicketLevel::Advance),
 ];
 
 benchmarks! {

@@ -8,7 +8,7 @@ use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::pool::{Level, TicketType};
+use gafi_primitives::pool::{TicketLevel, TicketType};
 use scale_info::prelude::format;
 use scale_info::prelude::string::String;
 use sp_core::H160;

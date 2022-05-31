@@ -2,17 +2,17 @@ use crate::{mock::*};
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	pool::{Level, TicketType, PlayerTicket},
+	ticket::{TicketLevel, TicketType, PlayerTicket},
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
-const TICKETS: [TicketType; 6] = [TicketType::Upfront(Level::Basic),
- TicketType::Upfront(Level::Medium), TicketType::Upfront(Level::Advance),
-TicketType::Staking(Level::Basic), TicketType::Staking(Level::Medium),
- TicketType::Staking(Level::Advance)];
+const TICKETS: [TicketType; 6] = [TicketType::Upfront(TicketLevel::Basic),
+ TicketType::Upfront(TicketLevel::Medium), TicketType::Upfront(TicketLevel::Advance),
+TicketType::Staking(TicketLevel::Basic), TicketType::Staking(TicketLevel::Medium),
+ TicketType::Staking(TicketLevel::Advance)];
 
- const LEVELS: [Level; 3] = [Level::Basic, Level::Medium, Level::Advance];
+ const LEVELS: [TicketLevel; 3] = [TicketLevel::Basic, TicketLevel::Medium, TicketLevel::Advance];
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;

@@ -21,8 +21,11 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	player::TicketInfo,
-	pool::{FlexPool, Level, MasterPool, PlayerTicket, Service, StaticPool, TicketType},
+	custom_services::CustomePool,
+	pool::{MasterPool, Service},
+	system_services::SystemPool,
+	ticket::TicketInfo,
+	ticket::{PlayerTicket, TicketLevel, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -53,13 +56,13 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Add upfront pool
-		type UpfrontPool: FlexPool<Self::AccountId>;
+		type UpfrontPool: SystemPool<Self::AccountId>;
 
 		/// Add Staking Pool
-		type StakingPool: FlexPool<Self::AccountId>;
+		type StakingPool: SystemPool<Self::AccountId>;
 
 		/// Add Sponsored Pool
-		type SponsoredPool: StaticPool<Self::AccountId>;
+		type SponsoredPool: CustomePool<Self::AccountId>;
 
 		/// Add Cache
 		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;
