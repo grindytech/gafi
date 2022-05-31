@@ -9,15 +9,15 @@ use sp_std::vec::Vec;
 use crate::pool::{Service};
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
-pub struct CustomeService<AccountId> {
+pub struct CustomService<AccountId> {
 	pub service: Service,
 	pub sponsor: AccountId,
 	pub targets: Vec<H160>,
 }
 
-impl<AccountId> CustomeService<AccountId> {
+impl<AccountId> CustomService<AccountId> {
 	pub fn new(targets: Vec<H160>, tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
-		CustomeService {
+		CustomService {
 			targets,
 			service: Service { tx_limit, discount },
 			sponsor,
@@ -25,8 +25,8 @@ impl<AccountId> CustomeService<AccountId> {
 	}
 }
 
-pub trait CustomePool<AccountId> {
+pub trait CustomPool<AccountId> {
 	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
-	fn get_service(pool_id: ID) -> Option<CustomeService<AccountId>>;
+	fn get_service(pool_id: ID) -> Option<CustomService<AccountId>>;
 }

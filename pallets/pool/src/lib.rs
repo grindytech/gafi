@@ -21,7 +21,7 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	custom_services::CustomePool,
+	custom_services::CustomPool,
 	pool::{MasterPool, Service},
 	system_services::SystemPool,
 	ticket::TicketInfo,
@@ -62,7 +62,7 @@ pub mod pallet {
 		type StakingPool: SystemPool<Self::AccountId>;
 
 		/// Add Sponsored Pool
-		type SponsoredPool: CustomePool<Self::AccountId>;
+		type SponsoredPool: CustomPool<Self::AccountId>;
 
 		/// Add Cache
 		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;

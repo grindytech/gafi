@@ -26,7 +26,7 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
 	constant::ID,
-	custom_services::{CustomePool, CustomeService},
+	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
 	ticket::TicketLevel,
@@ -368,7 +368,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CustomePool<T::AccountId> for Pallet<T> {
+	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
 		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
 			Ok(())
 		}
@@ -376,10 +376,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_service(pool_id: ID) -> Option<CustomeService<T::AccountId>> {
+		fn get_service(pool_id: ID) -> Option<CustomService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
 				let targets = Targets::<T>::get(pool_id);
-				return Some(CustomeService::new(
+				return Some(CustomService::new(
 					targets.to_vec(),
 					pool.tx_limit,
 					pool.discount,

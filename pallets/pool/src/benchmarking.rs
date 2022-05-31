@@ -10,7 +10,7 @@ use frame_system::RawOrigin;
 use frame_support::traits::Currency;
 use scale_info::prelude::string::String;
 use scale_info::prelude::format;
-use gafi_primitives::{pool::{TicketLevel, TicketType}};
+use gafi_primitives::{ticket::{TicketLevel, TicketType}};
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
 
 fn string_to_static_str(s: String) -> &'static str {
