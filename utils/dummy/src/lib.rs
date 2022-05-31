@@ -1,10 +1,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet::*;
 use frame_support::traits::Currency;
+pub use pallet::*;
 
 #[cfg(test)]
-pub mod mock;
+mod mock;
+
+#[cfg(test)]
+mod convertor_tests;
+
+#[cfg(test)]
+mod currency_test;
 
 #[frame_support::pallet]
 pub mod pallet {

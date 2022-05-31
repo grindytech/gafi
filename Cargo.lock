@@ -2589,6 +2589,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gu-convertor",
+ "gu-currency",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
