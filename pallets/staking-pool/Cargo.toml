@@ -31,6 +31,7 @@ sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+gu-convertor = {default-features = false, version = "4.0.0-dev", path = "../../utils/convertor"}
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
@@ -55,6 +56,7 @@ std = [
   "gafi-primitives/std",
   "pallet-balances/std",
   "sp-std/std",
+  "gu-convertor/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

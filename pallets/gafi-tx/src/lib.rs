@@ -34,6 +34,7 @@ use pallet_evm::OnChargeEVMTransaction;
 use pallet_evm::{AddressMapping, GasWeightMapping};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
+use gu_convertor::{u128_to_balance, into_account};
 
 #[cfg(test)]
 mod mock;
@@ -147,24 +148,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
-			match input.try_into().ok() {
-				Some(val) => Ok(val),
-				None => Err(<Error<T>>::IntoBalanceFail),
-			}
-		}
-
-		pub fn u128_to_balance(input: u128) -> BalanceOf<T> {
-			input.try_into().ok().unwrap_or_default()
-		}
-
-		pub fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
-			match T::AccountId::decode(&mut &id[..]) {
-				Ok(account) => Ok(account),
-				Err(_) => Err(<Error<T>>::IntoAccountFail),
-			}
-		}
-
 		pub fn correct_and_deposit_fee_sponsored(
 			pool_id: ID,
 			targets: Vec<H160>,
@@ -176,13 +159,14 @@ pub mod pallet {
 				return None;
 			}
 
-			if let Ok(sponsor) = Pallet::<T>::into_account(pool_id) {
+			if let Some(sponsor) = into_account::<T::AccountId>(pool_id) {
 				let sponsor_fee = service_fee
 					.saturating_mul(U256::from(discount))
 					.checked_div(U256::from(100u64))
 					.unwrap_or_else(|| U256::from(0u64));
 
-				let fee = Pallet::<T>::u128_to_balance(sponsor_fee.as_u128());
+				let fee = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee.as_u128());
+
 				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
 					&sponsor,
 					fee,
@@ -288,7 +272,7 @@ where
 					.unwrap_or_else(|| U256::from(0u64));
 				let _ = <T as Config>::Currency::deposit_into_existing(
 					&creator,
-					Pallet::<T>::u128_to_balance(reward.as_u128()),
+					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(reward.as_u128()),
 				);
 			}
 		}

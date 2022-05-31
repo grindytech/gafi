@@ -38,7 +38,8 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
-utils = {default-features = false, version = "4.0.0-dev", path = "../../utils"}
+gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../utils/ethereum"}
+gu-convertor = { default-features = false, version = "4.0.0-dev", path = "../../utils/convertor" }
 
 [dev-dependencies]
 hex-literal = "0.2.1"
@@ -74,9 +75,10 @@ std = [
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
   'gafi-primitives/std',
-  'utils/std',
+  'gu-ethereum/std',
   'game-creator/std',
   'proof-address-mapping/std',
+  'gu-convertor/std',
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "hex-literal"]

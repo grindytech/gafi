@@ -34,6 +34,7 @@ use gafi_primitives::{
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use gu_convertor::{u128_try_to_balance, u128_to_balance};
 
 #[cfg(test)]
 mod mock;
@@ -190,8 +191,8 @@ pub mod pallet {
 			ensure!(new_player_count <= Self::max_player(), <Error<T>>::ExceedMaxPlayer);
 			{
 				let service = Self::get_service_by_level(level)?;
-				let service_fee = Self::u128_try_to_balance(service.value)?;
-				let double_service_fee = Self::u128_try_to_balance(service.value * 2u128)?;
+				let service_fee = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
+				let double_service_fee = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value * 2u128)?;
 				ensure!(T::Currency::free_balance(&sender) > double_service_fee, pallet_balances::Error::<T>::InsufficientBalance);
 				<NewPlayers<T>>::try_mutate(|newplayers| newplayers.try_push(sender.clone()))
 					.map_err(|_| <Error<T>>::ExceedMaxPlayer)?;
@@ -226,8 +227,8 @@ pub mod pallet {
 					{
 						let service = Self::get_service_by_level(level)?;
 						let refund_fee = Self::get_refund_balance(_now, join_time, service.value);
-						charge_fee = Self::u128_try_to_balance(service.value - refund_fee)?;
-						service_fee = Self::u128_try_to_balance(service.value)?;
+						charge_fee = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value - refund_fee)?;
+						service_fee = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
 					}
 
 					T::Currency::unreserve(&sender, service_fee);
@@ -334,7 +335,7 @@ impl<T: Config> Pallet<T> {
 		let ingame_players: Vec<T::AccountId> = IngamePlayers::<T>::get().into_inner();
 		for player in ingame_players {
 			if let Some(service) = Self::get_player_service(player.clone()) {
-				let fee_value = Self::u128_try_to_balance(service.value)?;
+				let fee_value = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value);
 
 				match T::Currency::withdraw(
 					&player,
@@ -370,13 +371,6 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		None
-	}
-
-	fn u128_try_to_balance(input: u128) -> Result<BalanceOf<T>, Error<T>> {
-		match input.try_into().ok() {
-			Some(val) => Ok(val),
-			None => Err(<Error<T>>::IntoBalanceFail),
-		}
 	}
 
 	fn moment_to_u128(input: T::Moment) -> u128 {
