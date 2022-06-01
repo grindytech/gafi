@@ -15,7 +15,7 @@ var NormalFee;
 var ERC20_ADDRESS;
 var NewPool;
 const DISCOUNT = 60;
-const TX_LIMIT = 10;
+const TX_LIMIT = 50;
 
 function delay(interval) {
     return step(`should delay ${interval}`, done => {
@@ -76,7 +76,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
     step('step should create new pool', async () => {
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         let value = "1000000000000000000000"; // 1000 GAKI
-        let discount = DISCOUNT;
+        let discount = DISCOUNT * 10000;
         let txLimit = TX_LIMIT;
 
         let argument = {
@@ -140,7 +140,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
 
         let count = 0;
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < TX_LIMIT + 2; i++) {
             let before_balance = await context.web3.eth.getBalance(account_2.address);
             await utils.transfer_erc20(context, ERC20_ADDRESS, account_2,
                 account_1.address, "100");
@@ -155,5 +155,5 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
                 assert.notEqual(Math.round(rate), DISCOUNT);
             }
         }
-    }).timeout(20000);
+    }).timeout(30000);
 })

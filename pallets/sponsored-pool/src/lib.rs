@@ -39,6 +39,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
+use sp_runtime::Permill;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -48,7 +49,7 @@ struct SponsoredPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
-	pub discount: u8,
+	pub discount: Permill,
 	pub tx_limit: u32,
 }
 
@@ -90,6 +91,26 @@ pub mod pallet {
 
 		/// Manage pool name
 		type PoolName: Name<Self::AccountId>;
+
+		/// The minimum balance owner have to deposit when creating the pool
+		#[pallet::constant]
+		type MinPoolBalance: Get<u128>;
+
+		/// The minimum discount percent when creating the pool
+		#[pallet::constant]
+		type MinDiscountPercent: Get<Permill>;
+
+		///The maximum discount percent when creating the pool
+		#[pallet::constant]
+		type MaxDiscountPercent: Get<Permill>;
+
+		/// The minimum tx limit when creating the pool
+		#[pallet::constant]
+		type MinTxLimit: Get<u32>;
+
+		///The maximum tx limit when creating the pool
+		#[pallet::constant]
+		type MaxTxLimit: Get<u32>;
 
 		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
@@ -142,6 +163,11 @@ pub mod pallet {
 		PoolNotExist,
 		ExceedMaxPoolOwned,
 		ExceedPoolTarget,
+		NotReachMinPoolBalance,
+		LessThanMinTxLimit,
+		GreaterThanMaxTxLimit,
+		LessThanMinDiscountPercent,
+		GreaterThanMinDiscountPercent
 	}
 
 	#[pallet::call]
@@ -163,7 +189,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
-			discount: u8,
+			discount: Permill,
 			tx_limit: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -177,6 +203,11 @@ pub mod pallet {
 				T::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
+			ensure!(balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)? >= T::MinPoolBalance::get(), Error::<T>::NotReachMinPoolBalance);
+			ensure!(tx_limit >= T::MinTxLimit::get(), Error::<T>::LessThanMinTxLimit);
+			ensure!(tx_limit <= T::MaxTxLimit::get(), Error::<T>::GreaterThanMaxTxLimit);
+			ensure!(discount >= T::MinDiscountPercent::get(), Error::<T>::LessThanMinDiscountPercent);
+			ensure!(discount <= T::MaxDiscountPercent::get(), Error::<T>::GreaterThanMinDiscountPercent);
 			ensure! {
 				Self::usize_try_to_u32(targets.len())? <= T::MaxPoolTarget::get(),
 				<Error<T>>::ExceedPoolTarget

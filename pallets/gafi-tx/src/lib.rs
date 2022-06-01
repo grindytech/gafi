@@ -28,6 +28,7 @@ use gafi_primitives::{
 	game_creator::GetGameCreator,
 	ticket::{PlayerTicket, TicketType},
 };
+use sp_runtime::{Permill};
 pub use pallet::*;
 use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
@@ -79,7 +80,7 @@ pub mod pallet {
 
 		/// percentage of transaction fee reward to game-creator
 		#[pallet::constant]
-		type GameCreatorReward: Get<u8>;
+		type GameCreatorReward: Get<Permill>;
 
 		type GetGameCreator: GetGameCreator<Self::AccountId>;
 	}
@@ -152,20 +153,17 @@ pub mod pallet {
 			pool_id: ID,
 			targets: Vec<H160>,
 			target: H160,
-			service_fee: U256,
-			discount: u8,
-		) -> Option<U256> {
+			service_fee: u128,
+			discount: Permill,
+		) -> Option<u128> {
 			if !Self::is_target(targets, &target) {
 				return None;
 			}
 
 			if let Some(sponsor) = into_account::<T::AccountId>(pool_id) {
-				let sponsor_fee = service_fee
-					.saturating_mul(U256::from(discount))
-					.checked_div(U256::from(100u64))
-					.unwrap_or_else(|| U256::from(0u64));
+				let sponsor_fee = discount * service_fee;
 
-				let fee = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee.as_u128());
+				let fee = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee);
 
 				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
 					&sponsor,
@@ -183,12 +181,10 @@ pub mod pallet {
 			targets.contains(target)
 		}
 
-		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
-			let discount_fee = service_fee
-				.saturating_mul(U256::from(discount))
-				.checked_div(U256::from(100u64));
+		pub fn correct_and_deposit_fee_service(service_fee: u128, discount: Permill) -> u128 {
+			let discount_fee = discount * service_fee;
 
-			Some(service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64))))
+			return service_fee.saturating_sub(discount_fee);
 		}
 	}
 
@@ -230,7 +226,7 @@ where
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
-		let mut service_fee = corrected_fee;
+		let mut service_fee = corrected_fee.as_u128();
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		// get transaction service based on player's service
@@ -238,12 +234,10 @@ where
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
 				match ticket {
 					TicketType::Staking(_) | TicketType::Upfront(_) => {
-						if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_service(
+						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,
 							service.discount,
-						) {
-							service_fee = fee;
-						}
+						);
 					}
 					TicketType::Sponsored(pool_id) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
@@ -266,13 +260,11 @@ where
 		// reward game's creator
 		if let Some(contract) = target {
 			if let Some(creator) = T::GetGameCreator::get_game_creator(&contract) {
-				let reward = service_fee
-					.saturating_mul(U256::from(T::GameCreatorReward::get()))
-					.checked_div(U256::from(100u64))
-					.unwrap_or_else(|| U256::from(0u64));
+				let reward = T::GameCreatorReward::get() * service_fee;
+
 				let _ = <T as Config>::Currency::deposit_into_existing(
 					&creator,
-					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(reward.as_u128()),
+					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(reward),
 				);
 			}
 		}
@@ -280,7 +272,7 @@ where
 		T::OnChargeEVMTxHandler::correct_and_deposit_fee(
 			who,
 			target,
-			service_fee,
+			U256::from(service_fee),
 			already_withdrawn,
 		)
 	}

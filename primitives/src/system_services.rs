@@ -3,7 +3,7 @@ use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{RuntimeDebug, Permill};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -15,7 +15,7 @@ pub struct SystemService {
 }
 
 impl SystemService {
-	pub fn new(tx_limit: u32, discount: u8, value: u128) -> Self {
+	pub fn new(tx_limit: u32, discount: Permill, value: u128) -> Self {
 		SystemService {
 			service: Service { tx_limit, discount },
 			value,

@@ -14,6 +14,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
+use sp_runtime::{Permill};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -68,7 +69,7 @@ impl pallet_ethereum::Config for Test {
 }
 
 parameter_types! {
-	pub GameCreatorReward: u8 = 30;
+	pub GameCreatorReward: Permill = Permill::from_percent(30);
 }
 
 impl gafi_tx::Config for Test {

@@ -35,6 +35,7 @@ use gafi_primitives::{
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use sp_runtime::Permill;
 
 #[cfg(test)]
 mod mock;
@@ -141,15 +142,15 @@ pub mod pallet {
 				services: [
 					(
 						TicketLevel::Basic,
-						SystemService::new(100_u32, 30_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(30), 1000000u128)
 					),
 					(
 						TicketLevel::Medium,
-						SystemService::new(100_u32, 50_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(50), 1000000u128)
 					),
 					(
 						TicketLevel::Advance,
-						SystemService::new(100_u32, 70_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(70), 1000000u128)
 					),
 				],
 			}

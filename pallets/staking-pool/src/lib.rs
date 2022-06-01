@@ -30,6 +30,7 @@ use gafi_primitives::{
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use gu_convertor::{u128_try_to_balance};
+use sp_runtime::Permill;
 
 #[cfg(test)]
 mod mock;
@@ -60,7 +61,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
+
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
@@ -99,9 +100,9 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				services: [
-					(TicketLevel::Basic, SystemService::new(100_u32, 30_u8, 100000u128)),
-					(TicketLevel::Medium, SystemService::new(100_u32, 50_u8, 100000u128)),
-					(TicketLevel::Advance,  SystemService::new(100_u32, 70_u8, 100000u128)),
+					(TicketLevel::Basic, SystemService::new(100_u32, Permill::from_percent(30), 100000u128)),
+					(TicketLevel::Medium, SystemService::new(100_u32, Permill::from_percent(50), 100000u128)),
+					(TicketLevel::Advance,  SystemService::new(100_u32, Permill::from_percent(70), 100000u128)),
 				],
 			}
 		}

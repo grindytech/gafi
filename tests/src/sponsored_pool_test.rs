@@ -6,7 +6,7 @@ use gafi_primitives::{
     ticket::{ TicketType},
 };
 use sp_core::H160;
-use sp_runtime::AccountId32;
+use sp_runtime::{AccountId32, Permill};
 use sp_std::vec::Vec;
 use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::ticket::PlayerTicket;
@@ -26,7 +26,7 @@ fn create_pool(
     targets: Vec<H160>,
     pool_value: u128,
     tx_limit: u32,
-    discount: u8,
+    discount: Permill,
 )  -> ID {
     let before_balance = Balances::free_balance(&account);
     assert_ok!(SponsoredPool::create_pool(
@@ -57,7 +57,7 @@ fn create_sponsored_pool_works() {
         let targets = vec![H160::default()];
         let pool_value = 1000 * unit(GAKI);
         let tx_limit = 100_u32;
-        let discount = 30_u8;
+        let discount = Permill::from_percent(30);
 
         create_pool(account, targets, pool_value, tx_limit, discount);
     })
@@ -72,7 +72,7 @@ fn rejoin_sponsored_pool_works() {
         let targets = vec![H160::default()];
         let pool_value = 1000 * unit(GAKI);
         let tx_limit = 100_u32;
-        let discount = 30_u8;
+        let discount = Permill::from_percent(30);
 
         let pool_id = create_pool(account, targets, pool_value, tx_limit, discount);
 

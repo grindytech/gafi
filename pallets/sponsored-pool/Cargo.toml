@@ -28,6 +28,7 @@ pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
@@ -57,6 +58,7 @@ std = [
   "sp-core/std",
   "pallet-balances/std",
   "sp-std/std",
+  'sp-runtime/std',
   "pallet-timestamp/std",
   "gu-convertor/std",
   "gu-currency/std",

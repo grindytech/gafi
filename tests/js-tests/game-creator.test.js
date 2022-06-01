@@ -13,7 +13,7 @@ describeWithFrontier("Frontier RPC (EthFilterApi)", (context) => {
     var NormalFee;
     var ERC20_ADDRESS;
     var NewPool;
-    const DISCOUNT = 19;
+    const DISCOUNT = 190000;
     const TX_LIMIT = 10;
 
     function delay(interval) {
