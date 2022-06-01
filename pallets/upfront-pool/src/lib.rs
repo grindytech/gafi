@@ -50,7 +50,9 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	use sp_runtime::Permill;
+
+use super::*;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -139,9 +141,9 @@ pub mod pallet {
 			Self {
 				max_player: 1000,
 				services: [
-					(Level::Basic, FlexService::new(100_u32, 30_u8, 1000000u128)),
-					(Level::Medium, FlexService::new(100_u32, 50_u8, 1000000u128)),
-					(Level::Advance, FlexService::new(100_u32, 70_u8, 1000000u128)),
+					(Level::Basic, FlexService::new(100_u32, Permill::from_percent(30), 1000000u128)),
+					(Level::Medium, FlexService::new(100_u32, Permill::from_percent(50), 1000000u128)),
+					(Level::Advance, FlexService::new(100_u32, Permill::from_percent(70), 1000000u128)),
 				],
 			}
 		}

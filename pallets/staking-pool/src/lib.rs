@@ -47,6 +47,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult};
 	use gafi_primitives::pool::FlexPool;
+use sp_runtime::Permill;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -60,7 +61,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
+
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
@@ -99,9 +100,9 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				services: [
-					(Level::Basic, FlexService::new(100_u32, 30_u8, 100000u128)),
-					(Level::Medium, FlexService::new(100_u32, 50_u8, 100000u128)),
-					(Level::Advance,  FlexService::new(100_u32, 70_u8, 100000u128)),
+					(Level::Basic, FlexService::new(100_u32, Permill::from_percent(30), 100000u128)),
+					(Level::Medium, FlexService::new(100_u32, Permill::from_percent(50), 100000u128)),
+					(Level::Advance,  FlexService::new(100_u32, Permill::from_percent(70), 100000u128)),
 				],
 			}
 		}

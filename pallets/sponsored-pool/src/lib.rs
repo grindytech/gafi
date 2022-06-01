@@ -37,6 +37,7 @@ use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
+use sp_runtime::Permill;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -46,7 +47,7 @@ struct SponsoredPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
-	pub discount: u8,
+	pub discount: Permill,
 	pub tx_limit: u32,
 }
 
@@ -64,6 +65,7 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+
 
 use super::*;
 
@@ -162,7 +164,7 @@ use super::*;
 			origin: OriginFor<T>,
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
-			discount: u8,
+			discount: Permill,
 			tx_limit: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

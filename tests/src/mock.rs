@@ -21,7 +21,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32,
+	AccountId32, Permill,
 };
 use gafi_primitives::player::TicketInfo;
 pub use pallet_balances::Call as BalancesCall;
@@ -312,29 +312,29 @@ impl Default for ExtBuilder {
 			upfront_services: [
 				(
 					Level::Basic,
-					FlexService::new(100_u32, 30_u8, 5 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 				),
 				(
 					Level::Medium,
-					FlexService::new(100_u32, 50_u8, 7 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 				),
 				(
 					Level::Advance,
-					FlexService::new(100_u32, 70_u8, 10 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 				),
 			],
 			staking_services: [
 				(
 					Level::Basic,
-					FlexService::new(100_u32, 30_u8, 1000 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 				),
 				(
 					Level::Medium,
-					FlexService::new(100_u32, 50_u8, 1500 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 				),
 				(
 					Level::Advance,
-					FlexService::new(100_u32, 70_u8, 2000 * unit(GAKI)),
+					FlexService::new(100_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 				),
 			],
 		}

@@ -28,6 +28,7 @@ use gafi_primitives::{
 	game_creator::GetGameCreator,
 	pool::{PlayerTicket, TicketType},
 };
+use sp_runtime::{Permill};
 pub use pallet::*;
 use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
@@ -153,7 +154,7 @@ pub mod pallet {
 			targets: Vec<H160>,
 			target: H160,
 			service_fee: U256,
-			discount: u8,
+			discount: Permill,
 		) -> Option<U256> {
 			if !Self::is_target(targets, &target) {
 				return None;
@@ -161,9 +162,9 @@ pub mod pallet {
 
 			if let Some(sponsor) = into_account::<T::AccountId>(pool_id) {
 				let sponsor_fee = service_fee
-					.saturating_mul(U256::from(discount))
+					.saturating_mul(U256::from(discount.deconstruct()))
 					.checked_div(U256::from(100u64))
-					.unwrap_or_else(|| U256::from(0u64));
+					.unwrap_or_else(|| U256::from(0u64));;
 
 				let fee = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee.as_u128());
 
@@ -183,12 +184,10 @@ pub mod pallet {
 			targets.contains(target)
 		}
 
-		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: u8) -> Option<U256> {
-			let discount_fee = service_fee
-				.saturating_mul(U256::from(discount))
-				.checked_div(U256::from(100u64));
+		pub fn correct_and_deposit_fee_service(service_fee: U256, discount: Permill) -> Option<U256> {
+			let discount_fee = service_fee.saturating_mul(U256::from(discount.deconstruct()));
 
-			Some(service_fee.saturating_sub(discount_fee.unwrap_or_else(|| U256::from(0u64))))
+			Some(service_fee.saturating_sub(discount_fee))
 		}
 	}
 

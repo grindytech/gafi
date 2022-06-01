@@ -4,7 +4,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_core::H160;
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{RuntimeDebug, Permill};
 use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -37,7 +37,7 @@ pub enum Level {
 )]
 pub struct Service {
 	pub tx_limit: u32, // max number of discounted transaction user can use in TimeService
-	pub discount: u8,  // percentage of discount
+	pub discount: Permill,  // percentage of discount
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -50,7 +50,7 @@ pub struct FlexService {
 }
 
 impl FlexService {
-	pub fn new(tx_limit: u32, discount: u8, value: u128) -> Self {
+	pub fn new(tx_limit: u32, discount: Permill, value: u128) -> Self {
 		FlexService {
 			service: Service { tx_limit, discount },
 			value,
@@ -73,7 +73,7 @@ pub struct StaticService<AccountId> {
 }
 
 impl<AccountId> StaticService<AccountId> {
-	pub fn new(targets: Vec<H160>, tx_limit: u32, discount: u8, sponsor: AccountId) -> Self {
+	pub fn new(targets: Vec<H160>, tx_limit: u32, discount: Permill, sponsor: AccountId) -> Self {
 		StaticService {
 			targets,
 			service: Service { tx_limit, discount },
