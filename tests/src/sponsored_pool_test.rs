@@ -3,12 +3,13 @@ use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
-    pool::{ TicketType},
+    ticket::{ TicketType},
 };
 use sp_core::H160;
 use sp_runtime::AccountId32;
-use gafi_primitives::pool::PlayerTicket;
 use sp_std::vec::Vec;
+use gafi_primitives::system_services::SystemPool;
+use gafi_primitives::ticket::PlayerTicket;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADD_BLOCK: u64 = 1_u64;

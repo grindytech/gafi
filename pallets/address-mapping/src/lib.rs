@@ -29,7 +29,9 @@ use pallet_evm::AddressMapping;
 use sp_core::crypto::AccountId32;
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
-use utils::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
+use gu_ethereum::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
+use gu_convertor::into_account;
+use gu_currency::transfer_all;
 
 #[cfg(test)]
 mod mock;
@@ -147,8 +149,8 @@ pub mod pallet {
 			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
 			if withdraw {
 				let id = Self::into_account_id(address);
-				if let Some(from) = Self::into_account(id) {
-					Self::transfer_all(from, sender.clone(), true)?;
+				if let Some(from) = into_account::<T::AccountId>(id.into()) {
+					transfer_all::<T, <T as pallet::Config>::Currency>(&from, &sender, true)?;
 				}
 			}
 
@@ -193,25 +195,6 @@ where
 		let who = sender.using_encoded(to_ascii_hex);
 		let signer = eth_recover(&sig_converter, &who, &[][..], T::MessagePrefix::get());
 		signer == Some(address_convert)
-	}
-
-	pub fn transfer_all(from: T::AccountId, to: T::AccountId, keep_alive: bool) -> DispatchResult {
-		let reducible_balance: u128 =
-			pallet_balances::pallet::Pallet::<T>::reducible_balance(&from, keep_alive)
-				.try_into()
-				.ok()
-				.unwrap();
-		let existence = if keep_alive {
-			ExistenceRequirement::KeepAlive
-		} else {
-			ExistenceRequirement::AllowDeath
-		};
-		<T as pallet::Config>::Currency::transfer(
-			&from,
-			&to,
-			reducible_balance.try_into().ok().unwrap(),
-			existence,
-		)
 	}
 
 	pub fn get_evm_address(account_id: AccountId32) -> Option<H160> {
@@ -262,13 +245,6 @@ where
 		<Id32Mapping<T>>::remove(origin_account_id);
 	}
 
-	pub fn into_account(id: AccountId32) -> Option<T::AccountId> {
-		let bytes: [u8; 32] = id.into();
-		match T::AccountId::decode(&mut &bytes[..]) {
-			Ok(acc) => Some(acc),
-			Err(_) => None,
-		}
-	}
 }
 
 struct OriginAddressMapping;

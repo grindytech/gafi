@@ -1,5 +1,5 @@
 [package]
-name = "utils"
+name = "gu-ethereum"
 version = "4.0.0-dev"
 edition = "2021"
 

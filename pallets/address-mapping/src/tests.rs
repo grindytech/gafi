@@ -1,10 +1,11 @@
 use crate::{mock::*, Pallet, Error,
-	 H160Mapping, AddressMapping, Id32Mapping, OriginAddressMapping};
+	 H160Mapping, AddressMapping, Id32Mapping, OriginAddressMapping, pallet};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{H160};
 use sp_runtime::{AccountId32};
 use std::{str::FromStr};
+use gu_currency::transfer_all;
 
 #[test]
 fn default_into_account_id_works() {
@@ -151,75 +152,6 @@ fn bond_should_fail() {
 		}
 	})
 }
-
-
-#[test]
-fn transfer_all_keep_alive_works() {
-		ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
-		const EVM_BALANCE: u64 = 1_000_000_000;
-		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
-		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-			assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
-		}
-		
-		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		let mapping_address = ProofAddressMapping::into_account_id(evm_address);
-		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
-			assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
-
-			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
-			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
-		}
-
-		assert_ok!(ProofAddressMapping::transfer_all(mapping_address.clone(), ALICE.clone(), true));
-
-		// evm_address balance should  
-		{
-			assert_eq!(Balances::free_balance(&mapping_address), EXISTENTIAL_DEPOSIT);
-			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT);
-		}
-	});
-}
-
-
-#[test]
-fn transfer_all_allow_death_works() {
-		ExtBuilder::default().build_and_execute(|| {
-		run_to_block(10);
-		const EVM_BALANCE: u64 = 1_000_000_000;
-		const ALICE_BALANCE: u64 = 1_000_000_000;
-		let signature: [u8; 65] = hex!("20b4f726ffe9333370c64dba5bb50b01e84e1bc8d05b7be0fa8a7c52fcd5c3f46ef44800722a545ad70b8da26fea9cf80fba72a65bb119c7a93e81c3e51edf501b");
-		let ALICE = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, ALICE_BALANCE);
-			assert_eq!(Balances::free_balance(&ALICE), ALICE_BALANCE);
-		}
-		
-		let evm_address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
-		let mapping_address = ProofAddressMapping::into_account_id(evm_address);
-		{
-			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
-			assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
-
-			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
-			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
-		}
-
-		assert_ok!(ProofAddressMapping::transfer_all(mapping_address.clone(), ALICE.clone(), false));
-		// evm_address balance should  
-		{
-			assert_eq!(Balances::free_balance(&mapping_address), 0);
-			assert_eq!(Balances::free_balance(&ALICE), EVM_BALANCE + ALICE_BALANCE);
-		}
-		
-	});
-}
-
 
 #[test]
 fn bond_account_balances() {

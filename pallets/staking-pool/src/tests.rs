@@ -6,7 +6,7 @@ use crate::{mock::*, Error};
 use crate::{PlayerCount, Tickets};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::{FlexPool, Level};
+use gafi_primitives::{ticket::TicketLevel, system_services::SystemPool};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 
@@ -38,7 +38,7 @@ fn player_join_pool_should_works() {
 		run_to_block(10);
 		let count_before = PlayerCount::<Test>::get();
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(StakingPool::join(alice.clone(), Level::Basic));
+		assert_ok!(StakingPool::join(alice.clone(), TicketLevel::Basic));
 
 		let player = Tickets::<Test>::get(alice);
 		assert_ne!(player, None);
@@ -48,15 +48,13 @@ fn player_join_pool_should_works() {
 	});
 }
 
-
 #[test]
 fn leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(StakingPool::join(alice.clone(), Level::Basic));
+		assert_ok!(StakingPool::join(alice.clone(), TicketLevel::Basic));
 		run_to_block(2);
 		assert_ok!(StakingPool::leave(alice));
 	})
 }
-

@@ -26,9 +26,13 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
 	constant::ID,
+	custom_services::{CustomPool, CustomService},
 	name::Name,
-	pool::{Level, Service, StaticPool, StaticService},
+	pool::Service,
+	ticket::TicketLevel,
 };
+use gu_convertor::{balance_try_to_u128, into_account};
+use gu_currency::transfer_all;
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -63,7 +67,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-use super::*;
+	use super::*;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -130,8 +134,6 @@ use super::*;
 	pub enum Error<T> {
 		/// Generate the pool id that duplicated
 		PoolIdExisted,
-		/// Can not convert u128 to balance
-		ConvertBalanceFail,
 		/// Can not convert pool id to account
 		IntoAccountFail,
 		IntoU32Fail,
@@ -144,7 +146,6 @@ use super::*;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Create Pool
 		///
 		/// Create new pool and deposit amount of `value` to the pool,
@@ -184,7 +185,7 @@ use super::*;
 			let new_pool = SponsoredPool {
 				id: pool_config.id,
 				owner: sender.clone(),
-				value: Self::balance_try_to_u128(value)?,
+				value: balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)?,
 				discount,
 				tx_limit,
 			};
@@ -233,20 +234,23 @@ use super::*;
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner
 			);
-			let pool = Self::into_account(pool_id)?;
-			Self::transfer_all(&pool, &sender, false)?;
-			PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
-				if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
-					pool_owned.swap_remove(ind);
-					return Ok(());
-				}
-				Err(())
-			})
-			.map_err(|_| <Error<T>>::PoolNotExist)?;
-			Pools::<T>::remove(pool_id);
-			Targets::<T>::remove(pool_id);
-			Self::deposit_event(Event::Withdrew { id: pool_id });
-			Ok(())
+			if let Some(pool) = into_account::<T::AccountId>(pool_id) {
+				transfer_all::<T, <T as pallet::Config>::Currency>(&pool, &sender, false)?;
+				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
+					if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
+						pool_owned.swap_remove(ind);
+						return Ok(());
+					}
+					Err(())
+				})
+				.map_err(|_| <Error<T>>::PoolNotExist)?;
+				Pools::<T>::remove(pool_id);
+				Targets::<T>::remove(pool_id);
+				Self::deposit_event(Event::Withdrew { id: pool_id });
+				Ok(())
+			} else {
+				return Err(Error::<T>::IntoAccountFail.into());
+			}
 		}
 
 		/// New Targets
@@ -292,11 +296,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
-		pub fn set_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-			name: Vec<u8>,
-		) -> DispatchResult {
+		pub fn set_pool_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
@@ -311,10 +311,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
-		pub fn clear_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-		) -> DispatchResult {
+		pub fn clear_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
@@ -329,10 +326,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
-		pub fn kill_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-		) -> DispatchResult {
+		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			ensure_root(origin.clone())?;
 
 			match Pools::<T>::get(pool_id) {
@@ -340,7 +334,6 @@ use super::*;
 				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
 			}
 		}
-
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -360,48 +353,11 @@ use super::*;
 			}
 		}
 
-		fn into_account(id: ID) -> Result<T::AccountId, Error<T>> {
-			match T::AccountId::decode(&mut &id[..]) {
-				Ok(account) => Ok(account),
-				Err(_) => Err(<Error<T>>::IntoAccountFail),
-			}
-		}
-
 		fn usize_try_to_u32(input: usize) -> Result<u32, Error<T>> {
 			match input.try_into().ok() {
 				Some(val) => Ok(val),
 				None => Err(<Error<T>>::IntoU32Fail),
 			}
-		}
-
-		fn balance_try_to_u128(input: BalanceOf<T>) -> Result<u128, Error<T>> {
-			match input.try_into().ok() {
-				Some(val) => Ok(val),
-				None => Err(<Error<T>>::ConvertBalanceFail),
-			}
-		}
-
-		fn transfer_all(
-			from: &T::AccountId,
-			to: &T::AccountId,
-			keep_alive: bool,
-		) -> DispatchResult {
-			let reducible_balance: u128 =
-				pallet_balances::pallet::Pallet::<T>::reducible_balance(from, keep_alive)
-					.try_into()
-					.ok()
-					.unwrap();
-			let existence = if keep_alive {
-				ExistenceRequirement::KeepAlive
-			} else {
-				ExistenceRequirement::AllowDeath
-			};
-			<T as pallet::Config>::Currency::transfer(
-				from,
-				to,
-				reducible_balance.try_into().ok().unwrap(),
-				existence,
-			)
 		}
 
 		fn is_pool_owner(pool_id: &ID, owner: &T::AccountId) -> Result<bool, Error<T>> {
@@ -412,7 +368,7 @@ use super::*;
 		}
 	}
 
-	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
 		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
 			Ok(())
 		}
@@ -420,10 +376,10 @@ use super::*;
 			Ok(())
 		}
 
-		fn get_service(pool_id: ID) -> Option<StaticService<T::AccountId>> {
+		fn get_service(pool_id: ID) -> Option<CustomService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
 				let targets = Targets::<T>::get(pool_id);
-				return Some(StaticService::new(
+				return Some(CustomService::new(
 					targets.to_vec(),
 					pool.tx_limit,
 					pool.discount,
