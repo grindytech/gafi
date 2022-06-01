@@ -12,6 +12,12 @@ pub enum ConvertError {
 
 pub type BalanceOf<C, A> = <C as Currency<A>>::Balance;
 
+/// Try to convert u128 to balance
+/// 
+/// balance value should be return otherwise Error will be throw
+/// 
+/// # Examples
+/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn u128_try_to_balance<C, A>(input: u128) -> Result<BalanceOf<C, A>, DispatchError>
 where
     C: Currency<A>,
@@ -29,6 +35,12 @@ where
     input.try_into().ok().unwrap_or_default()
 }
 
+/// Try to convert balance to u128
+/// 
+/// u128 value should be return otherwise Error will be throw
+/// 
+/// # Examples
+/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn balance_try_to_u128<C, A>(input: BalanceOf<C, A>) -> Result<u128, DispatchError>
 where
     C: Currency<A>,
@@ -39,6 +51,10 @@ where
     }
 }
 
+/// Convert [u8; 32] to AccountId
+/// 
+/// # Examples
+/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn into_account<AccountId>(id: ID) -> Option<AccountId> 
     where AccountId: Decode,
 {
