@@ -60,8 +60,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use gafi_primitives::{
 	cache::Cache,
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
-	player::TicketInfo,
-	pool::TicketType,
+	ticket::{TicketInfo, TicketType},
 };
 use sp_std::if_std;
 
