@@ -9,13 +9,16 @@ This cover the tests related to the balances
 $ make build-test
 ```
 
-### 2. Setup nodejs environment & run test
+### 2. Setup nodejs environment
 ```
 $ cd tests/
 $ npm init
 $ npm run build
-$ npm run test
 ```
 
+### 3. Run test
+```
+$ npm run test
+```
 
 License: Apache-2.0
