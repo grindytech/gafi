@@ -72,7 +72,7 @@ fn create_pool_works() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 
         let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
@@ -117,7 +117,7 @@ fn withdraw_pool_works() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 
         assert_ok!(Sponsored::withdraw_pool(
@@ -203,7 +203,7 @@ fn new_targets_works() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 
         let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
@@ -247,7 +247,7 @@ fn new_targets_fail() {
                 vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
                 pool_value,
                 10,
-                Permill::from_percent(100),
+                Permill::from_percent(70),
             );
             assert_noop!(
                 Sponsored::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
@@ -295,7 +295,7 @@ fn normal_operation_should_work() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 		let free_balance = account_balance - pool_value - RESERVATION_FEE * unit(GAKI);
 
@@ -328,7 +328,7 @@ fn kill_name_should_work() {
 			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
 			pool_value,
 			10,
-			Permill::from_percent(100),
+			Permill::from_percent(70),
 		);
 
 		assert_ok!(Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
@@ -355,7 +355,7 @@ fn error_catching_should_work() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
             pool_value,
             10,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 		run_to_block(2);
 		let pool_id1 = create_pool(
@@ -364,7 +364,7 @@ fn error_catching_should_work() {
             vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84c").unwrap()],
             pool_value,
             20,
-            Permill::from_percent(100),
+            Permill::from_percent(70),
         );
 
 		assert_noop!(Sponsored::clear_pool_name(Origin::signed(account.clone()), pool_id), pallet_pool_names::Error::<Test>::Unnamed);

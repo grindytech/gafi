@@ -91,6 +91,26 @@ use super::*;
 		/// Manage pool name
 		type PoolName: Name<Self::AccountId>;
 
+		/// The minimum balance owner have to deposit when creating the pool
+		#[pallet::constant]
+		type MinPoolBalance: Get<u128>;
+
+		/// The minimum discount percent when creating the pool
+		#[pallet::constant]
+		type MinDiscountPercent: Get<Permill>;
+
+		///The maximum discount percent when creating the pool
+		#[pallet::constant]
+		type MaxDiscountPercent: Get<Permill>;
+
+		/// The minimum tx limit when creating the pool
+		#[pallet::constant]
+		type MinTxLimit: Get<u32>;
+
+		///The maximum tx limit when creating the pool
+		#[pallet::constant]
+		type MaxTxLimit: Get<u32>;
+
 		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
 		type MaxPoolOwned: Get<u32>;
@@ -142,6 +162,11 @@ use super::*;
 		PoolNotExist,
 		ExceedMaxPoolOwned,
 		ExceedPoolTarget,
+		NotReachMinPoolBalance,
+		LessThanMinTxLimit,
+		GreaterThanMaxTxLimit,
+		LessThanMinDiscountPercent,
+		GreaterThanMinDiscountPercent
 	}
 
 	#[pallet::call]
@@ -178,6 +203,11 @@ use super::*;
 				T::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
+			ensure!(balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)? >= T::MinPoolBalance::get(), Error::<T>::NotReachMinPoolBalance);
+			ensure!(tx_limit >= T::MinTxLimit::get(), Error::<T>::LessThanMinTxLimit);
+			ensure!(tx_limit <= T::MaxTxLimit::get(), Error::<T>::GreaterThanMaxTxLimit);
+			ensure!(discount >= T::MinDiscountPercent::get(), Error::<T>::LessThanMinDiscountPercent);
+			ensure!(discount <= T::MaxDiscountPercent::get(), Error::<T>::GreaterThanMinDiscountPercent);
 			ensure! {
 				Self::usize_try_to_u32(targets.len())? <= T::MaxPoolTarget::get(),
 				<Error<T>>::ExceedPoolTarget

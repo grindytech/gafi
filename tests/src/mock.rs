@@ -164,6 +164,11 @@ impl staking_pool::Config for Test {
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 = 10;
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinTxLimit: u32 = 10;
+	pub MaxTxLimit: u32 = 100;
 }
 
 impl sponsored_pool::Config for Test {
@@ -173,6 +178,11 @@ impl sponsored_pool::Config for Test {
 	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type MinDiscountPercent = MinDiscountPercent;
+	type MaxDiscountPercent = MaxDiscountPercent;
+	type MinTxLimit = MinTxLimit;
+	type MaxTxLimit = MaxTxLimit;
+	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
 }
 
@@ -259,7 +269,7 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-	pub GameCreatorReward: u8 = 30u8;
+	pub GameCreatorReward: Permill = Permill::from_percent(30);
 }
 
 impl gafi_tx::Config for Test {

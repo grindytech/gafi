@@ -40,12 +40,12 @@ fn correct_and_deposit_fee_sponsored_works() {
             pool_id,
             targets,
             target,
-            U256::from(service_fee),
+            service_fee,
             discount,
         )
         .unwrap();
 
-        assert_eq!(sponsored_fee, U256::from(6 * unit(GAKI)));
+        assert_eq!(sponsored_fee, 6 * unit(GAKI));
         assert_eq!(Balances::free_balance(&pool), 96 * unit(GAKI));
     })
 }
