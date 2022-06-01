@@ -184,8 +184,7 @@ pub mod pallet {
 		pub fn correct_and_deposit_fee_service(service_fee: u128, discount: Permill) -> u128 {
 			let discount_fee = discount * service_fee;
 
-			service_fee.saturating_sub(discount_fee);
-			service_fee
+			return service_fee.saturating_sub(discount_fee);
 		}
 	}
 
