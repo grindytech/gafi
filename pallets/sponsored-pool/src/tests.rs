@@ -3,7 +3,7 @@ use frame_support::assert_err;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::pool::StaticPool;
+use gafi_primitives::custom_services::CustomPool;
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};
 use sp_std::str::FromStr;

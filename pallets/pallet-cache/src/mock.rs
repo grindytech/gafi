@@ -6,8 +6,7 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{Currency, OnFinalize, OnInitialize},
 };
-pub use gafi_primitives::{player::TicketInfo,
-	pool::TicketType,
+pub use gafi_primitives::{ticket::{TicketInfo, TicketType},
 };
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;

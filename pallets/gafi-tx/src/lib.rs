@@ -26,7 +26,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	game_creator::GetGameCreator,
-	pool::{PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketType},
 };
 use sp_runtime::{Permill};
 pub use pallet::*;

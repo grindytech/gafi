@@ -26,17 +26,19 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
 	constant::ID,
+	custom_services::{CustomPool, CustomService},
 	name::Name,
-	pool::{Level, Service, StaticPool, StaticService},
+	pool::Service,
+	ticket::TicketLevel,
 };
+use gu_convertor::{balance_try_to_u128, into_account};
+use gu_currency::transfer_all;
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
-use gu_convertor::{balance_try_to_u128, into_account};
-use gu_currency::transfer_all;
 use sp_runtime::Permill;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -66,8 +68,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-
-use super::*;
+	use super::*;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -171,7 +172,6 @@ use super::*;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Create Pool
 		///
 		/// Create new pool and deposit amount of `value` to the pool,
@@ -327,11 +327,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
-		pub fn set_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-			name: Vec<u8>,
-		) -> DispatchResult {
+		pub fn set_pool_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
@@ -346,10 +342,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
-		pub fn clear_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-		) -> DispatchResult {
+		pub fn clear_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
@@ -364,10 +357,7 @@ use super::*;
 		}
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
-		pub fn kill_pool_name(
-			origin: OriginFor<T>,
-			pool_id: ID,
-		) -> DispatchResult {
+		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			ensure_root(origin.clone())?;
 
 			match Pools::<T>::get(pool_id) {
@@ -375,7 +365,6 @@ use super::*;
 				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
 			}
 		}
-
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -410,7 +399,7 @@ use super::*;
 		}
 	}
 
-	impl<T: Config> StaticPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
 		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
 			Ok(())
 		}
@@ -418,10 +407,10 @@ use super::*;
 			Ok(())
 		}
 
-		fn get_service(pool_id: ID) -> Option<StaticService<T::AccountId>> {
+		fn get_service(pool_id: ID) -> Option<CustomService<T::AccountId>> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
 				let targets = Targets::<T>::get(pool_id);
-				return Some(StaticService::new(
+				return Some(CustomService::new(
 					targets.to_vec(),
 					pool.tx_limit,
 					pool.discount,
