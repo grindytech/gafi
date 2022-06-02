@@ -13,6 +13,7 @@ use scale_info::prelude::format;
 use scale_info::prelude::string::String;
 use sp_core::H160;
 use sp_std::{str::FromStr, vec};
+use sp_runtime::Permill;
 
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
 
@@ -37,7 +38,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 	}: _(RawOrigin::Signed(caller), targets, value, discount, tx_limit)
 
@@ -49,7 +50,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
@@ -62,7 +63,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
@@ -79,7 +80,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
@@ -92,7 +93,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
@@ -106,7 +107,7 @@ benchmarks! {
 			H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap(),
 		];
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
-		let discount = 30_u8;
+		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
 		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
