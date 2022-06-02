@@ -30,7 +30,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
 	system_services::{SystemPool, SystemService},
-	ticket::{Ticket, TicketLevel, TicketType},
+	ticket::{Ticket, TicketLevel, TicketType, SystemTicket},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
@@ -308,7 +308,7 @@ impl<T: Config> Pallet<T> {
 		let ticket = Ticket::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
-			ticket_type: TicketType::Upfront(level),
+			ticket_type: TicketType::System(SystemTicket::Upfront(level)),
 		};
 		Tickets::<T>::insert(sender, ticket);
 		<PlayerCount<T>>::put(new_player_count);
@@ -390,7 +390,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
 		if let Some(ticket) = Tickets::<T>::get(player) {
-			if let TicketType::Upfront(level) = ticket.ticket_type {
+			if let TicketType::System(SystemTicket::Upfront(level)) = ticket.ticket_type {
 				return Some(level);
 			}
 		}
