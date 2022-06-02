@@ -22,6 +22,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{fungible::Inspect, Currency, ExistenceRequirement, Get, ReservableCurrency},
 	Twox64Concat,
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
@@ -128,6 +129,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(100u32))]
+		#[transactional]
 		pub fn bond(
 			origin: OriginFor<T>,
 			signature: [u8; 65],
@@ -138,15 +140,17 @@ pub mod pallet {
 			let account_id: AccountId32 = sender.clone().into();
 
 			ensure!(
-				Id32Mapping::<T>::get(account_id.clone()) == None
-					&& H160Mapping::<T>::get(address) == None,
+				Id32Mapping::<T>::get(account_id.clone()).is_none()
+					&& H160Mapping::<T>::get(address).is_none(),
 				<Error<T>>::AlreadyBond
 			);
 			ensure!(
 				Self::verify_bond(sender.clone(), signature, address.to_fixed_bytes()),
 				<Error<T>>::SignatureOrAddressNotCorrect,
 			);
+
 			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
+
 			if withdraw {
 				let id = Self::into_account_id(address);
 				if let Some(from) = into_account::<T::AccountId>(id.into()) {
@@ -168,14 +172,16 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(100u32))]
+		#[transactional]
 		pub fn unbond(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let account_id: AccountId32 = sender.clone().into();
 
 			let evm_address = <Id32Mapping<T>>::get(account_id);
-			ensure!(evm_address != None, <Error<T>>::NonbondAccount);
+			ensure!(evm_address.is_some(), <Error<T>>::NonbondAccount);
 			let id32_address = <H160Mapping<T>>::get(evm_address.unwrap());
-			ensure!(id32_address != None, <Error<T>>::NonbondAccount);
+			ensure!(id32_address.is_some(), <Error<T>>::NonbondAccount);
+
 			<T as pallet::Config>::Currency::unreserve(&sender, T::ReservationFee::get());
 
 			Self::remove_pair_bond(evm_address.unwrap(), id32_address.unwrap());

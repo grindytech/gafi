@@ -21,6 +21,7 @@
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, ReservableCurrency},
+	transactional
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
@@ -140,6 +141,7 @@ pub mod pallet {
 		/// - `level`: The level of ticket Basic - Medium - Advance
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn join(sender: T::AccountId, level: TicketLevel) -> DispatchResult {
 			let service = Self::get_service_by_level(level)?;
 			let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
@@ -157,6 +159,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(level) = Self::get_player_level(sender.clone()) {
 				let new_player_count =

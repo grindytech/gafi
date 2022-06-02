@@ -19,9 +19,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::weights::WeightInfo;
-use frame_support::pallet_prelude::*;
-use frame_support::traits::{
-	fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
+use frame_support::{
+	pallet_prelude::*,
+	traits::{
+		fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
+	},
+ 	transactional
 };
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
@@ -185,6 +188,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u32))]
+		#[transactional]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			targets: Vec<H160>,
@@ -196,7 +200,7 @@ pub mod pallet {
 
 			let pool_config = Self::new_pool()?;
 			ensure!(
-				Pools::<T>::get(pool_config.id) == None,
+				Pools::<T>::get(pool_config.id).is_none() ,
 				<Error<T>>::PoolIdExisted
 			);
 			ensure!(
@@ -257,6 +261,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u32))]
+		#[transactional]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -265,6 +270,7 @@ pub mod pallet {
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner
 			);
+
 			if let Some(pool) = into_account::<T::AccountId>(pool_id) {
 				transfer_all::<T, <T as pallet::Config>::Currency>(&pool, &sender, false)?;
 				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
