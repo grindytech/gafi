@@ -25,6 +25,7 @@ use frame_support::{
 		tokens::{ExistenceRequirement, WithdrawReasons},
 		Currency, ReservableCurrency,
 	},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
@@ -193,6 +194,7 @@ pub mod pallet {
 		/// - `level`: The level of ticket Basic - Medium - Advance
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn join(sender: T::AccountId, level: TicketLevel) -> DispatchResult {
 			let new_player_count = Self::player_count()
 				.checked_add(1)
@@ -208,10 +210,7 @@ pub mod pallet {
 					<T as pallet::Config>::Currency,
 					T::AccountId,
 				>(service.value)?;
-				let double_service_fee = u128_try_to_balance::<
-					<T as pallet::Config>::Currency,
-					T::AccountId,
-				>(service.value * 2u128)?;
+				let double_service_fee = service_fee + service_fee;
 				ensure!(
 					T::Currency::free_balance(&sender) > double_service_fee,
 					pallet_balances::Error::<T>::InsufficientBalance
@@ -235,6 +234,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				if let Some(level) = Self::get_player_level(sender.clone()) {

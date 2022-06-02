@@ -17,7 +17,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{pallet_prelude::*, traits::Currency};
+use frame_support::{pallet_prelude::*, traits::Currency, transactional};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
@@ -171,6 +171,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
+		#[transactional]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(
@@ -196,6 +197,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u32))]
+		#[transactional]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {

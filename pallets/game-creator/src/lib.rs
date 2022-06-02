@@ -17,8 +17,11 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::pallet_prelude::*;
-use frame_support::traits::{BalanceStatus, Currency, ReservableCurrency};
+use frame_support::{
+	pallet_prelude::*,
+	traits::{BalanceStatus, Currency, ReservableCurrency},
+	transactional,
+};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::game_creator::GetGameCreator;
 pub use pallet::*;
@@ -121,6 +124,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim_contract(100u32))]
+		#[transactional]
 		pub fn claim_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(
@@ -130,6 +134,7 @@ pub mod pallet {
 			Self::verify_owner(&sender, &contract)?;
 			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
 			ContractOwner::<T>::insert(contract, sender.clone());
+
 			Self::deposit_event(Event::Claimed {
 				contract,
 				owner: sender,
@@ -149,6 +154,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::change_ownership(100u32))]
+		#[transactional]
 		pub fn change_ownership(
 			origin: OriginFor<T>,
 			contract: H160,
@@ -183,6 +189,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_contract(100u32))]
+		#[transactional]
 		pub fn withdraw_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::verify_owner(&sender, &contract)?;
