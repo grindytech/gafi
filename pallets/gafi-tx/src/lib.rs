@@ -26,7 +26,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	game_creator::GetGameCreator,
-	ticket::{PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketType, CustomTicket},
 };
 use sp_runtime::{Permill};
 pub use pallet::*;
@@ -233,13 +233,13 @@ where
 		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
 			if let Some(service) = T::PlayerTicket::get_service(ticket) {
 				match ticket {
-					TicketType::Staking(_) | TicketType::Upfront(_) => {
+					TicketType::System(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,
 							service.discount,
 						);
 					}
-					TicketType::Sponsored(pool_id) => {
+					TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
 							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(

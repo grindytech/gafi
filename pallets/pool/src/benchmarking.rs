@@ -28,12 +28,12 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u128) -> T::Acco
 }
 const MAX_TICKETS: usize = 6;
 
-const TICKETS: [TicketType; MAX_TICKETS] = [TicketType::Upfront(TicketLevel::Basic),
- TicketType::Upfront(TicketLevel::Medium),
-TicketType::Upfront(TicketLevel::Advance),
-TicketType::Staking(TicketLevel::Basic),
- TicketType::Staking(TicketLevel::Medium),
-TicketType::Staking(TicketLevel::Advance),
+const TICKETS: [TicketType; MAX_TICKETS] = [TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)) ,
+ TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)) ,
+TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)) ,
+TicketType::System(SystemTicket::Staking(TicketLevel::Basic)) ,
+ TicketType::System(SystemTicket::Staking(TicketLevel::Medium)) ,
+TicketType::System(SystemTicket::Staking(TicketLevel::Advance)) ,
 ];
 
 benchmarks! {

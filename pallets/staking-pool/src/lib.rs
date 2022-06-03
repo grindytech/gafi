@@ -25,7 +25,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	ticket::{TicketLevel, Ticket, TicketType},
+	ticket::{TicketLevel, Ticket, TicketType, SystemTicket},
 	system_services::{SystemPool, SystemService},
 };
 pub use pallet::*;
@@ -210,7 +210,7 @@ pub mod pallet {
 			let ticket = Ticket {
 				address: sender.clone(),
 				join_time: _now,
-				ticket_type: TicketType::Staking(level),
+				ticket_type: TicketType::System(SystemTicket::Staking(level)),
 			};
 			Tickets::<T>::insert(sender, ticket);
 		}
@@ -227,7 +227,7 @@ pub mod pallet {
 		fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
 			match Tickets::<T>::get(player) {
 				Some(ticket) => {
-					if let TicketType::Staking(level) = ticket.ticket_type {
+					if let TicketType::System(SystemTicket::Staking(level)) = ticket.ticket_type {
 						Some(level)
 					} else {
 						None

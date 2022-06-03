@@ -104,7 +104,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     step('join sponsored sponsored works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.join_pool(context, Bob, { Sponsored: NewPool });
+        await utils.join_pool(context, Bob, { Custom: { Sponsored: NewPool } });
     }).timeout(20000);
 
     step('discount on sponsored pool works', async () => {
@@ -149,7 +149,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
             let rate = percentage_of(transfer_fee, NormalFee);
 
             count++;
-            if(count <= TX_LIMIT - 1) {
+            if (count <= TX_LIMIT - 1) {
                 assert.equal(Math.round(rate), DISCOUNT);
             } else {
                 assert.notEqual(Math.round(rate), DISCOUNT);
