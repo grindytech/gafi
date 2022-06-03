@@ -152,7 +152,7 @@ function describeWithFrontier(title, cb, provider) {
 
 		after(async function () {
 			//console.log(`\x1b[31m Killing RPC\x1b[0m`);
-			binary.kill();
+			binary?.kill();
 		});
 
 		cb(context);

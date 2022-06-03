@@ -4,8 +4,7 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
 const utils = require('../utils/util');
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const { Keyring } = require('@polkadot/api');
+const { Keyring, WsProvider } = require('@polkadot/api');
 const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
 const { describeWithFrontier, WS_PORT, RPC_PORT } = require('../utils/context');
@@ -23,15 +22,15 @@ function percentage_of(oldNumber, newNumber) {
     return (1 - (oldNumber / newNumber)) * 100
 }
 
-function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
+function create_erc20_token_circle(context, wsProvider, ticket, expect_rate, tx_limit) {
     step('leave pool works', async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.leave_pool(context, alice);
+        await utils.leave_pool(context, wsProvider, alice);
     }).timeout(10000);
 
     step(`join pool works`, async () => {
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.join_pool(context, alice, ticket);
+        await utils.join_pool(context, wsProvider, alice, ticket);
     }).timeout(10000);
 
     step('Discount with tx limit works', async () => {
@@ -55,6 +54,15 @@ function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
 }
 
 describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
+    let wsProvider;
+
+    beforeEach("Start ", () => {
+      wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
+    })
+
+    afterEach("Close", async () => {
+      await wsProvider.disconnect()
+    })
 
     step('show total fee spent when ouside the pool', async () => {
         let account = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -70,14 +78,14 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
     step('step should mapping addresses', async () => {
         let account2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.proof_address_mapping(context, account2, alice);
+        await utils.proof_address_mapping(context, wsProvider, account2, alice);
     }).timeout(10000);
 
-    create_erc20_token_circle(context, { System: { Staking: "Basic" } }, 30, 10);
-    create_erc20_token_circle(context, { System: { Staking: "Medium" } }, 50, 10);
-    create_erc20_token_circle(context, { System: { Staking: "Advance" } }, 70, 10);
-    create_erc20_token_circle(context, { System: { Upfront: "Basic" } }, 30, 10);
-    create_erc20_token_circle(context, { System: { Upfront: "Medium" } }, 50, 10);
-    create_erc20_token_circle(context, { System: { Upfront: "Advance" } }, 70, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Staking: "Basic" } }, 30, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Staking: "Medium" } }, 50, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Staking: "Advance" } }, 70, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Upfront: "Basic" } }, 30, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Upfront: "Medium" } }, 50, 10);
+    create_erc20_token_circle(context, wsProvider, { System: { Upfront: "Advance" } }, 70, 10);
 
 })

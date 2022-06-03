@@ -1,14 +1,13 @@
 require('dotenv').config();
-const Web3 = require('web3');
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const { Keyring } = require('@polkadot/api');
+const { ApiPromise } = require('@polkadot/api');
 const { customRequest, createAndFinalizeBlock, WS_PORT } = require('./context');
+const { BN_MILLION, BN, u8aToHex } = require('@polkadot/util');
+
 
 var ERC20ABI = require('../build/contracts/GAKI.json');
-const { u8aToHex } = require('@polkadot/util');
 
 async function add_additional_gas(contract, address) {
     const gas_limit = await contract.estimateGas({ from: address });
@@ -68,8 +67,7 @@ async function transfer_erc20(context, token_address, account, target, amount) {
 }
 
 /// map account to alice
-async function proof_address_mapping(context, evm_account, sub_account) {
-    const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
+async function proof_address_mapping(context, wsProvider, evm_account, sub_account) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     let signature;
@@ -90,8 +88,7 @@ async function proof_address_mapping(context, evm_account, sub_account) {
     return unsub;
 }
 
-async function join_pool(context, sub_account, service) {
-    const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
+async function join_pool(context, wsProvider, sub_account, service) {
     const api = await ApiPromise.create({ provider: wsProvider });
     const txExecute = api.tx.pool.join(
         service
@@ -103,8 +100,7 @@ async function join_pool(context, sub_account, service) {
     return unsub;
 }
 
-async function leave_pool(context, sub_account) {
-    const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
+async function leave_pool(context, wsProvider, sub_account) {
     const api = await ApiPromise.create({ provider: wsProvider });
     const txExecute = api.tx.pool.leave();
 
@@ -114,8 +110,7 @@ async function leave_pool(context, sub_account) {
     return unsub;
 }
 
-async function create_pool(context, sub_account, arguments) {
-    const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
+async function create_pool(context, wsProvider, sub_account, arguments) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     const txExecute = api.tx.sponsoredPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
@@ -123,6 +118,28 @@ async function create_pool(context, sub_account, arguments) {
         .signAndSend(sub_account);
     await createAndFinalizeBlock(context.web3);
     return unsub;
+}
+
+async function claim_contract(context, wsProvider, sub_account, arguments) {
+  const api = await ApiPromise.create({ provider: wsProvider });
+
+  const txExecute = api.tx.gameCreator.claimContract(arguments.contractAddress);
+  const unsub = await txExecute
+      .signAndSend(sub_account);
+
+  await createAndFinalizeBlock(context.web3);
+  return unsub;
+}
+
+async function get_game_creator_reward(wsProvider) {
+  const api = await ApiPromise.create({ provider: wsProvider });
+
+  const reward = api.consts.txHandler.gameCreatorReward
+  return permillOf(new BN(100), new BN(reward.toString()));
+}
+
+function permillOf (value, perMill) {
+  return value.mul(perMill).div(BN_MILLION);
 }
 
 module.exports = {
@@ -134,4 +151,7 @@ module.exports = {
     leave_pool,
     create_pool,
     get_erc20_balance,
+    claim_contract,
+    get_game_creator_reward,
+    permillOf
 }
