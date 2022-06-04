@@ -4,6 +4,7 @@ const Web3 = require("web3");
 const { ethers } = require("ethers");
 const { JsonRpcResponse } = require("web3-core-helpers");
 const { spawn, ChildProcess, exec } = require("child_process");
+const { WsProvider } = require("@polkadot/api");
 
 const RPC_PORT = 9933;
 const WS_PORT = 9944;
@@ -122,7 +123,7 @@ async function startFrontierNode(provider) {
 			}
 		};
 		binary.stderr.on("data", onData);
-		binary.stdout.on("data", onData);
+    binary.stdout.on("data", onData);
 	});
 
 	if (provider == 'ws') {
@@ -132,27 +133,30 @@ async function startFrontierNode(provider) {
 	let ethersjs = new ethers.providers.StaticJsonRpcProvider(`http://localhost:${RPC_PORT}`, {
 		chainId: 1337,
 		name: "frontier-dev",
-	});
+  });
 
 	return { web3, binary, ethersjs };
 }
 
 function describeWithFrontier(title, cb, provider) {
 	describe(title, () => {
-		let context = { web3: null, ethersjs: null };
+		let context = { web3: null, ethersjs: null, wsProvider: null };
 		let binary;
 		// Making sure the Frontier node has started
 		before("Starting Frontier Test Node", async function () {
 			this.timeout(SPAWNING_TIME);
 			const init = await startFrontierNode(provider);
 			context.web3 = init.web3;
-			context.ethersjs = init.ethersjs;
+      context.ethersjs = init.ethersjs;
+      context.wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
 			binary = init.binary;
 		});
 
 		after(async function () {
 			//console.log(`\x1b[31m Killing RPC\x1b[0m`);
-			binary?.kill();
+      await context.wsProvider?.disconnect();
+      binary.kill();
+
 		});
 
 		cb(context);

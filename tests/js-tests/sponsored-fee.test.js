@@ -30,15 +30,6 @@ function percentage_of(oldNumber, newNumber) {
 /// Situation: Alice map with account_1, Bob map with account_2
 /// Alice is the pool owner, Bob is the player
 describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
-    let wsProvider;
-
-    beforeEach("Start ", () => {
-      wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-    })
-
-    afterEach("Close", async () => {
-      await wsProvider.disconnect()
-    })
 
     step('step should create new erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -70,13 +61,13 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
 
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.proof_address_mapping(context, wsProvider, account_1, Alice);
+        await utils.proof_address_mapping(context, account_1, Alice);
     }).timeout(20000);
 
     step('step should mapping addresses', async () => {
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.proof_address_mapping(context, wsProvider, account_2, Bob);
+        await utils.proof_address_mapping(context, account_2, Bob);
     }).timeout(20000);
 
     step('step should create new pool', async () => {
@@ -91,11 +82,11 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
             discount: discount,
             txLimit: txLimit,
         }
-        await utils.create_pool(context, wsProvider, Alice, argument);
+        await utils.create_pool(context, Alice, argument);
     }).timeout(20000);
 
     step('step should get owned pools before create new pool', async () => {
-        const api = await ApiPromise.create({ provider: wsProvider });
+        const api = await ApiPromise.create({ provider: context.wsProvider });
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         let pools = await api.query.sponsoredPool.poolOwned(Alice.publicKey);
         NewPool = pools[pools.length - 1];
@@ -103,17 +94,17 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     step('leave any pool before join sponsored pool works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.leave_pool(context, wsProvider, Bob);
+        await utils.leave_pool(context, Bob);
     }).timeout(20000);
 
 
     step('join sponsored sponsored works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.join_pool(context, wsProvider, Bob, { Custom: { Sponsored: NewPool } });
+        await utils.join_pool(context, Bob, { Custom: { Sponsored: NewPool } });
     }).timeout(20000);
 
     step('discount on sponsored pool works', async () => {
-        const api = await ApiPromise.create({ provider: wsProvider });
+        const api = await ApiPromise.create({ provider: context.wsProvider });
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         let before_balance = await context.web3.eth.getBalance(account_2.address);

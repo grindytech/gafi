@@ -67,8 +67,8 @@ async function transfer_erc20(context, token_address, account, target, amount) {
 }
 
 /// map account to alice
-async function proof_address_mapping(context, wsProvider, evm_account, sub_account) {
-    const api = await ApiPromise.create({ provider: wsProvider });
+async function proof_address_mapping(context, evm_account, sub_account) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
 
     let signature;
     {
@@ -88,8 +88,8 @@ async function proof_address_mapping(context, wsProvider, evm_account, sub_accou
     return unsub;
 }
 
-async function join_pool(context, wsProvider, sub_account, service) {
-    const api = await ApiPromise.create({ provider: wsProvider });
+async function join_pool(context, sub_account, service) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
     const txExecute = api.tx.pool.join(
         service
     );
@@ -100,8 +100,8 @@ async function join_pool(context, wsProvider, sub_account, service) {
     return unsub;
 }
 
-async function leave_pool(context, wsProvider, sub_account) {
-    const api = await ApiPromise.create({ provider: wsProvider });
+async function leave_pool(context, sub_account) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
     const txExecute = api.tx.pool.leave();
 
     const unsub = await txExecute
@@ -110,8 +110,8 @@ async function leave_pool(context, wsProvider, sub_account) {
     return unsub;
 }
 
-async function create_pool(context, wsProvider, sub_account, arguments) {
-    const api = await ApiPromise.create({ provider: wsProvider });
+async function create_pool(context, sub_account, arguments) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
 
     const txExecute = api.tx.sponsoredPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
     const unsub = await txExecute
@@ -120,8 +120,8 @@ async function create_pool(context, wsProvider, sub_account, arguments) {
     return unsub;
 }
 
-async function claim_contract(context, wsProvider, sub_account, arguments) {
-  const api = await ApiPromise.create({ provider: wsProvider });
+async function claim_contract(context, sub_account, arguments) {
+  const api = await ApiPromise.create({ provider: context.wsProvider });
 
   const txExecute = api.tx.gameCreator.claimContract(arguments.contractAddress);
   const unsub = await txExecute

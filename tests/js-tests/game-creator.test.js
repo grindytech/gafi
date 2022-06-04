@@ -4,9 +4,9 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { step } = require("mocha-steps");
 var assert = require('assert');
-const { describeWithFrontier, RPC_PORT, createAndFinalizeBlock, describe_with_frontier, WS_PORT} = require('../utils/context');
+const { describeWithFrontier, RPC_PORT, createAndFinalizeBlock } = require('../utils/context');
 const util = require('../utils/util');
-const { Keyring, WsProvider } = require('@polkadot/api');
+const { Keyring } = require('@polkadot/api');
 const { BigNumber } = require('@ethersproject/bignumber');
 const keyring = new Keyring({ type: 'sr25519' });
 
@@ -19,15 +19,6 @@ describeWithFrontier("Frontier RPC (EthFilterApi)", (context) => {
   const TX_LIMIT = 10;
   let token_balance = "20000000000000";
   const token_balance1 = "10000000000000";
-  let wsProvider;
-
-  beforeEach("Start ", () => {
-    wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-  })
-
-  afterEach("Close", async () => {
-    await wsProvider.disconnect()
-  })
 
   function delay(interval) {
       return it(`should delay ${interval}`, done => {
@@ -67,8 +58,8 @@ describeWithFrontier("Frontier RPC (EthFilterApi)", (context) => {
     const base_account = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
     const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
 
-    await util.proof_address_mapping(context, wsProvider, base_account, alice);
-    await util.claim_contract(context, wsProvider, alice, { contractAddress: ERC20_ADDRESS });
+    await util.proof_address_mapping(context, base_account, alice);
+    await util.claim_contract(context, alice, { contractAddress: ERC20_ADDRESS });
 
     before_receive_reward = await context.web3.eth.getBalance(base_account.address);
     console.log('before_receive_reward', before_receive_reward)
@@ -93,7 +84,7 @@ describeWithFrontier("Frontier RPC (EthFilterApi)", (context) => {
     let after_receive_reward = await context.web3.eth.getBalance(base_account.address);
     console.log("after_receive_reward: ", after_receive_reward);
 
-    const reward_percent = await util.get_game_creator_reward(wsProvider);
+    const reward_percent = await util.get_game_creator_reward(context.wsProvider);
     console.log('rewardPercent', reward_percent.toNumber());
 
     let received_reward = context.web3.utils.fromWei(BigNumber.from(after_receive_reward).sub(BigNumber.from(before_receive_reward)).toString(), "ether");
