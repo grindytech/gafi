@@ -4,11 +4,10 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
 const utils = require('../utils/util');
-const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/api');
 const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
-const { describeWithFrontier, WS_PORT, RPC_PORT } = require('../utils/context');
+const { describeWithFrontier, RPC_PORT } = require('../utils/context');
 const { step } = require("mocha-steps");
 
 function delay(interval) {

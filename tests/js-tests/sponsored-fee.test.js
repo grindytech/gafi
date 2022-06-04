@@ -59,16 +59,13 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     step('step should mapping addresses', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
-        const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-        const api = await ApiPromise.create({ provider: wsProvider });
+
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         await utils.proof_address_mapping(context, account_1, Alice);
     }).timeout(20000);
 
     step('step should mapping addresses', async () => {
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
-        const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-        const api = await ApiPromise.create({ provider: wsProvider });
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.proof_address_mapping(context, account_2, Bob);
     }).timeout(20000);
@@ -89,8 +86,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
     }).timeout(20000);
 
     step('step should get owned pools before create new pool', async () => {
-        const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-        const api = await ApiPromise.create({ provider: wsProvider });
+        const api = await ApiPromise.create({ provider: context.wsProvider });
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
         let pools = await api.query.sponsoredPool.poolOwned(Alice.publicKey);
         NewPool = pools[pools.length - 1];
@@ -108,8 +104,7 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
     }).timeout(20000);
 
     step('discount on sponsored pool works', async () => {
-        const wsProvider = new WsProvider(`ws://127.0.0.1:${WS_PORT}`);
-        const api = await ApiPromise.create({ provider: wsProvider });
+        const api = await ApiPromise.create({ provider: context.wsProvider });
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
         let before_balance = await context.web3.eth.getBalance(account_2.address);
