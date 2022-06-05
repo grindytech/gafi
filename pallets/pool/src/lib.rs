@@ -174,23 +174,63 @@ pub mod pallet {
 		#[transactional]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			ensure!(
-				Tickets::<T>::get(sender.clone()) == None,
-				<Error<T>>::AlreadyJoined
-			);
+
 			let ticket_info = Self::get_ticket_info(&sender, ticket)?;
 
-			match ticket {
-				TicketType::System(SystemTicket::Upfront(level)) => {
-					T::UpfrontPool::join(sender.clone(), level)?
+			if Some(joined_ticket) = Tickets::<T>::get(sender.clone()) {
+				if Some(joined_pool_id) = joined_ticket.pool_id {
+					match ticket {
+						TicketType::System(SystemTicket::Upfront(_)) => {}
+						TicketType::System(SystemTicket::Staking(_)) => {}
+						TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+							ensure!(
+								joined_pool_id != pool_id,
+								<Error<T>>::AlreadyJoined
+							);
+							T::SponsoredPool::join(sender.clone())?
+						}
+					}
+				} else {
+					match ticket {
+						TicketType::System(SystemTicket::Upfront(_)) => {}
+						TicketType::System(SystemTicket::Staking(_)) => {}
+						TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+							ensure!(
+								joined_pool_id != pool_id,
+								<Error<T>>::AlreadyJoined
+							);
+							T::SponsoredPool::join(sender.clone())?
+						}
+					}
 				}
-				TicketType::System(SystemTicket::Staking(level)) => {
-					T::StakingPool::join(sender.clone(), level)?
-				}
-				TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
-					T::SponsoredPool::join(sender.clone(), pool_id)?
+			} else {
+				match ticket {
+					TicketType::System(SystemTicket::Upfront(level)) => {
+						ensure!(
+							Tickets::<T>::get(sender.clone()).is_none(),
+							<Error<T>>::AlreadyJoined
+						);
+						T::UpfrontPool::join(sender.clone(), level)?
+					}
+					TicketType::System(SystemTicket::Staking(level)) => {
+						ensure!(
+							Tickets::<T>::get(sender.clone()).is_none(),
+							<Error<T>>::AlreadyJoined
+						);
+						T::StakingPool::join(sender.clone(), level)?
+					}
+					TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+						ensure!(
+							Tickets::<T>::get(sender.clone()).is_none() ||
+							Tickets::<T>::get(sender.clone()).unwrap().ticket_type != TicketType::Custom(CustomTicket::Sponsored(pool_id)),
+							<Error<T>>::AlreadyJoined
+						);
+						T::SponsoredPool::join(sender.clone())?
+					}
 				}
 			}
+
+
 
 			Tickets::<T>::insert(sender.clone(), ticket_info);
 			Self::deposit_event(Event::<T>::Joined { sender, ticket });
@@ -204,9 +244,9 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u32))]
 		#[transactional]
-		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
+		pub fn leave(origin: OriginFor<T>, pool_id: Option<ID>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
+			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
 					TicketType::System(SystemTicket::Upfront(_)) => {
 						T::UpfrontPool::leave(sender.clone())?
@@ -219,7 +259,7 @@ pub mod pallet {
 					}
 				}
 				Self::insert_cache(&sender, ticket.ticket_type, ticket);
-				Tickets::<T>::remove(sender.clone());
+				Tickets::<T>::remove(sender.clone(), pool_id);
 				Self::deposit_event(Event::<T>::Leaved {
 					sender,
 					ticket: ticket.ticket_type,
@@ -275,10 +315,10 @@ pub mod pallet {
 
 		pub fn renew_tickets() {
 			let _ = Tickets::<T>::iter().for_each(|player| {
-				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone()) {
+				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone(), player.1.clone()) {
 					if let Some(service) = Self::get_service(ticket_info.ticket_type) {
 						let new_ticket = ticket_info.renew_ticket(service.tx_limit);
-						Tickets::<T>::insert(player.0, new_ticket);
+						Tickets::<T>::insert(player.0, player.1, new_ticket);
 					}
 				}
 			});
@@ -293,10 +333,10 @@ pub mod pallet {
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
-		fn use_ticket(player: T::AccountId) -> Option<TicketType> {
-			if let Some(ticket_info) = Tickets::<T>::get(player.clone()) {
+		fn use_ticket(player: T::AccountId, pool_id_key: Option<ID>) -> Option<TicketType> {
+			if let Some(ticket_info) = Tickets::<T>::get(player.clone(), pool_id_key) {
 				if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
-					Tickets::<T>::insert(player, new_ticket_info);
+					Tickets::<T>::insert(player, pool_id_key, new_ticket_info);
 					return Some(new_ticket_info.ticket_type);
 				}
 			}
@@ -335,8 +375,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> MasterPool<T::AccountId> for Pallet<T> {
-		fn remove_player(player: &T::AccountId) {
-			Tickets::<T>::remove(&player);
+		fn remove_player(player: &T::AccountId, pool_id: Option<ID>) {
+			Tickets::<T>::remove(&player, pool_id);
 		}
 
 		fn get_timeservice() -> u128 {

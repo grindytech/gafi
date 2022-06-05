@@ -337,7 +337,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn remove_player(player: &T::AccountId, new_player_count: u32) {
-		T::MasterPool::remove_player(player);
+		T::MasterPool::remove_player(player, None);
 		Tickets::<T>::remove(player);
 
 		<IngamePlayers<T>>::mutate(|players| {

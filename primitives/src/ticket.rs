@@ -52,6 +52,7 @@ pub enum TicketLevel {
 pub struct TicketInfo {
     pub ticket_type: TicketType,
     pub tickets: u32,
+	pub pool_id: Option<ID>
 }
 
 impl TicketInfo {
@@ -76,13 +77,13 @@ impl TicketInfo {
 }
 
 pub trait PlayerTicket<AccountId> {
-    fn use_ticket(player: AccountId) -> Option<TicketType>;
+    fn use_ticket(player: AccountId, pool_id_key: Option<ID>) -> Option<TicketType>;
     fn get_service(ticket: TicketType) -> Option<Service>;
     fn get_targets(pool_id: ID) -> Vec<H160>;
 }
 
 impl<AccountId> PlayerTicket<AccountId> for () {
-    fn use_ticket(_player: AccountId) -> Option<TicketType> {
+    fn use_ticket(_player: AccountId, _pool_id_key: Option<ID>) -> Option<TicketType> {
         None
     }
 
