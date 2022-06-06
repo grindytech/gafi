@@ -21,10 +21,8 @@
 use crate::weights::WeightInfo;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{
-		fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
-	},
- 	transactional
+	traits::{fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
@@ -41,8 +39,8 @@ pub use pallet::*;
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
-use sp_std::vec::Vec;
 use sp_runtime::Permill;
+use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -170,7 +168,7 @@ pub mod pallet {
 		LessThanMinTxLimit,
 		GreaterThanMaxTxLimit,
 		LessThanMinDiscountPercent,
-		GreaterThanMinDiscountPercent
+		GreaterThanMinDiscountPercent,
 	}
 
 	#[pallet::call]
@@ -200,18 +198,34 @@ pub mod pallet {
 
 			let pool_config = Self::new_pool()?;
 			ensure!(
-				Pools::<T>::get(pool_config.id).is_none() ,
+				Pools::<T>::get(pool_config.id).is_none(),
 				<Error<T>>::PoolIdExisted
 			);
 			ensure!(
 				T::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
-			ensure!(balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)? >= T::MinPoolBalance::get(), Error::<T>::NotReachMinPoolBalance);
-			ensure!(tx_limit >= T::MinTxLimit::get(), Error::<T>::LessThanMinTxLimit);
-			ensure!(tx_limit <= T::MaxTxLimit::get(), Error::<T>::GreaterThanMaxTxLimit);
-			ensure!(discount >= T::MinDiscountPercent::get(), Error::<T>::LessThanMinDiscountPercent);
-			ensure!(discount <= T::MaxDiscountPercent::get(), Error::<T>::GreaterThanMinDiscountPercent);
+			ensure!(
+				balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)?
+					>= T::MinPoolBalance::get(),
+				Error::<T>::NotReachMinPoolBalance
+			);
+			ensure!(
+				tx_limit >= T::MinTxLimit::get(),
+				Error::<T>::LessThanMinTxLimit
+			);
+			ensure!(
+				tx_limit <= T::MaxTxLimit::get(),
+				Error::<T>::GreaterThanMaxTxLimit
+			);
+			ensure!(
+				discount >= T::MinDiscountPercent::get(),
+				Error::<T>::LessThanMinDiscountPercent
+			);
+			ensure!(
+				discount <= T::MaxDiscountPercent::get(),
+				Error::<T>::GreaterThanMinDiscountPercent
+			);
 			ensure! {
 				Self::usize_try_to_u32(targets.len())? <= T::MaxPoolTarget::get(),
 				<Error<T>>::ExceedPoolTarget
@@ -406,7 +420,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
-		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
+		fn join(_sender: T::AccountId, pool_id: ID) -> DispatchResult {
+			ensure!(Pools::<T>::get(pool_id).is_some(), Error::<T>::PoolNotExist);
 			Ok(())
 		}
 		fn leave(_sender: T::AccountId) -> DispatchResult {
@@ -424,6 +439,24 @@ pub mod pallet {
 				));
 			}
 			None
+		}
+
+		/// Add new sponsored-pool with default values, return pool_id
+		///
+		/// ** Should be used for benchmarking only!!! **
+		#[cfg(feature = "runtime-benchmarks")]
+		fn add_default(owner: T::AccountId, pool_id: ID) {
+			let sponsored_pool = SponsoredPool {
+				id: pool_id,
+				owner: owner.clone(),
+				value: 0_u128,
+				discount: Permill::from_percent(0),
+				tx_limit: 0_u32,
+			};
+
+			Pools::<T>::insert(pool_id, sponsored_pool);
+			PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
+				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned);
 		}
 	}
 }
