@@ -181,7 +181,6 @@ fn dev_genesis(
 		),
 	];
 	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
-	let bond_existential_deposit: u128 = unit(GAKI);
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
 	// pallet-faucet

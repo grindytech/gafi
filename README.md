@@ -18,7 +18,7 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
   ```sh
   make test
   ```
-  #### [Client tests](https://github.com/cryptoviet/gafi/blob/document/client-test/tests/README.md)
+  #### [Client tests](https://github.com/cryptoviet/gafi/tree/master/tests)
 
 
 ### Run

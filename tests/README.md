@@ -12,7 +12,7 @@ $ make build-test
 ### 2. Setup nodejs environment
 ```
 $ cd tests/
-$ npm init
+$ npm i
 $ npm run build
 ```
 
