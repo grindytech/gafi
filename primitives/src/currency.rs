@@ -49,6 +49,16 @@ impl TokenInfo for GafiCurrency {
 	}
 }
 
+/// Express the native token as u128
+/// 
+/// # Examples
+/// 
+/// ```
+/// use gafi_primitives::currency::{NativeToken::GAKI, unit};
+/// 
+/// let balance = 10 * unit(GAKI);
+/// assert_eq!(balance, 10_000_000_000_000_000_000);
+/// ```
 pub fn unit(token: NativeToken) -> u128 {
 	10u128.saturating_pow( GafiCurrency::token_info(token).decimals.into() )
 }

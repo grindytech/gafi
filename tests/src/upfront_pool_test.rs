@@ -3,7 +3,7 @@ use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketLevel, TicketType},
+	ticket::{TicketLevel, TicketType, SystemTicket},
 };
 use gafi_tx::Config;
 use hex_literal::hex;
@@ -48,7 +48,7 @@ fn init_join_pool(pool_fee: u128, ticket: TicketType) {
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		let pool_fee = UpfrontPool::get_service(TicketLevel::Basic).unwrap();
-		init_join_pool(pool_fee.value, TicketType::Upfront(TicketLevel::Basic));
+		init_join_pool(pool_fee.value, TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)) );
 	})
 }
 
@@ -56,7 +56,7 @@ fn charge_join_pool_basic_work() {
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		let pool_fee = UpfrontPool::get_service(TicketLevel::Medium).unwrap();
-		init_join_pool(pool_fee.value, TicketType::Upfront(TicketLevel::Medium));
+		init_join_pool(pool_fee.value, TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)) );
 	})
 }
 
@@ -64,7 +64,7 @@ fn charge_join_pool_medium_work() {
 fn charge_join_max_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		let pool_fee = UpfrontPool::get_service(TicketLevel::Advance).unwrap();
-		init_join_pool(pool_fee.value, TicketType::Upfront(TicketLevel::Advance));
+		init_join_pool(pool_fee.value, TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)) );
 	})
 }
 
@@ -121,7 +121,7 @@ fn leave_pool_early_works() {
 				init_leave_pool(
 					i,
 					pool_fee.value,
-					TicketType::Upfront(level),
+					TicketType::System(SystemTicket::Upfront(level)),
 					1,
 					leave_block,
 				);
@@ -142,7 +142,7 @@ fn leave_pool_over_works() {
 				init_leave_pool(
 					i,
 					pool_fee.value,
-					TicketType::Upfront(level),
+					TicketType::System(SystemTicket::Upfront(level)),
 					start_block,
 					leave_block,
 				);

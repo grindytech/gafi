@@ -1,12 +1,11 @@
-use gaki_testnet::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig,
-	EthereumConfig, GenesisConfig, GrandpaConfig, UpfrontPoolConfig,
-	StakingPoolConfig, Signature, SudoConfig, SystemConfig,
-	FaucetConfig, TxHandlerConfig,
-	WASM_BINARY, PoolConfig, PalletCacheConfig, PalletCacheFaucetConfig
-};
 use gafi_primitives::currency::{microcent, unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
-use gafi_primitives::pool::{SystemService, TicketLevel};
+use gafi_primitives::system_services::SystemService;
+use gafi_primitives::ticket::TicketLevel;
+use gaki_testnet::{
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig,
+	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, Signature,
+	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
+};
 use sc_service::{ChainType, Properties};
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -15,6 +14,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_std::*;
 use std::collections::BTreeMap;
+use sp_runtime::Permill;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -110,29 +110,29 @@ fn gaki_testnet_genesis(
 	let upfront_services = [
 		(
 			TicketLevel::Basic,
-			SystemService::new(100_u32, 30_u8, 5 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 		),
 		(
 			TicketLevel::Medium,
-			SystemService::new(100_u32, 50_u8, 7 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 		),
 		(
 			TicketLevel::Advance,
-			SystemService::new(100_u32, 70_u8, 10 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 		),
 	];
 	let staking_services = [
 		(
 			TicketLevel::Basic,
-			SystemService::new(100_u32, 30_u8, 1000 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 		),
 		(
 			TicketLevel::Medium,
-			SystemService::new(100_u32, 50_u8, 1500 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 		),
 		(
 			TicketLevel::Advance,
-			SystemService::new(100_u32, 70_u8, 2000 * unit(GAKI)),
+			SystemService::new(100_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 		),
 	];
 	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
@@ -195,8 +195,13 @@ fn gaki_testnet_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig { max_player: MAX_PLAYER, services: upfront_services },
-		staking_pool: StakingPoolConfig { services: staking_services },
+		upfront_pool: UpfrontPoolConfig {
+			max_player: MAX_PLAYER,
+			services: upfront_services,
+		},
+		staking_pool: StakingPoolConfig {
+			services: staking_services,
+		},
 		faucet: FaucetConfig {
 			genesis_accounts: endowed_accounts,
 			faucet_amount,

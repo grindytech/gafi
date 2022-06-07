@@ -2,7 +2,7 @@ use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketLevel, TicketType},
+	ticket::{TicketLevel, TicketType, SystemTicket},
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
@@ -39,7 +39,7 @@ fn join_pool_works() {
         ExtBuilder::default().build_and_execute(|| {
             let pool_fee = StakingPool::get_service(LEVELS[i]).unwrap();
             let account = AccountId32::new([i as u8; 32]);
-            join_pool(account, pool_fee.value, TicketType::Staking(LEVELS[i]));
+            join_pool(account, pool_fee.value, TicketType::System(SystemTicket::Staking(LEVELS[i])));
         })
     }
 }
@@ -51,7 +51,7 @@ fn leave_pool_works() {
         ExtBuilder::default().build_and_execute(|| {
             let pool_fee = StakingPool::get_service(LEVELS[i]).unwrap();
             let account = AccountId32::new([i as u8; 32]);
-            join_pool(account.clone(), pool_fee.value, TicketType::Staking(LEVELS[i]));
+            join_pool(account.clone(), pool_fee.value, TicketType::System(SystemTicket::Staking(LEVELS[i])));
             leave_pool(account.clone(), pool_fee.value);
         })
     }

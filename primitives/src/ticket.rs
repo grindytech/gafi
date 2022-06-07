@@ -21,11 +21,22 @@ pub struct Ticket<AccountId> {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum TicketType {
-	Upfront(TicketLevel),
-	Staking(TicketLevel),
-	Sponsored(ID),
+	System(SystemTicket),
+    Custom(CustomTicket),
 }
 
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum SystemTicket {
+	Upfront(TicketLevel),
+	Staking(TicketLevel),
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum CustomTicket {
+    Sponsored(ID),
+}
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

@@ -16,7 +16,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32,
+	AccountId32, Permill,
 };
 pub use pallet_balances::Call as BalancesCall;
 
@@ -112,6 +112,11 @@ impl system::Config for Test {
 
 
 parameter_types! {
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinTxLimit: u32 = 10;
+	pub MaxTxLimit: u32 = 100;
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 =  10;
 }
@@ -123,6 +128,11 @@ impl sponsored_pool::Config for Test {
 	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type MinDiscountPercent = MinDiscountPercent;
+	type MaxDiscountPercent = MaxDiscountPercent;
+	type MinTxLimit = MinTxLimit;
+	type MaxTxLimit = MaxTxLimit;
+	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
 }
 

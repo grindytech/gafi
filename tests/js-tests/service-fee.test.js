@@ -4,11 +4,10 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
 const utils = require('../utils/util');
-const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/api');
 const keyring = new Keyring({ type: 'sr25519' });
 var assert = require('assert');
-const { describeWithFrontier, WS_PORT, RPC_PORT } = require('../utils/context');
+const { describeWithFrontier, RPC_PORT } = require('../utils/context');
 const { step } = require("mocha-steps");
 
 function delay(interval) {
@@ -73,12 +72,11 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
         await utils.proof_address_mapping(context, account2, alice);
     }).timeout(10000);
 
-    create_erc20_token_circle(context, { Staking: "Basic" }, 30, 10);
-    create_erc20_token_circle(context, { Staking: "Medium" }, 50, 10);
-    create_erc20_token_circle(context, { Staking: "Advance" }, 70, 10);
-    
-    create_erc20_token_circle(context, { Upfront: "Basic" }, 30, 10);
-    create_erc20_token_circle(context, { Upfront: "Medium" }, 50, 10);
-    create_erc20_token_circle(context, { Upfront: "Advance" }, 70, 10);
+    create_erc20_token_circle(context, { System: { Staking: "Basic" } }, 30, 10);
+    create_erc20_token_circle(context, { System: { Staking: "Medium" } }, 50, 10);
+    create_erc20_token_circle(context, { System: { Staking: "Advance" } }, 70, 10);
+    create_erc20_token_circle(context, { System: { Upfront: "Basic" } }, 30, 10);
+    create_erc20_token_circle(context, { System: { Upfront: "Medium" } }, 50, 10);
+    create_erc20_token_circle(context, { System: { Upfront: "Advance" } }, 70, 10);
 
 })

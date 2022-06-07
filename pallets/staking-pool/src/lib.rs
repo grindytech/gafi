@@ -21,15 +21,17 @@
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, ReservableCurrency},
+	transactional
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	ticket::{TicketLevel, Ticket, TicketType},
+	ticket::{TicketLevel, Ticket, TicketType, SystemTicket},
 	system_services::{SystemPool, SystemService},
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use gu_convertor::{u128_try_to_balance};
+use sp_runtime::Permill;
 
 #[cfg(test)]
 mod mock;
@@ -60,7 +62,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
+
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
@@ -99,9 +101,9 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				services: [
-					(TicketLevel::Basic, SystemService::new(100_u32, 30_u8, 100000u128)),
-					(TicketLevel::Medium, SystemService::new(100_u32, 50_u8, 100000u128)),
-					(TicketLevel::Advance,  SystemService::new(100_u32, 70_u8, 100000u128)),
+					(TicketLevel::Basic, SystemService::new(100_u32, Permill::from_percent(30), 100000u128)),
+					(TicketLevel::Medium, SystemService::new(100_u32, Permill::from_percent(50), 100000u128)),
+					(TicketLevel::Advance,  SystemService::new(100_u32, Permill::from_percent(70), 100000u128)),
 				],
 			}
 		}
@@ -139,6 +141,7 @@ pub mod pallet {
 		/// - `level`: The level of ticket Basic - Medium - Advance
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn join(sender: T::AccountId, level: TicketLevel) -> DispatchResult {
 			let service = Self::get_service_by_level(level)?;
 			let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
@@ -156,6 +159,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(level) = Self::get_player_level(sender.clone()) {
 				let new_player_count =
@@ -206,7 +210,7 @@ pub mod pallet {
 			let ticket = Ticket {
 				address: sender.clone(),
 				join_time: _now,
-				ticket_type: TicketType::Staking(level),
+				ticket_type: TicketType::System(SystemTicket::Staking(level)),
 			};
 			Tickets::<T>::insert(sender, ticket);
 		}
@@ -223,7 +227,7 @@ pub mod pallet {
 		fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
 			match Tickets::<T>::get(player) {
 				Some(ticket) => {
-					if let TicketType::Staking(level) = ticket.ticket_type {
+					if let TicketType::System(SystemTicket::Staking(level)) = ticket.ticket_type {
 						Some(level)
 					} else {
 						None

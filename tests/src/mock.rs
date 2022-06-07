@@ -27,7 +27,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32,
+	AccountId32, Permill,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -168,6 +168,11 @@ impl staking_pool::Config for Test {
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 = 10;
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinTxLimit: u32 = 10;
+	pub MaxTxLimit: u32 = 100;
 }
 
 impl sponsored_pool::Config for Test {
@@ -177,6 +182,11 @@ impl sponsored_pool::Config for Test {
 	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type MinDiscountPercent = MinDiscountPercent;
+	type MaxDiscountPercent = MaxDiscountPercent;
+	type MinTxLimit = MinTxLimit;
+	type MaxTxLimit = MaxTxLimit;
+	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
 }
 
@@ -262,7 +272,7 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-	pub GameCreatorReward: u8 = 30u8;
+	pub GameCreatorReward: Permill = Permill::from_percent(30);
 }
 
 impl gafi_tx::Config for Test {
@@ -315,29 +325,29 @@ impl Default for ExtBuilder {
 			upfront_services: [
 				(
 					TicketLevel::Basic,
-					SystemService::new(100_u32, 30_u8, 5 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 				),
 				(
 					TicketLevel::Medium,
-					SystemService::new(100_u32, 50_u8, 7 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 				),
 				(
 					TicketLevel::Advance,
-					SystemService::new(100_u32, 70_u8, 10 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 				),
 			],
 			staking_services: [
 				(
 					TicketLevel::Basic,
-					SystemService::new(100_u32, 30_u8, 1000 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 				),
 				(
 					TicketLevel::Medium,
-					SystemService::new(100_u32, 50_u8, 1500 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 				),
 				(
 					TicketLevel::Advance,
-					SystemService::new(100_u32, 70_u8, 2000 * unit(GAKI)),
+					SystemService::new(100_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 				),
 			],
 		}

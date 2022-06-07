@@ -17,7 +17,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{pallet_prelude::*, traits::Currency};
+use frame_support::{pallet_prelude::*, traits::Currency, transactional};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
@@ -25,7 +25,7 @@ use gafi_primitives::{
 	pool::{MasterPool, Service},
 	system_services::SystemPool,
 	ticket::TicketInfo,
-	ticket::{PlayerTicket, TicketLevel, TicketType},
+	ticket::{CustomTicket, PlayerTicket, SystemTicket, TicketLevel, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -171,6 +171,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
+		#[transactional]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(
@@ -180,9 +181,15 @@ pub mod pallet {
 			let ticket_info = Self::get_ticket_info(&sender, ticket)?;
 
 			match ticket {
-				TicketType::Upfront(level) => T::UpfrontPool::join(sender.clone(), level)?,
-				TicketType::Staking(level) => T::StakingPool::join(sender.clone(), level)?,
-				TicketType::Sponsored(pool_id) => T::SponsoredPool::join(sender.clone(), pool_id)?,
+				TicketType::System(SystemTicket::Upfront(level)) => {
+					T::UpfrontPool::join(sender.clone(), level)?
+				}
+				TicketType::System(SystemTicket::Staking(level)) => {
+					T::StakingPool::join(sender.clone(), level)?
+				}
+				TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+					T::SponsoredPool::join(sender.clone(), pool_id)?
+				}
 			}
 
 			Tickets::<T>::insert(sender.clone(), ticket_info);
@@ -196,13 +203,20 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u32))]
+		#[transactional]
 		pub fn leave(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				match ticket.ticket_type {
-					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
-					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
-					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
+					TicketType::System(SystemTicket::Upfront(_)) => {
+						T::UpfrontPool::leave(sender.clone())?
+					}
+					TicketType::System(SystemTicket::Staking(_)) => {
+						T::StakingPool::leave(sender.clone())?
+					}
+					TicketType::Custom(CustomTicket::Sponsored(_)) => {
+						T::SponsoredPool::leave(sender.clone())?
+					}
 				}
 				Self::insert_cache(&sender, ticket.ticket_type, ticket);
 				Tickets::<T>::remove(sender.clone());
@@ -220,9 +234,9 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn insert_cache(sender: &T::AccountId, ticket: TicketType, data: TicketInfo) {
 			match ticket {
-				TicketType::Staking(_) => {}
-				TicketType::Upfront(_) => {}
-				TicketType::Sponsored(_) => {
+				TicketType::System(SystemTicket::Upfront(_)) => {}
+				TicketType::System(SystemTicket::Staking(_)) => {}
+				TicketType::Custom(CustomTicket::Sponsored(_)) => {
 					T::Cache::insert(sender, ticket, data);
 				}
 			}
@@ -248,9 +262,9 @@ pub mod pallet {
 
 		fn get_cache(sender: &T::AccountId, ticket: TicketType) -> Option<TicketInfo> {
 			match ticket {
-				TicketType::Staking(_) => {}
-				TicketType::Upfront(_) => {}
-				TicketType::Sponsored(_) => {
+				TicketType::System(SystemTicket::Upfront(_)) => {}
+				TicketType::System(SystemTicket::Staking(_)) => {}
+				TicketType::Custom(CustomTicket::Sponsored(_)) => {
 					if let Some(ticket_cache) = T::Cache::get(&sender, ticket) {
 						return Some(ticket_cache);
 					}
@@ -291,18 +305,24 @@ pub mod pallet {
 
 		fn get_service(ticket: TicketType) -> Option<Service> {
 			return match ticket {
-				TicketType::Upfront(level) => match T::UpfrontPool::get_service(level) {
-					Some(service) => Some(service.service),
-					None => None,
-				},
-				TicketType::Staking(level) => match T::StakingPool::get_service(level) {
-					Some(service) => Some(service.service),
-					None => None,
-				},
-				TicketType::Sponsored(pool_id) => match T::SponsoredPool::get_service(pool_id) {
-					Some(service) => Some(service.service),
-					None => None,
-				},
+				TicketType::System(SystemTicket::Upfront(level)) => {
+					match T::UpfrontPool::get_service(level) {
+						Some(service) => Some(service.service),
+						None => None,
+					}
+				}
+				TicketType::System(SystemTicket::Staking(level)) => {
+					match T::StakingPool::get_service(level) {
+						Some(service) => Some(service.service),
+						None => None,
+					}
+				}
+				TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+					match T::SponsoredPool::get_service(pool_id) {
+						Some(service) => Some(service.service),
+						None => None,
+					}
+				}
 			};
 		}
 

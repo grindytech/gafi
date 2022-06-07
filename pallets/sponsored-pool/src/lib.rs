@@ -19,9 +19,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::weights::WeightInfo;
-use frame_support::pallet_prelude::*;
-use frame_support::traits::{
-	fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency,
+use frame_support::{
+	pallet_prelude::*,
+	traits::{fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
@@ -38,6 +39,7 @@ pub use pallet::*;
 use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_io::hashing::blake2_256;
+use sp_runtime::Permill;
 use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -48,7 +50,7 @@ struct SponsoredPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
-	pub discount: u8,
+	pub discount: Permill,
 	pub tx_limit: u32,
 }
 
@@ -90,6 +92,26 @@ pub mod pallet {
 
 		/// Manage pool name
 		type PoolName: Name<Self::AccountId>;
+
+		/// The minimum balance owner have to deposit when creating the pool
+		#[pallet::constant]
+		type MinPoolBalance: Get<u128>;
+
+		/// The minimum discount percent when creating the pool
+		#[pallet::constant]
+		type MinDiscountPercent: Get<Permill>;
+
+		///The maximum discount percent when creating the pool
+		#[pallet::constant]
+		type MaxDiscountPercent: Get<Permill>;
+
+		/// The minimum tx limit when creating the pool
+		#[pallet::constant]
+		type MinTxLimit: Get<u32>;
+
+		///The maximum tx limit when creating the pool
+		#[pallet::constant]
+		type MaxTxLimit: Get<u32>;
 
 		/// The maximum number of pool that sponsor can create
 		#[pallet::constant]
@@ -142,6 +164,11 @@ pub mod pallet {
 		PoolNotExist,
 		ExceedMaxPoolOwned,
 		ExceedPoolTarget,
+		NotReachMinPoolBalance,
+		LessThanMinTxLimit,
+		GreaterThanMaxTxLimit,
+		LessThanMinDiscountPercent,
+		GreaterThanMinDiscountPercent,
 	}
 
 	#[pallet::call]
@@ -159,23 +186,45 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u32))]
+		#[transactional]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			targets: Vec<H160>,
 			value: BalanceOf<T>,
-			discount: u8,
+			discount: Permill,
 			tx_limit: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let pool_config = Self::new_pool()?;
 			ensure!(
-				Pools::<T>::get(pool_config.id) == None,
+				Pools::<T>::get(pool_config.id).is_none(),
 				<Error<T>>::PoolIdExisted
 			);
 			ensure!(
 				T::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
+			);
+			ensure!(
+				balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)?
+					>= T::MinPoolBalance::get(),
+				Error::<T>::NotReachMinPoolBalance
+			);
+			ensure!(
+				tx_limit >= T::MinTxLimit::get(),
+				Error::<T>::LessThanMinTxLimit
+			);
+			ensure!(
+				tx_limit <= T::MaxTxLimit::get(),
+				Error::<T>::GreaterThanMaxTxLimit
+			);
+			ensure!(
+				discount >= T::MinDiscountPercent::get(),
+				Error::<T>::LessThanMinDiscountPercent
+			);
+			ensure!(
+				discount <= T::MaxDiscountPercent::get(),
+				Error::<T>::GreaterThanMinDiscountPercent
 			);
 			ensure! {
 				Self::usize_try_to_u32(targets.len())? <= T::MaxPoolTarget::get(),
@@ -226,6 +275,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u32))]
+		#[transactional]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -234,6 +284,7 @@ pub mod pallet {
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner
 			);
+
 			if let Some(pool) = into_account::<T::AccountId>(pool_id) {
 				transfer_all::<T, <T as pallet::Config>::Currency>(&pool, &sender, false)?;
 				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
@@ -369,7 +420,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
-		fn join(_sender: T::AccountId, _pool_id: ID) -> DispatchResult {
+		fn join(_sender: T::AccountId, pool_id: ID) -> DispatchResult {
+			ensure!(Pools::<T>::get(pool_id).is_some(), Error::<T>::PoolNotExist);
 			Ok(())
 		}
 		fn leave(_sender: T::AccountId) -> DispatchResult {
@@ -387,6 +439,24 @@ pub mod pallet {
 				));
 			}
 			None
+		}
+
+		/// Add new sponsored-pool with default values, return pool_id
+		///
+		/// ** Should be used for benchmarking only!!! **
+		#[cfg(feature = "runtime-benchmarks")]
+		fn add_default(owner: T::AccountId, pool_id: ID) {
+			let sponsored_pool = SponsoredPool {
+				id: pool_id,
+				owner: owner.clone(),
+				value: 0_u128,
+				discount: Permill::from_percent(0),
+				tx_limit: 0_u32,
+			};
+
+			Pools::<T>::insert(pool_id, sponsored_pool);
+			PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
+				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned);
 		}
 	}
 }

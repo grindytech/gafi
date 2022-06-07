@@ -9,7 +9,7 @@ use sp_core::{
     bytes::{from_hex, to_hex},
     H160, U256,
 };
-use sp_runtime::AccountId32;
+use sp_runtime::{AccountId32, Permill};
 use sp_std::str::FromStr;
 
 fn make_deposit(account: &AccountId32, balance: u128) {
@@ -34,18 +34,18 @@ fn correct_and_deposit_fee_sponsored_works() {
 
         let targets = vec![H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d1456").unwrap()];
         let target: H160 = H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d1456").unwrap();
-        let discount = 40_u8;
+        let discount = Permill::from_percent(40);
 
         let sponsored_fee = Pallet::<Test>::correct_and_deposit_fee_sponsored(
             pool_id,
             targets,
             target,
-            U256::from(service_fee),
+            service_fee,
             discount,
         )
         .unwrap();
 
-        assert_eq!(sponsored_fee, U256::from(6 * unit(GAKI)));
+        assert_eq!(sponsored_fee, 6 * unit(GAKI));
         assert_eq!(Balances::free_balance(&pool), 96 * unit(GAKI));
     })
 }

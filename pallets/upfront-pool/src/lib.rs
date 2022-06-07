@@ -25,16 +25,18 @@ use frame_support::{
 		tokens::{ExistenceRequirement, WithdrawReasons},
 		Currency, ReservableCurrency,
 	},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
 	system_services::{SystemPool, SystemService},
-	ticket::{Ticket, TicketLevel, TicketType},
+	ticket::{Ticket, TicketLevel, TicketType, SystemTicket},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use sp_runtime::Permill;
 
 #[cfg(test)]
 mod mock;
@@ -141,15 +143,15 @@ pub mod pallet {
 				services: [
 					(
 						TicketLevel::Basic,
-						SystemService::new(100_u32, 30_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(30), 1000000u128)
 					),
 					(
 						TicketLevel::Medium,
-						SystemService::new(100_u32, 50_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(50), 1000000u128)
 					),
 					(
 						TicketLevel::Advance,
-						SystemService::new(100_u32, 70_u8, 1000000u128),
+						SystemService::new(100_u32, Permill::from_percent(70), 1000000u128)
 					),
 				],
 			}
@@ -192,6 +194,7 @@ pub mod pallet {
 		/// - `level`: The level of ticket Basic - Medium - Advance
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn join(sender: T::AccountId, level: TicketLevel) -> DispatchResult {
 			let new_player_count = Self::player_count()
 				.checked_add(1)
@@ -207,10 +210,7 @@ pub mod pallet {
 					<T as pallet::Config>::Currency,
 					T::AccountId,
 				>(service.value)?;
-				let double_service_fee = u128_try_to_balance::<
-					<T as pallet::Config>::Currency,
-					T::AccountId,
-				>(service.value * 2u128)?;
+				let double_service_fee = service_fee + service_fee;
 				ensure!(
 					T::Currency::free_balance(&sender) > double_service_fee,
 					pallet_balances::Error::<T>::InsufficientBalance
@@ -234,6 +234,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				if let Some(level) = Self::get_player_level(sender.clone()) {
@@ -307,7 +308,7 @@ impl<T: Config> Pallet<T> {
 		let ticket = Ticket::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
-			ticket_type: TicketType::Upfront(level),
+			ticket_type: TicketType::System(SystemTicket::Upfront(level)),
 		};
 		Tickets::<T>::insert(sender, ticket);
 		<PlayerCount<T>>::put(new_player_count);
@@ -389,7 +390,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
 		if let Some(ticket) = Tickets::<T>::get(player) {
-			if let TicketType::Upfront(level) = ticket.ticket_type {
+			if let TicketType::System(SystemTicket::Upfront(level)) = ticket.ticket_type {
 				return Some(level);
 			}
 		}

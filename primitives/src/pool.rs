@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{RuntimeDebug, Permill};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -10,7 +10,7 @@ use sp_runtime::RuntimeDebug;
 )]
 pub struct Service {
 	pub tx_limit: u32, // max number of discounted transaction user can use in TimeService
-	pub discount: u8,  // percentage of discount
+	pub discount: Permill,  // percentage of discount
 }
 
 pub trait MasterPool<AccountId> {
