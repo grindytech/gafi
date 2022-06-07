@@ -3,7 +3,7 @@ use crate::*;
 use crate::Pallet as GameCreator;
 use crate::{Call, Config};
 use frame_benchmarking::Box;
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, account};
 use frame_support::log::info;
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
