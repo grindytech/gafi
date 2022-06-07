@@ -21,7 +21,7 @@
 use crate::weights::WeightInfo;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{fungible::Inspect, Currency, ExistenceRequirement, Randomness, ReservableCurrency},
+	traits::{Currency, ExistenceRequirement, Randomness, ReservableCurrency},
 	transactional,
 };
 use frame_system::pallet_prelude::*;
@@ -250,8 +250,7 @@ pub mod pallet {
 				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned)?;
 			Targets::<T>::try_mutate(pool_config.id, |target_vec| {
 				for target in targets {
-					if let Ok(_) = target_vec.try_push(target) {
-					} else {
+					if target_vec.try_push(target).is_err() {
 						return Err(());
 					}
 				}
@@ -300,7 +299,7 @@ pub mod pallet {
 				Self::deposit_event(Event::Withdrew { id: pool_id });
 				Ok(())
 			} else {
-				return Err(Error::<T>::IntoAccountFail.into());
+				Err(Error::<T>::IntoAccountFail.into())
 			}
 		}
 
@@ -334,8 +333,7 @@ pub mod pallet {
 			Targets::<T>::insert(pool_id, BoundedVec::default());
 			Targets::<T>::try_mutate(&pool_id, |target_vec| {
 				for target in targets {
-					if let Ok(_) = target_vec.try_push(target) {
-					} else {
+					if target_vec.try_push(target).is_err() {
 						return Err(());
 					}
 				}
@@ -348,7 +346,7 @@ pub mod pallet {
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
 		pub fn set_pool_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
 			ensure!(
@@ -363,7 +361,7 @@ pub mod pallet {
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
 		pub fn clear_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
 			ensure!(
@@ -378,7 +376,7 @@ pub mod pallet {
 
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
 		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-			ensure_root(origin.clone())?;
+			ensure_root(origin)?;
 
 			match Pools::<T>::get(pool_id) {
 				None => Err(<Error<T>>::PoolNotExist.into()),
