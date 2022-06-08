@@ -27,8 +27,8 @@ pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
-sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
+sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
 
 # Local
 gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
@@ -64,5 +64,8 @@ std = [
   "gu-currency/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = [
+  "frame-benchmarking/runtime-benchmarks",
+  "gafi-primitives/runtime-benchmarks",
+]
 try-runtime = ["frame-support/try-runtime"]
