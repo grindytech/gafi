@@ -497,12 +497,17 @@ impl game_creator::Config for Runtime {
 	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
 }
 
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5;
+}
+
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
 }

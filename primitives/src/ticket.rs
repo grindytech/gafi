@@ -76,13 +76,13 @@ impl TicketInfo {
 }
 
 pub trait PlayerTicket<AccountId> {
-    fn use_ticket(player: AccountId) -> Option<TicketType>;
+    fn use_ticket(player: AccountId, target: Option<H160>) -> Option<TicketType>;
     fn get_service(ticket: TicketType) -> Option<Service>;
     fn get_targets(pool_id: ID) -> Vec<H160>;
 }
 
 impl<AccountId> PlayerTicket<AccountId> for () {
-    fn use_ticket(_player: AccountId) -> Option<TicketType> {
+    fn use_ticket(_player: AccountId, _target: Option<H160>) -> Option<TicketType> {
         None
     }
 

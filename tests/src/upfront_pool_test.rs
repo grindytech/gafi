@@ -91,7 +91,7 @@ fn init_leave_pool(
 	run_to_block(leave_block);
 	{
 		let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
-		assert_ok!(Pool::leave(Origin::signed(sender.clone())));
+		assert_ok!(Pool::leave(Origin::signed(sender.clone()), None));
 
 		let after_balance = <Test as Config>::Currency::free_balance(sender.clone());
 

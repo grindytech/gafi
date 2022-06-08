@@ -20,16 +20,16 @@ fn join_pool(account: AccountId32, staking_amount: u128, ticket: TicketType) {
 	assert_ok!(Pool::join(Origin::signed(account.clone()), ticket));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(account.clone()),
-		base_balance - staking_amount 
+		base_balance - staking_amount
 	);
 }
 
 fn leave_pool(account: AccountId32, staking_amount: u128) {
     let before_balance = <Test as Config>::Currency::free_balance(account.clone());
-	assert_ok!(Pool::leave(Origin::signed(account.clone())));
+	assert_ok!(Pool::leave(Origin::signed(account.clone()), None));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(account.clone()),
-		before_balance + staking_amount 
+		before_balance + staking_amount
 	);
 }
 

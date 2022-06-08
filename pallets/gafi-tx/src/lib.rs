@@ -230,9 +230,9 @@ where
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		// get transaction service based on player's service
-		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
-			if let Some(service) = T::PlayerTicket::get_service(ticket) {
-				match ticket {
+		if let Some(ticket_type) = T::PlayerTicket::use_ticket(account_id, target) {
+			if let Some(service) = T::PlayerTicket::get_service(ticket_type) {
+				match ticket_type {
 					TicketType::System(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,
