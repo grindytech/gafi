@@ -37,9 +37,9 @@ fn use_tickets(ticket: TicketType, account: AccountId32) {
 
     let service = Pool::get_service(ticket).unwrap();
     for _ in 0..service.tx_limit {
-        assert_ne!(Pool::use_ticket(account.clone()), None);
+        assert_ne!(Pool::use_ticket(account.clone(), None), None);
     }
-    assert_eq!(Pool::use_ticket(account.clone()), None);
+    assert_eq!(Pool::use_ticket(account.clone(), None), None);
 }
 
 #[test]
@@ -58,9 +58,9 @@ fn renew_upfront_ticket_works() {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
             use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
-            assert_eq!(Pool::use_ticket(account.clone()), None);
+            assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
-            assert_ne!(Pool::use_ticket(account.clone()), None);
+            assert_ne!(Pool::use_ticket(account.clone(), None), None);
         });
     }
 }
@@ -72,9 +72,9 @@ fn trigger_renew_upfront_tickets_works() {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
             use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
-            assert_eq!(Pool::use_ticket(account.clone()), None);
+            assert_eq!(Pool::use_ticket(account.clone(), None), None);
             run_to_block(CIRCLE_BLOCK + ADDITIONAL_BLOCK);
-            assert_ne!(Pool::use_ticket(account.clone()), None);
+            assert_ne!(Pool::use_ticket(account.clone(), None), None);
         });
     }
 }
@@ -86,9 +86,9 @@ fn renew_staking_ticket_works() {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
             use_tickets(TicketType::System(SystemTicket::Staking(LEVELS[i])), account.clone());
-            assert_eq!(Pool::use_ticket(account.clone()), None);
+            assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
-            assert_ne!(Pool::use_ticket(account.clone()), None);
+            assert_ne!(Pool::use_ticket(account.clone(), None), None);
         });
     }
 }
@@ -100,9 +100,9 @@ fn trigger_renew_staking_tickets_works() {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
             use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
-            assert_eq!(Pool::use_ticket(account.clone()), None);
+            assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
-            assert_ne!(Pool::use_ticket(account.clone()), None);
+            assert_ne!(Pool::use_ticket(account.clone(), None), None);
         });
     }
 }

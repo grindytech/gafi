@@ -100,9 +100,9 @@ async function join_pool(context, sub_account, service) {
     return unsub;
 }
 
-async function leave_pool(context, sub_account) {
+async function leave_pool(context, sub_account, pool_id) {
     const api = await ApiPromise.create({ provider: context.wsProvider });
-    const txExecute = api.tx.pool.leave();
+    const txExecute = api.tx.pool.leave(pool_id);
 
     const unsub = await txExecute
         .signAndSend(sub_account);

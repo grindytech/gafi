@@ -137,6 +137,10 @@ impl pallet_cache::Config for Test {
 	type Action = TicketType;
 }
 
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5_u32;
+}
+
 impl pallet_pool::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
@@ -144,6 +148,7 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type SponsoredPool = SponsoredPool;
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type Cache = PalletCache;
 }
 
