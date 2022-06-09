@@ -131,10 +131,15 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
+parameter_types! {
+	pub CleanTime: u128 = TIME_SERVICE;
+}
+
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
+	type CleanTime = CleanTime;
 }
 
 parameter_types! {
