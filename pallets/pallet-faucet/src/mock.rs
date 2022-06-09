@@ -52,6 +52,7 @@ impl pallet_balances::Config for Test {
 pub const FAUCET_BALANCE: u64 = 1_000_000;
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = 6 * MILLISECS_PER_BLOCK; // 6 seconds
+pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -63,10 +64,16 @@ impl pallet_timestamp::Config for Test {
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
+
+parameter_types! {
+	pub CleanTime: u128 = TIME_SERVICE;
+}
+
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Action = AccountId32;
 	type Data = u128;
+	type CleanTime = CleanTime;
 }
 
 parameter_types! {

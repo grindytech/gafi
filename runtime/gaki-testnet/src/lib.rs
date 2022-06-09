@@ -462,16 +462,26 @@ parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
 }
 
+parameter_types! {
+	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;
+}
+
 impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 	type Event = Event;
 	type Data = Balance;
 	type Action = AccountId;
+	type CleanTime = CleanTime;
+}
+
+parameter_types! {
+	pub CleanTime2: u128 = 24 * 60 * 60_000u128; // 24 hours
 }
 
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
+	type CleanTime = CleanTime2;
 }
 
 impl pallet_faucet::Config for Runtime {
