@@ -153,10 +153,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn integrity_test() {
 			// ensure game's creator reward >= 0 && <= 100
+			// u32 always >=0, so just check <= 100
 			assert!(
-				T::GameCreatorReward::get() >= Permill::from_percent(0_u32)
-				&& T::GameCreatorReward::get() <= Permill::from_percent(100_u32),
-				"The game's creator reward must be greater than 0% and less than 100%"
+				T::GameCreatorReward::get().deconstruct() <= 100_u32,
+				"The game's creator reward must be greater or equal 0% and less than 100%"
 			);
 		}
 	}
