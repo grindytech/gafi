@@ -149,18 +149,6 @@ pub mod pallet {
 		}
 	}
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn integrity_test() {
-			// ensure game's creator reward >= 0 && <= 100
-			// u32 always >=0, so just check <= 100
-			assert!(
-				T::GameCreatorReward::get() < Permill::from_percent(101_u32),
-				"The game's creator reward must be greater than 0% and less than 100%"
-			);
-		}
-	}
-
 	impl<T: Config> Pallet<T> {
 		pub fn correct_and_deposit_fee_sponsored(
 			pool_id: ID,

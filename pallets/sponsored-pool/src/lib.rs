@@ -423,11 +423,6 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn integrity_test() {
 			assert!(T::MinDiscountPercent::get() <= T::MaxDiscountPercent::get());
-
-			assert!(
-				T::MaxDiscountPercent::get() < Permill::from_percent(101_u32),
-				"Discount must be greater or equal 0% and less than 100%"
-			);
 		}
 	}
 
