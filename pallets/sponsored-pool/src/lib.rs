@@ -419,6 +419,13 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn integrity_test() {
+			assert!(T::MinDiscountPercent::get() <= T::MaxDiscountPercent::get());
+		}
+	}
+
 	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
 		fn join(_sender: T::AccountId, pool_id: ID) -> DispatchResult {
 			ensure!(Pools::<T>::get(pool_id).is_some(), Error::<T>::PoolNotExist);
