@@ -448,7 +448,7 @@ impl proof_address_mapping::Config for Runtime {
 }
 
 parameter_types! {
-	pub GameCreatorReward: Permill = Permill::from_percent(10_u32);
+	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
 }
 
 impl gafi_tx::Config for Runtime {
