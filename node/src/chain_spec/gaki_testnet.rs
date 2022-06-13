@@ -222,5 +222,6 @@ fn gaki_testnet_genesis(
 			phantom: Default::default(),
 			phantom_i: Default::default(),
 		},
+		treasury: Default::default(),
 	}
 }

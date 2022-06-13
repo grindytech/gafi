@@ -287,5 +287,6 @@ fn dev_genesis(
 			phantom: Default::default(),
 			phantom_i: Default::default(),
 		},
+		treasury: Default::default(),
 	}
 }
