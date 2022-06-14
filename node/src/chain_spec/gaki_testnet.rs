@@ -213,12 +213,10 @@ fn gaki_testnet_genesis(
 			time_service: TIME_SERVICE,
 		},
 		pallet_cache: PalletCacheConfig {
-			clean_time: TIME_SERVICE,
 			phantom: Default::default(),
 			phantom_i: Default::default(),
 		},
 		pallet_cache_faucet: PalletCacheFaucetConfig {
-			clean_time: TIME_SERVICE,
 			phantom: Default::default(),
 			phantom_i: Default::default(),
 		},

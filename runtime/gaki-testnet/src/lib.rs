@@ -48,7 +48,7 @@ pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::FeeCalculator;
-use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner};
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner, EVMCurrencyAdapter};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -339,7 +339,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
@@ -452,7 +452,7 @@ parameter_types! {
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type OnChargeEVMTxHandler = ();
+	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
