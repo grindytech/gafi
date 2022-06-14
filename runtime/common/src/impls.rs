@@ -46,15 +46,24 @@ where
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 30% to treasury
+			// 30% to treasury
 			let mut split = fees.ration(30, 60);
 			if let Some(tips) = fees_then_tips.next() {
 				// for tips, if any, 100% to author
 				tips.merge_into(&mut split.1);
 			}
+
 			use pallet_treasury::Pallet as Treasury;
 			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
 		}
+	}
+
+	fn on_unbalanced(amount: NegativeImbalance<R>) {
+		// 30% to treasury
+		let split = amount.ration(30, 60);
+
+		use pallet_treasury::Pallet as Treasury;
+		<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
 	}
 }
 
@@ -202,10 +211,8 @@ use super::*;
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
-			// Author gets 100% of tip and 20% of fee = 22
-			assert_eq!(Balances::free_balance(TEST_ACCOUNT), 22);
-			// Treasury gets 80% of fee
-			assert_eq!(Balances::free_balance(Treasury::account_id()), 8);
+			// Treasury gets 30% of fee
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 3);
 		});
 	}
 }

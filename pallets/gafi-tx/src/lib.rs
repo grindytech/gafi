@@ -213,7 +213,8 @@ where
 	>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+	type LiquidityInfo = <<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
+
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
 	}
