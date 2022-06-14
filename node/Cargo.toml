@@ -106,7 +106,7 @@ manual-seal = [
   "devnet/manual-seal",
   "gaki-testnet/manual-seal",
 ]
-#rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
+rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
   "devnet/runtime-benchmarks",
 ]
