@@ -28,20 +28,20 @@ log = "0.4.8"
 serde_json = "1.0.59"
 
 # Frontier
-fc-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-base-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
+fc-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-base-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
 
 # Substrate
 frame-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}

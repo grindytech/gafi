@@ -17,15 +17,15 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 
 # Frontier
-fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
-pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.21"}
+fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
+pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.23"}
 
 # Substrate
 frame-executive = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21"}
