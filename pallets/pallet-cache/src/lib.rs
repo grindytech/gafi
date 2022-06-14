@@ -175,7 +175,7 @@ pub mod pallet {
 			let _now: u128 = <timestamp::Pallet<T>>::get()
 				.try_into()
 				.ok()
-				.unwrap_or_else(|| u128::default());
+				.unwrap_or_default();
 			_now
 		}
 	}

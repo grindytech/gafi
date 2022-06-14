@@ -1,7 +1,5 @@
 use crate::constant::ID;
 use frame_support::pallet_prelude::*;
-#[cfg(feature = "std")]
-use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_runtime::{RuntimeDebug, Permill};
