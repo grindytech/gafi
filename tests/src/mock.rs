@@ -131,10 +131,19 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
+parameter_types! {
+	pub CleanTime: u128 = TIME_SERVICE;
+}
+
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
+	type CleanTime = CleanTime;
+}
+
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5_u32;
 }
 
 impl pallet_pool::Config for Test {
@@ -144,6 +153,7 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type SponsoredPool = SponsoredPool;
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type Cache = PalletCache;
 }
 

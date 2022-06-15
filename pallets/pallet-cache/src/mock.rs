@@ -69,10 +69,15 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub CleanTime: u128 = TIME_SERVICE;
+}
+
 impl pallet_cache::Config for Test {
 	type Data = TicketInfo;
 	type Action = TicketType;
 	type Event = Event;
+	type CleanTime = CleanTime;
 }
 
 parameter_types! {
@@ -132,14 +137,12 @@ pub fn run_to_block(n: u64) {
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
-	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
-			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -157,7 +160,6 @@ impl ExtBuilder {
 
 		GenesisBuild::<Test>::assimilate_storage(
 			&pallet_cache::GenesisConfig {
-				clean_time: self.time_service,
 				phantom: Default::default(),
 				phantom_i: Default::default()
 			},

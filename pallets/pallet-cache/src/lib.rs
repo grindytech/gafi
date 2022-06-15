@@ -76,6 +76,9 @@ pub mod pallet {
 
 		/// The Action is the name of action use to query
 		type Action: Parameter + MaxEncodedLen + Clone + TypeInfo;
+
+		#[pallet::constant]
+		type CleanTime: Get<u128>;
 	}
 
 	//** Genesis Conguration **//
@@ -83,7 +86,6 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
 		pub phantom: PhantomData<T>,
 		pub phantom_i: PhantomData<I>,
-		pub clean_time: u128,
 	}
 
 	#[cfg(feature = "std")]
@@ -92,7 +94,6 @@ pub mod pallet {
 			Self {
 				phantom: Default::default(),
 				phantom_i: Default::default(),
-				clean_time: 3_600_000u128,
 			}
 		}
 	}
@@ -100,7 +101,6 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config<I>,  I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
-			<CleanTime<T, I>>::put(self.clean_time);
 			let _now: u128 = <timestamp::Pallet<T>>::get()
 				.try_into()
 				.ok()
@@ -142,22 +142,12 @@ pub mod pallet {
 	#[pallet::getter(fn mark_time)]
 	pub type MarkTime<T: Config<I>,  I: 'static = ()> = StorageValue<_, u128, ValueQuery, DefaultMarkTime<T, I>>;
 
-	/// Honding the specific period of time to clean cache
-	/// The default value is 1 hours
-	#[pallet::type_value]
-	pub fn DefaultCleanTime() -> u128 {
-		3_600_000u128
-	}
-	#[pallet::storage]
-	#[pallet::getter(fn clean_time)]
-	pub type CleanTime<T: Config<I>,  I: 'static = ()> = StorageValue<_, u128, ValueQuery, DefaultCleanTime>;
-
 	//** HOOKS **//
 	#[pallet::hooks]
 	impl<T: Config<I>,  I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = Self::get_timestamp();
-			if _now - Self::mark_time() >= Self::clean_time() {
+			if _now - Self::mark_time() >= T::CleanTime::get() {
 				if DataFlag::<T, I>::get() == Flag::Left {
 					<DataRight<T, I>>::remove_all(None);
 					DataFlag::<T, I>::put(Flag::Right);
@@ -229,7 +219,7 @@ pub mod pallet {
 
 			if let Some(wrap_data) = get_wrap_data() {
 				let _now = Self::get_timestamp();
-				if _now - wrap_data.timestamp < CleanTime::<T, I>::get() {
+				if _now - wrap_data.timestamp < T::CleanTime::get() {
 					return Some(wrap_data.data);
 				}
 			}

@@ -26,16 +26,16 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	game_creator::GetGameCreator,
-	ticket::{PlayerTicket, TicketType, CustomTicket},
+	ticket::{CustomTicket, PlayerTicket, TicketType},
 };
-use sp_runtime::{Permill};
+use gu_convertor::{into_account, u128_to_balance};
 pub use pallet::*;
 use pallet_evm::FeeCalculator;
 use pallet_evm::OnChargeEVMTransaction;
 use pallet_evm::{AddressMapping, GasWeightMapping};
 use sp_core::{H160, U256};
+use sp_runtime::Permill;
 use sp_std::vec::Vec;
-use gu_convertor::{u128_to_balance, into_account};
 
 #[cfg(test)]
 mod mock;
@@ -75,13 +75,14 @@ pub mod pallet {
 		/// Substrate - EVM Address Mapping
 		type AddressMapping: AddressMapping<Self::AccountId>;
 
-		/// To use tickets
+		/// To get and use player's tickets
 		type PlayerTicket: PlayerTicket<Self::AccountId>;
 
 		/// percentage of transaction fee reward to game-creator
 		#[pallet::constant]
 		type GameCreatorReward: Get<Permill>;
 
+		/// get game's creator
 		type GetGameCreator: GetGameCreator<Self::AccountId>;
 	}
 
@@ -163,7 +164,8 @@ pub mod pallet {
 			if let Some(sponsor) = into_account::<T::AccountId>(pool_id) {
 				let sponsor_fee = discount * service_fee;
 
-				let fee = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee);
+				let fee =
+					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee);
 
 				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
 					&sponsor,
@@ -211,8 +213,8 @@ where
 	>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-	type LiquidityInfo =
-		<<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
+	type LiquidityInfo = <<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
+
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
 	}
@@ -230,9 +232,9 @@ where
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		// get transaction service based on player's service
-		if let Some(ticket) = T::PlayerTicket::use_ticket(account_id) {
-			if let Some(service) = T::PlayerTicket::get_service(ticket) {
-				match ticket {
+		if let Some(ticket_type) = T::PlayerTicket::use_ticket(account_id, target) {
+			if let Some(service) = T::PlayerTicket::get_service(ticket_type) {
+				match ticket_type {
 					TicketType::System(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,

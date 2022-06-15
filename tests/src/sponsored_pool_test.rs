@@ -1,5 +1,5 @@
 use crate::mock::*;
-use frame_support::{assert_ok, traits::Currency};
+use frame_support::{assert_ok, assert_noop, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::ticket::PlayerTicket;
@@ -10,6 +10,7 @@ use gafi_primitives::{
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};
 use sp_std::vec::Vec;
+use crate::mock::Test;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADD_BLOCK: u64 = 1_u64;
@@ -82,24 +83,53 @@ fn rejoin_sponsored_pool_works() {
             TicketType::Custom(CustomTicket::Sponsored(pool_id))
         ));
 
-        Pool::use_ticket(account_1.clone());
-        Pool::use_ticket(account_1.clone());
-        assert_eq!(Pool::tickets(account_1.clone()).unwrap().tickets, 98_u32);
+        Pool::use_ticket(account_1.clone(), Some(H160::default()));
+        Pool::use_ticket(account_1.clone(), Some(H160::default()));
+        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(10);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone().clone())));
+        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), Some(pool_id)));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
             TicketType::Custom(CustomTicket::Sponsored(pool_id))
         ));
-        assert_eq!(Pool::tickets(account_1.clone()).unwrap().tickets, 98_u32);
+        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(CIRCLE_BLOCK + ADD_BLOCK);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone().clone())));
+        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), Some(pool_id)));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
             TicketType::Custom(CustomTicket::Sponsored(pool_id))
         ));
-        assert_eq!(Pool::tickets(account_1.clone()).unwrap().tickets, 100_u32);
+        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 100_u32);
+    })
+}
+
+#[test]
+fn limit_join_sponsored_pool_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        run_to_block(ADD_BLOCK);
+        let account_balance = 1_000_000 * unit(GAKI);
+        let account = new_account([0_u8; 32], account_balance);
+        let targets = vec![H160::default()];
+        let pool_value = 1000 * unit(GAKI);
+        let tx_limit = 100_u32;
+        let discount = Permill::from_percent(30);
+
+		let account_1 = new_account([1_u8; 32], account_balance);
+		for i in 1..7 {
+			run_to_block(i + 1);
+			let pool_id = create_pool(account.clone(), targets.clone(), pool_value, tx_limit, discount);
+			assert_ok!(Pool::join(
+				Origin::signed(account_1.clone()),
+				TicketType::Custom(CustomTicket::Sponsored(pool_id))
+			));
+		}
+		run_to_block(10);
+		let pool_id1 = create_pool(account.clone(), targets, pool_value, tx_limit, discount);
+		assert_noop!(Pool::join(
+			Origin::signed(account_1.clone()),
+			TicketType::Custom(CustomTicket::Sponsored(pool_id1))
+		), pallet_pool::Error::<Test>::ExceedJoinedPool);
     })
 }

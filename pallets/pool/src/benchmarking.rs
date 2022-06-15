@@ -51,6 +51,6 @@ benchmarks! {
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
 		Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), TICKETS[s as usize]);
-	}: _(RawOrigin::Signed(caller))
+	}: _(RawOrigin::Signed(caller), None)
 
 }

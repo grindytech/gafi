@@ -12,6 +12,7 @@ use codec::{Decode, Encode};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use runtime_common::impls::DealWithFees;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
@@ -41,13 +42,13 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
-	ConsensusEngineId, StorageValue,
+	ConsensusEngineId, StorageValue, PalletId,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::FeeCalculator;
-use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner};
+use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner, EVMCurrencyAdapter};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -338,7 +339,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
@@ -451,7 +452,7 @@ parameter_types! {
 impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type OnChargeEVMTxHandler = ();
+	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type AddressMapping = ProofAddressMapping;
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
@@ -462,16 +463,26 @@ parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
 }
 
+parameter_types! {
+	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;
+}
+
 impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 	type Event = Event;
 	type Data = Balance;
 	type Action = AccountId;
+	type CleanTime = CleanTime;
+}
+
+parameter_types! {
+	pub CleanTime2: u128 = 24 * 60 * 60_000u128; // 24 hours
 }
 
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
+	type CleanTime = CleanTime2;
 }
 
 impl pallet_faucet::Config for Runtime {
@@ -497,12 +508,17 @@ impl game_creator::Config for Runtime {
 	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
 }
 
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5;
+}
+
 impl pallet_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
 }
@@ -520,6 +536,40 @@ impl pallet_pool_names::Config for Runtime {
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
+}
+
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub ProposalBondMinimum: Balance = 100 * unit(GAKI);
+	pub ProposalBondMaximum: Balance = 500 * unit(GAKI);
+	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(1);
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+
+	pub const MaxApprovals: u32 = 100;
+}
+
+// type ApproveOrigin = EitherOfDiverse<
+// 	EnsureRoot<AccountId>,
+// 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
+// >;
+
+impl pallet_treasury::Config for Runtime {
+	type PalletId = TreasuryPalletId;
+	type Currency = Balances;
+	type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
+	type RejectOrigin = frame_system::EnsureRoot<AccountId>;
+	type Event = Event;
+	type OnSlash = Treasury;
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = ();
+	type SpendFunds = ();
+	type MaxApprovals = MaxApprovals;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -554,6 +604,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 	}
 );
 
