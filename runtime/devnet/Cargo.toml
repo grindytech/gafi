@@ -38,6 +38,7 @@ pallet-randomness-collective-flip = {version = "4.0.0-dev", default-features = f
 pallet-sudo = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
 pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
 pallet-transaction-payment = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
+pallet-treasury = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
 sp-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
 sp-block-builder = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
 sp-consensus-aura = {version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
@@ -61,6 +62,7 @@ hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
 gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+runtime-common = { package = "runtime-common", path = "../common", default-features = false }
 
 # Local pallets
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
@@ -150,4 +152,5 @@ std = [
   "sponsored-pool/std",
   "game-creator/std",
   "pallet-pool-names/std",
+  "runtime-common/std",
 ]

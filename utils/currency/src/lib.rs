@@ -18,7 +18,7 @@ where
     C: Currency<T::AccountId>,
 {
     let reducible_balance: u128 =
-        pallet_balances::pallet::Pallet::<T>::reducible_balance(&from, keep_alive)
+        pallet_balances::pallet::Pallet::<T>::reducible_balance(from, keep_alive)
             .try_into()
             .ok()
             .unwrap();
@@ -28,8 +28,8 @@ where
         ExistenceRequirement::AllowDeath
     };
     C::transfer(
-        &from,
-        &to,
+        from,
+        to,
         reducible_balance.try_into().ok().unwrap(),
         existence,
     )

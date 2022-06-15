@@ -56,6 +56,10 @@ check-benchmark:
 benchmark:
 	cargo build --release --features runtime-benchmarks --features with-development
 
+.PHONY: clippy
+clippy:
+	cargo clippy --release --features with-development  -- -D warnings
+
 .PHONY: benchmark_pool
 benchmark_pool:
 	./target/release/gafi-node benchmark pallet \
