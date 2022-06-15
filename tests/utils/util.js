@@ -4,10 +4,11 @@ chai.use(require('chai-as-promised'));
 const { BigNumber } = require('@ethersproject/bignumber');
 const { ApiPromise } = require('@polkadot/api');
 const { customRequest, createAndFinalizeBlock, WS_PORT } = require('./context');
-const { BN_MILLION, BN, u8aToHex } = require('@polkadot/util');
+const { BN_MILLION, BN, u8aToHex, u8aConcat } = require('@polkadot/util');
 
 
 var ERC20ABI = require('../build/contracts/GAKI.json');
+const EMPTY_U8A_32 = new Uint8Array(32);
 
 async function add_additional_gas(contract, address) {
     const gas_limit = await contract.estimateGas({ from: address });
@@ -142,6 +143,19 @@ function permillOf (value, perMill) {
   return value.mul(perMill).div(BN_MILLION);
 }
 
+async function get_treasury_balance(wsProvider) {
+  const api = await ApiPromise.create({ provider: wsProvider });
+  const treasury_account = u8aConcat(
+    'modl',
+    api.consts.treasury && api.consts.treasury.palletId
+      ? api.consts.treasury.palletId.toU8a(true)
+      : 'py/trsry',
+    EMPTY_U8A_32
+  ).subarray(0, 32);
+
+  return api.derive.balances?.account(treasury_account);
+}
+
 module.exports = {
     add_additional_gas,
     create_new_contract,
@@ -153,5 +167,6 @@ module.exports = {
     get_erc20_balance,
     claim_contract,
     get_game_creator_reward,
-    permillOf
+    permillOf,
+    get_treasury_balance
 }

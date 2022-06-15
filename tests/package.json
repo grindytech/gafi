@@ -9,7 +9,8 @@
     "scripts": "mocha --reporter spec scripts/*",
     "sponsored": "mocha --reporter spec js-tests/sponsored-fee.test.js",
     "service": "mocha --reporter spec js-tests/service-fee.test.js",
-    "game-creator": "mocha --reporter spec js-tests/game-creator.test.js"
+    "game-creator": "mocha --reporter spec js-tests/game-creator.test.js",
+    "treasury": "mocha --reporter spec js-tests/treasury.test.js"
   },
   "author": "",
   "license": "ISC",
