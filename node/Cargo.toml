@@ -86,8 +86,7 @@ frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branc
 # Local Dependencies
 devnet = {path = "../runtime/devnet", default-features = false, features = ["std"], optional = true}
 gafi-primitives = {path = "../primitives", default-features = false}
-gaki-testnet = {path = "../runtime/gaki-testnet", default-features = false, features = ["std"], optional = true}
-template-runtime = {path = "../runtime/template", default-features = false, features = ["std"]}
+gaki-runtime = {path = "../runtime/gaki", default-features = false, features = ["std"], optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23"}
@@ -96,15 +95,13 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 aura = [
   "sc-consensus-aura",
   "devnet/aura",
-  "gaki-testnet/aura",
-  "template-runtime/aura",
+  "gaki-runtime/aura",
 ]
 default = ["aura"]
 manual-seal = [
   "sc-consensus-manual-seal",
-  "template-runtime/manual-seal",
   "devnet/manual-seal",
-  "gaki-testnet/manual-seal",
+  "gaki-runtime/manual-seal",
 ]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
@@ -116,5 +113,5 @@ with-development = [
 ]
 
 with-gaki-runtime = [
-  "gaki-testnet",
+  "gaki-runtime",
 ]

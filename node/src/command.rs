@@ -79,7 +79,7 @@ impl SubstrateCli for Cli {
 
 			
 			#[cfg(feature = "with-gaki-runtime")]
-			"gaki-testnet" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
+			"gaki" => Box::new(chain_spec::gaki_testnet::gaki_config()?),
 			
 			#[cfg(feature = "manual-seal")]
 			"dev" => Box::new(chain_spec::dev::development_config()?),
