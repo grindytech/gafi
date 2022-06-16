@@ -77,6 +77,7 @@ pub mod pallet {
 		/// The Action is the name of action use to query
 		type Action: Parameter + MaxEncodedLen + Clone + TypeInfo;
 
+		/// Cache will clean the data after this time
 		#[pallet::constant]
 		type CleanTime: Get<u128>;
 	}
