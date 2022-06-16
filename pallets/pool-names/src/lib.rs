@@ -125,9 +125,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Clear a pool's name and return the deposit. Fails if the pool was not named.
-		///
-		/// The dispatch origin for this call must be _Signed_.
+		/// Clear a pool's name and return the deposit. Fails if the asset was not named.
 		///
 		/// # <weight>
 		/// - O(1).

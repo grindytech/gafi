@@ -344,6 +344,23 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set a pool's name. The name should be a UTF-8-encoded string by convention, though
+		/// we don't check it. Fail if the pool is not exist or the origin is not the owner of the pool.
+		///
+		/// The name may not be more than `T::MaxLength` bytes, nor less than `T::MinLength` bytes which
+		/// defined in the name pallet's config.
+		///
+		/// If the pool doesn't already have a name, then a fee of `ReservationFee` is reserved
+		/// in the account.
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - At most one balance operation.
+		/// - One storage read/write.
+		/// - One event.
+		/// # </weight>
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
 		pub fn set_pool_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -359,6 +376,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Clear a pool's name and return the deposit. Fails if the pool was not named, not exist
+		/// or the origin is not the owner of the pool.
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - One balance operation.
+		/// - One storage read/write.
+		/// - One event.
+		/// # </weight>
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
 		pub fn clear_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -374,6 +402,19 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove a name and take charge of the deposit.
+		///
+		/// Fails if `target` has not been named. The deposit is dealt with through `T::Slashed`
+		/// imbalance handler.
+		///
+		/// the dispatch origin for this call must be _Root_.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - One unbalanced handler (probably a balance transfer)
+		/// - One storage read/write.
+		/// - One event.
+		/// # </weight>
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
 		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			ensure_root(origin)?;
