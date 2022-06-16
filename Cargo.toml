@@ -7,7 +7,7 @@ members = [
   'utils/dummy',
   'runtime/devnet',
   'runtime/gaki',
-  # 'runtime/gari',
+  'runtime/gari',
   'pallets/player',
   'pallets/upfront-pool',
   'pallets/pool',
