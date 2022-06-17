@@ -2308,7 +2308,6 @@ dependencies = [
  "sp-timestamp",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
- "template-runtime",
 ]
 
 [[package]]
@@ -8243,62 +8242,6 @@ dependencies = [
  "redox_syscall 0.2.13",
  "remove_dir_all",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "template-runtime"
-version = "4.0.0-dev"
-dependencies = [
- "fp-rpc",
- "fp-self-contained",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "gafi-primitives",
- "gafi-tx",
- "game-creator",
- "hex-literal 0.3.4",
- "pallet-aura",
- "pallet-balances",
- "pallet-base-fee",
- "pallet-cache",
- "pallet-dynamic-fee",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-evm-precompile-modexp",
- "pallet-evm-precompile-sha3fips",
- "pallet-evm-precompile-simple",
- "pallet-faucet",
- "pallet-grandpa",
- "pallet-player",
- "pallet-pool",
- "pallet-pool-names",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec",
- "proof-address-mapping",
- "scale-info",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "sponsored-pool",
- "staking-pool",
- "substrate-wasm-builder",
- "upfront-pool",
 ]
 
 [[package]]
