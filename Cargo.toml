@@ -1,12 +1,14 @@
 [workspace]
 members = [
   'node',
+  'node/service',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
   'utils/dummy',
   'runtime/devnet',
   'runtime/gaki-testnet',
+  'runtime/gari',
   'pallets/player',
   'pallets/upfront-pool',
   'pallets/pool',

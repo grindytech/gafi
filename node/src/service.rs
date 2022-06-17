@@ -30,17 +30,7 @@ use devnet as runtime;
 #[cfg(feature = "with-gaki-runtime")]
 use gaki_testnet as runtime;
 
-// Runtime
-// #[cfg(feature = "manual-seal")]
 use runtime::{opaque::Block, RuntimeApi};
-
-// #[cfg(feature = "with-development")]
-// use devnet::{opaque::Block, RuntimeApi};
-
-// #[cfg(feature = "with-gaki-runtime")]
-// use gaki_testnet::{opaque::Block, RuntimeApi};
-
-
 
 use crate::cli::Cli;
 #[cfg(feature = "manual-seal")]
