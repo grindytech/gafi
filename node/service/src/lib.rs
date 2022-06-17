@@ -37,6 +37,8 @@ use polkadot_service::CollatorPair;
 // RPC
 pub mod gafi_rpc;
 
+pub mod chain_spec;
+
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;
 

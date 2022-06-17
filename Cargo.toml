@@ -2,6 +2,7 @@
 members = [
   'node',
   'node/service',
+  'node/cli',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
