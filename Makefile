@@ -48,6 +48,10 @@ check-dev:
 check-gaki:
 	cargo check --release --features with-gaki-runtime
 
+.PHONY: check-gari
+check-gari:
+	cargo check --release
+
 .PHONY: check-benchmark
 check-benchmark:
 	cargo check --release --features runtime-benchmarks --features with-development

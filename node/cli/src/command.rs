@@ -23,10 +23,10 @@ use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"dev" => Box::new(chain_spec::template::development_config()),
-		"template-rococo" => Box::new(chain_spec::template::local_testnet_config()),
-		"" | "local" => Box::new(chain_spec::template::local_testnet_config()),
-		path => Box::new(chain_spec::template::ChainSpec::from_json_file(
+		"dev" => Box::new(chain_spec::gari::development_config()),
+		"template-rococo" => Box::new(chain_spec::gari::local_testnet_config()),
+		"" | "local" => Box::new(chain_spec::gari::local_testnet_config()),
+		path => Box::new(chain_spec::gari::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
 	})
@@ -298,7 +298,7 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::template::Extensions::try_get(&*config.chain_spec)
+				let para_id = chain_spec::gari::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
