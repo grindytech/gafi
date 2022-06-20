@@ -1,7 +1,7 @@
 use std::{ops::Add};
 
 use crate::{mock::*, Error};
-use frame_support::{assert_noop, assert_ok, traits::Currency, assert_err};
+use frame_support::{assert_ok, traits::Currency, assert_err};
 use sp_runtime::AccountId32;
 
 #[test]

@@ -9,7 +9,7 @@ use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 };
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
@@ -121,7 +121,7 @@ impl upfront_pool::Config for Test {
 
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap()
@@ -175,7 +175,7 @@ impl ExtBuilder {
 		)
 		.unwrap();
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

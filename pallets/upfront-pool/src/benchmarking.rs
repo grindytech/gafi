@@ -4,7 +4,7 @@ use super::*;
 #[allow(unused)]
 use crate::Pallet as Pool;
 use crate::{Call, Config};
-use frame_benchmarking::{account, benchmarks};
+use frame_benchmarking::{benchmarks};
 use frame_system::RawOrigin;
 
 benchmarks! {

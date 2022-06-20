@@ -1,8 +1,7 @@
 //! Benchmarking setup for pallet-faucet
 
 use super::*;
-use crate::Pallet as Faucet;
-use frame_benchmarking::{Box, benchmarks, impl_benchmark_test_suite, whitelisted_caller, account};
+use frame_benchmarking::{Box, benchmarks, whitelisted_caller, account};
 use frame_system::RawOrigin;
 use scale_info::prelude::format;
 use scale_info::prelude::string::String;
@@ -31,6 +30,6 @@ benchmarks!{
 
 	donate {
 		let b in 1 .. 10 ;
-		let caller = new_funded_account::<T>(b,b, (1000_u128 * UNIT));
+		let caller = new_funded_account::<T>(b,b, 1000_u128 * UNIT);
 	}: _(RawOrigin::Signed(caller), (10_u128 * UNIT).try_into().ok().unwrap())
 }

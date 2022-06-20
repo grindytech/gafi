@@ -127,7 +127,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	
 			let base_r = total_read - upfront_r - staking_r - sponsored_r;
 			let base_w = total_write - upfront_w - staking_w - sponsored_w;
-			let mut weight = (46_286_000_u64).saturating_mul(s.into())
+			let weight = (46_286_000_u64).saturating_mul(s.into())
 			.saturating_add(T::DbWeight::get().reads(base_r))
 			.saturating_add(T::DbWeight::get().writes(base_w));
 	
@@ -197,7 +197,7 @@ impl WeightInfo for () {
 	
 			let base_r = total_read - upfront_r - staking_r - sponsored_r;
 			let base_w = total_write - upfront_w - staking_w - sponsored_w;
-			let mut weight = (46_286_000_u64).saturating_mul(s.into())
+			let weight = (46_286_000_u64).saturating_mul(s.into())
 			.saturating_add(RocksDbWeight::get().reads(base_r))
 			.saturating_add(RocksDbWeight::get().writes(base_w));
 	

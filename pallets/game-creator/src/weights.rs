@@ -52,7 +52,7 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn claim_contract(s: u32, ) -> Weight {
+	fn claim_contract(_s: u32, ) -> Weight {
 		(20_833_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -80,7 +80,7 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn withdraw_contract(s: u32, ) -> Weight {
+	fn withdraw_contract(_s: u32, ) -> Weight {
 		(20_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -88,7 +88,7 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 }
 
 impl WeightInfo for () {
-	fn claim_contract(s: u32, ) -> Weight {
+	fn claim_contract(_s: u32, ) -> Weight {
 		(20_833_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
@@ -101,7 +101,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
 	
-	fn withdraw_contract(s: u32, ) -> Weight {
+	fn withdraw_contract(_s: u32, ) -> Weight {
 		(20_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

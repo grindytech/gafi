@@ -8,14 +8,11 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::Parameter;
-use pallet_faucet::FaucetAmount;
+use codec::{Decode, Encode};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use runtime_common::impls::DealWithFees;
-use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
@@ -63,7 +60,6 @@ pub use gafi_primitives::{
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	ticket::{TicketInfo, TicketType},
 };
-use sp_std::if_std;
 
 // import local pallets
 pub use gafi_tx;
@@ -1038,7 +1034,7 @@ impl_runtime_apis! {
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-			use pallet_evm::Module as PalletEvmBench;
+			// use pallet_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;

@@ -1,12 +1,12 @@
 use crate as pallet_pool_names;
 use frame_support::{
-	assert_noop, assert_ok, ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{ConstU32, OnFinalize, OnInitialize},
 };
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BadOrigin, BlakeTwo256, IdentityLookup}, AccountId32,
+	traits::{BlakeTwo256, IdentityLookup}, AccountId32,
 };
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 
@@ -123,7 +123,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

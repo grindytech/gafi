@@ -66,13 +66,13 @@ impl<T: frame_system::Config> WeightInfo for FaucetWeight<T> {
 }
 
 impl WeightInfo for () {
-	fn faucet(b: u32, ) -> Weight {
+	fn faucet(_b: u32, ) -> Weight {
 		(39_500_000 as Weight)
 		.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 		.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 
-	fn donate(b: u32,) -> Weight {
+	fn donate(_b: u32,) -> Weight {
 		(31_411_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

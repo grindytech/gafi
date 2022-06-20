@@ -1,3 +1,6 @@
+.PHONY: build
+build:
+	cargo build --release --features with-development
 
 .PHONY: build-test
 build-test:

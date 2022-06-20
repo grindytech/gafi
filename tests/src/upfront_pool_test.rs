@@ -1,14 +1,12 @@
 use crate::mock::*;
-use frame_support::{assert_err, assert_ok, traits::Currency};
+use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	ticket::{TicketLevel, TicketType, SystemTicket},
 };
 use gafi_tx::Config;
-use hex_literal::hex;
 use rand::prelude::*;
-use sp_core::H160;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 

@@ -1,6 +1,4 @@
 use crate::*;
-use frame_support::assert_ok;
-use frame_support::traits::Currency;
 use crate::mock::*;
 use sp_runtime::AccountId32;
 use gu_convertor::{balance_try_to_u128, into_account, u128_to_balance, u128_try_to_balance};

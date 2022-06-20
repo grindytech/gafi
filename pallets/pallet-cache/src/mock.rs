@@ -4,7 +4,7 @@ use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 };
 pub use gafi_primitives::{ticket::{TicketInfo, TicketType},
 };
@@ -19,7 +19,6 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-pub const MAX_PLAYER: u32 = 1000;
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
@@ -113,7 +112,7 @@ impl system::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap()
@@ -167,7 +166,7 @@ impl ExtBuilder {
 		)
 		.unwrap();
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 
