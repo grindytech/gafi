@@ -1,6 +1,5 @@
 
 use crate as gu_dummy;
-use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -8,7 +7,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
     AccountId32,
 };
-use frame_support::traits::Currency;
 
 use frame_support::{
 	parameter_types,

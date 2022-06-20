@@ -4,12 +4,12 @@
 */
 
 use crate::{self as sponsored_pool};
-use frame_support::{parameter_types, traits::{GenesisBuild, ConstU32}};
+use frame_support::{parameter_types, traits::{ConstU32}};
 use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use sp_core::H256;
@@ -23,7 +23,6 @@ pub use pallet_balances::Call as BalancesCall;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-pub const MAX_PLAYER: u32 = 1000;
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
@@ -188,7 +187,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

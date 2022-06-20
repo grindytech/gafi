@@ -121,7 +121,7 @@ impl system::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
@@ -171,7 +171,7 @@ impl ExtBuilder {
 		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts, faucet_amount: FAUCET_BALANCE }
 			.assimilate_storage(&mut storage);
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

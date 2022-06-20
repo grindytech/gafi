@@ -9,7 +9,7 @@ use frame_system as system;
 
 use frame_support::{
 	dispatch::Vec,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -21,9 +21,6 @@ pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub const MAX_PLAYER: u32 = 1000;
-pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -115,7 +112,7 @@ impl staking_pool::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
@@ -155,7 +152,7 @@ impl ExtBuilder {
 		)
 		.unwrap();
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

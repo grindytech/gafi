@@ -1,7 +1,6 @@
 use crate::mock::*;
 use frame_support::{assert_ok, assert_noop, traits::Currency};
 use gafi_primitives::constant::ID;
-use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::ticket::PlayerTicket;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},

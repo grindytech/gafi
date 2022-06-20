@@ -1,13 +1,9 @@
-use crate::{mock::*, Config, Error, Pallet};
-use frame_support::{assert_err, assert_ok, traits::Currency};
+use crate::{mock::*, Pallet};
+use frame_support::{traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use pallet_ethereum::RawOrigin;
-use pallet_evm::AddressMapping;
-use pallet_evm::{ExitReason, ExitSucceed, Runner};
 use sp_core::{
-    bytes::{from_hex, to_hex},
-    H160, U256,
+    H160,
 };
 use sp_runtime::{AccountId32, Permill};
 use sp_std::str::FromStr;
@@ -16,7 +12,7 @@ fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
 }
 
-fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
+fn _new_account(account: [u8; 32], balance: u128) -> AccountId32 {
     let acc: AccountId32 = AccountId32::from(account);
     make_deposit(&acc, balance);
     assert_eq!(Balances::free_balance(&acc), balance);
