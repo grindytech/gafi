@@ -1195,7 +1195,9 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-cache",
+ "pallet-collective",
  "pallet-dynamic-fee",
+ "pallet-elections-phragmen",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-modexp",
@@ -1229,6 +1231,7 @@ dependencies = [
  "sp-version",
  "sponsored-pool",
  "staking-pool",
+ "static_assertions",
  "substrate-wasm-builder",
  "upfront-pool",
 ]
@@ -2377,7 +2380,9 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-cache",
+ "pallet-collective",
  "pallet-dynamic-fee",
+ "pallet-elections-phragmen",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-modexp",
@@ -2412,6 +2417,7 @@ dependencies = [
  "sp-version",
  "sponsored-pool",
  "staking-pool",
+ "static_assertions",
  "substrate-wasm-builder",
  "upfront-pool",
 ]
@@ -4577,6 +4583,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.20#563f4820d8f36d256ada7ea3fef46b2e94c4cd5a"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.20#fc5c7a5fe98f35ca169b30395b86c6e9d248cdbb"
@@ -4591,6 +4614,23 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "5.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.20#563f4820d8f36d256ada7ea3fef46b2e94c4cd5a"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
  "sp-runtime",
  "sp-std",
 ]
@@ -7719,6 +7759,20 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.20#56
 dependencies = [
  "thiserror",
  "zstd",
+]
+
+[[package]]
+name = "sp-npos-elections"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.20#563f4820d8f36d256ada7ea3fef46b2e94c4cd5a"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ use gafi_primitives::system_services::SystemService;
 use gafi_primitives::ticket::TicketLevel;
 use gaki_testnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig,
-	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, Signature,
+	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, CouncilConfig, Signature,
 	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
@@ -220,5 +220,7 @@ fn gaki_testnet_genesis(
 			phantom_i: Default::default(),
 		},
 		treasury: Default::default(),
+		phragmen_election: Default::default(),
+		council: CouncilConfig { members: vec![], phantom: Default::default() },
 	}
 }

@@ -1,6 +1,6 @@
 use devnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig,
-	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, Signature,
+	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, CouncilConfig, Signature,
 	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
@@ -287,5 +287,7 @@ fn dev_genesis(
 			phantom_i: Default::default(),
 		},
 		treasury: Default::default(),
+		phragmen_election: Default::default(),
+		council: CouncilConfig { members: vec![], phantom: Default::default() },
 	}
 }
