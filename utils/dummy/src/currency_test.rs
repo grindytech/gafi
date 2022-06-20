@@ -23,7 +23,7 @@ fn transfer_all_keep_alive_works() {
         let account_2 = new_account([1_u8; 32], BALANCE);
 		
 
-		transfer_all::<Test, <Test as pallet::Config>::Currency>(&account_1, &account_2, true);
+		let _ = transfer_all::<Test, <Test as pallet::Config>::Currency>(&account_1, &account_2, true);
 
 		// evm_address balance should  
 		{
@@ -42,7 +42,7 @@ fn transfer_all_allow_death_works() {
         let account_1 = new_account([0_u8; 32], BALANCE);
         let account_2 = new_account([1_u8; 32], BALANCE);
 
-		transfer_all::<Test, <Test as pallet::Config>::Currency>(&account_1, &account_2, false);
+		let _ = transfer_all::<Test, <Test as pallet::Config>::Currency>(&account_1, &account_2, false);
 
 		{
 			assert_eq!(Balances::free_balance(&account_1), 0_u128);

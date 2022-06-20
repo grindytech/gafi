@@ -8,7 +8,7 @@ use crate::{recover_signer};
 
 #[test]
 fn verify_binding() {
-	let mut s = secp256k1::Secp256k1::new();
+	let s = secp256k1::Secp256k1::new();
 
 	// privatekey only use for test
 	let sk = hex!("5240c93f837385e95742426ebc0dc49bbbeded5a9aaec129ac9de1754ca98ccb");

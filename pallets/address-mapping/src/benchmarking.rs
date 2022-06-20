@@ -5,7 +5,7 @@ use super::*;
 use crate::Pallet as Mapping;
 use crate::{Call, Config};
 use frame_benchmarking::Box;
-use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
 use hex_literal::hex;
@@ -85,6 +85,6 @@ benchmarks! {
 		let address: H160 = get_address(s);
 		init_funded_h160::<T>(address);
 		let withdraw = get_withdraw(s);
-		Pallet::<T>::bond(RawOrigin::Signed(caller.clone()).into(), signature, address, withdraw);
+		let _ = Pallet::<T>::bond(RawOrigin::Signed(caller.clone()).into(), signature, address, withdraw);
 	}: _(RawOrigin::Signed(caller))
 }

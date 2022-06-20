@@ -6,7 +6,6 @@ use gafi_primitives::{
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
-use sp_std::str::FromStr;
 const TICKETS: [TicketType; 6] = [
     TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
     TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)),

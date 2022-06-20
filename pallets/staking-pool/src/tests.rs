@@ -2,9 +2,9 @@
 * This unittest should only test logic function e.g. Storage, Computation
 * and not related with Currency e.g. Balances, Transaction Payment
 */
-use crate::{mock::*, Error};
+use crate::{mock::*};
 use crate::{PlayerCount, Tickets};
-use frame_support::{assert_err, assert_ok, traits::Currency};
+use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::{ticket::TicketLevel, system_services::SystemPool};
 use sp_runtime::AccountId32;
@@ -15,14 +15,14 @@ fn make_deposit(account: &AccountId32, balance: u128) {
 }
 
 fn new_account(balance: u128) -> AccountId32 {
-	let ALICE: AccountId32 =
+	let alice: AccountId32 =
 		AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-	make_deposit(&ALICE, balance);
-	assert_eq!(Balances::free_balance(&ALICE), balance);
-	return ALICE;
+	make_deposit(&alice, balance);
+	assert_eq!(Balances::free_balance(&alice), balance);
+	return alice;
 }
 
-fn new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
+fn _new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
 	let mut account_vec = Vec::new();
 	for i in 0..count {
 		let new_account = AccountId32::new([i as u8; 32]);

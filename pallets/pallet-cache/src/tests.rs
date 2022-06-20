@@ -1,5 +1,5 @@
-use crate::{mock::*, DataFlag, DataLeft, DataRight, Error, Flag, Pallet};
-use frame_support::{assert_err, assert_ok, traits::Currency};
+use crate::{mock::*, DataFlag, DataLeft, Flag, Pallet};
+use frame_support::{traits::Currency};
 use gafi_primitives::cache::Cache;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
@@ -7,7 +7,6 @@ use gafi_primitives::{
     ticket::{TicketLevel, TicketType, SystemTicket},
 };
 use sp_runtime::AccountId32;
-use sp_std::str::FromStr;
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDL_BLOCK: u64 = 1_u64;
 

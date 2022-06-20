@@ -60,7 +60,6 @@ pub use gafi_primitives::{
 	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
 	ticket::{TicketInfo, TicketType},
 };
-use sp_std::if_std;
 
 // import local pallets
 pub use gafi_tx;
@@ -1018,14 +1017,12 @@ impl_runtime_apis! {
 		}
 
 		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
+			_config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{BenchmarkBatch};
 			impl frame_system_benchmarking::Config for Runtime {}
 
-			let whitelist: Vec<TrackedStorageKey> = vec![];
-			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
+			let batches = Vec::<BenchmarkBatch>::new();
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

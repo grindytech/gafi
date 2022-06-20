@@ -8,7 +8,6 @@ use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::ticket::{TicketLevel, TicketType};
 use scale_info::prelude::format;
 use scale_info::prelude::string::String;
 use sp_core::H160;
@@ -52,7 +51,7 @@ benchmarks! {
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
 		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
-		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let _ = SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
 	}: _(RawOrigin::Signed(caller), pool_id)
 
@@ -65,7 +64,7 @@ benchmarks! {
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
 		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
-		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let _ = SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
 
 		let targets = vec![
@@ -82,7 +81,7 @@ benchmarks! {
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
 		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
-		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let _ = SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
 	}: _(RawOrigin::Signed(caller), pool_id, b"Test pool".to_vec())
 
@@ -95,9 +94,9 @@ benchmarks! {
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
 		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
-		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let _ = SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
-		SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
+		let _ = SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
 	}: _(RawOrigin::Signed(caller), pool_id)
 
 	kill_pool_name {
@@ -109,8 +108,8 @@ benchmarks! {
 		let value: BalanceOf<T> = (1000_u128 * UNIT).try_into().ok().unwrap();
 		let discount = Permill::from_percent(30);
 		let tx_limit = 100_u32;
-		SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
+		let _ = SponsoredPool::<T>::create_pool(RawOrigin::Signed(caller.clone()).into(), targets, value, discount, tx_limit);
 		let pool_id: ID = *PoolOwned::<T>::get(caller.clone()).last().unwrap();
-		SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
+		let _ = SponsoredPool::<T>::set_pool_name(RawOrigin::Signed(caller.clone()).into(), pool_id, b"Test pool".to_vec());
 	}: _(RawOrigin::Root, pool_id)
 }

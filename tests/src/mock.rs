@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use frame_support::{
 	dispatch::Vec,
-	traits::{ConstU32, Currency, OnFinalize, OnInitialize},
+	traits::{ConstU32, OnFinalize, OnInitialize},
 };
 use frame_support::{
 	parameter_types,
@@ -10,20 +8,18 @@ use frame_support::{
 	weights::IdentityFee,
 };
 use frame_system as system;
-use gafi_primitives::currency::{centi, unit, NativeToken::GAKI};
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::ticket::TicketInfo;
 use gafi_primitives::{
-	pool::Service,
 	system_services::SystemService,
 	ticket::{TicketLevel, TicketType},
 };
 use gafi_tx::GafiEVMCurrencyAdapter;
-use hex_literal::hex;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
-use sp_core::{H160, H256, U256};
+use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -32,10 +28,6 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-fn get_accountid32(addr: &str) -> AccountId32 {
-	AccountId32::from_str(addr).unwrap()
-}
 
 pub const PREFIX: &[u8] = b"Bond Gafi Network account:";
 
@@ -296,7 +288,7 @@ impl gafi_tx::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap()
@@ -398,7 +390,7 @@ impl ExtBuilder {
 		)
 		.unwrap();
 
-		let mut ext = sp_io::TestExternalities::from(storage);
+		let ext = sp_io::TestExternalities::from(storage);
 		ext
 	}
 

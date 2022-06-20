@@ -19,7 +19,7 @@
 pub mod impls;
 
 use frame_support::{
-	traits::{ConstU32, Currency, OneSessionHandler},
+	traits::{Currency},
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
