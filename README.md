@@ -18,8 +18,15 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
   ```sh
   make test
   ```
-  #### [Client tests](https://github.com/cryptoviet/gafi/tree/master/tests)
+  #### Client Test
+  [client test](https://github.com/cryptoviet/gafi/tree/master/tests)
 
+### Build
+
+```sh
+make build-dev
+```
+or visit [build wiki](https://wiki.gafi.network/build/how-to-run-gafi-node) for more detail
 
 ### Run
 
@@ -27,11 +34,6 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
 make run-dev
 ```
 
-### Build
-
-```sh
-make build
-```
 
 ### Benchmarking
 
@@ -65,7 +67,7 @@ Then run the following command to start a single node development chain.
 
 This command will firstly compile your code, and then start a local development network. You can
 also replace the default command
-(`cargo build --release && ./target/release/gafi-node --dev --ws-external`)
+(`cargo build --release --features with-development && ./target/release/gafi-node --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
