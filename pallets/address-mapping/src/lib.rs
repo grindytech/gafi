@@ -20,7 +20,7 @@
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
-	traits::{fungible::Inspect, Currency, ExistenceRequirement, Get, ReservableCurrency},
+	traits::{Currency, Get, ReservableCurrency},
 	Twox64Concat,
 	transactional,
 };

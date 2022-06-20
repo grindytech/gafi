@@ -501,7 +501,7 @@ pub mod pallet {
 			};
 
 			Pools::<T>::insert(pool_id, sponsored_pool);
-			PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
+			let _ = PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
 				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned);
 		}
 	}

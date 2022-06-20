@@ -25,7 +25,7 @@ use gafi_primitives::{
 	pool::{MasterPool, Service},
 	system_services::SystemPool,
 	ticket::TicketInfo,
-	ticket::{CustomTicket, PlayerTicket, SystemTicket, TicketLevel, TicketType},
+	ticket::{CustomTicket, PlayerTicket, SystemTicket, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 

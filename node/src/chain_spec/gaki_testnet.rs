@@ -136,7 +136,6 @@ fn gaki_testnet_genesis(
 		),
 	];
 	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
-	let bond_existential_deposit: u128 = unit(GAKI);
 
 	// pallet-faucet
 	let faucet_amount: u128 = 1500 * unit(GAKI);
