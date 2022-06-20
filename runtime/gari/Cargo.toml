@@ -35,6 +35,7 @@ runtime-common = {package = "runtime-common", path = "../common", default-featur
 sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
+gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
 
 # Frontier
 fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.20"}
@@ -167,6 +168,7 @@ std = [
   "sponsored-pool/std",
   "staking-pool/std",
   "upfront-pool/std",
+  "gafi-primitives/std",
 ]
 
 runtime-benchmarks = [

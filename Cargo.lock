@@ -3602,6 +3602,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "gafi-primitives",
  "gafi-tx",
  "game-creator",
  "hex-literal 0.3.4",
