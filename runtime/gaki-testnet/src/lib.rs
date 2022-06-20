@@ -32,19 +32,20 @@ use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use static_assertions::const_assert;
 
 // A few exports that help ease life for downstream crates.
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, ConstU8, FindAuthor, KeyOwnerProofSystem, Randomness},
+	traits::{ConstU32, ConstU8, FindAuthor, KeyOwnerProofSystem, Randomness, LockIdentifier, EnsureOneOf},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
 	ConsensusEngineId, StorageValue, PalletId,
 };
-pub use frame_system::Call as SystemCall;
+pub use frame_system::{Call as SystemCall, EnsureRoot};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::FeeCalculator;
@@ -57,7 +58,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
 	cache::Cache,
-	currency::{centi, microcent, milli, unit, NativeToken::GAKI},
+	currency::{centi, microcent, milli, unit, NativeToken::GAKI, deposit},
 	ticket::{TicketInfo, TicketType},
 };
 
@@ -159,6 +160,11 @@ pub fn native_version() -> NativeVersion {
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+
+type MoreThanHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -548,16 +554,16 @@ parameter_types! {
 	pub const MaxApprovals: u32 = 100;
 }
 
-// type ApproveOrigin = EitherOfDiverse<
-// 	EnsureRoot<AccountId>,
-// 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-// >;
+type ApproveOrigin = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
+>;
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
-	type RejectOrigin = frame_system::EnsureRoot<AccountId>;
+	type ApproveOrigin = ApproveOrigin;
+	type RejectOrigin = MoreThanHalfCouncil;
 	type Event = Event;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
@@ -569,6 +575,58 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type MaxApprovals = MaxApprovals;
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub CandidacyBond: Balance = 100 * centi(GAKI);
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub VotingBondBase: Balance = deposit(1, 64, GAKI);
+	// additional data per vote is 32 bytes (account id).
+	pub VotingBondFactor: Balance = deposit(0, 32, GAKI);
+	/// Daily council elections
+	pub TermDuration: BlockNumber = 24 * HOURS;
+	pub const DesiredMembers: u32 = 19;
+	pub const DesiredRunnersUp: u32 = 19;
+	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
+}
+
+// Make sure that there are no more than MaxMembers members elected via phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+
+impl pallet_elections_phragmen::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type ChangeMembers = Council;
+	type InitializeMembers = Council;
+	type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
+	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
+	type LoserCandidate = Treasury;
+	type KickedMember = Treasury;
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type TermDuration = TermDuration;
+	type PalletId = PhragmenElectionPalletId;
+	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -603,7 +661,10 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
+
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
+		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 	}
 );
 
