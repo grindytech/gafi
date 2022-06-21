@@ -4833,6 +4833,7 @@ name = "pallet-hotfix-sufficients"
 version = "1.0.0"
 source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.24#b15a41723062ba9b4bf140572ee4013e798b9492"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-evm",
