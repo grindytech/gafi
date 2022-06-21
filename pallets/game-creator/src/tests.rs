@@ -34,6 +34,8 @@ fn deploy_contract(caller: H160) -> H160 {
         None,
         None,
         vec![],
+        false,
+        false,
         <Test as pallet_evm::Config>::config(),
     )
     .unwrap();

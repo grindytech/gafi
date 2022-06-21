@@ -1,7 +1,11 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+
+//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+
 use std::{
 	collections::BTreeMap,
+	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,
 };
@@ -17,9 +21,12 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_core::U256;
 // Frontier
 use fc_consensus::FrontierBlockImport;
+use fc_db::Backend as FrontierBackend;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
+// Runtime
+
 
 #[cfg(feature = "manual-seal")]
 use devnet as runtime;
@@ -77,27 +84,15 @@ pub type ConsensusResult = (
 	Sealing,
 );
 
-pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
-	let config_dir = config
+pub(crate) fn db_config_dir(config: &Configuration) -> PathBuf {
+	config
 		.base_path
 		.as_ref()
 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.unwrap_or_else(|| {
-			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
+			BasePath::from_project("", "", &Cli::executable_name())
 				.config_dir(config.chain_spec.id())
-		});
-	config_dir.join("frontier").join("db")
-}
-
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	Ok(Arc::new(fc_db::Backend::<Block>::new(
-		&fc_db::DatabaseSettings {
-			source: fc_db::DatabaseSettingsSrc::RocksDb {
-				path: frontier_database_dir(&config),
-				cache_size: 0,
-			},
-		},
-	)?))
+		})
 }
 
 pub fn new_partial(
@@ -113,17 +108,17 @@ pub fn new_partial(
 		(
 			Option<Telemetry>,
 			ConsensusResult,
-			Arc<fc_db::Backend<Block>>,
+			Arc<FrontierBackend<Block>>,
 			Option<FilterPool>,
-			(FeeHistoryCache, u64),
+			(FeeHistoryCache, FeeHistoryCacheLimit),
 		),
 	>,
 	ServiceError,
 > {
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(format!(
-			"Remote Keystores are not supported."
-		)));
+		return Err(ServiceError::Other(
+			"Remote Keystores are not supported.".to_string(),
+		));
 	}
 
 	let telemetry = config
@@ -146,7 +141,7 @@ pub fn new_partial(
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
@@ -169,10 +164,13 @@ pub fn new_partial(
 		client.clone(),
 	);
 
-	let frontier_backend = open_frontier_backend(config)?;
+	let frontier_backend = Arc::new(FrontierBackend::open(
+		&config.database,
+		&db_config_dir(config),
+	)?);
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let fee_history_cache_limit: u64 = cli.run.fee_history_limit;
+	let fee_history_cache_limit: FeeHistoryCacheLimit = cli.run.fee_history_limit;
 
 	#[cfg(feature = "aura")]
 	{
@@ -207,7 +205,7 @@ pub fn new_partial(
 		let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _, _>(
 			sc_consensus_aura::ImportQueueParams {
 				block_import: frontier_block_import.clone(),
-				justification_import: Some(Box::new(grandpa_block_import.clone())),
+				justification_import: Some(Box::new(grandpa_block_import)),
 				client: client.clone(),
 				create_inherent_data_providers,
 				spawner: &task_manager.spawn_essential_handle(),
@@ -270,7 +268,7 @@ pub fn new_partial(
 	}
 }
 
-fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
+fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
 	// FIXME: here would the concrete keystore be built,
 	//        must return a concrete type (NOT `LocalKeystore`) that
 	//        implements `CryptoStore` and `SyncCryptoStore`
@@ -281,8 +279,10 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 #[cfg(feature = "aura")]
 pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
 	use sc_client_api::{BlockBackend, ExecutorProvider};
-	use sc_network::warp_request_handler::WarpSyncProvider;
 	use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+
+	// Use ethereum style for subscription ids
+	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
 
 	let sc_service::PartialComponents {
 		client,
@@ -300,7 +300,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 				filter_pool,
 				(fee_history_cache, fee_history_cache_limit),
 			),
-	} = new_partial(&config, &cli)?;
+	} = new_partial(&config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -329,12 +329,10 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 			grandpa_protocol_name.clone(),
 		));
 
-	let warp_sync: Option<Arc<dyn WarpSyncProvider<Block>>> = Some(Arc::new(
-		sc_finality_grandpa::warp_proof::NetworkProvider::new(
-			backend.clone(),
-			consensus_result.1.shared_authority_set().clone(),
-			Vec::default(),
-		),
+	let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+		backend.clone(),
+		consensus_result.1.shared_authority_set().clone(),
+		Vec::default(),
 	));
 
 	let (network, system_rpc_tx, network_starter) =
@@ -345,7 +343,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync,
+			warp_sync: Some(warp_sync),
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -363,11 +361,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let overrides = crate::rpc::overrides_handle(client.clone());
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
 		50,
 		50,
+		prometheus_registry.clone(),
 	));
 
 	let rpc_extensions_builder = {
@@ -381,10 +380,8 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
-		let subscription_task_executor =
-			sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
@@ -402,10 +399,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 				block_data_cache: block_data_cache.clone(),
 			};
 
-			Ok(crate::rpc::create_full(
-				deps,
-				subscription_task_executor.clone(),
-			))
+			crate::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
 		})
 	};
 
@@ -415,7 +409,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
-		rpc_extensions_builder,
+		rpc_builder: rpc_extensions_builder,
 		backend: backend.clone(),
 		system_rpc_tx,
 		config,
@@ -533,8 +527,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 	Ok(task_manager)
 }
 
+/// Builds a new service for a full client.
 #[cfg(feature = "manual-seal")]
-pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
+pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
+	// Use ethereum style for subscription ids
+	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
+
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -551,7 +549,7 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				filter_pool,
 				(fee_history_cache, fee_history_cache_limit),
 			),
-	} = new_partial(&config, &cli)?;
+	} = new_partial(&config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -588,11 +586,12 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let overrides = crate::rpc::overrides_handle(client.clone());
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
 		50,
 		50,
+		prometheus_registry.clone(),
 	));
 	// Channel for the rpc handler to communicate with the authorship task.
 	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
@@ -608,10 +607,8 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
-		let subscription_task_executor =
-			sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
@@ -630,20 +627,17 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				command_sink: Some(command_sink.clone()),
 			};
 
-			Ok(crate::rpc::create_full(
-				deps,
-				subscription_task_executor.clone(),
-			))
+			crate::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
 		})
 	};
 
 	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		network: network.clone(),
+		network,
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
-		rpc_extensions_builder,
+		rpc_builder: rpc_extensions_builder,
 		backend: backend.clone(),
 		system_rpc_tx,
 		config,
@@ -685,8 +679,6 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				&self,
 				inherent_data: &mut sp_inherents::InherentData,
 			) -> Result<(), sp_inherents::Error> {
-
-				
 				TIMESTAMP.with(|x| {
 					*x.borrow_mut() += runtime::SLOT_DURATION;
 					inherent_data.put_data(INHERENT_IDENTIFIER, &*x.borrow())
@@ -751,11 +743,11 @@ fn spawn_frontier_tasks(
 	task_manager: &TaskManager,
 	client: Arc<FullClient>,
 	backend: Arc<FullBackend>,
-	frontier_backend: Arc<fc_db::Backend<Block>>,
+	frontier_backend: Arc<FrontierBackend<Block>>,
 	filter_pool: Option<FilterPool>,
 	overrides: Arc<OverrideHandle<Block>>,
 	fee_history_cache: FeeHistoryCache,
-	fee_history_cache_limit: u64,
+	fee_history_cache_limit: FeeHistoryCacheLimit,
 ) {
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-mapping-sync-worker",
@@ -764,7 +756,7 @@ fn spawn_frontier_tasks(
 			client.import_notification_stream(),
 			Duration::new(6, 0),
 			client.clone(),
-			backend.clone(),
+			backend,
 			frontier_backend.clone(),
 			3,
 			0,
@@ -790,7 +782,7 @@ fn spawn_frontier_tasks(
 		None,
 		EthTask::fee_history_task(
 			client.clone(),
-			overrides.clone(),
+			overrides,
 			fee_history_cache,
 			fee_history_cache_limit,
 		),
@@ -799,6 +791,6 @@ fn spawn_frontier_tasks(
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-schema-cache-task",
 		None,
-		EthTask::ethereum_schema_cache_task(client.clone(), frontier_backend.clone()),
+		EthTask::ethereum_schema_cache_task(client, frontier_backend),
 	);
 }
