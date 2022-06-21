@@ -1214,6 +1214,7 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-faucet",
  "pallet-grandpa",
+ "pallet-hotfix-sufficients",
  "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
@@ -4824,6 +4825,21 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-hotfix-sufficients"
+version = "1.0.0"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.24#b15a41723062ba9b4bf140572ee4013e798b9492"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -8897,7 +8913,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

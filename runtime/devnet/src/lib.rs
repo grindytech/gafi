@@ -1085,6 +1085,8 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
+			use pallet_hotfix_sufficients::Pallet as PalletHotfixSufficients;
+			
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
@@ -1105,6 +1107,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -1114,7 +1117,9 @@ impl_runtime_apis! {
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-			// use pallet_evm::Module as PalletEvmBench;
+			use pallet_evm::Pallet as PalletEvmBench;
+			use pallet_hotfix_sufficients::Pallet as PalletHotfixSufficients;
+
 			impl frame_system_benchmarking::Config for Runtime {}
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
@@ -1129,7 +1134,9 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			// add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
+
 			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
