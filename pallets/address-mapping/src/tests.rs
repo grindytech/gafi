@@ -171,7 +171,7 @@ fn bond_account_balances() {
 			let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
 			assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
 
-			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+			let mapping_address_balance = EVM::account_basic(&evm_address).0.balance;
 			assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 		}
 
@@ -181,7 +181,7 @@ fn bond_account_balances() {
 		// evm_address balance should  equal to alice
 		{
 			assert_eq!(Balances::free_balance(&alice), EVM_BALANCE + ALICE_BALANCE - EXISTENTIAL_DEPOSIT - RESERVATION_FEE);
-			let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+			let mapping_address_balance = EVM::account_basic(&evm_address).0.balance;
 			assert_eq!(mapping_address_balance, Balances::free_balance(&alice).into());
 		}
 	});
@@ -208,7 +208,7 @@ fn unbond_works() {
 				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
 				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
 	
-				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				let mapping_address_balance = EVM::account_basic(&evm_address).0.balance;
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 	
@@ -254,7 +254,7 @@ fn proof_address_mapping_when_bond_works() {
 				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
 				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
 	
-				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				let mapping_address_balance = EVM::account_basic(&evm_address).0.balance;
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 	
@@ -293,7 +293,7 @@ fn proof_address_mapping_when_unbond_works() {
 				let _ = pallet_balances::Pallet::<Test>::deposit_creating(&mapping_address, EVM_BALANCE);
 				assert_eq!(Balances::free_balance(&mapping_address), EVM_BALANCE);
 	
-				let mapping_address_balance = EVM::account_basic(&evm_address).balance;
+				let mapping_address_balance = EVM::account_basic(&evm_address).0.balance;
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 	

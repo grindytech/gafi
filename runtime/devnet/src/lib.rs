@@ -22,8 +22,8 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
+		IdentifyAccount, NumberFor, PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiSignature,
@@ -38,18 +38,20 @@ use static_assertions::const_assert;
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, ConstU8, FindAuthor, KeyOwnerProofSystem, Randomness, LockIdentifier, EnsureOneOf},
+	traits::{
+		ConstU32, ConstU8, EnsureOneOf, FindAuthor, KeyOwnerProofSystem, LockIdentifier, Randomness,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
-	ConsensusEngineId, StorageValue, PalletId,
+	ConsensusEngineId, PalletId, StorageValue,
 };
 pub use frame_system::{Call as SystemCall, EnsureRoot};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{FeeCalculator, EVMCurrencyAdapter};
 use pallet_evm::{Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, Runner};
+use pallet_evm::{EVMCurrencyAdapter, FeeCalculator};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -58,7 +60,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
 	cache::Cache,
-	currency::{centi, microcent, milli, unit, NativeToken::GAKI, deposit},
+	currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},
 	ticket::{TicketInfo, TicketType},
 };
 
@@ -69,10 +71,10 @@ pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
 pub use pallet_pool;
+pub use pallet_pool_names;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
-pub use pallet_pool_names;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -537,7 +539,7 @@ parameter_types! {
 impl pallet_pool_names::Config for Runtime {
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
-    type Slashed = Treasury;
+	type Slashed = Treasury;
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
@@ -746,9 +748,14 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -865,11 +872,13 @@ impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			EVM::account_basic(&address)
+			let (account, _) = EVM::account_basic(&address);
+			account
 		}
 
 		fn gas_price() -> U256 {
-			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+			let (gas_price, _) = <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price();
+			gas_price
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -906,6 +915,9 @@ impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
+			let validate = true;
+			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
 				to,
@@ -916,8 +928,10 @@ impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
+				is_transactional,
+				validate,
+				evm_config,
+			).map_err(|err| err.error.into())
 		}
 
 		fn create(
@@ -939,6 +953,9 @@ impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
+			let validate = true;
+			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
@@ -948,8 +965,10 @@ impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
+				is_transactional,
+				validate,
+				evm_config,
+			).map_err(|err| err.error.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
