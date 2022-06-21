@@ -191,8 +191,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
-		fn min_gas_price() -> sp_core::U256 {
-			GasPrice::<T>::get()
+		fn min_gas_price() -> (sp_core::U256, Weight) {
+			(GasPrice::<T>::get(), 0_u64)
 		}
 	}
 }
@@ -213,7 +213,8 @@ where
 	>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-	type LiquidityInfo = <<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
+	type LiquidityInfo =
+		<<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
@@ -226,8 +227,9 @@ where
 		who: &H160,
 		target: Option<H160>,
 		corrected_fee: U256,
+		base_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) {
+	) -> Self::LiquidityInfo {
 		let mut service_fee = corrected_fee.as_u128();
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
@@ -275,11 +277,12 @@ where
 			who,
 			target,
 			U256::from(service_fee),
+			base_fee,
 			already_withdrawn,
 		)
 	}
 
-	fn pay_priority_fee(tip: U256) {
+	fn pay_priority_fee(tip: Self::LiquidityInfo) {
 		T::OnChargeEVMTxHandler::pay_priority_fee(tip)
 	}
 }
