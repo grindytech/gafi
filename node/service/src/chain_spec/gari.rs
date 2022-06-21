@@ -1,14 +1,14 @@
 use cumulus_primitives_core::ParaId;
-use gari_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use gari_runtime::{AccountId, AuraId, EVMConfig, EthereumConfig, Signature, EXISTENTIAL_DEPOSIT};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use std::collections::BTreeMap;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec =
-	sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -189,7 +189,11 @@ fn testnet_genesis(
 				.to_vec(),
 		},
 		balances: gari_runtime::BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
 		},
 		parachain_info: gari_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: gari_runtime::CollatorSelectionConfig {
@@ -217,5 +221,14 @@ fn testnet_genesis(
 		polkadot_xcm: gari_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
+		dynamic_fee: Default::default(),
+		base_fee: Default::default(),
+		evm: EVMConfig {
+			accounts: {
+				let mut map = BTreeMap::new();
+				map
+			},
+		},
+		ethereum: EthereumConfig {},
 	}
 }
