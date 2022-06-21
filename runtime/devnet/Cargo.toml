@@ -99,6 +99,7 @@ runtime-benchmarks = [
   "hex-literal",
   "pallet-balances/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
   "upfront-pool/runtime-benchmarks",
