@@ -211,7 +211,7 @@ pub mod pallet {
 					return Err(Error::<T>::NotContractOwner);
 				}
 			} else {
-				let contract_creator = Self::get_contract_creator(&contract)?;
+				let contract_creator = Self::get_contract_creator(contract)?;
 				if contract_creator != *sender {
 					return Err(Error::<T>::NotContractOwner);
 				}
@@ -221,7 +221,7 @@ pub mod pallet {
 
 		fn get_contract_creator(contract: &H160) -> Result<T::AccountId, Error<T>> {
 			match T::ContractCreator::get_creator(contract) {
-				Some(address) => return Ok(T::AddressMapping::into_account_id(address)),
+				Some(address) => Ok(T::AddressMapping::into_account_id(address)),
 				None => Err(Error::<T>::ContractNotFound),
 			}
 		}

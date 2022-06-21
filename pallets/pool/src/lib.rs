@@ -387,7 +387,7 @@ pub mod pallet {
 		}
 
 		fn get_service(ticket: TicketType) -> Option<Service> {
-			return match ticket {
+			match ticket {
 				TicketType::System(SystemTicket::Upfront(level)) => {
 					match T::UpfrontPool::get_service(level) {
 						Some(service) => Some(service.service),
@@ -406,7 +406,7 @@ pub mod pallet {
 						None => None,
 					}
 				}
-			};
+			}
 		}
 
 		fn get_targets(pool_id: ID) -> Vec<H160> {

@@ -167,12 +167,12 @@ pub mod pallet {
 				let fee =
 					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee);
 
-				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+				if <T as pallet::Config>::Currency::withdraw(
 					&sponsor,
 					fee,
 					WithdrawReasons::FEE,
 					ExistenceRequirement::KeepAlive,
-				) {
+				).is_ok() {
 					return Some(service_fee.saturating_sub(sponsor_fee));
 				}
 			}
@@ -186,7 +186,7 @@ pub mod pallet {
 		pub fn correct_and_deposit_fee_service(service_fee: u128, discount: Permill) -> u128 {
 			let discount_fee = discount * service_fee;
 
-			return service_fee.saturating_sub(discount_fee);
+			service_fee.saturating_sub(discount_fee)
 		}
 	}
 
