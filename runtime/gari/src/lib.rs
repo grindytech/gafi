@@ -65,9 +65,16 @@ use precompiles::FrontierPrecompiles;
 // Local
 use gafi_tx;
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
+use pallet_cache;
+use pallet_pool;
+use pallet_pool_names;
+use sponsored_pool;
+use staking_pool;
+use upfront_pool;
+use gafi_primitives::ticket::{TicketType, TicketInfo};
 
 // Primitives
-use gafi_primitives::currency::{centi, NativeToken::GAKI};
+use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -384,7 +391,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = centi(GAKI).into(); //0.01 GAKI
+	pub DefaultBaseFeePerGas: U256 = centi(GAFI).into(); //0.01 GAFI
 }
 
 pub struct BaseFeeThreshold;
@@ -438,6 +445,8 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 }
 
 impl parachain_info::Config for Runtime {}
+
+impl pallet_randomness_collective_flip::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
@@ -559,6 +568,117 @@ impl pallet_ethereum::Config for Runtime {
 
 // Local
 
+impl staking_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;
+}
+
+impl pallet_cache::Config for Runtime {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = TicketType;
+	type CleanTime = CleanTime;
+}
+
+parameter_types! {
+	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
+	pub Fee: u128 = 1 * unit(GAFI);
+}
+
+impl proof_address_mapping::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
+	type MessagePrefix = Prefix;
+	type ReservationFee = Fee;
+}
+
+parameter_types! {
+	pub const MaxPlayerStorage: u32 = 10000;
+}
+
+impl upfront_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
+	type MaxPlayerStorage = MaxPlayerStorage;
+	type MasterPool = Pool;
+}
+
+// parameter_types! {
+// 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
+// }
+
+// impl gafi_tx::Config for Runtime {
+// 	type Event = Event;
+// 	type Currency = Balances;
+// 	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
+// 	type AddressMapping = ProofAddressMapping;
+// 	type PlayerTicket = Pool;
+// 	type GameCreatorReward = GameCreatorReward;
+// 	type GetGameCreator = GameCreator;
+// }
+
+parameter_types! {
+	pub ReservationFee:u128 = 1 * unit(GAFI);
+	pub MinLength: u32 = 8;
+	pub MaxLength: u32 = 32;
+}
+
+impl pallet_pool_names::Config for Runtime {
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type MinLength = MinLength;
+	type MaxLength = MaxLength;
+	type Event = Event;
+}
+
+parameter_types! {
+	pub MinPoolBalance: u128 = 1000 * unit(GAFI);
+	pub MinDiscountPercent: Permill = Permill::from_percent(30);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinTxLimit: u32 = 50;
+	pub MaxTxLimit: u32 = 100;
+	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 =  10;
+}
+
+impl sponsored_pool::Config for Runtime {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+	type PoolName = PoolName;
+	type Currency = Balances;
+	type MinPoolBalance = MinPoolBalance;
+	type MinDiscountPercent = MinDiscountPercent;
+	type MaxDiscountPercent = MaxDiscountPercent;
+	type MinTxLimit = MinTxLimit;
+	type MaxTxLimit = MaxTxLimit;
+	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
+	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
+}
+
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5;
+}
+
+impl pallet_pool::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
+	type SponsoredPool = SponsoredPool;
+	type Cache = PalletCache;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -573,6 +693,7 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
@@ -598,7 +719,14 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 43,
 
 		// Local
-
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
+		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>} = 60,
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>} = 61,
+		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
+		// TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
+		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
+		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
+		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
 	}
 );
 
@@ -900,36 +1028,6 @@ impl_runtime_apis! {
 			)
 		}
 	}
-
-	// impl fg_primitives::GrandpaApi<Block> for Runtime {
-	// 	fn grandpa_authorities() -> GrandpaAuthorityList {
-	// 		Grandpa::grandpa_authorities()
-	// 	}
-
-	// 	fn current_set_id() -> fg_primitives::SetId {
-	// 		Grandpa::current_set_id()
-	// 	}
-
-	// 	fn submit_report_equivocation_unsigned_extrinsic(
-	// 		_equivocation_proof: fg_primitives::EquivocationProof<
-	// 			<Block as BlockT>::Hash,
-	// 			NumberFor<Block>,
-	// 		>,
-	// 		_key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
-	// 	) -> Option<()> {
-	// 		None
-	// 	}
-
-	// 	fn generate_key_ownership_proof(
-	// 		_set_id: fg_primitives::SetId,
-	// 		_authority_id: GrandpaId,
-	// 	) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-	// 		// NOTE: this is the only implementation possible since we've
-	// 		// defined our key owner proof type as a bottom type (i.e. a type
-	// 		// with no values).
-	// 		None
-	// 	}
-	// }
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
