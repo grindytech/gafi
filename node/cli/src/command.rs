@@ -3,22 +3,22 @@ use crate::cli::{Cli, RelayChainCli, Subcommand};
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-use frame_benchmarking_cli::BenchmarkCmd;
-use gafi_service::{chain_spec, new_partial, TemplateRuntimeExecutor};
+#[cfg(feature = "frame-benchmarking")]
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+use gafi_service::{chain_spec, new_partial, GafiRuntimeExecutor};
 use gari_runtime::{Block, RuntimeApi};
 use log::info;
-use polkadot_parachain::primitives::AccountIdConversion;
-use polkadot_service::chain_spec::Extensions;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::{
 	config::{BasePath, PrometheusConfig},
-	TaskManager,
+	PartialComponents, TaskManager,
 };
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -118,23 +118,23 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
-macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-		let runner = $cli.create_runner($cmd)?;
-		runner.async_run(|$config| {
-			let $components = new_partial::<
-				RuntimeApi,
-				TemplateRuntimeExecutor,
-				_
-			>(
-				&$config,
-				gafi_service::parachain_build_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
-	}}
-}
+// macro_rules! construct_async_run {
+// 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+// 		let runner = $cli.create_runner($cmd)?;
+// 		runner.async_run(|$config| {
+// 			let $components = new_partial::<
+// 				RuntimeApi,
+// 				GafiRuntimeExecutor,
+// 				_
+// 			>(
+// 				&$config,
+// 				gafi_service::parachain_build_import_queue,
+// 			)?;
+// 			let task_manager = $components.task_manager;
+// 			{ $( $code )* }.map(|v| (v, task_manager))
+// 		})
+// 	}}
+// }
 
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
@@ -146,28 +146,65 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents {
+					client,
+					task_manager,
+					import_queue,
+					..
+				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+					&config,
+					gafi_service::parachain_build_import_queue,
+				)?;
+				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.database))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents {
+					client,
+					task_manager,
+					..
+				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+					&config,
+					gafi_service::parachain_build_import_queue,
+				)?;
+				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.chain_spec))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents {
+					client,
+					task_manager,
+					..
+				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+					&config,
+					gafi_service::parachain_build_import_queue,
+				)?;
+				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents {
+					client,
+					task_manager,
+					import_queue,
+					..
+				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+					&config,
+					gafi_service::parachain_build_import_queue,
+				)?;
+				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
 			runner.sync_run(|config| {
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -187,8 +224,22 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.backend, None))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents {
+					client,
+					task_manager,
+					backend,
+					..
+				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+					&config,
+					gafi_service::parachain_build_import_queue,
+				)?;
+				let aux_revert = Box::new(|client, _, blocks| {
+					sc_finality_grandpa::revert(client, blocks)?;
+					Ok(())
+				});
+				Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
 			})
 		}
 		Some(Subcommand::ExportGenesisState(params)) => {
@@ -235,13 +286,14 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		#[cfg(feature = "frame-benchmarking")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, TemplateRuntimeExecutor>(config))
+						runner.sync_run(|config| cmd.run::<Block, GafiRuntimeExecutor>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 					You can enable it with `--features runtime-benchmarks`."
@@ -249,14 +301,14 @@ pub fn run() -> Result<()> {
 					}
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<RuntimeApi, TemplateRuntimeExecutor, _>(
+					let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
 						&config,
 						gafi_service::parachain_build_import_queue,
 					)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<RuntimeApi, TemplateRuntimeExecutor, _>(
+					let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
 						&config,
 						gafi_service::parachain_build_import_queue,
 					)?;
@@ -266,7 +318,10 @@ pub fn run() -> Result<()> {
 					cmd.run(config, partials.client.clone(), db, storage)
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
+				BenchmarkCmd::Machine(cmd) => {
+					return runner
+						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()));
+				}
 			}
 		}
 		Some(Subcommand::TryRuntime(cmd)) => {
@@ -284,10 +339,7 @@ pub fn run() -> Result<()> {
 						.map_err(|e| format!("Error: {:?}", e))?;
 
 				runner.async_run(|config| {
-					Ok((
-						cmd.run::<Block, TemplateRuntimeExecutor>(config),
-						task_manager,
-					))
+					Ok((cmd.run::<Block, GafiRuntimeExecutor>(config), task_manager))
 				})
 			} else {
 				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
@@ -312,7 +364,9 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(&id);
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::try_into_account(
+						&id,
+					);
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
@@ -326,7 +380,11 @@ pub fn run() -> Result<()> {
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
-				info!("Parachain Account: {}", parachain_account);
+				if let Some(account) = parachain_account {
+					info!("Parachain Account: {}", account);
+				} else {
+					info!("Can not get Parachain Account");
+				}
 				info!("Parachain genesis state: {}", genesis_state);
 				info!(
 					"Is collating: {}",
