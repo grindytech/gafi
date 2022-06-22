@@ -1,12 +1,13 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use cumulus_client_cli::CollatorOptions;
 // Local Runtime Types
 use gari_runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi};
 
 // Cumulus Imports
+use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::ParachainConsensus;
+use cumulus_client_consensus_common::{ParachainBlockImport, ParachainConsensus};
+use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -17,7 +18,7 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
 
 // Substrate Imports
-use sc_client_api::ExecutorProvider;
+use sc_client_api::{BlockchainEvents, ExecutorProvider};
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
@@ -28,6 +29,7 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 
 // std
+use futures::{lock::Mutex, StreamExt};
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 // Frontier
@@ -42,9 +44,9 @@ pub mod gafi_rpc;
 pub mod chain_spec;
 
 /// Native executor instance.
-pub struct TemplateRuntimeExecutor;
+pub struct GafiRuntimeExecutor;
 
-impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
+impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
@@ -486,14 +488,14 @@ where
 /// Build the import queue for the parachain runtime.
 #[allow(clippy::type_complexity)]
 pub fn parachain_build_import_queue(
-	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
+	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>,
 	>,
 	sc_service::Error,
 > {
@@ -537,9 +539,9 @@ pub async fn start_parachain_node(
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
 )> {
-	start_node_impl::<gari_runtime::RuntimeApi, gari_runtime::Executor, _, _>(
+	start_node_impl::<RuntimeApi, GafiRuntimeExecutor, _, _>(
         parachain_config,
         polkadot_config,
         collator_options,

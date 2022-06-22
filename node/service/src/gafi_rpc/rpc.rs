@@ -26,9 +26,9 @@ use substrate_frame_rpc_system::{System, SystemApiServer};
 
 // Frontier
 use fc_rpc::{
-	Eth, EthBlockDataCacheTask, EthFilter, EthPubSub, Net, OverrideHandle,
-	RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override, SchemaV3Override,
-	StorageOverride, Web3,
+	Eth, EthApiServer, EthBlockDataCacheTask, EthFilter, EthFilterApiServer, EthPubSub,
+	EthPubSubApiServer, Net, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
+	SchemaV1Override, SchemaV2Override, SchemaV3Override, StorageOverride, Web3, Web3ApiServer,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 use fp_storage::EthereumStorageSchema;
