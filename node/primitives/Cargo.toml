@@ -1,0 +1,29 @@
+[package]
+authors = ["Anonymous"]
+description = "A new Cumulus FRAME-based Substrate Node, ready for hacking together a parachain."
+edition = "2021"
+homepage = "https://substrate.io"
+license = "Unlicense"
+name = "node-primitives"
+repository = "https://github.com/paritytech/cumulus/"
+version = "0.1.0"
+
+[dependencies]
+clap = {version = "3.1", features = ["derive"]}
+
+
+# Runtime
+
+# Frontier
+fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-cli = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+
+# Substrate
+sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
+frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+
+# Polkadot
+
+
+[features]
+

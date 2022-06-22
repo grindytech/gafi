@@ -6,7 +6,6 @@ use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking")]
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use gafi_service::{chain_spec, new_partial, GafiRuntimeExecutor};
-use gari_runtime::{Block, RuntimeApi};
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -21,8 +20,22 @@ use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
 
+#[cfg(feature = "manual-seal")]
+use devnet as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
+
+#[cfg(feature = "with-gari-runtime")]
+use gari_runtime as runtime;
+
+use runtime::{Block, RuntimeApi};
+use primitives;
+
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
+
+		
 		"dev" => Box::new(chain_spec::gari::development_config()),
 		"template-rococo" => Box::new(chain_spec::gari::local_testnet_config()),
 		"" | "local" => Box::new(chain_spec::gari::local_testnet_config()),
@@ -66,7 +79,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&gari_runtime::VERSION
+		&runtime::VERSION
 	}
 }
 
@@ -118,24 +131,6 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
-// macro_rules! construct_async_run {
-// 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-// 		let runner = $cli.create_runner($cmd)?;
-// 		runner.async_run(|$config| {
-// 			let $components = new_partial::<
-// 				RuntimeApi,
-// 				GafiRuntimeExecutor,
-// 				_
-// 			>(
-// 				&$config,
-// 				gafi_service::parachain_build_import_queue,
-// 			)?;
-// 			let task_manager = $components.task_manager;
-// 			{ $( $code )* }.map(|v| (v, task_manager))
-// 		})
-// 	}}
-// }
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -147,260 +142,273 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let runtime_type = primitives::RuntimeType::default();
+			#[cfg(feature = "with-development")]
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					import_queue,
 					..
-				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-					&config,
-					gafi_service::parachain_build_import_queue,
-				)?;
+				} = gafi_dev::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
+			
+			// #[cfg(feature = "with-gari-runtime")]
+			// runner.async_run(|config| {
+			// 	let PartialComponents {
+			// 		client,
+			// 		task_manager,
+			// 		import_queue,
+			// 		..
+			// 	} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+			// 		&config,
+			// 		gafi_service::parachain_build_import_queue,
+			// 	)?;
+			// 	Ok((cmd.run(client, import_queue), task_manager))
+			// })
 		}
-		Some(Subcommand::ExportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-					&config,
-					gafi_service::parachain_build_import_queue,
-				)?;
-				Ok((cmd.run(client, config.database), task_manager))
-			})
-		}
-		Some(Subcommand::ExportState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-					&config,
-					gafi_service::parachain_build_import_queue,
-				)?;
-				Ok((cmd.run(client, config.chain_spec), task_manager))
-			})
-		}
-		Some(Subcommand::ImportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					import_queue,
-					..
-				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-					&config,
-					gafi_service::parachain_build_import_queue,
-				)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
-		}
-		Some(Subcommand::PurgeChain(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| {
-				let polkadot_cli = RelayChainCli::new(
-					&config,
-					[RelayChainCli::executable_name()]
-						.iter()
-						.chain(cli.relay_chain_args.iter()),
-				);
+		// Some(Subcommand::ExportBlocks(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	runner.async_run(|config| {
+		// 		let PartialComponents {
+		// 			client,
+		// 			task_manager,
+		// 			..
+		// 		} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 			&config,
+		// 			gafi_service::parachain_build_import_queue,
+		// 		)?;
+		// 		Ok((cmd.run(client, config.database), task_manager))
+		// 	})
+		// }
+		// Some(Subcommand::ExportState(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	runner.async_run(|config| {
+		// 		let PartialComponents {
+		// 			client,
+		// 			task_manager,
+		// 			..
+		// 		} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 			&config,
+		// 			gafi_service::parachain_build_import_queue,
+		// 		)?;
+		// 		Ok((cmd.run(client, config.chain_spec), task_manager))
+		// 	})
+		// }
+		// Some(Subcommand::ImportBlocks(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	runner.async_run(|config| {
+		// 		let PartialComponents {
+		// 			client,
+		// 			task_manager,
+		// 			import_queue,
+		// 			..
+		// 		} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 			&config,
+		// 			gafi_service::parachain_build_import_queue,
+		// 		)?;
+		// 		Ok((cmd.run(client, import_queue), task_manager))
+		// 	})
+		// }
+		// Some(Subcommand::PurgeChain(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	runner.sync_run(|config| {
+		// 		let polkadot_cli = RelayChainCli::new(
+		// 			&config,
+		// 			[RelayChainCli::executable_name()]
+		// 				.iter()
+		// 				.chain(cli.relay_chain_args.iter()),
+		// 		);
 
-				let polkadot_config = SubstrateCli::create_configuration(
-					&polkadot_cli,
-					&polkadot_cli,
-					config.tokio_handle.clone(),
-				)
-				.map_err(|err| format!("Relay chain argument error: {}", err))?;
+		// 		let polkadot_config = SubstrateCli::create_configuration(
+		// 			&polkadot_cli,
+		// 			&polkadot_cli,
+		// 			config.tokio_handle.clone(),
+		// 		)
+		// 		.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				cmd.run(config, polkadot_config)
-			})
-		}
-		Some(Subcommand::Revert(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					backend,
-					..
-				} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-					&config,
-					gafi_service::parachain_build_import_queue,
-				)?;
-				let aux_revert = Box::new(|client, _, blocks| {
-					sc_finality_grandpa::revert(client, blocks)?;
-					Ok(())
-				});
-				Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
-			})
-		}
-		Some(Subcommand::ExportGenesisState(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
+		// 		cmd.run(config, polkadot_config)
+		// 	})
+		// }
+		// Some(Subcommand::Revert(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	runner.async_run(|config| {
+		// 		let PartialComponents {
+		// 			client,
+		// 			task_manager,
+		// 			backend,
+		// 			..
+		// 		} = gafi_service::new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 			&config,
+		// 			gafi_service::parachain_build_import_queue,
+		// 		)?;
+		// 		let aux_revert = Box::new(|client, _, blocks| {
+		// 			sc_finality_grandpa::revert(client, blocks)?;
+		// 			Ok(())
+		// 		});
+		// 		Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
+		// 	})
+		// }
+		// Some(Subcommand::ExportGenesisState(params)) => {
+		// 	let mut builder = sc_cli::LoggerBuilder::new("");
+		// 	builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+		// 	let _ = builder.init();
 
-			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
-			let block: Block = generate_genesis_block(&spec, state_version)?;
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
-			};
+		// 	let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
+		// 	let state_version = Cli::native_runtime_version(&spec).state_version();
+		// 	let block: Block = generate_genesis_block(&spec, state_version)?;
+		// 	let raw_header = block.header().encode();
+		// 	let output_buf = if params.raw {
+		// 		raw_header
+		// 	} else {
+		// 		format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+		// 	};
 
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
+		// 	if let Some(output) = &params.output {
+		// 		std::fs::write(output, output_buf)?;
+		// 	} else {
+		// 		std::io::stdout().write_all(&output_buf)?;
+		// 	}
 
-			Ok(())
-		}
-		Some(Subcommand::ExportGenesisWasm(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
+		// 	Ok(())
+		// }
+		// Some(Subcommand::ExportGenesisWasm(params)) => {
+		// 	let mut builder = sc_cli::LoggerBuilder::new("");
+		// 	builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+		// 	let _ = builder.init();
 
-			let raw_wasm_blob =
-				extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
-			let output_buf = if params.raw {
-				raw_wasm_blob
-			} else {
-				format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
-			};
+		// 	let raw_wasm_blob =
+		// 		extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
+		// 	let output_buf = if params.raw {
+		// 		raw_wasm_blob
+		// 	} else {
+		// 		format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
+		// 	};
 
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
+		// 	if let Some(output) = &params.output {
+		// 		std::fs::write(output, output_buf)?;
+		// 	} else {
+		// 		std::io::stdout().write_all(&output_buf)?;
+		// 	}
 
-			Ok(())
-		}
-		#[cfg(feature = "frame-benchmarking")]
-		Some(Subcommand::Benchmark(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			// Switch on the concrete benchmark sub-command-
-			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, GafiRuntimeExecutor>(config))
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-					You can enable it with `--features runtime-benchmarks`."
-							.into())
-					}
-				}
-				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-						&config,
-						gafi_service::parachain_build_import_queue,
-					)?;
-					cmd.run(partials.client)
-				}),
-				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
-						&config,
-						gafi_service::parachain_build_import_queue,
-					)?;
-					let db = partials.backend.expose_db();
-					let storage = partials.backend.expose_storage();
+		// 	Ok(())
+		// }
+		// #[cfg(feature = "frame-benchmarking")]
+		// Some(Subcommand::Benchmark(cmd)) => {
+		// 	let runner = cli.create_runner(cmd)?;
+		// 	// Switch on the concrete benchmark sub-command-
+		// 	match cmd {
+		// 		BenchmarkCmd::Pallet(cmd) => {
+		// 			if cfg!(feature = "runtime-benchmarks") {
+		// 				runner.sync_run(|config| cmd.run::<Block, GafiRuntimeExecutor>(config))
+		// 			} else {
+		// 				Err("Benchmarking wasn't enabled when building the node. \
+		// 			You can enable it with `--features runtime-benchmarks`."
+		// 					.into())
+		// 			}
+		// 		}
+		// 		BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+		// 			let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 				&config,
+		// 				gafi_service::parachain_build_import_queue,
+		// 			)?;
+		// 			cmd.run(partials.client)
+		// 		}),
+		// 		BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+		// 			let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
+		// 				&config,
+		// 				gafi_service::parachain_build_import_queue,
+		// 			)?;
+		// 			let db = partials.backend.expose_db();
+		// 			let storage = partials.backend.expose_storage();
 
-					cmd.run(config, partials.client.clone(), db, storage)
-				}),
-				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) => {
-					return runner
-						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()));
-				}
-			}
-		}
-		Some(Subcommand::TryRuntime(cmd)) => {
-			if cfg!(feature = "try-runtime") {
-				let runner = cli.create_runner(cmd)?;
+		// 			cmd.run(config, partials.client.clone(), db, storage)
+		// 		}),
+		// 		BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+		// 		BenchmarkCmd::Machine(cmd) => {
+		// 			return runner
+		// 				.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()));
+		// 		}
+		// 	}
+		// }
+		// Some(Subcommand::TryRuntime(cmd)) => {
+		// 	if cfg!(feature = "try-runtime") {
+		// 		let runner = cli.create_runner(cmd)?;
 
-				// grab the task manager.
-				let registry = &runner
-					.config()
-					.prometheus_config
-					.as_ref()
-					.map(|cfg| &cfg.registry);
-				let task_manager =
-					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-						.map_err(|e| format!("Error: {:?}", e))?;
+		// 		// grab the task manager.
+		// 		let registry = &runner
+		// 			.config()
+		// 			.prometheus_config
+		// 			.as_ref()
+		// 			.map(|cfg| &cfg.registry);
+		// 		let task_manager =
+		// 			TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+		// 				.map_err(|e| format!("Error: {:?}", e))?;
 
-				runner.async_run(|config| {
-					Ok((cmd.run::<Block, GafiRuntimeExecutor>(config), task_manager))
-				})
-			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			}
-		}
-		None => {
-			let runner = cli.create_runner(&cli.run.normalize())?;
-			let collator_options = cli.run.collator_options();
+		// 		runner.async_run(|config| {
+		// 			Ok((cmd.run::<Block, GafiRuntimeExecutor>(config), task_manager))
+		// 		})
+		// 	} else {
+		// 		Err("Try-runtime must be enabled by `--features try-runtime`.".into())
+		// 	}
+		// }
+		// None => {
+		// 	let runner = cli.create_runner(&cli.run.normalize())?;
+		// 	let collator_options = cli.run.collator_options();
 
-			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::gari::Extensions::try_get(&*config.chain_spec)
-					.map(|e| e.para_id)
-					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
+		// 	runner.run_node_until_exit(|config| async move {
+		// 		let para_id = chain_spec::gari::Extensions::try_get(&*config.chain_spec)
+		// 			.map(|e| e.para_id)
+		// 			.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
-				let polkadot_cli = RelayChainCli::new(
-					&config,
-					[RelayChainCli::executable_name()]
-						.iter()
-						.chain(cli.relay_chain_args.iter()),
-				);
+		// 		let polkadot_cli = RelayChainCli::new(
+		// 			&config,
+		// 			[RelayChainCli::executable_name()]
+		// 				.iter()
+		// 				.chain(cli.relay_chain_args.iter()),
+		// 		);
 
-				let id = ParaId::from(para_id);
+		// 		let id = ParaId::from(para_id);
 
-				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::try_into_account(
-						&id,
-					);
+		// 		let parachain_account =
+		// 			AccountIdConversion::<polkadot_primitives::v2::AccountId>::try_into_account(
+		// 				&id,
+		// 			);
 
-				let state_version =
-					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+		// 		let state_version =
+		// 			RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
+		// 		let block: Block = generate_genesis_block(&config.chain_spec, state_version)
+		// 			.map_err(|e| format!("{:?}", e))?;
+		// 		let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
-				let tokio_handle = config.tokio_handle.clone();
-				let polkadot_config =
-					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
-						.map_err(|err| format!("Relay chain argument error: {}", err))?;
+		// 		let tokio_handle = config.tokio_handle.clone();
+		// 		let polkadot_config =
+		// 			SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
+		// 				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
-				if let Some(account) = parachain_account {
-					info!("Parachain Account: {}", account);
-				} else {
-					info!("Can not get Parachain Account");
-				}
-				info!("Parachain genesis state: {}", genesis_state);
-				info!(
-					"Is collating: {}",
-					if config.role.is_authority() {
-						"yes"
-					} else {
-						"no"
-					}
-				);
+		// 		info!("Parachain id: {:?}", id);
+		// 		if let Some(account) = parachain_account {
+		// 			info!("Parachain Account: {}", account);
+		// 		} else {
+		// 			info!("Can not get Parachain Account");
+		// 		}
+		// 		info!("Parachain genesis state: {}", genesis_state);
+		// 		info!(
+		// 			"Is collating: {}",
+		// 			if config.role.is_authority() {
+		// 				"yes"
+		// 			} else {
+		// 				"no"
+		// 			}
+		// 		);
 
-				gafi_service::start_parachain_node(config, polkadot_config, collator_options, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
-			})
-		}
+		// 		gafi_service::start_parachain_node(config, polkadot_config, collator_options, id)
+		// 			.await
+		// 			.map(|r| r.0)
+		// 			.map_err(Into::into)
+		// 	})
+		// }
 	}
 }
 

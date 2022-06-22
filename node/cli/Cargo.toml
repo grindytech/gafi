@@ -17,9 +17,16 @@ jsonrpc-core = "18.0.0"
 log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
+# Runtime
+devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
+gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"], optional = true}
+
 # Local
+gafi-dev = {path = "../dev"}
 gafi-service = {path = "../service"}
-gari-runtime = {path = "../../runtime/gari"}
+
+# Frontier
+fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -30,7 +37,10 @@ sc-chain-spec = {git = "https://github.com/paritytech/substrate", branch = "polk
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
 sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
+sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
 sc-executor = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
+sc-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-network = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -56,7 +66,6 @@ sp-transaction-pool = {git = "https://github.com/paritytech/substrate", branch =
 substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 substrate-prometheus-endpoint = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 try-runtime-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # Polkadot
 polkadot-cli = {git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24"}
@@ -82,8 +91,26 @@ cumulus-relay-chain-rpc-interface = {git = "https://github.com/paritytech/cumulu
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 [features]
+aura = [
+  "sc-consensus-aura",
+  "devnet/aura",
+]
 default = []
+manual-seal = [
+  "sc-consensus-manual-seal",
+  "devnet/manual-seal",
+]
+rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
+  "devnet/runtime-benchmarks",
   "polkadot-cli/runtime-benchmarks",
 ]
-try-runtime = []
+
+with-development = [
+  "devnet",
+]
+
+# Gafi Westend Parachain
+with-gari-runtime = [
+  "gari-runtime",
+]
