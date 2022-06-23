@@ -79,15 +79,13 @@ frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branc
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
 gafi-primitives = {path = "../../primitives", default-features = false}
-gafi-service = {path = "../service", default-features = false}
-node-primitives = {path = "../primitives", default-features = false}
 
 [features]
+default = ["aura", "with-development"]
 aura = [
   "sc-consensus-aura",
   "devnet/aura",
 ]
-default = ["aura"]
 manual-seal = [
   "sc-consensus-manual-seal",
   "devnet/manual-seal",

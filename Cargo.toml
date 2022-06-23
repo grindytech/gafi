@@ -4,7 +4,7 @@ members = [
   'node/service',
   'node/dev',
   'node/cli',
-  'node/primitives',
+  'node/rpc',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',

@@ -1,7 +1,10 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 // Local Runtime Types
-use gari_runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi};
+#[cfg(feature = "with-gari-runtime")]
+use gari_runtime as runtime;
+
+use runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi};
 
 // Cumulus Imports
 use cumulus_client_cli::CollatorOptions;
@@ -38,9 +41,6 @@ use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 
 use polkadot_service::CollatorPair;
 
-// RPC
-pub mod gafi_rpc;
-
 pub mod chain_spec;
 
 /// Native executor instance.
@@ -50,11 +50,11 @@ impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		gari_runtime::api::dispatch(method, data)
+		runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		gari_runtime::native_version()
+		runtime::native_version()
 	}
 }
 
@@ -163,7 +163,7 @@ where
 		client.clone(),
 	);
 
-	let frontier_backend = gafi_rpc::rpc::open_frontier_backend(config)?;
+	let frontier_backend = gafi_rpc::open_frontier_backend(config)?;
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
@@ -330,7 +330,7 @@ where
 
 	let filter_pool: FilterPool = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
-	let overrides = gafi_rpc::rpc::overrides_handle(client.clone());
+	let overrides = gafi_rpc::overrides_handle(client.clone());
 
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
@@ -395,7 +395,7 @@ where
 		let transaction_pool = transaction_pool.clone();
 
 		Box::new(move |deny_unsafe, subscription| {
-			let deps = gafi_rpc::rpc::FullDeps {
+			let deps = gafi_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				graph: transaction_pool.pool().clone(),
@@ -410,7 +410,7 @@ where
 				overrides: overrides.clone(),
 			};
 
-			gafi_rpc::rpc::create_full(deps, subscription).map_err(Into::into)
+			gafi_rpc::create_full(deps, subscription).map_err(Into::into)
 		})
 	};
 

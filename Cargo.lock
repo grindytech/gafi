@@ -3225,6 +3225,7 @@ dependencies = [
  "cumulus-relay-chain-rpc-interface",
  "derive_more",
  "devnet",
+ "fc-db",
  "fc-rpc",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -3302,13 +3303,11 @@ dependencies = [
  "frame-system",
  "futures 0.3.21",
  "gafi-primitives",
- "gafi-service",
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "jsonrpsee",
  "log",
- "node-primitives",
  "pallet-base-fee",
  "pallet-dynamic-fee",
  "pallet-ethereum",
@@ -3433,6 +3432,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "gafi-rpc"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "derive_more",
+ "devnet",
+ "fc-db",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.21",
+ "gari-runtime",
+ "hex-literal 0.3.4",
+ "jsonrpc-core",
+ "jsonrpsee",
+ "log",
+ "pallet-transaction-payment-rpc",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-transaction-pool",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-runtime",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+]
+
+[[package]]
 name = "gafi-service"
 version = "0.1.0"
 dependencies = [
@@ -3462,6 +3498,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures 0.3.21",
+ "gafi-rpc",
  "gari-runtime",
  "hex-literal 0.3.4",
  "jsonrpc-core",
@@ -3480,6 +3517,8 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
  "sc-executor",
  "sc-keystore",
  "sc-network",
@@ -3504,7 +3543,6 @@ dependencies = [
  "sp-session",
  "sp-timestamp",
  "sp-transaction-pool",
- "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "try-runtime-cli",
@@ -5788,17 +5826,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "memoffset",
-]
-
-[[package]]
-name = "node-primitives"
-version = "0.1.0"
-dependencies = [
- "clap",
- "fc-cli",
- "fc-rpc",
- "frame-benchmarking-cli",
- "sc-cli",
 ]
 
 [[package]]

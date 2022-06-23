@@ -33,30 +33,39 @@ use fc_rpc::{
 use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
+
+#[cfg(feature = "with-gari-runtime")]
 use gari_runtime as runtime;
+
+#[cfg(feature = "with-development")]
+use devnet as runtime;
 
 use runtime::{opaque::Block, AccountId, Balance, Hash, Index};
 
-pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
-	let config_dir = config
-		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
-		.unwrap_or_else(|| {
-			BasePath::from_project("", "", "gafi").config_dir(config.chain_spec.id())
-		});
-	config_dir.join("frontier").join("db")
+pub fn frontier_database_dir(config: &Configuration, db_path: &str) -> std::path::PathBuf {
+	let config_dir = db_config_dir(&config);
+	config_dir.join("frontier").join(db_path)
 }
 
 pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
 		&fc_db::DatabaseSettings {
 			source: fc_db::DatabaseSource::RocksDb {
-				path: frontier_database_dir(&config),
+				path: frontier_database_dir(&config, "db"),
 				cache_size: 0,
 			},
 		},
 	)?))
+}
+
+pub fn db_config_dir(config: &Configuration) -> std::path::PathBuf {
+	config
+		.base_path
+		.as_ref()
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+		.unwrap_or_else(|| {
+			BasePath::from_project("", "", "gafi").config_dir(config.chain_spec.id())
+		})
 }
 
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>

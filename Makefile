@@ -14,6 +14,10 @@ build-dev:
 build-gaki:
 	cargo build --release --features with-gaki-runtime
 
+.PHONY: build-gari
+build-gari:
+	cargo build --release --features with-gari-runtime
+
 .PHONY: run-dev
 run-dev:
 	./target/release/gafi-node \
@@ -53,7 +57,7 @@ check-gaki:
 
 .PHONY: check-gari
 check-gari:
-	cargo check --release
+	cargo check --release --features with-gari-runtime
 
 .PHONY: check-benchmark
 check-benchmark:

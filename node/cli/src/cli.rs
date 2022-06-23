@@ -19,29 +19,29 @@ pub enum Subcommand {
 	/// Validate blocks.
 	CheckBlock(sc_cli::CheckBlockCmd),
 
-	// /// Export blocks.
-	// ExportBlocks(sc_cli::ExportBlocksCmd),
+	/// Export blocks.
+	ExportBlocks(sc_cli::ExportBlocksCmd),
 
-	// /// Export the state of a given block into a chain spec.
-	// ExportState(sc_cli::ExportStateCmd),
+	/// Export the state of a given block into a chain spec.
+	ExportState(sc_cli::ExportStateCmd),
 
-	// /// Import blocks.
-	// ImportBlocks(sc_cli::ImportBlocksCmd),
+	/// Import blocks.
+	ImportBlocks(sc_cli::ImportBlocksCmd),
 
-	// /// Remove the whole chain.
-	// PurgeChain(cumulus_client_cli::PurgeChainCmd),
+	/// Remove the whole chain.
+	PurgeChain(cumulus_client_cli::PurgeChainCmd),
 
-	// /// Revert the chain to a previous state.
-	// Revert(sc_cli::RevertCmd),
+	/// Revert the chain to a previous state.
+	Revert(sc_cli::RevertCmd),
 
-	// /// Sub-commands concerned with benchmarking.
-	// /// The pallet benchmarking moved to the `pallet` sub-command.
-	// #[cfg(feature = "runtime-benchmarks")]
-	// #[clap(subcommand)]
-	// Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+	/// Sub-commands concerned with benchmarking.
+	/// The pallet benchmarking moved to the `pallet` sub-command.
+	#[cfg(feature = "runtime-benchmarks")]
+	#[clap(subcommand)]
+	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
-	// /// Try some testing command against a specified runtime state.
-	// TryRuntime(try_runtime_cli::TryRuntimeCmd),
+	/// Try some testing command against a specified runtime state.
+	TryRuntime(try_runtime_cli::TryRuntimeCmd),
 }
 
 /// Command for exporting the genesis state of the parachain
