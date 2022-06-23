@@ -1205,6 +1205,7 @@ dependencies = [
  "pallet-base-fee",
  "pallet-cache",
  "pallet-collective",
+ "pallet-democracy",
  "pallet-dynamic-fee",
  "pallet-elections-phragmen",
  "pallet-ethereum",
@@ -1218,7 +1219,9 @@ dependencies = [
  "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -2409,6 +2412,7 @@ dependencies = [
  "pallet-base-fee",
  "pallet-cache",
  "pallet-collective",
+ "pallet-democracy",
  "pallet-dynamic-fee",
  "pallet-elections-phragmen",
  "pallet-ethereum",
@@ -2421,6 +2425,7 @@ dependencies = [
  "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-sudo",
@@ -4673,6 +4678,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-democracy"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.24#b15a41723062ba9b4bf140572ee4013e798b9492"
@@ -4890,6 +4911,22 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-preimage"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
