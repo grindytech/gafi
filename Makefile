@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	cargo build --release --features with-development
+	cargo build --release --features with-dev
 
 .PHONY: build-test
 build-test:
@@ -8,7 +8,7 @@ build-test:
 
 .PHONY: build-dev
 build-dev:
-	cargo build --release --features with-development
+	cargo build --release --features with-dev
 
 .PHONY: build-gaki
 build-gaki:
@@ -16,7 +16,7 @@ build-gaki:
 
 .PHONY: build-gari
 build-gari:
-	cargo build --release --features with-gari-runtime
+	cargo build --release --features with-gari
 
 .PHONY: run-dev
 run-dev:
@@ -45,11 +45,11 @@ run-manual-seal:
 
 .PHONY: test
 test:
-	cargo test --features with-development
+	cargo test --features with-dev
 
 .PHONY: check-dev
 check-dev:
-	cargo check --release --features with-development
+	cargo check --release --features with-dev
 
 .PHONY: check-gaki
 check-gaki:
@@ -57,19 +57,19 @@ check-gaki:
 
 .PHONY: check-gari
 check-gari:
-	cargo check --release --features with-gari-runtime
+	cargo check --release --features with-gari
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks --features with-development
+	cargo check --release --features runtime-benchmarks --features with-dev
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks --features with-development
+	cargo build --release --features runtime-benchmarks --features with-dev
 
 .PHONY: clippy
 clippy:
-	cargo clippy --release --features with-development  -- -D warnings
+	cargo clippy --release --features with-dev  -- -D warnings
 
 .PHONY: benchmark_pool
 benchmark_pool:

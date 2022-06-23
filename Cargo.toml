@@ -2,7 +2,6 @@
 members = [
   'node',
   'node/service',
-  'node/dev',
   'node/cli',
   'node/rpc',
   'node/chain_spec',

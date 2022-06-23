@@ -2,7 +2,7 @@ FROM dttr278/gafi-linux as builder
 
 WORKDIR /gafi
 ADD . /gafi
-RUN cargo build --release --features with-development
+RUN cargo build --release --features with-dev
 
 FROM debian:buster-slim
 

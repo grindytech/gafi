@@ -1,8 +1,5 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
 use std::{
 	collections::BTreeMap,
 	path::PathBuf,
@@ -27,6 +24,7 @@ use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 
 use gafi_primitives::types::{Block};
+pub use devnet as runtime;
 pub use devnet::RuntimeApi;
 
 // #[cfg(feature = "manual-seal")]

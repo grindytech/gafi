@@ -1,4 +1,3 @@
-
 use crate::cli::{Cli, RelayChainCli, Subcommand};
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -27,33 +26,10 @@ use gafi_primitives::types::{Block};
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		// Local 
-		#[cfg(feature = "with-development")]
-		"" | "local" => Box::new(gafi_chain_spec::dev::local_testnet_config()?),
-
-		#[cfg(feature = "with-development")]
-		"dev" => Box::new(gafi_chain_spec::dev::development_config()?),
-
-		#[cfg(feature = "manual-seal")]
-		"dev" => Box::new(gafi_chain_spec::dev::development_config()?),
-
-		#[cfg(feature = "with-gari-runtime")]
 		"dev" => Box::new(gafi_chain_spec::gari::development_config()),
 
-		#[cfg(feature = "with-gari-runtime")]
 		"template-rococo" => Box::new(gafi_chain_spec::gari::local_testnet_config()),
 
-		// Load chain_spec from json_file
-		#[cfg(feature = "with-development")]
-		path => Box::new(gafi_chain_spec::dev::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
-
-		#[cfg(feature = "manual-seal")]
-		path => Box::new(gafi_chain_spec::dev::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
-
-		#[cfg(feature = "with-gari-runtime")]
 		path => Box::new(gafi_chain_spec::gari::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
@@ -366,9 +342,6 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
-
-				#[cfg(feature = "with-development")]
-                return gafi_dev::new_full(config).map_err(Into::into);
 
 				let para_id = gafi_chain_spec::gari::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)

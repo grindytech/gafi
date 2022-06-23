@@ -1,7 +1,6 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 // Local Runtime Types
-#[cfg(feature = "with-gari-runtime")]
 pub use gari_runtime as runtime;
 
 use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index as Nonce};

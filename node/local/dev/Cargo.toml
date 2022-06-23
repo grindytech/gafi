@@ -82,7 +82,7 @@ gafi-primitives = {path = "../../primitives", default-features = false}
 gafi-rpc = {path = "../rpc", default-features = false}
 
 [features]
-default = ["aura", "with-development"]
+default = ["aura", "with-dev"]
 aura = [
   "sc-consensus-aura",
   "devnet/aura",
@@ -96,6 +96,6 @@ runtime-benchmarks = [
   "devnet/runtime-benchmarks",
 ]
 
-with-development = [
+with-dev = [
   "devnet",
 ]

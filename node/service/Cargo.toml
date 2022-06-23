@@ -92,7 +92,7 @@ cumulus-relay-chain-interface = {git = "https://github.com/paritytech/cumulus", 
 cumulus-relay-chain-rpc-interface = {git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24"}
 
 # Runtime
-gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"], optional = true}
+gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"]}
 
 # Local
 gafi-rpc = {path = "../rpc", default-features = false}
@@ -109,9 +109,4 @@ manual-seal = [
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
   "polkadot-cli/runtime-benchmarks",
-]
-
-# Gafi Westend Parachain
-with-gari-runtime = [
-  "gari-runtime",
 ]

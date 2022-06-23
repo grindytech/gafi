@@ -18,15 +18,12 @@ log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
 # Runtime
-# devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
-# gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"], optional = true}
 
 # Local
 gafi-chain-spec = {path = "../chain_spec"}
-gafi-dev = {path = "../dev", default-features = false, features = ["with-development"], optional = true}
 gafi-primitives = {path = "../../primitives", default-features = false}
 gafi-rpc = {path = "../rpc", default-features = false}
-gafi-service = {path = "../service", default-features = false, features = ["with-gari-runtime"], optional = true}
+gafi-service = {path = "../service", default-features = false}
 
 # Frontier
 fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
@@ -97,24 +94,12 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 [features]
 aura = [
   "sc-consensus-aura",
-  "gafi-dev/aura",
 ]
 default = ["aura"]
 manual-seal = [
-  "sc-consensus-manual-seal", # "devnet/manual-seal",
+  "sc-consensus-manual-seal",
 ]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
-  # "devnet/runtime-benchmarks",
   "polkadot-cli/runtime-benchmarks",
-]
-
-with-development = [
-  # "devnet",
-  "gafi-dev",
-]
-
-# Gafi Westend Parachain
-with-gari-runtime = [
-  "gafi-service",
 ]

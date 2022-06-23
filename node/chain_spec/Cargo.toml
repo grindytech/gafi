@@ -118,6 +118,6 @@ default = ["aura"]
 # ]
 
 # # Gafi Westend Parachain
-# with-gari-runtime = [
+# with-gari = [
 #   "gari-runtime",
 # ]

@@ -27,8 +27,8 @@ sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "
 sp-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 # Local
-gafi-cli =  {path = "cli"}
-gafi-service =  {path = "service"}
+gafi-cli =  {path = "cli", default-features = false, optional = true}
+gafi-service =  {path = "service", default-features = false, optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -44,10 +44,10 @@ rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
 ]
 
-with-development = [
+with-dev = [
 ]
 
-with-gari-runtime = [
-  "gafi-cli/with-gari-runtime",
-  "gafi-service/with-gari-runtime",
+with-gari = [
+  "gafi-cli",
+  "gafi-service",
 ]

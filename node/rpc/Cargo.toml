@@ -65,11 +65,11 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 #   # "devnet/runtime-benchmarks",
 # ]
 
-# with-development = [
+# with-dev = [
 #   # "devnet",
 # ]
 
 # # Gafi Westend Parachain
-# with-gari-runtime = [
+# with-gari = [
 #   # "gari-runtime",
 # ]
