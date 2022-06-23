@@ -5,7 +5,6 @@ use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking")]
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use gafi_service::{chain_spec, new_partial, GafiRuntimeExecutor};
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -19,51 +18,43 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
-use gafi_service::gafi_rpc::rpc::{frontier_database_dir, db_config_dir};
+use gafi_rpc::{frontier_database_dir, db_config_dir};
 
-#[cfg(feature = "manual-seal")]
-use devnet as runtime;
+use gafi_service::{new_partial, GafiRuntimeExecutor, RuntimeApi};
 
-#[cfg(feature = "with-development")]
-use devnet as runtime;
-
-#[cfg(feature = "with-gari-runtime")]
-use gari_runtime as runtime;
-
-use runtime::{Block, RuntimeApi};
+use gafi_primitives::types::{Block};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-
 		// Local 
 		#[cfg(feature = "with-development")]
-		"" | "local" => Box::new(chain_spec::dev::local_testnet_config()?),
+		"" | "local" => Box::new(gafi_chain_spec::dev::local_testnet_config()?),
 
 		#[cfg(feature = "with-development")]
-		"dev" => Box::new(chain_spec::dev::development_config()?),
+		"dev" => Box::new(gafi_chain_spec::dev::development_config()?),
 
 		#[cfg(feature = "manual-seal")]
-		"dev" => Box::new(chain_spec::dev::development_config()?),
+		"dev" => Box::new(gafi_chain_spec::dev::development_config()?),
 
 		#[cfg(feature = "with-gari-runtime")]
-		"dev" => Box::new(chain_spec::gari::development_config()),
+		"dev" => Box::new(gafi_chain_spec::gari::development_config()),
 
 		#[cfg(feature = "with-gari-runtime")]
-		"template-rococo" => Box::new(chain_spec::gari::local_testnet_config()),
+		"template-rococo" => Box::new(gafi_chain_spec::gari::local_testnet_config()),
 
 		// Load chain_spec from json_file
 		#[cfg(feature = "with-development")]
-		path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+		path => Box::new(gafi_chain_spec::dev::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
 
 		#[cfg(feature = "manual-seal")]
-		path => Box::new(chain_spec::dev::ChainSpec::from_json_file(
+		path => Box::new(gafi_chain_spec::dev::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
 
 		#[cfg(feature = "with-gari-runtime")]
-		path => Box::new(chain_spec::gari::ChainSpec::from_json_file(
+		path => Box::new(gafi_chain_spec::gari::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
 	})
@@ -103,7 +94,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&runtime::VERSION
+		return &gafi_service::runtime::VERSION;
 	}
 }
 
@@ -379,7 +370,7 @@ pub fn run() -> Result<()> {
 				#[cfg(feature = "with-development")]
                 return gafi_dev::new_full(config).map_err(Into::into);
 
-				let para_id = chain_spec::gari::Extensions::try_get(&*config.chain_spec)
+				let para_id = gafi_chain_spec::gari::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 

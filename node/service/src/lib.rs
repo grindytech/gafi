@@ -2,9 +2,10 @@
 
 // Local Runtime Types
 #[cfg(feature = "with-gari-runtime")]
-use gari_runtime as runtime;
+pub use gari_runtime as runtime;
 
-use runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi};
+use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index as Nonce};
+pub use runtime::RuntimeApi;
 
 // Cumulus Imports
 use cumulus_client_cli::CollatorOptions;
@@ -41,12 +42,11 @@ use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 
 use polkadot_service::CollatorPair;
 
-pub mod chain_spec;
-
 /// Native executor instance.
 pub struct GafiRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
+
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {

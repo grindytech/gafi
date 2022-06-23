@@ -79,6 +79,7 @@ frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branc
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
 gafi-primitives = {path = "../../primitives", default-features = false}
+gafi-rpc = {path = "../rpc", default-features = false}
 
 [features]
 default = ["aura", "with-development"]

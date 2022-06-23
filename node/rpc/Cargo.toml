@@ -20,8 +20,9 @@ log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
 # Local
-devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
-gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"], optional = true}
+# devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"], optional = true}
+# gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"], optional = true}
+gafi-primitives = {path = "../../primitives"}
 
 # Frontier
 fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24", features = ["rpc_binary_search_estimate"]}
@@ -50,25 +51,25 @@ sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polk
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 [features]
-aura = [
-  "sc-consensus-aura",
-  "devnet/aura",
-]
-default = []
-manual-seal = [
-  "sc-consensus-manual-seal",
-  "devnet/manual-seal",
-]
-rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = [
-  "devnet/runtime-benchmarks",
-]
+# aura = [
+#   "sc-consensus-aura",
+#   # "devnet/aura",
+# ]
+# default = ["aura"]
+# manual-seal = [
+#   "sc-consensus-manual-seal",
+#   # "devnet/manual-seal",
+# ]
+# rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
+# runtime-benchmarks = [
+#   # "devnet/runtime-benchmarks",
+# ]
 
-with-development = [
-  "devnet",
-]
+# with-development = [
+#   # "devnet",
+# ]
 
-# Gafi Westend Parachain
-with-gari-runtime = [
-  "gari-runtime",
-]
+# # Gafi Westend Parachain
+# with-gari-runtime = [
+#   # "gari-runtime",
+# ]

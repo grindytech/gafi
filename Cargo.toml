@@ -5,6 +5,7 @@ members = [
   'node/dev',
   'node/cli',
   'node/rpc',
+  'node/chain_spec',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',

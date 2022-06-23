@@ -26,14 +26,8 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 
-// Runtime
-use gafi_service::gafi_rpc;
-
-pub mod chain_spec;
-
-use devnet as runtime;
-
-use runtime::{opaque::Block, RuntimeApi};
+use gafi_primitives::types::{Block};
+pub use devnet::RuntimeApi;
 
 // #[cfg(feature = "manual-seal")]
 // use crate::cli::Sealing;
@@ -50,11 +44,11 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		runtime::api::dispatch(method, data)
+		devnet::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		runtime::native_version()
+		devnet::native_version()
 	}
 }
 
@@ -73,11 +67,11 @@ pub type ConsensusResult = (
 	sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 );
 
-// #[cfg(feature = "manual-seal")]
-// pub type ConsensusResult = (
-// 	FrontierBlockImport<Block, Arc<FullClient>, FullClient>,
-// 	Sealing,
-// );
+#[cfg(feature = "manual-seal")]
+pub type ConsensusResult = (
+	FrontierBlockImport<Block, Arc<FullClient>, FullClient>,
+	Sealing,
+);
 
 pub(crate) fn db_config_dir(config: &Configuration) -> PathBuf {
 	config
@@ -354,7 +348,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 	let name = config.network.node_name.clone();
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
-	let overrides = gafi_rpc::rpc::overrides_handle(client.clone());
+	let overrides = gafi_rpc::overrides_handle(client.clone());
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
@@ -375,7 +369,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		let max_past_logs = 30;
 
 		Box::new(move |deny_unsafe, subscription_task_executor| {
-			let deps = gafi_rpc::rpc::FullDeps {
+			let deps = gafi_rpc::FullDeps {
 				client: client.clone(),
                 pool: pool.clone(),
                 graph: pool.pool().clone(),
@@ -390,7 +384,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
                 overrides: overrides.clone(),
 			};
 
-			gafi_rpc::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
+			gafi_rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
 		})
 	};
 
