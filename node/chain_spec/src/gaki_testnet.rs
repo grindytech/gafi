@@ -220,6 +220,7 @@ fn gaki_testnet_genesis(
 			phantom: Default::default(),
 			phantom_i: Default::default(),
 		},
+		democracy: Default::default(),
 		treasury: Default::default(),
 	}
 }

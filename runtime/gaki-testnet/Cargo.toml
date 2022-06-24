@@ -41,7 +41,9 @@ pallet-sudo = {version = "4.0.0-dev", default-features = false, git = "https://g
 pallet-timestamp = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-transaction-payment = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-treasury = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+pallet-preimage = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-collective = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+pallet-democracy = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-elections-phragmen = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-api = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-block-builder = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -120,6 +122,9 @@ std = [
   "pallet-transaction-payment/std",
   "pallet-treasury/std",
   "pallet-collective/std",
+  "pallet-democracy/std",
+  "pallet-scheduler/std",
+  "pallet-preimage/std",
   "pallet-elections-phragmen/std",
   "sp-api/std",
   "sp-block-builder/std",
