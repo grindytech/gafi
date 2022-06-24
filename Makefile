@@ -12,7 +12,7 @@ build-dev:
 
 .PHONY: build-gaki
 build-gaki:
-	cargo build --release --features with-gaki-runtime
+	cargo build --release --features with-gaki
 
 .PHONY: build-gari
 build-gari:
@@ -53,7 +53,7 @@ check-dev:
 
 .PHONY: check-gaki
 check-gaki:
-	cargo check --release --features with-gaki-runtime
+	cargo check --release --features with-gaki
 
 .PHONY: check-gari
 check-gari:
