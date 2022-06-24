@@ -2499,6 +2499,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-cli"
+version = "1.0.0-dev"
+source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.24#b15a41723062ba9b4bf140572ee4013e798b9492"
+dependencies = [
+ "clap",
+ "ethereum-types",
+ "fc-db",
+ "fp-rpc",
+ "fp-storage",
+ "sc-cli",
+ "sc-service",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
 source = "git+https://github.com/cryptoviet/frontier?branch=gafi-polkadot-v0.9.24#b15a41723062ba9b4bf140572ee4013e798b9492"
@@ -3348,11 +3367,80 @@ dependencies = [
 ]
 
 [[package]]
+name = "gafi-local"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "devnet",
+ "fc-cli",
+ "fc-consensus",
+ "fc-db",
+ "fc-mapping-sync",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-consensus",
+ "fp-dynamic-fee",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frame-system",
+ "futures 0.3.21",
+ "gafi-primitives",
+ "hex-literal 0.3.4",
+ "jsonrpc-core",
+ "jsonrpc-pubsub",
+ "jsonrpsee",
+ "log",
+ "pallet-base-fee",
+ "pallet-dynamic-fee",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc",
+ "parity-scale-codec",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde_json",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+]
+
+[[package]]
 name = "gafi-node"
 version = "4.0.0-dev"
 dependencies = [
  "fc-rpc",
  "gafi-cli",
+ "gafi-local",
  "gafi-service",
  "sc-cli",
  "sc-consensus-aura",
@@ -4311,6 +4399,21 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+]
+
+[[package]]
+name = "jsonrpc-pubsub"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "240f87695e6c6f62fb37f05c02c04953cf68d6408b8c1c89de85c7a0125b1011"
+dependencies = [
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "lazy_static",
+ "log",
+ "parking_lot 0.11.2",
+ "rand 0.7.3",
+ "serde",
 ]
 
 [[package]]

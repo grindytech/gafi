@@ -1,5 +1,8 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+
+//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+
 use std::{
 	collections::BTreeMap,
 	path::PathBuf,
@@ -22,13 +25,16 @@ use fc_db::Backend as FrontierBackend;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
+// Runtime
 
-use gafi_primitives::types::{Block};
-pub use devnet as runtime;
-pub use devnet::RuntimeApi;
 
-// #[cfg(feature = "manual-seal")]
-// use crate::cli::Sealing;
+use devnet as runtime;
+
+use runtime::{opaque::Block, RuntimeApi};
+
+use crate::cli::Cli;
+#[cfg(feature = "manual-seal")]
+use crate::cli::Sealing;
 
 // Our native executor instance.
 pub struct ExecutorDispatch;
@@ -42,11 +48,11 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		devnet::api::dispatch(method, data)
+		runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		devnet::native_version()
+		runtime::native_version()
 	}
 }
 
@@ -77,13 +83,14 @@ pub(crate) fn db_config_dir(config: &Configuration) -> PathBuf {
 		.as_ref()
 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.unwrap_or_else(|| {
-			BasePath::from_project("", "", "gafi")
+			BasePath::from_project("", "", &Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		})
 }
 
 pub fn new_partial(
 	config: &Configuration,
+	cli: &Cli,
 ) -> Result<
 	sc_service::PartialComponents<
 		FullClient,
@@ -156,7 +163,7 @@ pub fn new_partial(
 	)?);
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	const FEE_HISTORY_CACHE_LIMIT: u64 = 2048;
+	let fee_history_cache_limit: FeeHistoryCacheLimit = cli.run.fee_history_limit;
 
 	#[cfg(feature = "aura")]
 	{
@@ -177,7 +184,7 @@ pub fn new_partial(
 		);
 
 		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-		let target_gas_price = 1000_000_000_u128;
+		let target_gas_price = cli.run.target_gas_price;
 		let create_inherent_data_providers = move |_, ()| async move {
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 			let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -217,41 +224,41 @@ pub fn new_partial(
 				(frontier_block_import, grandpa_link),
 				frontier_backend,
 				filter_pool,
-				(fee_history_cache, FEE_HISTORY_CACHE_LIMIT),
+				(fee_history_cache, fee_history_cache_limit),
 			),
 		})
 	}
 
-	// #[cfg(feature = "manual-seal")]
-	// {
-	// 	let sealing = cli.run.sealing;
+	#[cfg(feature = "manual-seal")]
+	{
+		let sealing = cli.run.sealing;
 
-	// 	let frontier_block_import =
-	// 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+		let frontier_block_import =
+			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
-	// 	let import_queue = sc_consensus_manual_seal::import_queue(
-	// 		Box::new(frontier_block_import.clone()),
-	// 		&task_manager.spawn_essential_handle(),
-	// 		config.prometheus_registry(),
-	// 	);
+		let import_queue = sc_consensus_manual_seal::import_queue(
+			Box::new(frontier_block_import.clone()),
+			&task_manager.spawn_essential_handle(),
+			config.prometheus_registry(),
+		);
 
-	// 	Ok(sc_service::PartialComponents {
-	// 		client,
-	// 		backend,
-	// 		task_manager,
-	// 		import_queue,
-	// 		keystore_container,
-	// 		select_chain,
-	// 		transaction_pool,
-	// 		other: (
-	// 			telemetry,
-	// 			(frontier_block_import, sealing),
-	// 			frontier_backend,
-	// 			filter_pool,
-	// 			(fee_history_cache, fee_history_cache_limit),
-	// 		),
-	// 	})
-	// }
+		Ok(sc_service::PartialComponents {
+			client,
+			backend,
+			task_manager,
+			import_queue,
+			keystore_container,
+			select_chain,
+			transaction_pool,
+			other: (
+				telemetry,
+				(frontier_block_import, sealing),
+				frontier_backend,
+				filter_pool,
+				(fee_history_cache, fee_history_cache_limit),
+			),
+		})
+	}
 }
 
 fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
@@ -263,7 +270,7 @@ fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
 
 /// Builds a new service for a full client.
 #[cfg(feature = "aura")]
-pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> {
+pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
 	use sc_client_api::{BlockBackend, ExecutorProvider};
 	use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
@@ -286,7 +293,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 				filter_pool,
 				(fee_history_cache, fee_history_cache_limit),
 			),
-	} = new_partial(&config)?;
+	} = new_partial(&config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -346,7 +353,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 	let name = config.network.node_name.clone();
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
-	let overrides = gafi_rpc::overrides_handle(client.clone());
+	let overrides = crate::rpc::overrides_handle(client.clone());
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
@@ -359,30 +366,33 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let is_authority = role.is_authority();
+		let enable_dev_signer = cli.run.enable_dev_signer;
 		let network = network.clone();
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
-		let max_past_logs = 30;
+		let max_past_logs = cli.run.max_past_logs;
 
 		Box::new(move |deny_unsafe, subscription_task_executor| {
-			let deps = gafi_rpc::FullDeps {
+			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
-                pool: pool.clone(),
-                graph: pool.pool().clone(),
-                network: network.clone(),
-                is_authority,
-                deny_unsafe,
-                frontier_backend: frontier_backend.clone(),
-                filter_pool: filter_pool.clone().unwrap(),
-                fee_history_limit: fee_history_cache_limit,
-                fee_history_cache: fee_history_cache.clone(),
-                block_data_cache: block_data_cache.clone(),
-                overrides: overrides.clone(),
+				pool: pool.clone(),
+				graph: pool.pool().clone(),
+				deny_unsafe,
+				is_authority,
+				enable_dev_signer,
+				network: network.clone(),
+				filter_pool: filter_pool.clone(),
+				backend: frontier_backend.clone(),
+				max_past_logs,
+				fee_history_cache: fee_history_cache.clone(),
+				fee_history_cache_limit,
+				overrides: overrides.clone(),
+				block_data_cache: block_data_cache.clone(),
 			};
 
-			gafi_rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
+			crate::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
 		})
 	};
 
@@ -422,7 +432,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		);
 
 		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-		let target_gas_price = 1000_000_000_u128;
+		let target_gas_price = cli.run.target_gas_price;
 		let create_inherent_data_providers = move |_, ()| async move {
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 			let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -511,216 +521,216 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 }
 
 /// Builds a new service for a full client.
-// #[cfg(feature = "manual-seal")]
-// pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> {
-// 	// Use ethereum style for subscription ids
-// 	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
+#[cfg(feature = "manual-seal")]
+pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
+	// Use ethereum style for subscription ids
+	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
 
-// 	let sc_service::PartialComponents {
-// 		client,
-// 		backend,
-// 		mut task_manager,
-// 		import_queue,
-// 		mut keystore_container,
-// 		select_chain,
-// 		transaction_pool,
-// 		other:
-// 			(
-// 				mut telemetry,
-// 				consensus_result,
-// 				frontier_backend,
-// 				filter_pool,
-// 				(fee_history_cache, fee_history_cache_limit),
-// 			),
-// 	} = new_partial(&config, cli)?;
+	let sc_service::PartialComponents {
+		client,
+		backend,
+		mut task_manager,
+		import_queue,
+		mut keystore_container,
+		select_chain,
+		transaction_pool,
+		other:
+			(
+				mut telemetry,
+				consensus_result,
+				frontier_backend,
+				filter_pool,
+				(fee_history_cache, fee_history_cache_limit),
+			),
+	} = new_partial(&config, cli)?;
 
-// 	if let Some(url) = &config.keystore_remote {
-// 		match remote_keystore(url) {
-// 			Ok(k) => keystore_container.set_remote_keystore(k),
-// 			Err(e) => {
-// 				return Err(ServiceError::Other(format!(
-// 					"Error hooking up remote keystore for {}: {}",
-// 					url, e
-// 				)))
-// 			}
-// 		};
-// 	}
+	if let Some(url) = &config.keystore_remote {
+		match remote_keystore(url) {
+			Ok(k) => keystore_container.set_remote_keystore(k),
+			Err(e) => {
+				return Err(ServiceError::Other(format!(
+					"Error hooking up remote keystore for {}: {}",
+					url, e
+				)))
+			}
+		};
+	}
 
-// 	let (network, system_rpc_tx, network_starter) =
-// 		sc_service::build_network(sc_service::BuildNetworkParams {
-// 			config: &config,
-// 			client: client.clone(),
-// 			transaction_pool: transaction_pool.clone(),
-// 			spawn_handle: task_manager.spawn_handle(),
-// 			import_queue,
-// 			block_announce_validator_builder: None,
-// 			warp_sync: None,
-// 		})?;
+	let (network, system_rpc_tx, network_starter) =
+		sc_service::build_network(sc_service::BuildNetworkParams {
+			config: &config,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue,
+			block_announce_validator_builder: None,
+			warp_sync: None,
+		})?;
 
-// 	if config.offchain_worker.enabled {
-// 		sc_service::build_offchain_workers(
-// 			&config,
-// 			task_manager.spawn_handle(),
-// 			client.clone(),
-// 			network.clone(),
-// 		);
-// 	}
+	if config.offchain_worker.enabled {
+		sc_service::build_offchain_workers(
+			&config,
+			task_manager.spawn_handle(),
+			client.clone(),
+			network.clone(),
+		);
+	}
 
-// 	let role = config.role.clone();
-// 	let prometheus_registry = config.prometheus_registry().cloned();
-// 	let overrides = crate::rpc::overrides_handle(client.clone());
-// 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-// 		task_manager.spawn_handle(),
-// 		overrides.clone(),
-// 		50,
-// 		50,
-// 		prometheus_registry.clone(),
-// 	));
-// 	// Channel for the rpc handler to communicate with the authorship task.
-// 	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
+	let role = config.role.clone();
+	let prometheus_registry = config.prometheus_registry().cloned();
+	let overrides = crate::rpc::overrides_handle(client.clone());
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		50,
+		50,
+		prometheus_registry.clone(),
+	));
+	// Channel for the rpc handler to communicate with the authorship task.
+	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
 
-// 	let rpc_extensions_builder = {
-// 		let client = client.clone();
-// 		let pool = transaction_pool.clone();
-// 		let is_authority = role.is_authority();
-// 		let enable_dev_signer = cli.run.enable_dev_signer;
-// 		let network = network.clone();
-// 		let filter_pool = filter_pool.clone();
-// 		let frontier_backend = frontier_backend.clone();
-// 		let overrides = overrides.clone();
-// 		let fee_history_cache = fee_history_cache.clone();
-// 		let max_past_logs = 30;
+	let rpc_extensions_builder = {
+		let client = client.clone();
+		let pool = transaction_pool.clone();
+		let is_authority = role.is_authority();
+		let enable_dev_signer = cli.run.enable_dev_signer;
+		let network = network.clone();
+		let filter_pool = filter_pool.clone();
+		let frontier_backend = frontier_backend.clone();
+		let overrides = overrides.clone();
+		let fee_history_cache = fee_history_cache.clone();
+		let max_past_logs = cli.run.max_past_logs;
 
-// 		Box::new(move |deny_unsafe, subscription_task_executor| {
-// 			let deps = crate::rpc::FullDeps {
-// 				client: client.clone(),
-// 				pool: pool.clone(),
-// 				graph: pool.pool().clone(),
-// 				deny_unsafe,
-// 				is_authority,
-// 				enable_dev_signer,
-// 				network: network.clone(),
-// 				filter_pool: filter_pool.clone(),
-// 				backend: frontier_backend.clone(),
-// 				max_past_logs,
-// 				fee_history_cache: fee_history_cache.clone(),
-// 				fee_history_cache_limit,
-// 				overrides: overrides.clone(),
-// 				block_data_cache: block_data_cache.clone(),
-// 				command_sink: Some(command_sink.clone()),
-// 			};
+		Box::new(move |deny_unsafe, subscription_task_executor| {
+			let deps = crate::rpc::FullDeps {
+				client: client.clone(),
+				pool: pool.clone(),
+				graph: pool.pool().clone(),
+				deny_unsafe,
+				is_authority,
+				enable_dev_signer,
+				network: network.clone(),
+				filter_pool: filter_pool.clone(),
+				backend: frontier_backend.clone(),
+				max_past_logs,
+				fee_history_cache: fee_history_cache.clone(),
+				fee_history_cache_limit,
+				overrides: overrides.clone(),
+				block_data_cache: block_data_cache.clone(),
+				command_sink: Some(command_sink.clone()),
+			};
 
-// 			crate::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
-// 		})
-// 	};
+			crate::rpc::create_full(deps, subscription_task_executor).map_err(Into::into)
+		})
+	};
 
-// 	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-// 		network,
-// 		client: client.clone(),
-// 		keystore: keystore_container.sync_keystore(),
-// 		task_manager: &mut task_manager,
-// 		transaction_pool: transaction_pool.clone(),
-// 		rpc_builder: rpc_extensions_builder,
-// 		backend: backend.clone(),
-// 		system_rpc_tx,
-// 		config,
-// 		telemetry: telemetry.as_mut(),
-// 	})?;
+	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+		network,
+		client: client.clone(),
+		keystore: keystore_container.sync_keystore(),
+		task_manager: &mut task_manager,
+		transaction_pool: transaction_pool.clone(),
+		rpc_builder: rpc_extensions_builder,
+		backend: backend.clone(),
+		system_rpc_tx,
+		config,
+		telemetry: telemetry.as_mut(),
+	})?;
 
-// 	spawn_frontier_tasks(
-// 		&task_manager,
-// 		client.clone(),
-// 		backend,
-// 		frontier_backend,
-// 		filter_pool,
-// 		overrides,
-// 		fee_history_cache,
-// 		fee_history_cache_limit,
-// 	);
+	spawn_frontier_tasks(
+		&task_manager,
+		client.clone(),
+		backend,
+		frontier_backend,
+		filter_pool,
+		overrides,
+		fee_history_cache,
+		fee_history_cache_limit,
+	);
 
-// 	if role.is_authority() {
-// 		let env = sc_basic_authorship::ProposerFactory::new(
-// 			task_manager.spawn_handle(),
-// 			client.clone(),
-// 			transaction_pool.clone(),
-// 			prometheus_registry.as_ref(),
-// 			telemetry.as_ref().map(|x| x.handle()),
-// 		);
+	if role.is_authority() {
+		let env = sc_basic_authorship::ProposerFactory::new(
+			task_manager.spawn_handle(),
+			client.clone(),
+			transaction_pool.clone(),
+			prometheus_registry.as_ref(),
+			telemetry.as_ref().map(|x| x.handle()),
+		);
 
-// 		let (block_import, sealing) = consensus_result;
+		let (block_import, sealing) = consensus_result;
 
-// 		const INHERENT_IDENTIFIER: sp_inherents::InherentIdentifier = *b"timstap0";
-// 		thread_local!(static TIMESTAMP: std::cell::RefCell<u64> = std::cell::RefCell::new(0));
+		const INHERENT_IDENTIFIER: sp_inherents::InherentIdentifier = *b"timstap0";
+		thread_local!(static TIMESTAMP: std::cell::RefCell<u64> = std::cell::RefCell::new(0));
 
-// 		/// Provide a mock duration starting at 0 in millisecond for timestamp inherent.
-// 		/// Each call will increment timestamp by slot_duration making Aura think time has passed.
-// 		struct MockTimestampInherentDataProvider;
+		/// Provide a mock duration starting at 0 in millisecond for timestamp inherent.
+		/// Each call will increment timestamp by slot_duration making Aura think time has passed.
+		struct MockTimestampInherentDataProvider;
 
-// 		#[async_trait::async_trait]
-// 		impl sp_inherents::InherentDataProvider for MockTimestampInherentDataProvider {
-// 			fn provide_inherent_data(
-// 				&self,
-// 				inherent_data: &mut sp_inherents::InherentData,
-// 			) -> Result<(), sp_inherents::Error> {
-// 				TIMESTAMP.with(|x| {
-// 					*x.borrow_mut() += runtime::SLOT_DURATION;
-// 					inherent_data.put_data(INHERENT_IDENTIFIER, &*x.borrow())
-// 				})
-// 			}
+		#[async_trait::async_trait]
+		impl sp_inherents::InherentDataProvider for MockTimestampInherentDataProvider {
+			fn provide_inherent_data(
+				&self,
+				inherent_data: &mut sp_inherents::InherentData,
+			) -> Result<(), sp_inherents::Error> {
+				TIMESTAMP.with(|x| {
+					*x.borrow_mut() += runtime::SLOT_DURATION;
+					inherent_data.put_data(INHERENT_IDENTIFIER, &*x.borrow())
+				})
+			}
 
-// 			async fn try_handle_error(
-// 				&self,
-// 				_identifier: &sp_inherents::InherentIdentifier,
-// 				_error: &[u8],
-// 			) -> Option<Result<(), sp_inherents::Error>> {
-// 				// The pallet never reports error.
-// 				None
-// 			}
-// 		}
+			async fn try_handle_error(
+				&self,
+				_identifier: &sp_inherents::InherentIdentifier,
+				_error: &[u8],
+			) -> Option<Result<(), sp_inherents::Error>> {
+				// The pallet never reports error.
+				None
+			}
+		}
 
-// 		let target_gas_price = 1000_000_000_u128;
-// 		let create_inherent_data_providers = move |_, ()| async move {
-// 			let mock_timestamp = MockTimestampInherentDataProvider;
-// 			let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-// 			Ok((mock_timestamp, dynamic_fee))
-// 		};
+		let target_gas_price = cli.run.target_gas_price;
+		let create_inherent_data_providers = move |_, ()| async move {
+			let mock_timestamp = MockTimestampInherentDataProvider;
+			let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+			Ok((mock_timestamp, dynamic_fee))
+		};
 
-// 		let manual_seal = match sealing {
-// 			Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
-// 				sc_consensus_manual_seal::ManualSealParams {
-// 					block_import,
-// 					env,
-// 					client,
-// 					pool: transaction_pool,
-// 					commands_stream,
-// 					select_chain,
-// 					consensus_data_provider: None,
-// 					create_inherent_data_providers,
-// 				},
-// 			)),
-// 			Sealing::Instant => future::Either::Right(sc_consensus_manual_seal::run_instant_seal(
-// 				sc_consensus_manual_seal::InstantSealParams {
-// 					block_import,
-// 					env,
-// 					client,
-// 					pool: transaction_pool,
-// 					select_chain,
-// 					consensus_data_provider: None,
-// 					create_inherent_data_providers,
-// 				},
-// 			)),
-// 		};
-// 		// we spawn the future on a background thread managed by service.
-// 		task_manager
-// 			.spawn_essential_handle()
-// 			.spawn_blocking("manual-seal", None, manual_seal);
-// 	}
+		let manual_seal = match sealing {
+			Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
+				sc_consensus_manual_seal::ManualSealParams {
+					block_import,
+					env,
+					client,
+					pool: transaction_pool,
+					commands_stream,
+					select_chain,
+					consensus_data_provider: None,
+					create_inherent_data_providers,
+				},
+			)),
+			Sealing::Instant => future::Either::Right(sc_consensus_manual_seal::run_instant_seal(
+				sc_consensus_manual_seal::InstantSealParams {
+					block_import,
+					env,
+					client,
+					pool: transaction_pool,
+					select_chain,
+					consensus_data_provider: None,
+					create_inherent_data_providers,
+				},
+			)),
+		};
+		// we spawn the future on a background thread managed by service.
+		task_manager
+			.spawn_essential_handle()
+			.spawn_blocking("manual-seal", None, manual_seal);
+	}
 
-// 	log::info!("Manual Seal Ready");
+	log::info!("Manual Seal Ready");
 
-// 	network_starter.start_network();
-// 	Ok(task_manager)
-// }
+	network_starter.start_network();
+	Ok(task_manager)
+}
 
 fn spawn_frontier_tasks(
 	task_manager: &TaskManager,
