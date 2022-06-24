@@ -36,7 +36,7 @@ jobs:
 
       - name: Check Build Dev
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release --features with-development
+          SKIP_WASM_BUILD=1 cargo check --release --features with-dev
 
       - name: Check Build Gaki
         run: |
@@ -44,9 +44,9 @@ jobs:
 
       - name: Unit-Test
         run: |
-          cargo test --features with-development
+          cargo test --features with-dev
 
       - name: Check Build for Benchmarking
         run: >
           pushd node &&
-          cargo check --release --features runtime-benchmarks --features with-development
+          cargo check --release --features runtime-benchmarks --features with-dev

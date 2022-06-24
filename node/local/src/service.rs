@@ -28,14 +28,7 @@ use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 // Runtime
 
 
-#[cfg(feature = "manual-seal")]
 use devnet as runtime;
-
-#[cfg(feature = "with-development")]
-use devnet as runtime;
-
-#[cfg(feature = "with-gaki-runtime")]
-use gaki_testnet as runtime;
 
 use runtime::{opaque::Block, RuntimeApi};
 

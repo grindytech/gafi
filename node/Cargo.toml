@@ -17,78 +17,19 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "gafi-node"
 
 [dependencies]
-async-trait = "0.1"
-clap = {version = "3.1", features = ["derive"]}
-codec = {package = "parity-scale-codec", version = "3.1", features = ["derive"]}
-futures = '0.3'
-hex-literal = '0.3'
-jsonrpc-core = "18.0.0"
-jsonrpc-pubsub = "18.0.0"
-jsonrpsee = {version = "0.13.0", features = ["server", "macros"]}
-log = "0.4.8"
-serde_json = "1.0.59"
 
 # Frontier
-fc-cli = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
 fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-base-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-dynamic-fee = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
-frame-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-pallet-transaction-payment = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
-sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
-sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
-sc-executor = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
-sc-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-network = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-service = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
-sc-telemetry = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-transaction-pool = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-transaction-pool-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-core = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-inherents = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-keyring = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-runtime = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-timestamp = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
-# These dependencies are used for the node template's RPCs
-pallet-transaction-payment-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-basic-authorship = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sc-rpc-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-block-builder = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-blockchain = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-
-# These dependencies are used for runtime benchmarking
-frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-
-# Local Dependencies
-devnet = {path = "../runtime/devnet", default-features = false, features = ["std"], optional = true}
-gafi-primitives = {path = "../primitives", default-features = false}
-gaki-testnet = {path = "../runtime/gaki-testnet", default-features = false, features = ["std"], optional = true}
+# Local
+gafi-cli = {path = "cli", default-features = false, optional = true}
+gafi-local = {path = "local", default-features = false, optional = true}
+gafi-service = {path = "service", default-features = false, optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -96,24 +37,17 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 [features]
 aura = [
   "sc-consensus-aura",
-  "devnet/aura",
-  "gaki-testnet/aura",
 ]
 default = ["aura"]
-manual-seal = [
-  "sc-consensus-manual-seal",
-  "devnet/manual-seal",
-  "gaki-testnet/manual-seal",
-]
+manual-seal = []
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = [
-  "devnet/runtime-benchmarks",
+runtime-benchmarks = []
+
+with-dev = [
+  "gafi-local"
 ]
 
-with-development = [
-  "devnet",
-]
-
-with-gaki-runtime = [
-  "gaki-testnet",
+with-gari = [
+  "gafi-cli",
+  "gafi-service",
 ]

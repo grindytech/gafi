@@ -1,16 +1,20 @@
 use devnet::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig,
-	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, CouncilConfig, Signature,
-	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, CouncilConfig, EVMConfig, EthereumConfig, FaucetConfig,
+	GenesisConfig, GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig,
+	Signature, StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig,
+	WASM_BINARY,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
-use gafi_primitives::{ticket::TicketLevel, system_services::SystemService};
+use gafi_primitives::{system_services::SystemService, ticket::TicketLevel};
 use sc_service::{ChainType, Properties};
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::{traits::{IdentifyAccount, Verify}, Permill};
+use sp_runtime::{
+	traits::{IdentifyAccount, Verify},
+	Permill,
+};
 use sp_std::*;
 use std::collections::BTreeMap;
 
@@ -289,6 +293,9 @@ fn dev_genesis(
 		democracy: Default::default(),
 		treasury: Default::default(),
 		phragmen_election: Default::default(),
-		council: CouncilConfig { members: vec![], phantom: Default::default() },
+		council: CouncilConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
 	}
 }

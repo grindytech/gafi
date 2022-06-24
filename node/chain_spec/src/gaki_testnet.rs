@@ -3,7 +3,7 @@ use gafi_primitives::system_services::SystemService;
 use gafi_primitives::ticket::TicketLevel;
 use gaki_testnet::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig,
-	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, CouncilConfig, Signature,
+	GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig, Signature,
 	StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
@@ -136,6 +136,7 @@ fn gaki_testnet_genesis(
 		),
 	];
 	const TIME_SERVICE: u128 = 30 * 60_000u128; // 30 minutes
+	let bond_existential_deposit: u128 = unit(GAKI);
 
 	// pallet-faucet
 	let faucet_amount: u128 = 1500 * unit(GAKI);
@@ -221,7 +222,5 @@ fn gaki_testnet_genesis(
 		},
 		democracy: Default::default(),
 		treasury: Default::default(),
-		phragmen_election: Default::default(),
-		council: CouncilConfig { members: vec![], phantom: Default::default() },
 	}
 }

@@ -27,14 +27,7 @@ use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
 
-#[cfg(feature = "manual-seal")]
 use devnet as runtime;
-
-#[cfg(feature = "with-development")]
-use devnet as runtime;
-
-#[cfg(feature = "with-gaki-runtime")]
-use gaki_testnet as runtime;
 
 use runtime::{opaque::Block, AccountId, Balance, Hash, Index};
 

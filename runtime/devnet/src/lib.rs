@@ -473,25 +473,27 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;
+	pub FaucetCleanTime: u128 = 24 * 60 * 60_000u128; // 24 hours
 }
 
+// cache for pallet faucet
 impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 	type Event = Event;
 	type Data = Balance;
 	type Action = AccountId;
-	type CleanTime = CleanTime;
+	type CleanTime = FaucetCleanTime;
 }
 
 parameter_types! {
-	pub CleanTime2: u128 = 24 * 60 * 60_000u128; // 24 hours
+	pub PoolCleanTime: u128 = 30 * 60_000u128; // 30 minutes;
 }
 
+// cache for pallet pool
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
 	type Action = TicketType;
-	type CleanTime = CleanTime2;
+	type CleanTime = PoolCleanTime;
 }
 
 impl pallet_faucet::Config for Runtime {
