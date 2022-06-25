@@ -34,12 +34,6 @@ use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
 
-// #[cfg(feature = "with-gari")]
-// use gari_runtime as runtime;
-
-// #[cfg(feature = "with-dev")]
-// use devnet as runtime;
-
 use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index};
 
 pub fn frontier_database_dir(config: &Configuration, db_path: &str) -> std::path::PathBuf {

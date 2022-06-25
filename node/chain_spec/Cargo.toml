@@ -96,28 +96,11 @@ cumulus-relay-chain-rpc-interface = {git = "https://github.com/paritytech/cumulu
 
 # Runtime
 gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"]}
-devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
-gaki-testnet = {path = "../../runtime/gaki-testnet", default-features = false, features = ["std"]}
+gaki-runtime = {path = "../../runtime/gaki", default-features = false, features = ["std"]}
 
 # Local
 gafi-primitives = {path = "../../primitives"}
 
 [features]
-aura = [
-  "sc-consensus-aura",
-  "devnet/aura",
-  "gaki-testnet/aura",
-]
-default = ["aura"]
-# manual-seal = [
-#   "sc-consensus-manual-seal",
-# ]
-# rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-# runtime-benchmarks = [
-#   "polkadot-cli/runtime-benchmarks",
-# ]
-
-# # Gafi Westend Parachain
-# with-gari = [
-#   "gari-runtime",
-# ]
+default = ["std"]
+std = []
