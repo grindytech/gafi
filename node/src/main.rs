@@ -3,10 +3,10 @@
 fn main() -> sc_cli::Result<()> {
 
 	#[cfg(feature = "with-gari")]
-	return gafi_cli::command::run();
+	return gafi_cli::command::run_gari();
 
 	#[cfg(feature = "with-gaki")]
-	return gafi_cli::command::run();
+	return gafi_cli::command::run_gaki();
 	
 	#[cfg(feature = "with-dev")]
 	return gafi_local::command::run();
