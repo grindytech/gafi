@@ -75,15 +75,15 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// Holding all the tickets in the network
-	#[pallet::storage]
-	#[pallet::getter(fn tickets)]
-	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
+	// /// Holding all the tickets in the network
+	// #[pallet::storage]
+	// #[pallet::getter(fn tickets)]
+	// pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
 
 	/// Holding all the tickets in the network
 	#[pallet::storage]
-	#[pallet::getter(fn sponsored_tickets)]
-	pub type SponsoredTickets<T: Config> = StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, ID, TicketInfo>;
+	#[pallet::getter(fn tickets)]
+	pub type Tickets<T: Config> = StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, ID, TicketInfo>;
 
 	/// Holding the mark time to check if correct time to charge service fee
 	/// The default value is at the time chain launched
@@ -181,8 +181,10 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
 		#[transactional]
-		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
+		pub fn join(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			// if joined upfront or staking pool => cannot join any pool
+			// if joined sponsored pool and pool_id is not upfront or staking pool => still can join sponsored pool
 
 			let ticket_info = Self::get_ticket_info(&sender, ticket)?;
 			let mut new_pool_id = None;

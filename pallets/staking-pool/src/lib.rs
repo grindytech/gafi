@@ -27,6 +27,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	ticket::{TicketLevel, Ticket, TicketType, SystemTicket},
 	system_services::{SystemPool, SystemService},
+	constant::ID
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
@@ -88,22 +89,25 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, TicketLevel, SystemService>;
+	pub type Services<T: Config> = StorageMap<_, Twox64Concat, ID, SystemService>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub services: [(TicketLevel, SystemService); 3],
+		pub services: [(ID, SystemService); 3],
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
+			println!("basic {:?}", (TicketLevel::Basic).using_encoded(blake2_256));
+			println!("medium {:?}", (TicketLevel::Medium).using_encoded(blake2_256));
+			println!("advance {:?}", (TicketLevel::Advance).using_encoded(blake2_256));
 			Self {
 				services: [
-					(TicketLevel::Basic, SystemService::new(100_u32, Permill::from_percent(30), 100000u128)),
-					(TicketLevel::Medium, SystemService::new(100_u32, Permill::from_percent(50), 100000u128)),
-					(TicketLevel::Advance,  SystemService::new(100_u32, Permill::from_percent(70), 100000u128)),
+					((TicketLevel::Basic).using_encoded(blake2_256), SystemService::new(100_u32, Permill::from_percent(30), 100000u128)),
+					((TicketLevel::Medium).using_encoded(blake2_256), SystemService::new(100_u32, Permill::from_percent(50), 100000u128)),
+					((TicketLevel::Advance).using_encoded(blake2_256),  SystemService::new(100_u32, Permill::from_percent(70), 100000u128)),
 				],
 			}
 		}
@@ -130,10 +134,11 @@ pub mod pallet {
 		StakeCountOverflow,
 		IntoBalanceFail,
 		LevelNotFound,
+		PoolNotFound,
 	}
 
 	impl<T: Config> SystemPool<T::AccountId> for Pallet<T> {
-			/// Join Staking Pool
+		/// Join Staking Pool
 		///
 		/// The origin must be Signed
 		///
@@ -142,15 +147,15 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn join(sender: T::AccountId, level: TicketLevel) -> DispatchResult {
-			let service = Self::get_service_by_level(level)?;
+		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+			let service = Self::get_pool_by_id(pool_id)?;
 			let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			Self::stake_pool(sender, new_player_count, level);
+			Self::stake_pool(sender, pool_id, new_player_count);
 			Ok(())
 		}
 
@@ -160,11 +165,11 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn leave(sender: T::AccountId) -> DispatchResult {
+		fn leave(sender: T::AccountId, pool_id: ID) -> DispatchResult {
 			if let Some(level) = Self::get_player_level(sender.clone()) {
 				let new_player_count =
 					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
-				let service = Self::get_service_by_level(level)?;
+				let service = Self::get_pool_by_id(pool_id)?;
 				let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
 				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 				Self::unstake_pool(sender, new_player_count);
@@ -174,8 +179,8 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service(level: TicketLevel) -> Option<SystemService> {
-			Services::<T>::get(level)
+		fn get_service(pool_id: ID) -> Option<SystemService> {
+			Services::<T>::get(pool_id)
 		}
 	}
 
@@ -204,15 +209,17 @@ pub mod pallet {
 
 
 	impl<T: Config> Pallet<T> {
-		fn stake_pool(sender: T::AccountId, new_player_count: u32, level: TicketLevel) {
+		fn stake_pool(sender: T::AccountId, pool_id: ID, new_player_count: u32) -> Result<(), Error<T>> {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+			let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 			<PlayerCount<T>>::put(new_player_count);
 			let ticket = Ticket {
 				address: sender.clone(),
 				join_time: _now,
-				ticket_type: TicketType::System(SystemTicket::Staking(level)),
+				ticket_type: TicketType::System(SystemTicket::Staking(pool.ticket_level)),
 			};
 			Tickets::<T>::insert(sender, ticket);
+			Ok(())
 		}
 
 		fn unstake_pool(sender: T::AccountId, new_player_count: u32) {
@@ -237,10 +244,10 @@ pub mod pallet {
 			}
 		}
 
-		fn get_service_by_level(level: TicketLevel) -> Result<SystemService, Error<T>> {
-			match Services::<T>::get(level) {
+		fn get_pool_by_id(pool_id: ID) -> Result<SystemService, Error<T>> {
+			match Services::<T>::get(pool_id) {
 				Some(service) => Ok(service),
-				None => Err(<Error<T>>::LevelNotFound),
+				None => Err(<Error<T>>::PoolNotFound),
 			}
 		}
 	}

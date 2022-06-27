@@ -41,6 +41,7 @@ pub enum CustomTicket {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum TicketLevel {
+	#[codec(index = 15)]
 	Basic,
 	Medium,
 	Advance,
