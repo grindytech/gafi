@@ -95,6 +95,7 @@ substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/parit
 aura = []
 default = ["std", "aura"]
 manual-seal = []
+with-dev = []
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",

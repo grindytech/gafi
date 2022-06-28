@@ -24,28 +24,34 @@ fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkado
 # Substrate
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
 sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
-sp-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
 
 # Local
-gafi-cli = {path = "cli", default-features = false,  optional = true}
-gafi-local = {path = "local", optional = true}
+gafi-cli = {path = "cli", default-features = false, optional = true}
+gafi-local = {path = "local", default-features = false, optional = true}
 gafi-service = {path = "service", default-features = false, optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 [features]
-aura = [
-  "sc-consensus-aura",
-  "gafi-local/aura",
+# aura = [
+#   "sc-consensus-aura",
+#   "gafi-local/aura",
+# ]
+default = ["std"]
+
+std = []
+
+manual-seal = [
+  "sc-consensus-manual-seal",
+  "gafi-local/manual-seal",
 ]
-default = ["aura", "with-dev"]
-manual-seal = []
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = []
 
 with-dev = [
-  "gafi-local"
+  "gafi-local/with-dev",
 ]
 
 with-gari = [

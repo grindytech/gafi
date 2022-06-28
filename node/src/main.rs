@@ -10,4 +10,7 @@ fn main() -> sc_cli::Result<()> {
 	
 	#[cfg(feature = "with-dev")]
 	return gafi_local::command::run();
+
+	#[cfg(feature = "manual-seal")]
+	return gafi_local::command::run();
 }

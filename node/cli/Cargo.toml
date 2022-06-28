@@ -89,7 +89,6 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 
 [features]
 default = ["with-gari", "with-gaki"]
-rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
   "polkadot-cli/runtime-benchmarks",
 ]

@@ -18,15 +18,15 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use frame_benchmarking_cli::BenchmarkCmd;
 use fc_db::frontier_database_dir;
+use frame_benchmarking_cli::BenchmarkCmd;
 
 use devnet as runtime;
 
 use runtime::Block;
 
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sc_service::{PartialComponents, DatabaseSource};
+use sc_service::{DatabaseSource, PartialComponents};
 
 use crate::{
 	chain_spec,
@@ -170,6 +170,7 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
 			})
 		}
+		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| {
