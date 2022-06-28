@@ -79,6 +79,7 @@ sp-session = {git = "https://github.com/paritytech/substrate", default-features 
 sp-std = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24"}
 sp-transaction-pool = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24"}
 sp-version = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24"}
+pallet-collective = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24"}
 
 # Polkadot
 pallet-xcm = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24"}
@@ -172,6 +173,7 @@ std = [
   "staking-pool/std",
   "upfront-pool/std",
   "gafi-primitives/std",
+  "pallet-collective/std",
 ]
 
 runtime-benchmarks = [
@@ -188,6 +190,24 @@ runtime-benchmarks = [
   "xcm-builder/runtime-benchmarks",
   "cumulus-pallet-session-benchmarking/runtime-benchmarks",
   "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking",
+  "frame-system/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  "pallet-ethereum/runtime-benchmarks",
+  "pallet-evm/runtime-benchmarks",
+  "upfront-pool/runtime-benchmarks",
+  "staking-pool/runtime-benchmarks",
+  "pallet-pool/runtime-benchmarks",
+  "gafi-tx/runtime-benchmarks",
+  "proof-address-mapping/runtime-benchmarks",
+  "pallet-faucet/runtime-benchmarks",
+  "sponsored-pool/runtime-benchmarks",
+  "game-creator/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks",
 ]
 
 try-runtime = [

@@ -2,7 +2,7 @@ use crate::cli::{Cli, RelayChainCli, Subcommand};
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-#[cfg(feature = "frame-benchmarking")]
+#[cfg(feature = "runtime-benchmarks")]
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use gafi_rpc::{db_config_dir, frontier_database_dir};
 use log::info;
@@ -316,7 +316,7 @@ pub fn run_gari() -> Result<()> {
 
             Ok(())
         }
-        #[cfg(feature = "frame-benchmarking")]
+        #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
             // Switch on the concrete benchmark sub-command-
@@ -333,14 +333,14 @@ pub fn run_gari() -> Result<()> {
                 BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
                     let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
                         &config,
-                        service::gaki_build_import_queue,
+                        gafi_service::gari_build_import_queue,
                     )?;
                     cmd.run(partials.client)
                 }),
                 BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
                     let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
                         &config,
-                        service::gaki_build_import_queue,
+                        gafi_service::gari_build_import_queue,
                     )?;
                     let db = partials.backend.expose_db();
                     let storage = partials.backend.expose_storage();
@@ -591,7 +591,7 @@ pub fn run_gaki() -> Result<()> {
 
             Ok(())
         }
-        #[cfg(feature = "frame-benchmarking")]
+        #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
             // Switch on the concrete benchmark sub-command-
@@ -608,14 +608,14 @@ pub fn run_gaki() -> Result<()> {
                 BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
                     let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
                         &config,
-                        service::gaki_build_import_queue,
+                        gafi_service::gaki_build_import_queue,
                     )?;
                     cmd.run(partials.client)
                 }),
                 BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
                     let partials = new_partial::<RuntimeApi, GafiRuntimeExecutor, _>(
                         &config,
-                        service::gaki_build_import_queue,
+                        gafi_service::gaki_build_import_queue,
                     )?;
                     let db = partials.backend.expose_db();
                     let storage = partials.backend.expose_storage();

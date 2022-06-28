@@ -20,6 +20,7 @@ name = "gafi-node"
 
 # Frontier
 fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
@@ -49,8 +50,8 @@ manual-seal = [
 ]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
-  "gafi-local/runtime-benchmarks",
-  "gafi-local/aura",
+  "gafi-cli/runtime-benchmarks",
+  "with-gari",
 ]
 
 with-dev = [
