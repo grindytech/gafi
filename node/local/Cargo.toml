@@ -97,6 +97,11 @@ manual-seal = [
   "sc-consensus-manual-seal",
   "devnet/manual-seal",
 ]
+
+with-dev = [
+  "devnet/with-dev"
+]
+
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 runtime-benchmarks = [
   "devnet/runtime-benchmarks",
