@@ -35,11 +35,11 @@ gafi-service = {path = "service", default-features = false, optional = true}
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 [features]
-# aura = [
-#   "sc-consensus-aura",
-#   "gafi-local/aura",
-# ]
-default = ["std"]
+aura = [
+  "sc-consensus-aura",
+  "gafi-local/aura",
+]
+default = []
 
 std = []
 
@@ -48,10 +48,14 @@ manual-seal = [
   "gafi-local/manual-seal",
 ]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = []
+runtime-benchmarks = [
+  "gafi-local/runtime-benchmarks",
+  "gafi-local/aura",
+]
 
 with-dev = [
   "gafi-local/with-dev",
+  "gafi-local/aura",
 ]
 
 with-gari = [

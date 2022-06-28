@@ -13,4 +13,7 @@ fn main() -> sc_cli::Result<()> {
 
 	#[cfg(feature = "manual-seal")]
 	return gafi_local::command::run();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	return gafi_local::command::run();
 }

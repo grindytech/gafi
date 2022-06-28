@@ -107,6 +107,7 @@ runtime-benchmarks = [
   "pallet-collective/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
+  "pallet-evm/runtime-benchmarks",
   "upfront-pool/runtime-benchmarks",
   "staking-pool/runtime-benchmarks",
   "pallet-pool/runtime-benchmarks",
