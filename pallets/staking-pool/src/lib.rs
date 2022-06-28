@@ -33,6 +33,7 @@ pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use gu_convertor::{u128_try_to_balance};
 use sp_runtime::Permill;
+use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
 mod mock;
@@ -100,14 +101,19 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			println!("basic {:?}", (TicketLevel::Basic).using_encoded(blake2_256));
-			println!("medium {:?}", (TicketLevel::Medium).using_encoded(blake2_256));
-			println!("advance {:?}", (TicketLevel::Advance).using_encoded(blake2_256));
 			Self {
 				services: [
-					((TicketLevel::Basic).using_encoded(blake2_256), SystemService::new(100_u32, Permill::from_percent(30), 100000u128)),
-					((TicketLevel::Medium).using_encoded(blake2_256), SystemService::new(100_u32, Permill::from_percent(50), 100000u128)),
-					((TicketLevel::Advance).using_encoded(blake2_256),  SystemService::new(100_u32, Permill::from_percent(70), 100000u128)),
+					(
+						(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+						SystemService::new(TicketLevel::Basic ,100_u32, Permill::from_percent(30), 100000u128)
+					),
+					(
+						(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+						SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 100000u128)),
+					(
+						(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+						SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 100000u128)
+					),
 				],
 			}
 		}

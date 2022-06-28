@@ -140,22 +140,19 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			println!("basic {:?}", (TicketLevel::Basic).using_encoded(blake2_256));
-			println!("medium {:?}", (TicketLevel::Medium).using_encoded(blake2_256));
-			println!("advance {:?}", (TicketLevel::Advance).using_encoded(blake2_256));
 			Self {
 				max_player: 1000,
 				services: [
 					(
-						(TicketLevel::Basic).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Basic ,100_u32, Permill::from_percent(30), 1000000u128)
+						(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+						SystemService::new(TicketLevel::Basic, 100_u32, Permill::from_percent(30), 1000000u128)
 					),
 					(
-						(TicketLevel::Medium).using_encoded(blake2_256),
+						(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
 						SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 1000000u128)
 					),
 					(
-						(TicketLevel::Advance).using_encoded(blake2_256),
+						(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
 						SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 1000000u128)
 					),
 				],
@@ -272,7 +269,7 @@ pub mod pallet {
 					let new_player_count = Self::player_count()
 						.checked_sub(1)
 						.ok_or(<Error<T>>::PlayerCountOverflow)?;
-					Self::remove_player(&sender, new_player_count);
+					Self::remove_player(&sender, pool_id, new_player_count);
 				}
 				Ok(())
 			} else {
@@ -343,8 +340,8 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn remove_player(player: &T::AccountId, new_player_count: u32) {
-		T::MasterPool::remove_player(player, None);
+	fn remove_player(player: &T::AccountId, pool_id: ID, new_player_count: u32) {
+		T::MasterPool::remove_player(player, pool_id);
 		Tickets::<T>::remove(player);
 
 		<IngamePlayers<T>>::mutate(|players| {
@@ -380,7 +377,7 @@ impl<T: Config> Pallet<T> {
 						let new_player_count = Self::player_count()
 							.checked_sub(1)
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
-						let _ = Self::remove_player(&player, new_player_count);
+						let _ = Self::remove_player(&player, (SystemTicket::Upfront(service.ticket_level)).using_encoded(blake2_256), new_player_count);
 					}
 				};
 			}
@@ -390,7 +387,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_player_service(player: T::AccountId) -> Option<SystemService> {
 		if let Some(level) = Self::get_player_level(player) {
-			return Self::get_service((level).using_encoded(blake2_256));
+			return Self::get_service((SystemTicket::Upfront(level)).using_encoded(blake2_256));
 		}
 		None
 	}

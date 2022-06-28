@@ -234,8 +234,8 @@ where
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		// get transaction service based on player's service
-		if let Some(ticket_type) = T::PlayerTicket::use_ticket(account_id, target) {
-			if let Some(service) = T::PlayerTicket::get_service(ticket_type) {
+		if let Some((ticket_type, pool_id)) = T::PlayerTicket::use_ticket(account_id, target) {
+			if let Some(service) = T::PlayerTicket::get_service(pool_id) {
 				match ticket_type {
 					TicketType::System(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
@@ -243,7 +243,7 @@ where
 							service.discount,
 						);
 					}
-					TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+					TicketType::Custom(_) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
 							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
