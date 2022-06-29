@@ -90,7 +90,7 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate",
 [features]
 default = ["with-gari", "with-gaki"]
 runtime-benchmarks = [
-  "polkadot-cli/runtime-benchmarks",
+  "gafi-service/runtime-benchmarks",
 ]
 
 with-gari = [

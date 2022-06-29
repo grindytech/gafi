@@ -1048,13 +1048,26 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use upfront_pool::Pallet as UpfrontBench;
+			use proof_address_mapping::Pallet as AddressMappingBench;
+			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
+			use pallet_pool::Pallet as PoolBench;
+
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
+			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
+			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
+			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
+			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
+
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -1071,6 +1084,13 @@ impl_runtime_apis! {
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 
+			use pallet_evm::Pallet as PalletEvmBench;
+			use upfront_pool::Pallet as UpfrontBench;
+			use proof_address_mapping::Pallet as AddressMappingBench;
+			use staking_pool::Pallet as StakingPoolBench;
+			use sponsored_pool::Pallet as SponsoredBench;
+			use pallet_pool::Pallet as PoolBench;
+
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
@@ -1086,7 +1106,14 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-			add_benchmarks!(params, batches);
+
+			add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			add_benchmark!(params, batches, upfront_pool, UpfrontBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
+			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
+			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
+			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
+
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
