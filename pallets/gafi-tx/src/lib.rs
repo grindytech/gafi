@@ -167,12 +167,12 @@ pub mod pallet {
 				let fee =
 					u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(sponsor_fee);
 
-				if let Ok(_) = <T as pallet::Config>::Currency::withdraw(
+				if <T as pallet::Config>::Currency::withdraw(
 					&sponsor,
 					fee,
 					WithdrawReasons::FEE,
 					ExistenceRequirement::KeepAlive,
-				) {
+				).is_ok() {
 					return Some(service_fee.saturating_sub(sponsor_fee));
 				}
 			}
@@ -186,13 +186,13 @@ pub mod pallet {
 		pub fn correct_and_deposit_fee_service(service_fee: u128, discount: Permill) -> u128 {
 			let discount_fee = discount * service_fee;
 
-			return service_fee.saturating_sub(discount_fee);
+			service_fee.saturating_sub(discount_fee)
 		}
 	}
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
-		fn min_gas_price() -> sp_core::U256 {
-			GasPrice::<T>::get()
+		fn min_gas_price() -> (sp_core::U256, Weight) {
+			(GasPrice::<T>::get(), 0_u64)
 		}
 	}
 }
@@ -213,7 +213,8 @@ where
 	>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-	type LiquidityInfo = <<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
+	type LiquidityInfo =
+		<<T as pallet::Config>::OnChargeEVMTxHandler as OnChargeEVMTransaction<T>>::LiquidityInfo;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		T::OnChargeEVMTxHandler::withdraw_fee(who, fee)
@@ -226,14 +227,15 @@ where
 		who: &H160,
 		target: Option<H160>,
 		corrected_fee: U256,
+		base_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) {
+	) -> Self::LiquidityInfo {
 		let mut service_fee = corrected_fee.as_u128();
 		// get mapping account id
 		let account_id: T::AccountId = <T as pallet::Config>::AddressMapping::into_account_id(*who);
 		// get transaction service based on player's service
-		if let Some(ticket_type) = T::PlayerTicket::use_ticket(account_id, target) {
-			if let Some(service) = T::PlayerTicket::get_service(ticket_type) {
+		if let Some((ticket_type, pool_id)) = T::PlayerTicket::use_ticket(account_id, target) {
+			if let Some(service) = T::PlayerTicket::get_service(pool_id) {
 				match ticket_type {
 					TicketType::System(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
@@ -241,7 +243,7 @@ where
 							service.discount,
 						);
 					}
-					TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+					TicketType::Custom(_) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
 							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
@@ -275,11 +277,12 @@ where
 			who,
 			target,
 			U256::from(service_fee),
+			base_fee,
 			already_withdrawn,
 		)
 	}
 
-	fn pay_priority_fee(tip: U256) {
+	fn pay_priority_fee(tip: Self::LiquidityInfo) {
 		T::OnChargeEVMTxHandler::pay_priority_fee(tip)
 	}
 }

@@ -16,13 +16,13 @@ pub struct Service {
 }
 
 pub trait MasterPool<AccountId> {
-	fn remove_player(player: &AccountId, pool_id: Option<ID>);
+	fn remove_player(player: &AccountId, pool_id: ID);
 	fn get_timeservice() -> u128;
 	fn get_marktime() -> u128;
 }
 
 impl<AccountId> MasterPool<AccountId> for () {
-	fn remove_player(_player: &AccountId, _pool_id: Option<ID>) {}
+	fn remove_player(_player: &AccountId, _pool_id: ID) {}
 	fn get_timeservice() -> u128 {
 		30 * 60_000u128 // 30 minutes
 	}

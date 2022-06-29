@@ -13,17 +13,20 @@ pub struct Token {
     pub name:  Vec<u8>,
     pub symbol:  Vec<u8>,
     pub decimals: u8,
-    pub id: u8 
+    pub id: u8
 }
 
 pub trait TokenInfo {
     fn token_info(token: NativeToken) -> Token;
 }
 
+#[derive(Clone)]
 pub enum NativeToken {
     GAFI,
     GAKI,
 }
+
+pub type Balance = u128;
 
 pub struct GafiCurrency {}
 
@@ -50,12 +53,12 @@ impl TokenInfo for GafiCurrency {
 }
 
 /// Express the native token as u128
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// use gafi_primitives::currency::{NativeToken::GAKI, unit};
-/// 
+///
 /// let balance = 10 * unit(GAKI);
 /// assert_eq!(balance, 10_000_000_000_000_000_000);
 /// ```
@@ -81,4 +84,8 @@ pub fn millicent(token: NativeToken) -> u128 {
 /// 1 microcent = 0.000001 unit
 pub fn microcent(token: NativeToken) -> u128 {
     milli(token) / 1000
+}
+
+pub fn deposit(items: u32, bytes: u32, token: NativeToken) -> Balance {
+	items as Balance * 20 * unit(token.clone()) + (bytes as Balance) * 100 * millicent(token)
 }

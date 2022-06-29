@@ -1,18 +1,22 @@
 .PHONY: build
 build:
-	cargo build --release --features with-development
+	cargo build --release --features with-dev
 
 .PHONY: build-test
 build-test:
-	cargo build --release --no-default-features --features manual-seal,rpc_binary_search_estimate
+	cargo build --release --no-default-features -p gafi-node --features manual-seal,rpc_binary_search_estimate
 
 .PHONY: build-dev
 build-dev:
-	cargo build --release --features with-development
+	cargo build --release --features with-dev
 
 .PHONY: build-gaki
 build-gaki:
-	cargo build --release --features with-gaki-runtime
+	cargo build --release --features with-gaki
+
+.PHONY: build-gari
+build-gari:
+	cargo build --release --features with-gari
 
 .PHONY: run-dev
 run-dev:
@@ -41,27 +45,31 @@ run-manual-seal:
 
 .PHONY: test
 test:
-	cargo test --features with-development
+	cargo test --features with-dev
 
 .PHONY: check-dev
 check-dev:
-	cargo check --release --features with-development
+	cargo check --release --features with-dev
 
 .PHONY: check-gaki
 check-gaki:
-	cargo check --release --features with-gaki-runtime
+	cargo check --release --features with-gaki
+
+.PHONY: check-gari
+check-gari:
+	cargo check --release --features with-gari
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks --features with-development
+	cargo check --release --features runtime-benchmarks 
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks --features with-development
+	cargo build --release --features runtime-benchmarks
 
 .PHONY: clippy
 clippy:
-	cargo clippy --release --features with-development  -- -D warnings
+	cargo clippy --release --features with-dev  -- -D warnings
 
 .PHONY: benchmark_pool
 benchmark_pool:
@@ -83,7 +91,7 @@ benchmark_staking_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/staking_pool/weights.rs
+    --output ./benchmarking/staking-pool/weights.rs
 
 .PHONY: benchmark_upfront_pool
 benchmark_upfront_pool:
@@ -94,7 +102,7 @@ benchmark_upfront_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/upfront_pool/weights.rs
+    --output ./benchmarking/upfront-pool/weights.rs
 
 .PHONY: benchmark_sponsored_pool
 benchmark_sponsored_pool:

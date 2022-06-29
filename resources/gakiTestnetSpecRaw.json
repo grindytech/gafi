@@ -1,6 +1,6 @@
 {
   "name": "Gaki Testnet",
-  "id": "gaki_testnet",
+  "id": "gaki_runtime",
   "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,

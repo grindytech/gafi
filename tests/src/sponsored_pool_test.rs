@@ -84,23 +84,23 @@ fn rejoin_sponsored_pool_works() {
 
         Pool::use_ticket(account_1.clone(), Some(H160::default()));
         Pool::use_ticket(account_1.clone(), Some(H160::default()));
-        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
+        assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(10);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), Some(pool_id)));
+        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
             TicketType::Custom(CustomTicket::Sponsored(pool_id))
         ));
-        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
+        assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(CIRCLE_BLOCK + ADD_BLOCK);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), Some(pool_id)));
+        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
             TicketType::Custom(CustomTicket::Sponsored(pool_id))
         ));
-        assert_eq!(Pool::sponsored_tickets(account_1.clone(), pool_id).unwrap().tickets, 100_u32);
+        assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 100_u32);
     })
 }
 

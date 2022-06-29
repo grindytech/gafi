@@ -41,6 +41,7 @@ pub enum CustomTicket {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum TicketLevel {
+	#[codec(index = 15)]
 	Basic,
 	Medium,
 	Advance,
@@ -76,17 +77,17 @@ impl TicketInfo {
 }
 
 pub trait PlayerTicket<AccountId> {
-    fn use_ticket(player: AccountId, target: Option<H160>) -> Option<TicketType>;
-    fn get_service(ticket: TicketType) -> Option<Service>;
+    fn use_ticket(player: AccountId, target: Option<H160>) -> Option<(TicketType, ID)>;
+    fn get_service(pool_id: ID) -> Option<Service>;
     fn get_targets(pool_id: ID) -> Vec<H160>;
 }
 
 impl<AccountId> PlayerTicket<AccountId> for () {
-    fn use_ticket(_player: AccountId, _target: Option<H160>) -> Option<TicketType> {
+    fn use_ticket(_player: AccountId, _target: Option<H160>) -> Option<(TicketType, ID)> {
         None
     }
 
-    fn get_service(_ticket: TicketType) -> Option<Service> {
+    fn get_service(_pool_id: ID) -> Option<Service> {
         None
     }
 

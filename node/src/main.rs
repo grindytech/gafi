@@ -1,14 +1,23 @@
-//! Substrate Node Template CLI library.
 #![warn(missing_docs)]
 
-mod chain_spec;
-#[macro_use]
-mod service;
-mod cli;
-mod command;
-mod command_helper;
-mod rpc;
-
 fn main() -> sc_cli::Result<()> {
-	command::run()
+
+	#[cfg(feature = "with-gari")]
+	return gafi_cli::command::run_gari();
+
+	#[cfg(feature = "with-gaki")]
+	return gafi_cli::command::run_gaki();
+	
+	#[cfg(feature = "with-dev")]
+	return gafi_local::command::run();
+
+	#[cfg(feature = "manual-seal")]
+	return gafi_local::command::run();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	return gafi_cli::command::run_gari();
+	
+	// // Devnet
+	// #[cfg(feature = "runtime-benchmarks")]
+	// return gafi_local::command::run();
 }

@@ -17,3 +17,5 @@ pub mod game_creator;
 pub mod system_services;
 
 pub mod custom_services;
+
+pub mod types;
