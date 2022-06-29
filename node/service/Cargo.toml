@@ -33,7 +33,7 @@ pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gaf
 pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
-frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
+frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
 pallet-transaction-payment-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sc-basic-authorship = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
@@ -108,7 +108,6 @@ runtime-benchmarks = [
   "polkadot-cli/runtime-benchmarks",
   "gari-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
-  "frame-benchmarking",
   "frame-benchmarking-cli",
 ]
 

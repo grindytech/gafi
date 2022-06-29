@@ -61,11 +61,11 @@ check-gari:
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release -p gafi-node --features runtime-benchmarks 
+	cargo check --release --features runtime-benchmarks 
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release -p gafi-node --features runtime-benchmarks
+	cargo build --release --features runtime-benchmarks
 
 .PHONY: clippy
 clippy:
@@ -91,7 +91,7 @@ benchmark_staking_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/staking_pool/weights.rs
+    --output ./benchmarking/staking-pool/weights.rs
 
 .PHONY: benchmark_upfront_pool
 benchmark_upfront_pool:
@@ -102,7 +102,7 @@ benchmark_upfront_pool:
     --extrinsic '*' \
      --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/upfront_pool/weights.rs
+    --output ./benchmarking/upfront-pool/weights.rs
 
 .PHONY: benchmark_sponsored_pool
 benchmark_sponsored_pool:

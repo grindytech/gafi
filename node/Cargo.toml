@@ -54,6 +54,11 @@ runtime-benchmarks = [
   "with-gari",
 ]
 
+# runtime-benchmarks = [
+#   "gafi-local/runtime-benchmarks",
+#   "aura",
+# ]
+
 with-dev = [
   "gafi-local/with-dev",
   "gafi-local/aura",

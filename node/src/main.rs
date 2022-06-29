@@ -16,4 +16,8 @@ fn main() -> sc_cli::Result<()> {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	return gafi_cli::command::run_gari();
+	
+	// // Devnet
+	// #[cfg(feature = "runtime-benchmarks")]
+	// return gafi_local::command::run();
 }
