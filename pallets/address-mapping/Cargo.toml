@@ -38,8 +38,8 @@ pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", g
 
 # Local
 gu-convertor = {default-features = false, version = "4.0.0-dev", path = "../../utils/convertor"}
-gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../utils/ethereum"}
 gu-currency = {default-features = false, version = "4.0.0-dev", path = "../../utils/currency"}
+gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../utils/ethereum"}
 
 [dev-dependencies]
 hex-literal = "0.2.1"
