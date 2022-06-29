@@ -3445,7 +3445,7 @@ dependencies = [
  "gafi-service",
  "sc-cli",
  "sc-consensus-aura",
- "sp-consensus-aura",
+ "sc-consensus-manual-seal",
  "substrate-build-script-utils",
 ]
 
