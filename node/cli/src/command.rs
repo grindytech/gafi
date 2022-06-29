@@ -19,8 +19,8 @@ use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
 
-use gafi_service::{new_partial, GafiRuntimeExecutor};
 use gafi_chain_spec::IdentifyVariant;
+use gafi_service::{new_partial, GafiRuntimeExecutor};
 
 use gafi_primitives::types::Block;
 
@@ -89,24 +89,21 @@ impl SubstrateCli for Cli {
     fn native_runtime_version(
         spec: &Box<dyn gafi_chain_spec::ChainSpec>,
     ) -> &'static RuntimeVersion {
-
         #[cfg(feature = "with-gaki")]
-		if spec.is_gaki() {
-			return &gafi_service::gaki_runtime::VERSION
-		}
+        if spec.is_gaki() {
+            return &gafi_service::gaki_runtime::VERSION;
+        }
 
-        #[cfg(not(all(
-			feature = "with-gaki",
-		)))]
-		let _ = spec;
+        #[cfg(not(all(feature = "with-gaki",)))]
+        let _ = spec;
 
-		#[cfg(feature = "with-gari")]
-		{
-			return &gafi_service::gari_runtime::VERSION
-		}
+        #[cfg(feature = "with-gari")]
+        {
+            return &gafi_service::gari_runtime::VERSION;
+        }
 
-		#[cfg(not(feature = "with-gari"))]
-		panic!("No runtime feature (gari, gaki) is enabled")
+        #[cfg(not(feature = "with-gari"))]
+        panic!("No runtime feature (gari, gaki) is enabled")
     }
 }
 

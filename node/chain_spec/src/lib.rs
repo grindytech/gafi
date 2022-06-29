@@ -8,6 +8,8 @@ use gari::*;
 pub mod gaki;
 use gaki::*;
 
+pub type TemplateChainSpec = sc_service::GenericChainSpec<(), Extensions>;
+
 /// Node `ChainSpec` extensions.
 ///
 /// Additional parameters for some Substrate core modules,
