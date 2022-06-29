@@ -330,7 +330,7 @@ pub mod pallet {
 					}
 					TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
 						// We can join multiple sponsored pools so we must check equal id.
-						if joined_pool_id != pool_id {
+						if joined_pool_id == pool_id {
 							is_joined = true;
 						}
 					}
@@ -373,9 +373,18 @@ pub mod pallet {
 
 		fn get_service(pool_id: ID) -> Option<Service> {
 			let mut service = None;
-			service = Some((T::UpfrontPool::get_service(pool_id)?).service);
-			service = Some((T::StakingPool::get_service(pool_id)?).service);
-			service = Some((T::SponsoredPool::get_service(pool_id)?).service);
+			let upfront_service = T::UpfrontPool::get_service(pool_id);
+			let staking_service = T::StakingPool::get_service(pool_id);
+			let sponsored_service = T::SponsoredPool::get_service(pool_id);
+			if upfront_service.is_some() {
+				service = Some(upfront_service.unwrap().service);
+			}
+			if staking_service.is_some() {
+				service = Some(staking_service.unwrap().service);
+			}
+			if sponsored_service.is_some() {
+				service = Some(sponsored_service.unwrap().service);
+			}
 
 			service
 		}
