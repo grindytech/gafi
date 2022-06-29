@@ -3426,6 +3426,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
  "sp-keyring",
  "sp-runtime",
  "sp-std",
@@ -12804,7 +12805,6 @@ dependencies = [
  "gu-convertor",
  "log",
  "pallet-balances",
- "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -12814,8 +12814,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
- "staking-pool",
 ]
 
 [[package]]

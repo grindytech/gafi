@@ -5,7 +5,7 @@ use devnet::{
 	WASM_BINARY,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
-use gafi_primitives::{system_services::SystemService, ticket::TicketLevel};
+use gafi_primitives::{system_services::SystemService, ticket::{TicketLevel, SystemTicket}};
 use sc_service::{ChainType, Properties};
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -17,6 +17,8 @@ use sp_runtime::{
 };
 use sp_std::*;
 use std::collections::BTreeMap;
+use codec::Encode;
+use sp_io::hashing::blake2_256;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -154,34 +156,35 @@ fn dev_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+
 	// Pool config
 	const MAX_PLAYER: u32 = 1000;
 	let upfront_services = [
 		(
-			TicketLevel::Basic,
-			SystemService::new(10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+			(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 		),
 		(
-			TicketLevel::Medium,
-			SystemService::new(10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+			(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 		),
 		(
-			TicketLevel::Advance,
-			SystemService::new(10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+			(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 		),
 	];
 	let staking_services = [
 		(
-			TicketLevel::Basic,
-			SystemService::new(10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+			(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 		),
 		(
-			TicketLevel::Medium,
-			SystemService::new(10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+			(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 		),
 		(
-			TicketLevel::Advance,
-			SystemService::new(10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+			(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+			SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 		),
 	];
 	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing

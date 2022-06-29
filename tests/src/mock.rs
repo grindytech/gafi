@@ -1,3 +1,4 @@
+use codec::Encode;
 use frame_support::{
 	dispatch::Vec,
 	traits::{ConstU32, OnFinalize, OnInitialize},
@@ -12,7 +13,8 @@ use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::ticket::TicketInfo;
 use gafi_primitives::{
 	system_services::SystemService,
-	ticket::{TicketLevel, TicketType},
+	ticket::{TicketLevel, TicketType, SystemTicket},
+	constant::ID
 };
 use gafi_tx::GafiEVMCurrencyAdapter;
 pub use pallet_balances::Call as BalancesCall;
@@ -20,6 +22,7 @@ use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::{H256, U256};
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -314,8 +317,8 @@ pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
 	pub max_player: u32,
 	pub time_service: u128,
-	pub upfront_services: [(TicketLevel, SystemService); 3],
-	pub staking_services: [(TicketLevel, SystemService); 3],
+	pub upfront_services: [(ID, SystemService); 3],
+	pub staking_services: [(ID, SystemService); 3],
 }
 
 impl Default for ExtBuilder {
@@ -326,30 +329,29 @@ impl Default for ExtBuilder {
 			time_service: TIME_SERVICE,
 			upfront_services: [
 				(
-					TicketLevel::Basic,
-					SystemService::new(100_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+					(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Basic, 100_u32, Permill::from_percent(30), 5 * unit(GAKI))
 				),
 				(
-					TicketLevel::Medium,
-					SystemService::new(100_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+					(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 7 * unit(GAKI))
 				),
 				(
-					TicketLevel::Advance,
-					SystemService::new(100_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+					(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 10 * unit(GAKI))
 				),
 			],
 			staking_services: [
 				(
-					TicketLevel::Basic,
-					SystemService::new(100_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+					(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Basic ,100_u32, Permill::from_percent(30), 1000 * unit(GAKI))
 				),
 				(
-					TicketLevel::Medium,
-					SystemService::new(100_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-				),
+					(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 1500 * unit(GAKI))),
 				(
-					TicketLevel::Advance,
-					SystemService::new(100_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+					(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+					SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 2000 * unit(GAKI))
 				),
 			],
 		}
