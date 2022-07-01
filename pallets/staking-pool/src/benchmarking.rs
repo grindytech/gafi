@@ -11,4 +11,7 @@ benchmarks! {
 	set_max_player {
 		let s in 0 .. 2;
 	}: _(RawOrigin::Root, s)
+
+
+	impl_benchmark_test_suite!(Pool, crate::mock::_new_test_ext(), crate::mock::Test);
 }

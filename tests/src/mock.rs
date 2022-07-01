@@ -12,7 +12,7 @@ use frame_system as system;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::ticket::TicketInfo;
 use gafi_primitives::{
-	system_services::SystemService,
+	system_services::{SystemService, SystemDefaultServices},
 	ticket::{TicketLevel, TicketType, SystemTicket},
 	constant::ID
 };
@@ -152,6 +152,27 @@ impl pallet_pool::Config for Test {
 	type Cache = PalletCache;
 }
 
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+			),
+		]
+	}
+}
+
 parameter_types! {
 	pub MaxPlayerStorage: u32 = 1000;
 }
@@ -162,12 +183,35 @@ impl upfront_pool::Config for Test {
 	type WeightInfo = ();
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
+	type UpfrontServices = UpfrontPoolDefaultServices;
+}
+
+pub struct StakingPoolDefaultServices {}
+
+impl SystemDefaultServices for StakingPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+			),
+		]
+	}
 }
 
 impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type StakingServices = StakingPoolDefaultServices;
 }
 
 parameter_types! {
@@ -317,8 +361,6 @@ pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
 	pub max_player: u32,
 	pub time_service: u128,
-	pub upfront_services: [(ID, SystemService); 3],
-	pub staking_services: [(ID, SystemService); 3],
 }
 
 impl Default for ExtBuilder {
@@ -327,33 +369,6 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			max_player: 1000,
 			time_service: TIME_SERVICE,
-			upfront_services: [
-				(
-					(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Basic, 100_u32, Permill::from_percent(30), 5 * unit(GAKI))
-				),
-				(
-					(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 7 * unit(GAKI))
-				),
-				(
-					(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 10 * unit(GAKI))
-				),
-			],
-			staking_services: [
-				(
-					(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Basic ,100_u32, Permill::from_percent(30), 1000 * unit(GAKI))
-				),
-				(
-					(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 1500 * unit(GAKI))),
-				(
-					(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-					SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 2000 * unit(GAKI))
-				),
-			],
 		}
 	}
 }
@@ -372,15 +387,12 @@ impl ExtBuilder {
 		GenesisBuild::<Test>::assimilate_storage(
 			&upfront_pool::GenesisConfig {
 				max_player: self.max_player,
-				services: self.upfront_services,
 			},
 			&mut storage,
 		)
 		.unwrap();
 		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig {
-				services: self.staking_services,
-			},
+			&staking_pool::GenesisConfig {},
 			&mut storage,
 		)
 		.unwrap();

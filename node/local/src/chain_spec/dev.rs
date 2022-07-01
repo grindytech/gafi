@@ -5,7 +5,6 @@ use devnet::{
 	WASM_BINARY,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
-use gafi_primitives::{system_services::SystemService, ticket::{TicketLevel, SystemTicket}};
 use sc_service::{ChainType, Properties};
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -13,12 +12,9 @@ use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Permill,
 };
 use sp_std::*;
 use std::collections::BTreeMap;
-use codec::Encode;
-use sp_io::hashing::blake2_256;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -159,34 +155,6 @@ fn dev_genesis(
 
 	// Pool config
 	const MAX_PLAYER: u32 = 1000;
-	let upfront_services = [
-		(
-			(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-		),
-		(
-			(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-		),
-		(
-			(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-		),
-	];
-	let staking_services = [
-		(
-			(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-		),
-		(
-			(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-		),
-		(
-			(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-			SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-		),
-	];
 	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
@@ -265,11 +233,8 @@ fn dev_genesis(
 		base_fee: Default::default(),
 		upfront_pool: UpfrontPoolConfig {
 			max_player: MAX_PLAYER,
-			services: upfront_services,
 		},
-		staking_pool: StakingPoolConfig {
-			services: staking_services,
-		},
+		staking_pool: StakingPoolConfig {},
 		faucet: FaucetConfig {
 			genesis_accounts: vec![
 				get_account_id_from_seed::<sr25519::Public>("Alice"),

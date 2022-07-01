@@ -36,6 +36,12 @@ use sp_core::H160;
 use sp_std::vec::Vec;
 use sp_io::hashing::blake2_256;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -376,6 +382,7 @@ pub mod pallet {
 			let upfront_service = T::UpfrontPool::get_service(pool_id);
 			let staking_service = T::StakingPool::get_service(pool_id);
 			let sponsored_service = T::SponsoredPool::get_service(pool_id);
+
 			if upfront_service.is_some() {
 				service = Some(upfront_service.unwrap().service);
 			}
