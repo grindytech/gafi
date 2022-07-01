@@ -30,14 +30,13 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
-	system_services::{SystemPool, SystemService},
+	system_services::{SystemPool, SystemService, SystemDefaultServices},
 	ticket::{Ticket, TicketLevel, TicketType, SystemTicket},
 	constant::ID
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use sp_runtime::Permill;
 use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
@@ -80,6 +79,8 @@ pub mod pallet {
 		/// Max number of player can join the Upfront Pool
 		#[pallet::constant]
 		type MaxPlayerStorage: Get<u32>;
+
+		type UpfrontServices: SystemDefaultServices;
 	}
 
 	/// on_finalize following by steps:
@@ -134,7 +135,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub max_player: u32,
-		pub services: [(ID, SystemService); 3],
 	}
 
 	#[cfg(feature = "std")]
@@ -142,20 +142,6 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				max_player: 1000,
-				services: [
-					(
-						(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Basic, 100_u32, Permill::from_percent(30), 1000000u128)
-					),
-					(
-						(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 1000000u128)
-					),
-					(
-						(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 1000000u128)
-					),
-				],
 			}
 		}
 	}
@@ -164,7 +150,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(self.max_player);
-			for service in self.services {
+			for service in <T as Config>::UpfrontServices::get_default_services() {
 				Services::<T>::insert(service.0, service.1);
 			}
 		}

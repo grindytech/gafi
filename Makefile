@@ -61,7 +61,7 @@ check-gari:
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks 
+	cargo check --release --features runtime-benchmarks
 
 .PHONY: benchmark
 benchmark:
@@ -89,7 +89,7 @@ benchmark_staking_pool:
     --wasm-execution compiled \
     --pallet staking_pool \
     --extrinsic '*' \
-     --steps 20 \
+    --steps 20 \
     --repeat 10 \
     --output ./benchmarking/staking-pool/weights.rs
 
@@ -100,7 +100,7 @@ benchmark_upfront_pool:
     --wasm-execution compiled \
     --pallet upfront_pool \
     --extrinsic '*' \
-     --steps 20 \
+    --steps 20 \
     --repeat 10 \
     --output ./benchmarking/upfront-pool/weights.rs
 
@@ -111,7 +111,7 @@ benchmark_sponsored_pool:
     --wasm-execution compiled \
     --pallet sponsored_pool \
     --extrinsic '*' \
-     --steps 20 \
+    --steps 20 \
     --repeat 10 \
     --output ./benchmarking/sponsored-pool/weights.rs
 
@@ -122,7 +122,7 @@ benchmark_faucet:
     --wasm-execution compiled \
     --pallet pallet_faucet \
     --extrinsic '*' \
-     --steps 20 \
+    --steps 20 \
     --repeat 10 \
     --output ./benchmarking/pallet-faucet/weights.rs
 
@@ -133,7 +133,7 @@ benchmark_game_creator:
     --wasm-execution compiled \
     --pallet game_creator \
     --extrinsic '*' \
-     --steps 20 \
+    --steps 20 \
     --repeat 10 \
     --output ./benchmarking/game-creator/weights.rs
 
