@@ -31,3 +31,7 @@ pub trait SystemPool<AccountId> {
 	fn leave(sender: AccountId, pool_id: ID) -> DispatchResult;
 	fn get_service(pool_id: ID) -> Option<SystemService>;
 }
+
+pub trait SystemDefaultServices {
+	fn get_default_services() -> [(ID, SystemService); 3];
+}

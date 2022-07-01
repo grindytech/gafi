@@ -4,6 +4,7 @@
 */
 
 use crate::{self as staking_pool};
+use codec::Encode;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -11,12 +12,20 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
+use gafi_primitives::{
+	ticket::{SystemTicket, TicketLevel},
+	constant::ID,
+	system_services::{SystemDefaultServices, SystemService},
+	currency::{unit, NativeToken::GAKI}
+};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
+	Permill
 };
+use sp_io::hashing::blake2_256;
 pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -105,10 +114,32 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+pub struct StakingPoolDefaultServices {}
+
+impl SystemDefaultServices for StakingPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+			),
+		]
+	}
+}
+
 impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type StakingServices = StakingPoolDefaultServices;
 }
 
 // Build genesis storage according to the mock runtime.

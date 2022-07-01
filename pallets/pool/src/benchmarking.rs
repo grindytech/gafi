@@ -49,8 +49,17 @@ benchmarks! {
 	leave {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		let pool_id =  match TICKETS[s as usize] {
+			TicketType::System(system_ticket) => {
+				system_ticket.using_encoded(blake2_256)
+			}
+			TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
+				joined_pool_id
+			}
+		};
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
 		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), TICKETS[s as usize]);
-	}: _(RawOrigin::Signed(caller), None)
+	}: _(RawOrigin::Signed(caller), pool_id)
 
+	impl_benchmark_test_suite!(Pool, crate::mock::new_test_ext(), crate::mock::Test);
 }

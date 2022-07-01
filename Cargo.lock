@@ -2038,6 +2038,7 @@ dependencies = [
  "sp-consensus-aura",
  "sp-core",
  "sp-inherents",
+ "sp-io",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -6905,7 +6906,10 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "log",
+ "pallet-balances",
  "pallet-cache",
+ "pallet-pool-names",
+ "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -6914,6 +6918,9 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sponsored-pool",
+ "staking-pool",
+ "upfront-pool",
 ]
 
 [[package]]

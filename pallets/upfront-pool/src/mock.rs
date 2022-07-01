@@ -4,6 +4,7 @@
 */
 
 use crate::{self as upfront_pool};
+use codec::Encode;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -11,19 +12,27 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
+use gafi_primitives::{
+	ticket::{SystemTicket, TicketLevel},
+	system_services::{SystemService, SystemDefaultServices},
+	currency::{unit, NativeToken::GAKI},
+	constant::ID
+};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32,
+	AccountId32, Permill,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const MAX_PLAYER: u32 = 1000;
-pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
+pub const TIME_SERVICE: u128 = 60 *
+ 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -107,6 +116,27 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+			),
+		]
+	}
+}
+
 parameter_types! {
 	pub MaxPlayerStorage: u32 = 1000;
 }
@@ -117,6 +147,7 @@ impl upfront_pool::Config for Test {
 	type WeightInfo = ();
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
+	type UpfrontServices = UpfrontPoolDefaultServices;
 }
 
 
