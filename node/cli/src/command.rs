@@ -19,8 +19,8 @@ use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
 
-use gafi_service::{new_partial, GafiRuntimeExecutor};
 use gafi_chain_spec::IdentifyVariant;
+use gafi_service::{new_partial, GafiRuntimeExecutor};
 
 use gafi_primitives::types::Block;
 
@@ -89,24 +89,21 @@ impl SubstrateCli for Cli {
     fn native_runtime_version(
         spec: &Box<dyn gafi_chain_spec::ChainSpec>,
     ) -> &'static RuntimeVersion {
-
         #[cfg(feature = "with-gaki")]
-		if spec.is_gaki() {
-			return &gafi_service::gaki_runtime::VERSION
-		}
+        if spec.is_gaki() {
+            return &gafi_service::gaki_runtime::VERSION;
+        }
 
-        #[cfg(not(all(
-			feature = "with-gaki",
-		)))]
-		let _ = spec;
+        #[cfg(not(all(feature = "with-gaki",)))]
+        let _ = spec;
 
-		#[cfg(feature = "with-gari")]
-		{
-			return &gafi_service::gari_runtime::VERSION
-		}
+        #[cfg(feature = "with-gari")]
+        {
+            return &gafi_service::gari_runtime::VERSION;
+        }
 
-		#[cfg(not(feature = "with-gari"))]
-		panic!("No runtime feature (gari, gaki) is enabled")
+        #[cfg(not(feature = "with-gari"))]
+        panic!("No runtime feature (gari, gaki) is enabled")
     }
 }
 
@@ -379,7 +376,7 @@ pub fn run_gari() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gari::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
@@ -654,7 +651,7 @@ pub fn run_gaki() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gaki::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
