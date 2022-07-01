@@ -376,7 +376,7 @@ pub fn run_gari() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gari::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
@@ -651,7 +651,7 @@ pub fn run_gaki() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gaki::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
