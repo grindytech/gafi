@@ -1,11 +1,16 @@
 use cumulus_primitives_core::ParaId;
-use gari_runtime::{AccountId, AuraId, EVMConfig, EthereumConfig, Signature, EXISTENTIAL_DEPOSIT};
+use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAFI, TokenInfo};
+use gari_runtime::{AccountId, EVMConfig, EthereumConfig, Signature, EXISTENTIAL_DEPOSIT};
+use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::collections::BTreeMap;
+use sp_core::crypto::UncheckedInto;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
@@ -59,6 +64,65 @@ where
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
 pub fn template_session_keys(keys: AuraId) -> gari_runtime::SessionKeys {
 	gari_runtime::SessionKeys { aura: keys }
+}
+
+pub fn rococo_config() -> ChainSpec {
+	// Give your base currency a unit name and decimal places
+	let mut props = sc_chain_spec::Properties::new();
+
+	let gafi = GafiCurrency::token_info(GAFI);
+	let symbol = json!(String::from_utf8(gafi.symbol).unwrap_or("GAFI".to_string()));
+	let name = json!(String::from_utf8(gafi.name).unwrap_or("Gafi Token".to_string()));
+	let decimals = json!(gafi.decimals);
+	props.insert("tokenSymbol".to_string(), symbol);
+	props.insert("tokenName".to_string(), name);
+	props.insert("tokenDecimals".to_string(), decimals);
+	let id: ParaId = 4012.into();
+
+	ChainSpec::from_genesis(
+		// Name
+		"Gari",
+		// ID
+		"gafi_rococo",
+		ChainType::Live,
+		move || {
+			testnet_genesis(
+				// initial collators.
+				vec![
+					(
+						//5FbfK2cdph7eM6YNmwyoNxq1hWhsCf8Gq4yet1yduexLCyTe
+						hex!("6e312c24b61893b64fbb04fd37b2cc6c1df62a4419f1327fbabad172182a395c")
+							.into(),
+						hex!("9c50bd296e31f84d7ff151faf176e8d4ff6894c8f55ad95fcbe69123aa9ded2d")
+							.unchecked_into(),
+					),
+					(
+						//5GRQ2cn1yjWg4KeC386X6kNHwLkQnxf1acushGeurqKnpUWb
+						hex!("0253d36985ec33de94eadc8657dc5ab9dbfa84e27d944660c8c758a1530d2462")
+							.into(),
+						hex!("c0b91242dac16a951f8ca60e9d0c3937f6a01012a4d299b05b07e047009cbc57")
+							.unchecked_into(),
+					),
+				],
+				vec![
+					//5FYu1DAUqRax7Pe8tQxQQccs1SyZNLn8oPaLgJo9RtaBge5o
+					hex!("9a3518c4346239d5384abd80659d358f23271e1049398dca23734203ab44b811").into(),
+					//5Gp4fsJUTCtKXfXwjsJvNevtJeZrKFGm3kvbrtWePqpCqtCZ
+					hex!("d2028d37ded894f5544d2c93efa810772e59f5340e169c54230d88ef1ef2ff1f").into(),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		None,
+		None,
+		None,
+		Extensions {
+			relay_chain: "rococo".into(), // You MUST set this to the correct network!
+			para_id: id.into(),
+		},
+	)
 }
 
 pub fn development_config() -> ChainSpec {
