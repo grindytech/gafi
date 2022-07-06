@@ -27,6 +27,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use sp_io::hashing::blake2_256;
 
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -71,7 +72,11 @@ use pallet_pool_names;
 use sponsored_pool;
 use staking_pool;
 use upfront_pool;
-use gafi_primitives::ticket::{TicketType, TicketInfo};
+use gafi_primitives::{
+	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
+	constant::ID,
+	system_services::{SystemService, SystemDefaultServices},
+};
 
 // Primitives
 use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
@@ -568,10 +573,32 @@ impl pallet_ethereum::Config for Runtime {
 
 // Local
 
+pub struct StakingPoolDefaultServices {}
+
+impl SystemDefaultServices for StakingPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+			),
+		]
+	}
+}
+
 impl staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
+	type StakingServices = StakingPoolDefaultServices;
 }
 
 parameter_types! {
@@ -598,6 +625,27 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;
 }
 
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
+			),
+			(
+				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
+			),
+		]
+	}
+}
+
 parameter_types! {
 	pub const MaxPlayerStorage: u32 = 10000;
 }
@@ -608,6 +656,7 @@ impl upfront_pool::Config for Runtime {
 	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
+	type UpfrontServices = UpfrontPoolDefaultServices;
 }
 
 // parameter_types! {
@@ -666,6 +715,7 @@ impl sponsored_pool::Config for Runtime {
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -677,6 +727,7 @@ impl pallet_pool::Config for Runtime {
 	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -21,19 +21,17 @@
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, ReservableCurrency},
-	transactional
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	ticket::{TicketLevel, Ticket, TicketType, SystemTicket},
-	system_services::{SystemPool, SystemService},
+	system_services::{SystemPool, SystemService, SystemDefaultServices},
 	constant::ID
 };
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use gu_convertor::{u128_try_to_balance};
-use sp_runtime::Permill;
-use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
 mod mock;
@@ -70,6 +68,8 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		type StakingServices: SystemDefaultServices;
 	}
 
 	//** Storage **//
@@ -92,37 +92,20 @@ pub mod pallet {
 	#[pallet::getter(fn services)]
 	pub type Services<T: Config> = StorageMap<_, Twox64Concat, ID, SystemService>;
 
-	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub services: [(ID, SystemService); 3],
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				services: [
-					(
-						(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Basic ,100_u32, Permill::from_percent(30), 100000u128)
-					),
-					(
-						(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Medium, 100_u32, Permill::from_percent(50), 100000u128)),
-					(
-						(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-						SystemService::new(TicketLevel::Advance, 100_u32, Permill::from_percent(70), 100000u128)
-					),
-				],
-			}
+			Self {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			for service in self.services {
+			for service in <T as Config>::StakingServices::get_default_services() {
 				Services::<T>::insert(service.0, service.1);
 			}
 		}

@@ -73,3 +73,7 @@ with-gaki = [
   "gafi-cli/with-gaki",
   "gafi-service/with-gaki",
 ]
+
+rococo-native = [
+	"gafi-service/rococo-native"
+]

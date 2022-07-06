@@ -36,6 +36,12 @@ use sp_core::H160;
 use sp_std::vec::Vec;
 use sp_io::hashing::blake2_256;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -67,6 +73,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxJoinedSponsoredPool: Get<u32>;
+
+		#[pallet::constant]
+		type TimeServiceStorage: Get<u128>;
 
 		/// Add Cache
 		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;
@@ -123,23 +132,19 @@ pub mod pallet {
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub time_service: u128,
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				time_service: 3_600_000u128,
-			}
+			Self {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<TimeService<T>>::put(self.time_service);
+			<TimeService<T>>::put(<T as Config>::TimeServiceStorage::get());
 			let _now: u128 = <timestamp::Pallet<T>>::get()
 				.try_into()
 				.ok()
@@ -376,6 +381,7 @@ pub mod pallet {
 			let upfront_service = T::UpfrontPool::get_service(pool_id);
 			let staking_service = T::StakingPool::get_service(pool_id);
 			let sponsored_service = T::SponsoredPool::get_service(pool_id);
+
 			if upfront_service.is_some() {
 				service = Some(upfront_service.unwrap().service);
 			}

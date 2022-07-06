@@ -19,8 +19,8 @@ use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use sp_runtime::AccountId32;
 use std::{io::Write, net::SocketAddr};
 
-use gafi_service::{new_partial, GafiRuntimeExecutor};
 use gafi_chain_spec::IdentifyVariant;
+use gafi_service::{new_partial, GafiRuntimeExecutor};
 
 use gafi_primitives::types::Block;
 
@@ -39,6 +39,9 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 
         #[cfg(feature = "with-gaki")]
         "template-rococo" => Box::new(gafi_chain_spec::gaki::local_testnet_config()),
+
+        #[cfg(feature = "with-gari")]
+        "rococo" => Box::new(gafi_chain_spec::gari::rococo_config()),
 
         // custome chain
         #[cfg(feature = "with-gari")]
@@ -89,24 +92,21 @@ impl SubstrateCli for Cli {
     fn native_runtime_version(
         spec: &Box<dyn gafi_chain_spec::ChainSpec>,
     ) -> &'static RuntimeVersion {
-
         #[cfg(feature = "with-gaki")]
-		if spec.is_gaki() {
-			return &gafi_service::gaki_runtime::VERSION
-		}
+        if spec.is_gaki() {
+            return &gafi_service::gaki_runtime::VERSION;
+        }
 
-        #[cfg(not(all(
-			feature = "with-gaki",
-		)))]
-		let _ = spec;
+        #[cfg(not(all(feature = "with-gaki",)))]
+        let _ = spec;
 
-		#[cfg(feature = "with-gari")]
-		{
-			return &gafi_service::gari_runtime::VERSION
-		}
+        #[cfg(feature = "with-gari")]
+        {
+            return &gafi_service::gari_runtime::VERSION;
+        }
 
-		#[cfg(not(feature = "with-gari"))]
-		panic!("No runtime feature (gari, gaki) is enabled")
+        #[cfg(not(feature = "with-gari"))]
+        panic!("No runtime feature (gari, gaki) is enabled")
     }
 }
 
@@ -316,6 +316,7 @@ pub fn run_gari() -> Result<()> {
 
             Ok(())
         }
+        Some(Subcommand::Key(cmd)) => cmd.run(&cli),
         #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -379,7 +380,7 @@ pub fn run_gari() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gari::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
@@ -591,6 +592,7 @@ pub fn run_gaki() -> Result<()> {
 
             Ok(())
         }
+        Some(Subcommand::Key(cmd)) => cmd.run(&cli),
         #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -654,7 +656,7 @@ pub fn run_gaki() -> Result<()> {
             let runner = cli.create_runner(&cli.run.normalize())?;
             let collator_options = cli.run.collator_options();
             runner.run_node_until_exit(|config| async move {
-                let para_id = gafi_chain_spec::Extensions::try_get(&*config.chain_spec)
+                let para_id = gafi_chain_spec::gaki::Extensions::try_get(&*config.chain_spec)
                     .map(|e| e.para_id)
                     .ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 

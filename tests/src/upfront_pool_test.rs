@@ -68,7 +68,7 @@ fn charge_join_pool_medium_work() {
 }
 
 #[test]
-fn charge_join_max_pool_work() {
+fn charge_join_advance_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)) );
 	})
