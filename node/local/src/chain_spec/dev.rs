@@ -1,7 +1,7 @@
 use devnet::{
 	AccountId, AuraConfig, BalancesConfig, CouncilConfig, EVMConfig, EthereumConfig, FaucetConfig,
 	GenesisConfig, GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig,
-	Signature, StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig, UpfrontPoolConfig,
+	Signature, StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig,
 	WASM_BINARY,
 };
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
@@ -153,9 +153,6 @@ fn dev_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 
-	// Pool config
-	const MAX_PLAYER: u32 = 1000;
-	const TIME_SERVICE: u128 = 10 * 60_000u128; // for testing
 	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
 	// pallet-faucet
@@ -231,9 +228,7 @@ fn dev_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		upfront_pool: UpfrontPoolConfig {
-			max_player: MAX_PLAYER,
-		},
+		upfront_pool: Default::default(),
 		staking_pool: StakingPoolConfig {},
 		faucet: FaucetConfig {
 			genesis_accounts: vec![
@@ -247,9 +242,7 @@ fn dev_genesis(
 		tx_handler: TxHandlerConfig {
 			gas_price: U256::from(min_gas_price),
 		},
-		pool: PoolConfig {
-			time_service: TIME_SERVICE,
-		},
+		pool: Default::default(),
 		pallet_cache: PalletCacheConfig {
 			phantom: Default::default(),
 			phantom_i: Default::default(),

@@ -144,6 +144,7 @@ impl pallet_cache::Config for Test {
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
 impl pallet_pool::Config for Test {
@@ -155,6 +156,7 @@ impl pallet_pool::Config for Test {
 	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 pub struct StakingPoolDefaultServices {}

@@ -133,23 +133,19 @@ pub mod pallet {
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub max_player: u32,
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				max_player: 1000,
-			}
+			Self {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<MaxPlayer<T>>::put(self.max_player);
+			<MaxPlayer<T>>::put(<T as Config>::MaxPlayerStorage::get());
 			for service in <T as Config>::UpfrontServices::get_default_services() {
 				Services::<T>::insert(service.0, service.1);
 			}

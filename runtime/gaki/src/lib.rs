@@ -715,6 +715,7 @@ impl sponsored_pool::Config for Runtime {
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -726,6 +727,7 @@ impl pallet_pool::Config for Runtime {
 	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

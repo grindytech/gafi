@@ -568,6 +568,7 @@ impl game_creator::Config for Runtime {
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
 impl pallet_pool::Config for Runtime {
@@ -579,6 +580,7 @@ impl pallet_pool::Config for Runtime {
 	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type SponsoredPool = SponsoredPool;
 	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 parameter_types! {

@@ -139,6 +139,7 @@ impl pallet_cache::Config for Test {
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5_u32;
+	pub TimeServiceStorage: u128 = TIME_SERVICE;
 }
 
 impl pallet_pool::Config for Test {
@@ -150,6 +151,7 @@ impl pallet_pool::Config for Test {
 	type SponsoredPool = SponsoredPool;
 	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
 	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 pub struct UpfrontPoolDefaultServices {}
@@ -359,16 +361,12 @@ pub fn run_to_block(n: u64) {
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId32, u128)>,
-	pub max_player: u32,
-	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
-			max_player: 1000,
-			time_service: TIME_SERVICE,
 		}
 	}
 }
@@ -385,9 +383,7 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage);
 
 		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig {
-				max_player: self.max_player,
-			},
+			&upfront_pool::GenesisConfig {},
 			&mut storage,
 		)
 		.unwrap();
@@ -397,9 +393,7 @@ impl ExtBuilder {
 		)
 		.unwrap();
 		GenesisBuild::<Test>::assimilate_storage(
-			&pallet_pool::GenesisConfig {
-				time_service: self.time_service,
-			},
+			&pallet_pool::GenesisConfig {},
 			&mut storage,
 		)
 		.unwrap();
