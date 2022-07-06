@@ -1,16 +1,19 @@
 use cumulus_primitives_core::ParaId;
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAFI, TokenInfo};
-use gari_runtime::{AccountId, EVMConfig, EthereumConfig, Signature, EXISTENTIAL_DEPOSIT};
+use gari_runtime::{
+	AccountId, EVMConfig, EthereumConfig, PoolConfig, Signature, UpfrontPoolConfig,
+	EXISTENTIAL_DEPOSIT,
+};
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::crypto::UncheckedInto;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::collections::BTreeMap;
-use sp_core::crypto::UncheckedInto;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
@@ -129,7 +132,7 @@ pub fn development_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "UNIT".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 16.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
@@ -184,7 +187,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "UNIT".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 16.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
@@ -220,7 +223,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000.into(),
+				2000.into(),
 			)
 		},
 		// Bootnodes
@@ -236,7 +239,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 1000,
+			para_id: 2000,
 		},
 	)
 }
@@ -246,6 +249,10 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
+	// Pool config
+	const MAX_PLAYER: u32 = 1000;
+	const TIME_SERVICE: u128 = 30 * 60_000u128;
+
 	gari_runtime::GenesisConfig {
 		system: gari_runtime::SystemConfig {
 			code: gari_runtime::WASM_BINARY
@@ -256,7 +263,7 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 60))
+				.map(|k| (k, 1 << 64))
 				.collect(),
 		},
 		parachain_info: gari_runtime::ParachainInfoConfig { parachain_id: id },
@@ -294,5 +301,11 @@ fn testnet_genesis(
 			},
 		},
 		ethereum: EthereumConfig {},
+		pool: PoolConfig {
+			time_service: TIME_SERVICE,
+		},
+		upfront_pool: UpfrontPoolConfig {
+			max_player: MAX_PLAYER,
+		},
 	}
 }

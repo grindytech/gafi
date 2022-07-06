@@ -769,8 +769,8 @@ construct_runtime!(
 
 		// Local
 		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
-		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>} = 60,
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>} = 61,
+		Pool: pallet_pool::{Pallet, Call, Storage, Config, Event<T>} = 60,
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Config, Event<T>} = 61,
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
 		// TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
