@@ -74,6 +74,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxJoinedSponsoredPool: Get<u32>;
 
+		#[pallet::constant]
+		type TimeServiceStorage: Get<u128>;
+
 		/// Add Cache
 		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;
 	}
@@ -129,23 +132,19 @@ pub mod pallet {
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub time_service: u128,
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				time_service: 3_600_000u128,
-			}
+			Self {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<TimeService<T>>::put(self.time_service);
+			<TimeService<T>>::put(<T as Config>::TimeServiceStorage::get());
 			let _now: u128 = <timestamp::Pallet<T>>::get()
 				.try_into()
 				.ok()

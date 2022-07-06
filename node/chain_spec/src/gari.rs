@@ -1,7 +1,7 @@
 use cumulus_primitives_core::ParaId;
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAFI, TokenInfo};
 use gari_runtime::{
-	AccountId, EVMConfig, EthereumConfig, PoolConfig, Signature, UpfrontPoolConfig,
+	AccountId, EVMConfig, EthereumConfig, Signature,
 	EXISTENTIAL_DEPOSIT,
 };
 use hex_literal::hex;
@@ -132,7 +132,7 @@ pub fn development_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "UNIT".into());
-	properties.insert("tokenDecimals".into(), 16.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
@@ -187,7 +187,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "UNIT".into());
-	properties.insert("tokenDecimals".into(), 16.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
@@ -249,9 +249,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
-	// Pool config
-	const MAX_PLAYER: u32 = 1000;
-	const TIME_SERVICE: u128 = 30 * 60_000u128;
 
 	gari_runtime::GenesisConfig {
 		system: gari_runtime::SystemConfig {
@@ -301,11 +298,7 @@ fn testnet_genesis(
 			},
 		},
 		ethereum: EthereumConfig {},
-		pool: PoolConfig {
-			time_service: TIME_SERVICE,
-		},
-		upfront_pool: UpfrontPoolConfig {
-			max_player: MAX_PLAYER,
-		},
+		pool: Default::default(),
+		upfront_pool: Default::default()
 	}
 }
