@@ -40,6 +40,9 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
         #[cfg(feature = "with-gaki")]
         "template-rococo" => Box::new(gafi_chain_spec::gaki::local_testnet_config()),
 
+        #[cfg(feature = "with-gari")]
+        "rococo" => Box::new(gafi_chain_spec::gari::rococo_config()),
+
         // custome chain
         #[cfg(feature = "with-gari")]
         path => Box::new(gafi_chain_spec::gari::ChainSpec::from_json_file(
@@ -313,6 +316,7 @@ pub fn run_gari() -> Result<()> {
 
             Ok(())
         }
+        Some(Subcommand::Key(cmd)) => cmd.run(&cli),
         #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -588,6 +592,7 @@ pub fn run_gaki() -> Result<()> {
 
             Ok(())
         }
+        Some(Subcommand::Key(cmd)) => cmd.run(&cli),
         #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
