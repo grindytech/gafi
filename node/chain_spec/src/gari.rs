@@ -80,7 +80,7 @@ pub fn rococo_config() -> ChainSpec {
 	props.insert("tokenSymbol".to_string(), symbol);
 	props.insert("tokenName".to_string(), name);
 	props.insert("tokenDecimals".to_string(), decimals);
-	let id: ParaId = 4012.into();
+	let id: ParaId = 4015.into();
 
 	ChainSpec::from_genesis(
 		// Name
