@@ -1,4 +1,4 @@
-use crate::{mock::*, Error};
+use crate::{mock::*, Error, Tickets};
 use frame_support::traits::Currency;
 use gafi_primitives::{currency::{unit, NativeToken::GAKI}, ticket::{TicketType,SystemTicket, TicketLevel}};
 use sp_runtime::{AccountId32};
@@ -24,5 +24,20 @@ fn join_staking_pool_works() {
 		Pool::join(Origin::signed(account.clone()), TicketType::System(SystemTicket::Staking(TicketLevel::Basic)));
 
         assert_eq!(Balances::free_balance(account), account_balance - 1000 * unit(GAKI));
+    })
+}
+
+#[test]
+fn leave_all_system_pool_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        run_to_block(1);
+        let account_balance = 1_000_000 * unit(GAKI);
+        let account = new_account([0_u8; 32], account_balance);
+		Pool::join(Origin::signed(account.clone()), TicketType::System(SystemTicket::Staking(TicketLevel::Basic)));
+    
+        Pool::leave_all(Origin::signed(account.clone()));
+
+        assert_eq!(Tickets::<Test>::iter_prefix_values(account.clone()).count(), 0);
+
     })
 }
