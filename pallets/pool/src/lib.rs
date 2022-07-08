@@ -22,7 +22,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	custom_services::CustomPool,
-	pool::{MasterPool, Service},
+	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
 	ticket::TicketInfo,
 	ticket::{CustomTicket, PlayerTicket, SystemTicket, TicketType},
@@ -165,6 +165,10 @@ pub mod pallet {
 			sender: T::AccountId,
 			ticket: TicketType,
 		},
+		LeavedAll {
+			sender: T::AccountId,
+			pool_type: PoolType,
+		},
 	}
 
 	#[pallet::error]
@@ -241,10 +245,10 @@ pub mod pallet {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
 					TicketType::System(SystemTicket::Upfront(_)) => {
-						T::UpfrontPool::leave(sender.clone(), pool_id)?
+						T::UpfrontPool::leave(sender.clone())?
 					}
 					TicketType::System(SystemTicket::Staking(_)) => {
-						T::StakingPool::leave(sender.clone(), pool_id)?
+						T::StakingPool::leave(sender.clone())?
 					}
 					TicketType::Custom(CustomTicket::Sponsored(_)) => {
 						T::SponsoredPool::leave(sender.clone())?
@@ -267,10 +271,23 @@ pub mod pallet {
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let joined_pools = Tickets::<T>::iter_prefix_values(sender.clone());
-
-			Tickets::<T>::remove_prefix(sender.clone(), None);
-
+			if let Ok(_) = T::UpfrontPool::leave(sender.clone()) {
+				Self::deposit_event(Event::LeavedAll {
+					sender: sender.clone(),
+					pool_type: PoolType::Upfront,
+				});
+			} else if let Ok(_) = T::StakingPool::leave(sender.clone()) {
+				Self::deposit_event(Event::LeavedAll {
+					sender: sender.clone(),
+					pool_type: PoolType::Staking,
+				});
+			} else if let Ok(_) = T::SponsoredPool::leave(sender.clone()) {
+				Self::deposit_event(Event::LeavedAll {
+					sender: sender.clone(),
+					pool_type: PoolType::Sponsored,
+				});
+			}
+			Tickets::<T>::remove_prefix(sender, None);
 			Ok(())
 		}
 	}
