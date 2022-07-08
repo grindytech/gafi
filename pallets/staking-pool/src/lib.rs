@@ -1,4 +1,3 @@
-
 // This file is part of Gafi Network.
 
 // Copyright (C) 2021-2022 CryptoViet.
@@ -25,13 +24,13 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	ticket::{TicketLevel, Ticket, TicketType, SystemTicket},
-	system_services::{SystemPool, SystemService, SystemDefaultServices},
-	constant::ID
+	constant::ID,
+	system_services::{Convertor, SystemDefaultServices, SystemPool, SystemService},
+	ticket::{SystemTicket, Ticket, TicketLevel, TicketType},
 };
+use gu_convertor::u128_try_to_balance;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use gu_convertor::{u128_try_to_balance};
 
 #[cfg(test)]
 mod mock;
@@ -48,7 +47,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{dispatch::DispatchResult};
+	use frame_support::dispatch::DispatchResult;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -114,7 +113,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		StakingNewMaxPlayer { new_max_player: u32 }
+		StakingNewMaxPlayer { new_max_player: u32 },
 	}
 
 	#[pallet::error]
@@ -138,11 +137,15 @@ pub mod pallet {
 		#[transactional]
 		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
 			let service = Self::get_pool_by_id(pool_id)?;
-			let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
+			let staking_amount = u128_try_to_balance::<
+				<T as pallet::Config>::Currency,
+				T::AccountId,
+			>(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
-			let new_player_count =
-				Self::player_count().checked_add(1).ok_or(<Error<T>>::StakeCountOverflow)?;
+			let new_player_count = Self::player_count()
+				.checked_add(1)
+				.ok_or(<Error<T>>::StakeCountOverflow)?;
 
 			Self::stake_pool(sender, pool_id, new_player_count);
 			Ok(())
@@ -154,18 +157,25 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn leave(sender: T::AccountId, pool_id: ID) -> DispatchResult {
-			if let Some(level) = Self::get_player_level(sender.clone()) {
-				let new_player_count =
-					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
-				let service = Self::get_pool_by_id(pool_id)?;
-				let staking_amount = u128_try_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(service.value)?;
-				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
-				Self::unstake_pool(sender, new_player_count);
-				Ok(())
-			} else {
-				Err(Error::<T>::PlayerNotStake.into())
+		fn leave(sender: T::AccountId) -> DispatchResult {
+			if let Some(ticket) = Tickets::<T>::get(&sender) {
+				let new_player_count = Self::player_count()
+					.checked_sub(1)
+					.ok_or(<Error<T>>::StakeCountOverflow)?;
+
+				if let TicketType::System(system_ticket) = ticket.ticket_type {
+					let pool_id = Convertor::into_id(system_ticket);
+					let service = Self::get_pool_by_id(pool_id)?;
+					let staking_amount = u128_try_to_balance::<
+						<T as pallet::Config>::Currency,
+						T::AccountId,
+					>(service.value)?;
+					<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
+					Self::unstake_pool(sender, new_player_count);
+					return Ok(());
+				}
 			}
+			return Err(Error::<T>::PlayerNotStake.into());
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
@@ -174,7 +184,7 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl <T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> {
 		/// Set MaxPlayer
 		///
 		/// The root must be Signed
@@ -191,14 +201,17 @@ pub mod pallet {
 		pub fn set_max_player(origin: OriginFor<T>, new_max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			MaxPlayer::<T>::put(new_max_player);
-			Self::deposit_event(Event::<T>::StakingNewMaxPlayer{new_max_player});
+			Self::deposit_event(Event::<T>::StakingNewMaxPlayer { new_max_player });
 			Ok(())
 		}
 	}
 
-
 	impl<T: Config> Pallet<T> {
-		fn stake_pool(sender: T::AccountId, pool_id: ID, new_player_count: u32) -> Result<(), Error<T>> {
+		fn stake_pool(
+			sender: T::AccountId,
+			pool_id: ID,
+			new_player_count: u32,
+		) -> Result<(), Error<T>> {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 			let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 			<PlayerCount<T>>::put(new_player_count);
@@ -228,7 +241,7 @@ pub mod pallet {
 					} else {
 						None
 					}
-				},
+				}
 				None => None,
 			}
 		}
