@@ -266,6 +266,13 @@ pub mod pallet {
 			}
 		}
 
+		/// Leave Pool
+		/// 
+		/// Leave all the pools that player joined
+		/// 
+		/// The origin must be Signed
+		/// 
+		/// Weight: `O(1)`
 		#[pallet::weight(0)]
 		#[transactional]
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
