@@ -10,6 +10,9 @@ use sp_runtime::{AccountId32, Permill};
 use sponsored_pool::{PoolOwned, Pools};
 use std::str::FromStr;
 
+#[cfg(feature = "runtime-benchmarks")]
+use sponsored_pool::CustomPool;
+
 fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
 }
@@ -139,6 +142,25 @@ fn leave_all_custom_pool_works() {
 
         assert_ok!(Pool::leave_all(Origin::signed(account2.clone())));
         assert_eq!(PoolOwned::<Test>::get(account2.clone()), [].to_vec());
-        assert_eq!(Tickets::<Test>::iter_prefix_values(account2.clone()).count(), 0);
+        assert_eq!(
+            Tickets::<Test>::iter_prefix_values(account2.clone()).count(),
+            0
+        );
+    })
+}
+
+#[test]
+#[cfg(feature = "runtime-benchmarks")]
+fn get_ticket_service_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        let account_balance = 1_000_000 * unit(GAKI);
+        let account = new_account([0_u8; 32], account_balance);
+        let id = [1; 32];
+
+        SponsoredPool::add_default(account.clone(), id);
+        let service = Pool::get_ticket_service(id).unwrap();
+
+        assert_eq!(service.tx_limit, 0);
+        assert_eq!(service.discount, Permill::from_percent(0));
     })
 }

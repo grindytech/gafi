@@ -267,13 +267,13 @@ pub mod pallet {
 		}
 
 		/// Leave Pool
-		/// 
+		///
 		/// Leave all the pools that player joined
-		/// 
+		///
 		/// The origin must be Signed
-		/// 
+		///
 		/// Weight: `O(1)`
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_all(50u32))]
 		#[transactional]
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -353,7 +353,7 @@ pub mod pallet {
 			});
 		}
 
-		fn get_ticket_service(pool_id: ID) -> Result<Service, Error<T>> {
+		pub(crate) fn get_ticket_service(pool_id: ID) -> Result<Service, Error<T>> {
 			match Self::get_service(pool_id) {
 				Some(service) => Ok(service),
 				None => Err(<Error<T>>::TicketNotFound),
@@ -417,22 +417,21 @@ pub mod pallet {
 		}
 
 		fn get_service(pool_id: ID) -> Option<Service> {
-			let mut service = None;
 			let upfront_service = T::UpfrontPool::get_service(pool_id);
 			let staking_service = T::StakingPool::get_service(pool_id);
 			let sponsored_service = T::SponsoredPool::get_service(pool_id);
 
 			if upfront_service.is_some() {
-				service = Some(upfront_service.unwrap().service);
+				return Some(upfront_service.unwrap().service);
 			}
 			if staking_service.is_some() {
-				service = Some(staking_service.unwrap().service);
+				return Some(staking_service.unwrap().service);
 			}
 			if sponsored_service.is_some() {
-				service = Some(sponsored_service.unwrap().service);
+				return Some(sponsored_service.unwrap().service);
 			}
 
-			service
+			return None;
 		}
 
 		fn get_targets(pool_id: ID) -> Vec<H160> {

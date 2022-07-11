@@ -61,11 +61,11 @@ check-gari:
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks
+	cargo check --release --features runtime-benchmarks,with-dev
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks
+	cargo build --release --features runtime-benchmarks,with-dev
 
 .PHONY: clippy
 clippy:
