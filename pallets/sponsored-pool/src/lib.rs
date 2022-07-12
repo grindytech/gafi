@@ -46,7 +46,7 @@ use sp_std::vec::Vec;
 #[derive(
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-struct SponsoredPool<AccountId> {
+pub struct SponsoredPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
@@ -132,12 +132,12 @@ pub mod pallet {
 
 	/// Holding the all the pool data
 	#[pallet::storage]
-	pub(super) type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
+	pub type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
 
 	/// Holding the pool owned
 	#[pallet::storage]
 	#[pallet::getter(fn pool_owned)]
-	pub(super) type PoolOwned<T: Config> =
+	pub type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
 
 	/// Holding the contract addresses
