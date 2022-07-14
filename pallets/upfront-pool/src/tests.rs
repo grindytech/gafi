@@ -132,7 +132,8 @@ fn new_player_leave_pool_should_work() {
 		let alice = new_account(1_000_000 * unit(GAKI));
 		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
 		run_to_block(2);
-		assert_ok!(UpfrontPool::leave(alice, UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::leave(alice.clone()));
+		assert_eq!(Tickets::<Test>::get(alice.clone()), None);
 	})
 }
 

@@ -1,10 +1,11 @@
 use crate::constant::ID;
-use crate::{pool::Service, ticket::TicketLevel};
+use crate::{pool::Service, ticket::{TicketLevel, SystemTicket}};
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{RuntimeDebug, Permill};
+use sp_io::hashing::blake2_256;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
@@ -28,10 +29,18 @@ impl SystemService {
 
 pub trait SystemPool<AccountId> {
 	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
-	fn leave(sender: AccountId, pool_id: ID) -> DispatchResult;
+	fn leave(sender: AccountId) -> DispatchResult;
 	fn get_service(pool_id: ID) -> Option<SystemService>;
 }
 
 pub trait SystemDefaultServices {
 	fn get_default_services() -> [(ID, SystemService); 3];
+}
+
+pub struct Convertor;
+
+impl Convertor {
+	pub fn into_id(ticket: SystemTicket) -> ID {
+		ticket.using_encoded(blake2_256)
+	}
 }

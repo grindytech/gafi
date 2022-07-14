@@ -1,8 +1,5 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
 use std::{
 	collections::BTreeMap,
 	path::PathBuf,
@@ -61,7 +58,7 @@ pub type FullClient =
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-#[cfg(feature = "aura")]
+#[cfg(all(feature = "aura", not(feature = "manual-seal")))]
 pub type ConsensusResult = (
 	FrontierBlockImport<
 		Block,
@@ -165,7 +162,7 @@ pub fn new_partial(
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let fee_history_cache_limit: FeeHistoryCacheLimit = cli.run.fee_history_limit;
 
-	#[cfg(feature = "aura")]
+	#[cfg(all(feature = "aura", not(feature = "manual-seal")))]
 	{
 		use sc_client_api::ExecutorProvider;
 		use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
@@ -269,7 +266,7 @@ fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
 }
 
 /// Builds a new service for a full client.
-#[cfg(feature = "aura")]
+#[cfg(all(feature = "aura", not(feature = "manual-seal")))]
 pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
 	use sc_client_api::{BlockBackend, ExecutorProvider};
 	use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;

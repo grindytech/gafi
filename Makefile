@@ -4,7 +4,7 @@ build:
 
 .PHONY: build-test
 build-test:
-	cargo build --release --no-default-features -p gafi-node --features manual-seal,rpc_binary_search_estimate
+	cargo build --release --features manual-seal,rpc_binary_search_estimate
 
 .PHONY: build-dev
 build-dev:
@@ -61,11 +61,11 @@ check-gari:
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks
+	cargo check --release --features runtime-benchmarks,with-dev
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks
+	cargo build --release --features runtime-benchmarks,with-dev
 
 .PHONY: clippy
 clippy:

@@ -30,9 +30,9 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
-	system_services::{SystemPool, SystemService, SystemDefaultServices},
-	ticket::{Ticket, TicketLevel, TicketType, SystemTicket},
-	constant::ID
+	constant::ID,
+	system_services::{SystemDefaultServices, SystemPool, SystemService, Convertor},
+	ticket::{SystemTicket, Ticket, TicketLevel, TicketType},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
@@ -219,9 +219,11 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn leave(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
-				if let Some(level) = Self::get_player_level(sender.clone()) {
+				if let TicketType::System(system_ticket) = ticket.ticket_type {
+					let pool_id = Convertor::into_id(system_ticket);
+
 					let join_time = ticket.join_time;
 					let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
@@ -252,11 +254,10 @@ pub mod pallet {
 						.checked_sub(1)
 						.ok_or(<Error<T>>::PlayerCountOverflow)?;
 					Self::remove_player(&sender, pool_id, new_player_count);
+					return Ok(());
 				}
-				Ok(())
-			} else {
-				Err(Error::<T>::PlayerNotFound.into())
 			}
+			return Err(Error::<T>::PlayerNotFound.into());
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
@@ -359,7 +360,11 @@ impl<T: Config> Pallet<T> {
 						let new_player_count = Self::player_count()
 							.checked_sub(1)
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
-						let _ = Self::remove_player(&player, (SystemTicket::Upfront(service.ticket_level)).using_encoded(blake2_256), new_player_count);
+						let _ = Self::remove_player(
+							&player,
+							(SystemTicket::Upfront(service.ticket_level)).using_encoded(blake2_256),
+							new_player_count,
+						);
 					}
 				};
 			}
