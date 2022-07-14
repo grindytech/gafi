@@ -69,6 +69,7 @@ fn leave_pool_should_work() {
 		let alice = new_account(1_000_000 * unit(GAKI));
 		assert_ok!(StakingPool::join(alice.clone(), STAKING_BASIC_ID));
 		run_to_block(2);
-		assert_ok!(StakingPool::leave(alice, STAKING_BASIC_ID));
+		assert_ok!(StakingPool::leave(alice.clone()));
+		assert_eq!(Tickets::<Test>::get(alice.clone()), None);
 	})
 }

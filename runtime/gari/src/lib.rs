@@ -42,12 +42,12 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+pub use frame_support::traits::EqualPrivilegeOnly;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{H160, H256, U256};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-
 // Runtime common
 use runtime_common::impls::DealWithFees;
 
@@ -540,6 +540,25 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = 10_000_000;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = ();
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type PreimageProvider = ();
+	type NoPreimagePostponement = ();
+   }
+
 // Frontier
 
 parameter_types! {
@@ -744,7 +763,8 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 4,
+		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>} = 5,
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,

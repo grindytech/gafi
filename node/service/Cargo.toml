@@ -101,7 +101,7 @@ gafi-rpc = {path = "../rpc", default-features = false}
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
 [features]
-default = ["with-gari", "with-gaki", "rococo-native"]
+default = ["with-gari", "rococo-native"]
 std = []
 
 runtime-benchmarks = [

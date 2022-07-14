@@ -49,15 +49,15 @@ manual-seal = [
   "gafi-local/manual-seal",
 ]
 rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = [
-  "gafi-cli/runtime-benchmarks",
-  "with-gari",
-]
-
 # runtime-benchmarks = [
-#   "gafi-local/runtime-benchmarks",
-#   "aura",
+#   "gafi-cli/runtime-benchmarks",
+#   "with-gari",
 # ]
+
+runtime-benchmarks = [
+  "gafi-local/runtime-benchmarks",
+  "aura",
+]
 
 with-dev = [
   "gafi-local/with-dev",
