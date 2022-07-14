@@ -1,8 +1,5 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
 use std::{
 	collections::BTreeMap,
 	path::PathBuf,
