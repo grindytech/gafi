@@ -98,7 +98,7 @@ substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/pari
 
 [features]
 aura = []
-default = ["std", "aura"]
+default = ["std"]
 manual-seal = []
 with-dev = []
 runtime-benchmarks = [

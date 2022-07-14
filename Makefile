@@ -4,7 +4,7 @@ build:
 
 .PHONY: build-test
 build-test:
-	cargo build --release --no-default-features -p gafi-node --features manual-seal,rpc_binary_search_estimate
+	cargo build --release --no-default-features --features manual-seal,rpc_binary_search_estimate
 
 .PHONY: build-dev
 build-dev:

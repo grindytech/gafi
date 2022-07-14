@@ -57,6 +57,7 @@ impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
 
 		#[cfg(feature = "with-gaki")]
 		return gaki_runtime::api::dispatch(method, data);
+
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
