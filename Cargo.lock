@@ -3766,6 +3766,7 @@ dependencies = [
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-faucet",
+ "pallet-hotfix-sufficients",
  "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
