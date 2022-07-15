@@ -109,9 +109,15 @@ pub fn rococo_config() -> ChainSpec {
 				],
 				vec![
 					//5FYu1DAUqRax7Pe8tQxQQccs1SyZNLn8oPaLgJo9RtaBge5o
-					hex!("9a3518c4346239d5384abd80659d358f23271e1049398dca23734203ab44b811").into(),
+					(
+						hex!("9a3518c4346239d5384abd80659d358f23271e1049398dca23734203ab44b811").into(),
+						500_000_000_000_000_000_000_000_000_u128
+					),
 					//5Gp4fsJUTCtKXfXwjsJvNevtJeZrKFGm3kvbrtWePqpCqtCZ
-					hex!("d2028d37ded894f5544d2c93efa810772e59f5340e169c54230d88ef1ef2ff1f").into(),
+					(
+						hex!("d2028d37ded894f5544d2c93efa810772e59f5340e169c54230d88ef1ef2ff1f").into(),
+						500_000_000_000_000_000_000_000_000_u128
+					)
 				],
 				id,
 			)
@@ -155,18 +161,60 @@ pub fn development_config() -> ChainSpec {
 					),
 				],
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Dave"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Eve"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
 				],
 				1000.into(),
 			)
@@ -210,18 +258,60 @@ pub fn local_testnet_config() -> ChainSpec {
 					),
 				],
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Dave"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Eve"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						
+						500_000_000_000_000_000_000_000_000_u128
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						500_000_000_000_000_000_000_000_000_u128
+					),
 				],
 				2000.into(),
 			)
@@ -246,7 +336,7 @@ pub fn local_testnet_config() -> ChainSpec {
 
 fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
-	endowed_accounts: Vec<AccountId>,
+	endowed_accounts: Vec<(AccountId, u128)>,
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
 
@@ -260,7 +350,7 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 64))
+				.map(|k| (k.0, k.1))
 				.collect(),
 		},
 		parachain_info: gari_runtime::ParachainInfoConfig { parachain_id: id },
