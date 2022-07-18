@@ -564,7 +564,6 @@ impl pallet_scheduler::Config for Runtime {
    }
 
 // Frontier
-
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
@@ -572,12 +571,12 @@ parameter_types! {
 }
 
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = ();
-	type GasWeightMapping = ();
+	type FeeCalculator = TxHandler;
+	type GasWeightMapping = GafiGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressRoot<AccountId>;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -585,7 +584,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
@@ -595,7 +594,6 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 // Local
-
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
@@ -682,19 +680,19 @@ impl upfront_pool::Config for Runtime {
 	type UpfrontServices = UpfrontPoolDefaultServices;
 }
 
-// parameter_types! {
-// 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
-// }
+parameter_types! {
+	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
+}
 
-// impl gafi_tx::Config for Runtime {
-// 	type Event = Event;
-// 	type Currency = Balances;
-// 	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, DealWithFees<Runtime>>;
-// 	type AddressMapping = ProofAddressMapping;
-// 	type PlayerTicket = Pool;
-// 	type GameCreatorReward = GameCreatorReward;
-// 	type GetGameCreator = GameCreator;
-// }
+impl gafi_tx::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
+	type AddressMapping = ProofAddressMapping;
+	type PlayerTicket = Pool;
+	type GameCreatorReward = GameCreatorReward;
+	type GetGameCreator = ();
+}
 
 parameter_types! {
 	pub ReservationFee:u128 = 1 * unit(GAFI);
@@ -798,7 +796,7 @@ construct_runtime!(
 		Pool: pallet_pool::{Pallet, Call, Storage, Config, Event<T>} = 60,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Config, Event<T>} = 61,
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
-		// TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
+		TxHandler: gafi_tx::{Pallet, Call, Storage, Config, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
 		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
