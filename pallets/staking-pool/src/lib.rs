@@ -181,6 +181,10 @@ pub mod pallet {
 		fn get_service(pool_id: ID) -> Option<SystemService> {
 			Services::<T>::get(pool_id)
 		}
+
+		fn get_ticket(sender: T::AccountId) -> Option<Ticket<T::AccountId>> {
+			Tickets::<T>::get(sender.clone())
+		}
 	}
 
 	#[pallet::call]

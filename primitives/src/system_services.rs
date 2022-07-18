@@ -1,4 +1,5 @@
 use crate::constant::ID;
+use crate::ticket::Ticket;
 use crate::{pool::Service, ticket::{TicketLevel, SystemTicket}};
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
@@ -31,6 +32,7 @@ pub trait SystemPool<AccountId> {
 	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
 	fn leave(sender: AccountId) -> DispatchResult;
 	fn get_service(pool_id: ID) -> Option<SystemService>;
+	fn get_ticket(sender: AccountId) -> Option<Ticket<AccountId>>;
 }
 
 pub trait SystemDefaultServices {

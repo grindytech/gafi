@@ -81,6 +81,9 @@ substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", b
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 
+pallet-player = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player" }
+pallet-player-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api" }
+
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
 gafi-primitives = {path = "../../primitives", default-features = false}

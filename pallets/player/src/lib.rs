@@ -1,8 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet::*;
-pub mod player;
+use frame_support::{
+	pallet_prelude::*,
+	traits::{Currency, Randomness},
+};
+use frame_system::pallet_prelude::*;
+use codec::{Encode};
+use gafi_primitives::constant::ID;
+use sp_io::hashing::blake2_256;
+use pallet_timestamp::{self as timestamp};
+use crate::player::Player;
 
+pub use pallet::*;
+mod player;
 #[cfg(test)]
 mod mock;
 
@@ -11,16 +21,9 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{Currency, Randomness},
-	};
-	use frame_system::pallet_prelude::*;
-	use codec::{Encode};
-	use sp_io::hashing::blake2_256;
-	use crate::player::Player;
+	use gafi_primitives::{system_services::SystemPool, players::PlayersTime};
 
-	pub type ID = [u8; 32];
+use super::*;
 	pub type NAME = [u8; 16];
 
 	#[pallet::pallet]
@@ -29,13 +32,15 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + timestamp::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type Currency: Currency<Self::AccountId>;
 
 		type GameRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+
+		type UpfrontPool: SystemPool<Self::AccountId>;
 	}
 
 	// Errors.
@@ -59,6 +64,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn player_owned)]
 	pub type PlayerOwned<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_time_joined_upfront)]
+	pub type TotalTimeJoinedUpfront<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, u128>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -87,6 +96,36 @@ pub mod pallet {
 			<Players<T>>::insert(id, player);
 			<PlayerOwned<T>>::insert(sender, id);
 			Ok(id)
+		}
+
+		pub fn get_total_time_joined_upfront(player: T::AccountId) -> u128 {
+			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player.clone()).unwrap_or(0u128);
+
+			if let Some(ticket) = T::UpfrontPool::get_ticket(player.clone()) {
+				let join_time = ticket.join_time;
+				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+
+				return now.saturating_sub(join_time).saturating_add(current_joined_time);
+			}
+
+			current_joined_time
+		}
+
+		fn moment_to_u128(input: T::Moment) -> u128 {
+			sp_runtime::SaturatedConversion::saturated_into(input)
+		}
+
+	}
+
+	impl<T: Config> PlayersTime<T::AccountId> for Pallet<T> {
+		fn add_time_joined_upfront(player: T::AccountId, time: u128) {
+			let mut add_time = time;
+
+			if let Some(current_joined_time) = TotalTimeJoinedUpfront::<T>::get(player.clone()) {
+				add_time = current_joined_time.saturating_add(add_time);
+			}
+
+			TotalTimeJoinedUpfront::<T>::insert(player, add_time);
 		}
 	}
 }

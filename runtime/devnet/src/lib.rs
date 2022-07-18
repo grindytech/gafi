@@ -399,6 +399,7 @@ impl pallet_player::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type UpfrontPool = UpfrontPool;
 }
 
 parameter_types! {
@@ -433,6 +434,7 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Player;
 }
 
 pub struct StakingPoolDefaultServices {}
@@ -1204,6 +1206,12 @@ impl_runtime_apis! {
 
 		fn elasticity() -> Option<Permill> {
 			Some(BaseFee::elasticity())
+		}
+	}
+
+	impl pallet_player_rpc_runtime_api::PlayerRuntimeRPCApi<Block, AccountId> for Runtime {
+		fn get_total_time_joined_upfront(player: AccountId) -> u128 {
+			Player::get_total_time_joined_upfront(player)
 		}
 	}
 
