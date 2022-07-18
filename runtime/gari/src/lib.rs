@@ -453,6 +453,13 @@ impl parachain_info::Config for Runtime {}
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
+impl pallet_player::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+	type UpfrontPool = UpfrontPool;
+}
+
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
@@ -676,6 +683,7 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Player;
 }
 
 // parameter_types! {
@@ -798,6 +806,7 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
 		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
+		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68
 	}
 );
 
