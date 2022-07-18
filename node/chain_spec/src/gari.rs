@@ -2,7 +2,7 @@ use cumulus_primitives_core::ParaId;
 use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAFI, TokenInfo};
 use gari_runtime::{
 	AccountId, EVMConfig, EthereumConfig, Signature,
-	EXISTENTIAL_DEPOSIT,
+	EXISTENTIAL_DEPOSIT, TxHandlerConfig
 };
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
@@ -14,6 +14,7 @@ use sp_core::crypto::UncheckedInto;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::collections::BTreeMap;
+use sp_core::U256;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
@@ -340,6 +341,8 @@ fn testnet_genesis(
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
 
+	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
+
 	gari_runtime::GenesisConfig {
 		system: gari_runtime::SystemConfig {
 			code: gari_runtime::WASM_BINARY
@@ -388,6 +391,9 @@ fn testnet_genesis(
 			},
 		},
 		ethereum: EthereumConfig {},
+		tx_handler: TxHandlerConfig {
+			gas_price: U256::from(min_gas_price),
+		},
 		pool: Default::default(),
 		upfront_pool: Default::default()
 	}
