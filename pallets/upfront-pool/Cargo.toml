@@ -41,6 +41,7 @@ pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+pallet-player = { version = "4.0.0-dev", default-features = false, path = "../player" }
 
 [features]
 default = ["std"]
@@ -59,6 +60,7 @@ std = [
   "pallet-timestamp/std",
   "gafi-primitives/std",
   "gu-convertor/std",
+  "pallet-player/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

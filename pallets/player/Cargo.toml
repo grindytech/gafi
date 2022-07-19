@@ -35,6 +35,7 @@ gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../
 [dev-dependencies]
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
 
 [features]
 default = ["std"]
@@ -49,6 +50,7 @@ std = [
   "pallet-balances/std",
   'pallet-randomness-collective-flip/std',
   "pallet-timestamp/std",
+  "upfront-pool/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

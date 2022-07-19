@@ -43,6 +43,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
+		Players: pallet_player::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
@@ -148,7 +149,16 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Players;
 }
+
+impl pallet_player::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+	type UpfrontPool = UpfrontPool;
+}
+
 
 
 // Build genesis storage according to the mock runtime.

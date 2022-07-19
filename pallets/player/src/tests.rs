@@ -1,10 +1,15 @@
 use crate::{mock::*, Config, Error, Players, PlayerOwned};
+use codec::Encode;
+use gafi_primitives::{system_services::SystemPool, ticket::{SystemTicket, TicketLevel}, currency::{unit, NativeToken::GAKI}, players::PlayersTime};
 use frame_support::{assert_err, assert_ok, traits::Currency};
+use sp_io::hashing::blake2_256;
+
+const START_BLOCK: u64 = 10;
 
 #[test]
 fn gen_id_should_works() {
 	new_test_ext().execute_with(|| {
-		run_to_block(10);
+		run_to_block(START_BLOCK);
 		let id = PalletGame::gen_id().unwrap();
 		assert_eq!(id.len(), 32, "id not correct");
 	});
@@ -13,7 +18,7 @@ fn gen_id_should_works() {
 #[test]
 fn create_new_player_should_works() {
 	new_test_ext().execute_with(|| {
-		run_to_block(10);
+		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1000_000);
 		let user_name = [0u8; 16];
 		assert_ok!(PalletGame::create_new_player(ALICE, user_name));
@@ -23,7 +28,7 @@ fn create_new_player_should_works() {
 #[test]
 fn create_new_player_should_fail() {
 	new_test_ext().execute_with(|| {
-		run_to_block(10);
+		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1000_000);
 		let user_name = [0u8; 16];
 		assert_ok!(PalletGame::create_new_player(ALICE, user_name));
@@ -34,7 +39,7 @@ fn create_new_player_should_fail() {
 #[test]
 fn is_player_id_check_should_works() {
 	new_test_ext().execute_with(|| {
-		run_to_block(10);
+		run_to_block(START_BLOCK);
 		let id = PalletGame::gen_id().unwrap();
 		let check = Players::<Test>::get(&id).is_none();
 		assert_eq!(check, true, "player id should available");
@@ -48,7 +53,7 @@ fn is_player_id_check_should_works() {
 #[test]
 fn is_player_check_should_works() {
 	new_test_ext().execute_with(|| {
-		run_to_block(10);
+		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1000_000);
 
 		let check = PlayerOwned::<Test>::get(&ALICE).is_none();
@@ -66,5 +71,60 @@ fn is_player_check_should_works() {
 		);
 
 		run_to_block(10);
+	});
+}
+
+#[test]
+fn get_total_time_joined_upfront_should_return_zero() {
+	new_test_ext().execute_with(|| {
+		run_to_block(START_BLOCK);
+		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+
+		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), 0);
+	});
+}
+
+#[test]
+fn get_total_time_joined_upfront_should_work() {
+	new_test_ext().execute_with(|| {
+		run_to_block(START_BLOCK);
+		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+		let _result = <Test as Config>::UpfrontPool::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+
+		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), 0);
+
+		run_to_block(START_BLOCK + 10);
+
+		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), (MILLISECS_PER_BLOCK * 10).into());
+	});
+}
+
+#[test]
+fn add_time_joined_upfront_should_work() {
+	new_test_ext().execute_with(|| {
+		run_to_block(START_BLOCK);
+		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+
+		PalletGame::add_time_joined_upfront(ALICE, 100);
+
+		assert_eq!(PalletGame::total_time_joined_upfront(ALICE).unwrap(), 100);
+
+	});
+}
+
+#[test]
+fn add_time_joined_upfront_should_add_with_existed_player_time() {
+	new_test_ext().execute_with(|| {
+		run_to_block(START_BLOCK);
+		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+		let _result = <Test as Config>::UpfrontPool::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+
+		run_to_block(START_BLOCK + 10);
+		let _result = <Test as Config>::UpfrontPool::leave(ALICE);
+
+		PalletGame::add_time_joined_upfront(ALICE, 100);
+
+		assert_eq!(PalletGame::total_time_joined_upfront(ALICE).unwrap(), 100u128.saturating_add((MILLISECS_PER_BLOCK * 10).into()));
+
 	});
 }

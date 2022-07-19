@@ -55,7 +55,6 @@ impl pallet_evm::Config for Test {
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 parameter_types! {
