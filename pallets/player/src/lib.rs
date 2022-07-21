@@ -21,7 +21,7 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use gafi_primitives::{system_services::SystemPool, players::PlayersTime};
+	use gafi_primitives::{system_services::SystemPool, players::{PlayersTime, PlayerJoinedPoolStatistic}};
 
 use super::*;
 	pub type NAME = [u8; 16];
@@ -98,7 +98,14 @@ use super::*;
 			Ok(id)
 		}
 
-		pub fn get_total_time_joined_upfront(player: T::AccountId) -> u128 {
+		fn moment_to_u128(input: T::Moment) -> u128 {
+			sp_runtime::SaturatedConversion::saturated_into(input)
+		}
+
+	}
+
+	impl<T: Config> PlayerJoinedPoolStatistic<T::AccountId> for Pallet<T>{
+		fn get_total_time_joined_upfront(player: T::AccountId) -> u128 {
 			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player.clone()).unwrap_or(0u128);
 
 			if let Some(ticket) = T::UpfrontPool::get_ticket(player.clone()) {
@@ -110,11 +117,6 @@ use super::*;
 
 			current_joined_time
 		}
-
-		fn moment_to_u128(input: T::Moment) -> u128 {
-			sp_runtime::SaturatedConversion::saturated_into(input)
-		}
-
 	}
 
 	impl<T: Config> PlayersTime<T::AccountId> for Pallet<T> {

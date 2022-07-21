@@ -66,7 +66,8 @@ pub use gafi_primitives::{
 	currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},
 	system_services::{SystemService, SystemDefaultServices},
 	ticket::{TicketInfo, TicketType, SystemTicket, TicketLevel},
-	constant::ID
+	constant::ID,
+	players::PlayerJoinedPoolStatistic
 };
 
 // import local pallets

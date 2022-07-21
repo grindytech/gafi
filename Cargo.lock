@@ -3463,6 +3463,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "gafi-membership"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "pallet-balances",
+ "pallet-player",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "upfront-pool",
+]
+
+[[package]]
 name = "gafi-node"
 version = "4.0.0-dev"
 dependencies = [

@@ -1,6 +1,11 @@
 use crate::{mock::*, Config, Error, Players, PlayerOwned};
 use codec::Encode;
-use gafi_primitives::{system_services::SystemPool, ticket::{SystemTicket, TicketLevel}, currency::{unit, NativeToken::GAKI}, players::PlayersTime};
+use gafi_primitives::{
+	system_services::SystemPool,
+	ticket::{SystemTicket, TicketLevel},
+	currency::{unit, NativeToken::GAKI},
+	players::{PlayersTime, PlayerJoinedPoolStatistic}
+};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use sp_io::hashing::blake2_256;
 
