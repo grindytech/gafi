@@ -1,15 +1,10 @@
-FROM ubuntu:18.04 as builder
+FROM rust:buster as builder
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl \
-    && apt-get install build-essential -y \
-    && apt-get install -y llvm-3.9-dev libclang-3.9-dev clang-3.9 \
-    && mkdir -p /user/turreta-rust-builder/src \
-    && curl https://sh.rustup.rs -sSf | sh -s -- -y
+RUN rustup default nightly-2022-05-15 && \
+  rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-15
 
-ENV PATH="/root/.cargo/bin:${PATH}" 
-
-RUN rustup default stable  \
-    && rustup update  \
-    && rustup update nightly  \
-    && rustup target add wasm32-unknown-unknown --toolchain nightly
+RUN apt-get update && \
+  apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+  apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
