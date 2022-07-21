@@ -6948,6 +6948,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "upfront-pool",
 ]
 
 [[package]]
@@ -6971,6 +6972,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
+ "pallet-player",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -12312,6 +12314,7 @@ dependencies = [
  "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
@@ -12879,6 +12882,7 @@ dependencies = [
  "gu-convertor",
  "log",
  "pallet-balances",
+ "pallet-player",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
