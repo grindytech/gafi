@@ -41,6 +41,8 @@ use super::*;
 		type GameRandomness: Randomness<Self::Hash, Self::BlockNumber>;
 
 		type UpfrontPool: SystemPool<Self::AccountId>;
+
+		type StakingPool: SystemPool<Self::AccountId>;
 	}
 
 	// Errors.
@@ -68,6 +70,10 @@ use super::*;
 	#[pallet::storage]
 	#[pallet::getter(fn total_time_joined_upfront)]
 	pub type TotalTimeJoinedUpfront<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, u128>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_time_joined_staking)]
+	pub type TotalTimeJoinedStaking<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, u128>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -102,6 +108,19 @@ use super::*;
 			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player.clone()).unwrap_or(0u128);
 
 			if let Some(ticket) = T::UpfrontPool::get_ticket(player.clone()) {
+				let join_time = ticket.join_time;
+				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+
+				return now.saturating_sub(join_time).saturating_add(current_joined_time);
+			}
+
+			current_joined_time
+		}
+
+		pub fn get_total_time_joined_staking(player: T::AccountId) -> u128 {
+			let current_joined_time = TotalTimeJoinedStaking::<T>::get(player.clone()).unwrap_or(0u128);
+
+			if let Some(ticket) = T::StakingPool::get_ticket(player.clone()) {
 				let join_time = ticket.join_time;
 				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
