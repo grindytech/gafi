@@ -400,6 +400,7 @@ impl pallet_player::Config for Runtime {
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
 	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
 parameter_types! {
@@ -463,6 +464,7 @@ impl staking_pool::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {

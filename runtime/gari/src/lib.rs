@@ -462,6 +462,7 @@ impl pallet_player::Config for Runtime {
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
 	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -627,6 +628,7 @@ impl staking_pool::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {
