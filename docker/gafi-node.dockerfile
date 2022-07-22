@@ -1,4 +1,4 @@
-FROM dttr278/gafi-linux as builder
+FROM cryptoviet/gafi-linux as builder
 
 WORKDIR /gafi
 ADD . /gafi
