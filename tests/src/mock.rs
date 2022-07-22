@@ -57,6 +57,7 @@ frame_support::construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
+		Players: pallet_player::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -154,6 +155,13 @@ impl pallet_pool::Config for Test {
 	type TimeServiceStorage = TimeServiceStorage;
 }
 
+impl pallet_player::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+}
 pub struct UpfrontPoolDefaultServices {}
 
 impl SystemDefaultServices for UpfrontPoolDefaultServices {
@@ -186,6 +194,7 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Players;
 }
 
 pub struct StakingPoolDefaultServices {}
@@ -214,6 +223,7 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = ();
 }
 
 parameter_types! {

@@ -25,11 +25,18 @@ frame-system = {default-features = false, version = "4.0.0-dev", git = "https://
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-api = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+
+# Local
+gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
 
 [dev-dependencies]
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
+staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 
 [features]
 default = ["std"]
@@ -43,6 +50,8 @@ std = [
   "frame-benchmarking/std",
   "pallet-balances/std",
   'pallet-randomness-collective-flip/std',
+  "pallet-timestamp/std",
+  "upfront-pool/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

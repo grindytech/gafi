@@ -46,6 +46,7 @@ upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upf
 sponsored-pool = { version = "4.0.0-dev", default-features = false, path = "../sponsored-pool" }
 pallet-pool-names = { default-features = false, version = "4.0.0-dev", path = "../pool-names" }
 pallet-cache = { default-features = false, version = "4.0.0-dev", path = "../pallet-cache" }
+pallet-player = { default-features = false, version = "4.0.0-dev", path = "../player" }
 
 
 [features]

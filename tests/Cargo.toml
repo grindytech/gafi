@@ -60,6 +60,7 @@ proof-address-mapping = { default-features = false, version = "4.0.0-dev", path 
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallets/pallet-cache"}
 pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../pallets/pool-names"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../pallets/game-creator"}
+pallet-player = {version = "4.0.0-dev", default-features = false, path = "../pallets/player"}
 
 [features]
 default = ["std"]
@@ -88,4 +89,5 @@ std = [
   'gafi-primitives/std',
   'pallet-cache/std',
   'game-creator/std',
+  'pallet-player/std'
 ]

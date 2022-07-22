@@ -2028,6 +2028,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-hotfix-sufficients",
  "pallet-player",
+ "pallet-player-rpc-runtime-api",
  "pallet-pool",
  "pallet-pool-names",
  "pallet-preimage",
@@ -3422,6 +3423,8 @@ dependencies = [
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-player",
+ "pallet-player-rpc-runtime-api",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
@@ -3505,6 +3508,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpsee",
  "log",
+ "pallet-player",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
  "sc-client-api",
@@ -6933,13 +6937,28 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-primitives",
  "pallet-balances",
  "pallet-randomness-collective-flip",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-api",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "staking-pool",
+ "upfront-pool",
+]
+
+[[package]]
+name = "pallet-player-rpc-runtime-api"
+version = "4.0.0-dev"
+dependencies = [
+ "pallet-player",
+ "parity-scale-codec",
+ "sp-api",
  "sp-runtime",
 ]
 
@@ -6954,6 +6973,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
+ "pallet-player",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -12295,6 +12315,7 @@ dependencies = [
  "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-player",
  "pallet-pool",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
@@ -12862,6 +12883,7 @@ dependencies = [
  "gu-convertor",
  "log",
  "pallet-balances",
+ "pallet-player",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
