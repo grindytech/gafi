@@ -51,7 +51,6 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::Twox64Concat;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
@@ -116,6 +115,9 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn time_service)]
 	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
+
+	#[pallet::storage]
+	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
 
 	/// on_finalize following by steps:
 	/// 1. renew tickets
@@ -297,6 +299,34 @@ pub mod pallet {
 			Tickets::<T>::remove_prefix(sender, None);
 			Ok(())
 		}
+	
+		#[pallet::weight(0)]
+		pub fn approve_whitelist(origin: OriginFor<T>, pool_id: ID, player: T::AccountId) -> DispatchResult {
+			
+			let sender = ensure_signed(origin)?;
+
+			// ensure!(SponsoredPool::get_pool_owner(pool_id) == Some(pool_id), Error::<);
+
+			// if let Some(pool) = Whitelist::<T>::get(player) {
+
+			// }
+
+			let ticket_info = Self::get_ticket_info(&player, TicketType::Custom(CustomTicket::Sponsored(pool_id)), pool_id)?;
+			Tickets::<T>::insert(player.clone(), pool_id, ticket_info);
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+
+			Whitelist::<T>::insert(sender, pool_id);
+
+			Ok(())
+		}
+
 	}
 
 	impl<T: Config> Pallet<T> {

@@ -487,6 +487,13 @@ pub mod pallet {
 			None
 		}
 
+		fn get_pool_owner(pool_id: ID) -> Option<T::AccountId> {
+			if let Some(pool) = Pools::<T>::get(pool_id) {
+				return Some(pool.owner);
+			}
+			return None;
+		}
+
 		/// Add new sponsored-pool with default values, return pool_id
 		///
 		/// ** Should be used for benchmarking only!!! **

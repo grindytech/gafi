@@ -150,7 +150,7 @@ pub mod pallet {
 				.checked_add(1)
 				.ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			Self::stake_pool(sender, pool_id, new_player_count);
+			Self::stake_pool(sender, pool_id, new_player_count)?;
 			Ok(())
 		}
 

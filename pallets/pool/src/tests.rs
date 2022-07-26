@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Tickets};
+use crate::{mock::*, Error, Tickets, Whitelist};
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
     constant::ID,
@@ -164,3 +164,29 @@ fn get_ticket_service_works() {
         assert_eq!(service.discount, Permill::from_percent(0));
     })
 }
+
+
+
+#[test]
+fn whitelist_works() {
+    ExtBuilder::default().build_and_execute(||{
+        let balance = 100_000_000 * unit(GAKI);
+        let account = new_account([0_u8; 32], balance);
+
+        let pool_id = [1_u8; 32];
+
+        assert_ok!(Pool::whitelist(Origin::signed(account.clone()), pool_id));
+
+        assert_eq!(Whitelist::<Test>::get(account.clone()).unwrap(), pool_id);
+        // assert_eq!(Balances::free_balance(account.clone()), balance - )
+    })
+
+}
+
+#[test]
+fn approve_whitelist_works() {
+    ExtBuilder::default().build_and_execute(||{
+
+    })
+}
+
