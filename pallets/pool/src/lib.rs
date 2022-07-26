@@ -33,7 +33,6 @@ use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
 use sp_core::H160;
-use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
 
 #[cfg(test)]

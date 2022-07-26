@@ -26,28 +26,6 @@ pub enum TicketType {
     Sponsored(ID),
 }
 
-// #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// pub enum SystemTicket {
-// 	Upfront(ID),
-// 	Staking(ID),
-// }
-
-// #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// pub enum CustomTicket {
-//     Sponsored(ID),
-// }
-
-// #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// pub enum TicketLevel {
-// 	#[codec(index = 15)]
-// 	Basic,
-// 	Medium,
-// 	Advance,
-// }
-
 /// Holding the number of tickets to restrict player transaction
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]

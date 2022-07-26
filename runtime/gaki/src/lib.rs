@@ -73,13 +73,13 @@ use sponsored_pool;
 use staking_pool;
 use upfront_pool;
 use gafi_primitives::{
-	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
+	ticket::{TicketType, TicketInfo},
 	constant::ID,
 	system_services::{SystemService, SystemDefaultServices},
 };
 
 // Primitives
-use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
+use gafi_primitives::currency::{centi, unit, NativeToken::GAKI};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -396,7 +396,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = centi(GAFI).into(); //0.01 GAFI
+	pub DefaultBaseFeePerGas: U256 = centi(GAKI).into(); //0.01 GAKI
 }
 
 pub struct BaseFeeThreshold;
@@ -579,16 +579,16 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+				[0; 32].using_encoded(blake2_256),
+				SystemService::new([0; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+				[1; 32].using_encoded(blake2_256),
+				SystemService::new([1; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+				[2; 32].using_encoded(blake2_256),
+				SystemService::new([2; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 			),
 		]
 	}
@@ -614,7 +614,7 @@ impl pallet_cache::Config for Runtime {
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
-	pub Fee: u128 = 1 * unit(GAFI);
+	pub Fee: u128 = 1 * unit(GAKI);
 }
 
 impl proof_address_mapping::Config for Runtime {
@@ -631,16 +631,16 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
+				[10; 32].using_encoded(blake2_256),
+				SystemService::new([10; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
+				[11; 32].using_encoded(blake2_256),
+				SystemService::new([11; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
+				[12; 32].using_encoded(blake2_256),
+				SystemService::new([12; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 			),
 		]
 	}
@@ -674,7 +674,7 @@ impl upfront_pool::Config for Runtime {
 // }
 
 parameter_types! {
-	pub ReservationFee:u128 = 1 * unit(GAFI);
+	pub ReservationFee:u128 = 1 * unit(GAKI);
 	pub MinLength: u32 = 8;
 	pub MaxLength: u32 = 32;
 }
@@ -689,7 +689,7 @@ impl pallet_pool_names::Config for Runtime {
 }
 
 parameter_types! {
-	pub MinPoolBalance: u128 = 1000 * unit(GAFI);
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
 	pub MinDiscountPercent: Permill = Permill::from_percent(30);
 	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
 	pub MinTxLimit: u32 = 50;

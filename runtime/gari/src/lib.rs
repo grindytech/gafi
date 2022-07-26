@@ -73,7 +73,7 @@ use sponsored_pool;
 use staking_pool;
 use upfront_pool;
 use gafi_primitives::{
-	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
+	ticket::{TicketType, TicketInfo},
 	constant::ID,
 	system_services::{SystemService, SystemDefaultServices},
 };
@@ -600,16 +600,16 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+				[0; 32].using_encoded(blake2_256),
+				SystemService::new([0; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+				[1; 32].using_encoded(blake2_256),
+				SystemService::new([1; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+				[2; 32].using_encoded(blake2_256),
+				SystemService::new([2; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
 			),
 		]
 	}
@@ -652,16 +652,16 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
+				[10; 32].using_encoded(blake2_256),
+				SystemService::new([10; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
+				[11; 32].using_encoded(blake2_256),
+				SystemService::new([11; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
+				[12; 32].using_encoded(blake2_256),
+				SystemService::new([12; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
 			),
 		]
 	}
