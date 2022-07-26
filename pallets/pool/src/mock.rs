@@ -19,7 +19,6 @@ use gafi_primitives::{
 	constant::ID
 };
 use sp_core::H256;
-use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},

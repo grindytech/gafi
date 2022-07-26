@@ -79,20 +79,20 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 		.saturating_add(T::DbWeight::get().reads(base_r))
 		.saturating_add(T::DbWeight::get().writes(base_w));
 
-		// match ticket {
-   		// 	TicketType::Upfront(_)) => {
-		// 		   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
-		// 		   .saturating_add(T::DbWeight::get().writes(upfront_w));
-		// 	   },
-    	// 	TicketType::System(SystemTicket::Staking(_)) => {
-		// 		weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
-		// 		.saturating_add(T::DbWeight::get().writes(staking_w));
-		// 	},
-		// 	TicketType::Sponsored(_)) => {
-		// 		weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
-		// 		.saturating_add(T::DbWeight::get().writes(sponsored_w));
-		// 	},
-		// }
+		match ticket {
+   			TicketType::Upfront(_) => {
+				   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
+				   .saturating_add(T::DbWeight::get().writes(upfront_w));
+			   },
+    		TicketType::Staking(_) => {
+				weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
+				.saturating_add(T::DbWeight::get().writes(staking_w));
+			},
+			TicketType::Sponsored(_) => {
+				weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
+				.saturating_add(T::DbWeight::get().writes(sponsored_w));
+			},
+		}
 		weight
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
@@ -115,7 +115,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: StakingPool Services (r:1 w:0)
 	// Storage: PalletCache DataFlag (r:1 w:0)
 	// Storage: PalletCache DataLeft (r:0 w:1)
-	fn leave(s: u32 ) -> Weight {
+	fn leave(s: u32, ) -> Weight {
 			let total_read = 16_u64;
 			let total_write = 11_u64;
 	
@@ -133,15 +133,15 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(base_w));
 	
 			// match ticket {
-			// 	   TicketType::Upfront(_)) => {
+			// 	   TicketType::Upfront(_) => {
 			// 		   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
 			// 		   .saturating_add(T::DbWeight::get().writes(upfront_w));
 			// 	   },
-			// 	TicketType::System(SystemTicket::Staking(_)) => {
+			// 	TicketType::Staking(_) => {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
 			// 		.saturating_add(T::DbWeight::get().writes(staking_w));
 			// 	},
-			// 	TicketType::Sponsored(_)) => {
+			// 	TicketType::Sponsored(_) => {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
 			// 		.saturating_add(T::DbWeight::get().writes(sponsored_w));
 			// 	},
@@ -191,20 +191,20 @@ impl WeightInfo for () {
 		.saturating_add(RocksDbWeight::get().reads(base_r))
 		.saturating_add(RocksDbWeight::get().writes(base_w));
 
-		// match ticket {
-   		// 	TicketType::Upfront(_)) => {
-		// 		   weight = (weight).saturating_add(RocksDbWeight::get().reads(upfront_r))
-		// 		   .saturating_add(RocksDbWeight::get().writes(upfront_w));
-		// 	   },
-		// 	TicketType::System(SystemTicket::Staking(_)) => {
-		// 		weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
-		// 		.saturating_add(RocksDbWeight::get().writes(staking_w));
-		// 	},
-		// 	TicketType::Sponsored(_)) => {
-		// 		weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
-		// 		.saturating_add(RocksDbWeight::get().writes(sponsored_w));
-		// 	},
-		// }
+		match ticket {
+   			TicketType::Upfront(_) => {
+				   weight = (weight).saturating_add(RocksDbWeight::get().reads(upfront_r))
+				   .saturating_add(RocksDbWeight::get().writes(upfront_w));
+			   },
+			TicketType::Staking(_) => {
+				weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
+				.saturating_add(RocksDbWeight::get().writes(staking_w));
+			},
+			TicketType::Sponsored(_) => {
+				weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
+				.saturating_add(RocksDbWeight::get().writes(sponsored_w));
+			},
+		}
 		weight
 	}
 
