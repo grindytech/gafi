@@ -33,6 +33,10 @@ pub const MAX_PLAYER: u32 = 1000;
 pub const TIME_SERVICE: u128 = 60 *
  60_000u128; // 1 hour
 
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -121,16 +125,16 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				[10_u8;32].using_encoded(blake2_256),
-				SystemService::new([10_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+				UPFRONT_BASIC_ID,
+				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 			),
 			(
-				[11_u8;32].using_encoded(blake2_256),
-				SystemService::new([11_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 			),
 			(
-				[12_u8;32].using_encoded(blake2_256),
-				SystemService::new([12_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 			),
 		]
 	}

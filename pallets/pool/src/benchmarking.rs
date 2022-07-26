@@ -30,13 +30,13 @@ const MAX_TICKETS: usize = 7;
 const POOL_ID: ID = [0_u8; 32];
 
 const TICKETS: [TicketType; MAX_TICKETS] = [
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)),
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)),
+	TicketType::Upfront(TicketLevel::Basic)),
+	TicketType::Upfront(TicketLevel::Medium)),
+	TicketType::Upfront(TicketLevel::Advance)),
 	TicketType::System(SystemTicket::Staking(TicketLevel::Basic)),
 	TicketType::System(SystemTicket::Staking(TicketLevel::Medium)),
 	TicketType::System(SystemTicket::Staking(TicketLevel::Advance)),
-	TicketType::Custom(CustomTicket::Sponsored(POOL_ID)),
+	TicketType::Sponsored(POOL_ID),
 ];
 
 benchmarks! {
@@ -53,7 +53,7 @@ benchmarks! {
 			TicketType::System(system_ticket) => {
 				system_ticket.using_encoded(blake2_256)
 			}
-			TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
+			TicketType::Sponsored(joined_pool_id) => {
 				joined_pool_id
 			}
 		};
@@ -69,7 +69,7 @@ benchmarks! {
 			TicketType::System(system_ticket) => {
 				system_ticket.using_encoded(blake2_256)
 			}
-			TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
+			TicketType::Sponsored(joined_pool_id) => {
 				joined_pool_id
 			}
 		};

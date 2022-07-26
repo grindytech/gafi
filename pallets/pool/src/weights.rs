@@ -80,7 +80,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 		.saturating_add(T::DbWeight::get().writes(base_w));
 
 		// match ticket {
-   		// 	TicketType::System(SystemTicket::Upfront(_)) => {
+   		// 	TicketType::Upfront(_)) => {
 		// 		   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
 		// 		   .saturating_add(T::DbWeight::get().writes(upfront_w));
 		// 	   },
@@ -88,7 +88,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 		// 		weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
 		// 		.saturating_add(T::DbWeight::get().writes(staking_w));
 		// 	},
-		// 	TicketType::Custom(CustomTicket::Sponsored(_)) => {
+		// 	TicketType::Sponsored(_)) => {
 		// 		weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
 		// 		.saturating_add(T::DbWeight::get().writes(sponsored_w));
 		// 	},
@@ -133,7 +133,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(base_w));
 	
 			// match ticket {
-			// 	   TicketType::System(SystemTicket::Upfront(_)) => {
+			// 	   TicketType::Upfront(_)) => {
 			// 		   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
 			// 		   .saturating_add(T::DbWeight::get().writes(upfront_w));
 			// 	   },
@@ -141,7 +141,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
 			// 		.saturating_add(T::DbWeight::get().writes(staking_w));
 			// 	},
-			// 	TicketType::Custom(CustomTicket::Sponsored(_)) => {
+			// 	TicketType::Sponsored(_)) => {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
 			// 		.saturating_add(T::DbWeight::get().writes(sponsored_w));
 			// 	},
@@ -192,7 +192,7 @@ impl WeightInfo for () {
 		.saturating_add(RocksDbWeight::get().writes(base_w));
 
 		// match ticket {
-   		// 	TicketType::System(SystemTicket::Upfront(_)) => {
+   		// 	TicketType::Upfront(_)) => {
 		// 		   weight = (weight).saturating_add(RocksDbWeight::get().reads(upfront_r))
 		// 		   .saturating_add(RocksDbWeight::get().writes(upfront_w));
 		// 	   },
@@ -200,7 +200,7 @@ impl WeightInfo for () {
 		// 		weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
 		// 		.saturating_add(RocksDbWeight::get().writes(staking_w));
 		// 	},
-		// 	TicketType::Custom(CustomTicket::Sponsored(_)) => {
+		// 	TicketType::Sponsored(_)) => {
 		// 		weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
 		// 		.saturating_add(RocksDbWeight::get().writes(sponsored_w));
 		// 	},

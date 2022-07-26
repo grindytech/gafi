@@ -42,9 +42,9 @@ fn _new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
 fn default_services_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
-		assert_eq!(StakingPool::get_service(STAKING_BASIC_ID.using_encoded(blake2_256)).is_none(), false);
-		assert_eq!(StakingPool::get_service(STAKING_MEDIUM_ID.using_encoded(blake2_256)).is_none(), false);
-		assert_eq!(StakingPool::get_service(STAKING_ADVANCE_ID.using_encoded(blake2_256)).is_none(), false);
+		assert_eq!(StakingPool::get_service(STAKING_BASIC_ID).is_none(), false);
+		assert_eq!(StakingPool::get_service(STAKING_MEDIUM_ID).is_none(), false);
+		assert_eq!(StakingPool::get_service(STAKING_ADVANCE_ID).is_none(), false);
 	})
 }
 
@@ -54,7 +54,7 @@ fn player_join_pool_should_works() {
 		run_to_block(10);
 		let count_before = PlayerCount::<Test>::get();
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(StakingPool::join(alice.clone(), STAKING_BASIC_ID.using_encoded(blake2_256)));
+		assert_ok!(StakingPool::join(alice.clone(), STAKING_BASIC_ID));
 
 		let player = Tickets::<Test>::get(alice);
 		assert_ne!(player, None);
@@ -69,7 +69,7 @@ fn leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(StakingPool::join(alice.clone(), STAKING_BASIC_ID.using_encoded(blake2_256)));
+		assert_ok!(StakingPool::join(alice.clone(), STAKING_BASIC_ID));
 		run_to_block(2);
 		assert_ok!(StakingPool::leave(alice.clone()));
 		assert_eq!(Tickets::<Test>::get(alice.clone()), None);

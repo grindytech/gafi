@@ -35,6 +35,14 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -165,16 +173,16 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				[0_u8; 32].using_encoded(blake2_256),
-				SystemService::new([0_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+				STAKING_BASIC_ID,
+				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 			),
 			(
-				[1_u8; 32].using_encoded(blake2_256),
-				SystemService::new([1_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+				STAKING_MEDIUM_ID,
+				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 			),
 			(
-				[2_u8; 32].using_encoded(blake2_256),
-				SystemService::new([2_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+				STAKING_ADVANCE_ID,
+				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 			),
 		]
 	}
@@ -193,16 +201,16 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				[10_u8; 32].using_encoded(blake2_256),
-				SystemService::new([10_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+				UPFRONT_BASIC_ID,
+				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 			),
 			(
-				[11_u8; 32].using_encoded(blake2_256),
-				SystemService::new([11_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 			),
 			(
-				[12_u8; 32].using_encoded(blake2_256),
-				SystemService::new([12_u8; 32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 			),
 		]
 	}

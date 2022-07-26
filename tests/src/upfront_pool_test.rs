@@ -2,9 +2,9 @@ use crate::mock::*;
 use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::system_services::SystemPool;
+use gafi_primitives::ticket::TicketType;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketLevel, TicketType, SystemTicket, CustomTicket},
 };
 use gafi_tx::Config;
 use rand::prelude::*;
@@ -14,17 +14,21 @@ use sp_std::str::FromStr;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
-const LEVELS: [TicketLevel; 3] = [TicketLevel::Basic, TicketLevel::Medium, TicketLevel::Advance];
+
+const TICKETS: [TicketType; 3] = [
+    TicketType::Upfront(UPFRONT_BASIC_ID),
+    TicketType::Upfront(UPFRONT_MEDIUM_ID),
+    TicketType::Upfront(UPFRONT_ADVANCE_ID),
+];
 
 fn init_join_pool(ticket: TicketType) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
 	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
+		TicketType::Sponsored(id) |
+        TicketType::Staking(id) |
+         TicketType::Upfront(id) => {
+			id
 		}
 	};
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
@@ -56,21 +60,21 @@ fn init_join_pool(ticket: TicketType) {
 #[test]
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)) );
+		init_join_pool(TicketType::Upfront(UPFRONT_BASIC_ID) );
 	})
 }
 
 #[test]
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)) );
+		init_join_pool(TicketType::Upfront(UPFRONT_MEDIUM_ID));
 	})
 }
 
 #[test]
 fn charge_join_advance_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)) );
+		init_join_pool(TicketType::Upfront(UPFRONT_ADVANCE_ID) );
 	})
 }
 
@@ -82,11 +86,10 @@ fn init_leave_pool(
 ) {
 	let sender = AccountId32::new([index as u8; 32]);
 	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
+		TicketType::Sponsored(id) |
+        TicketType::Staking(id) |
+         TicketType::Upfront(id) => {
+			id
 		}
 	};
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
@@ -127,13 +130,13 @@ fn init_leave_pool(
 #[test]
 fn leave_pool_early_works() {
 	for i in 0..10 {
-		for level in LEVELS {
+		for ticket in TICKETS {
 			ExtBuilder::default().build_and_execute(|| {
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
 				init_leave_pool(
 					i,
-					TicketType::System(SystemTicket::Upfront(level)),
+					ticket,
 					1,
 					leave_block,
 				);
@@ -145,14 +148,14 @@ fn leave_pool_early_works() {
 #[test]
 fn leave_pool_over_works() {
 	for i in 0..10 {
-		for level in LEVELS {
+		for ticket in TICKETS {
 			ExtBuilder::default().build_and_execute(|| {
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
 				let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));
 				init_leave_pool(
 					i,
-					TicketType::System(SystemTicket::Upfront(level)),
+					ticket,
 					start_block,
 					leave_block,
 				);

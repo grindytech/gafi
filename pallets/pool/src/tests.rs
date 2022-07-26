@@ -6,7 +6,7 @@ use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
     ticket::{TicketType},
 };
-use sp_core::{H160, blake2_256};
+use sp_core::{H160};
 use sp_runtime::{AccountId32, Permill};
 use sponsored_pool::{PoolOwned, Pools};
 use std::str::FromStr;
@@ -14,13 +14,6 @@ use std::str::FromStr;
 #[cfg(feature = "runtime-benchmarks")]
 use sponsored_pool::CustomPool;
 
-const STAKING_BASIC_ID: ID = [0_u8; 32];
-const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -40,10 +33,10 @@ fn join_staking_pool_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
 
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Staking(STAKING_BASIC_ID.using_encoded(blake2_256)),
-        );
+            TicketType::Staking(STAKING_BASIC_ID),
+        ));
 
         assert_eq!(
             Balances::free_balance(account),
@@ -58,10 +51,10 @@ fn leave_all_system_pool_works() {
         run_to_block(1);
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Staking(STAKING_BASIC_ID.using_encoded(blake2_256)),
-        );
+            TicketType::Staking(STAKING_BASIC_ID),
+        ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
         assert_eq!(
@@ -69,10 +62,10 @@ fn leave_all_system_pool_works() {
             0
         );
 
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Upfront(UPFRONT_BASIC_ID.using_encoded(blake2_256)),
-        );
+            TicketType::Upfront(UPFRONT_BASIC_ID),
+        ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
         assert_eq!(
