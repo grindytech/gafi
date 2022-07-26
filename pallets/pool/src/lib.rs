@@ -25,7 +25,7 @@ use gafi_primitives::{
 	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
 	ticket::TicketInfo,
-	ticket::{CustomTicket, PlayerTicket, SystemTicket, TicketType},
+	ticket::{PlayerTicket, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -194,9 +194,11 @@ pub mod pallet {
 		#[transactional]
 		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
 			let pool_id = match ticket {
-				TicketType::System(system_ticket) => system_ticket.using_encoded(blake2_256),
-				TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => joined_pool_id,
+				TicketType::Sponsored(id)=>id,
+    			TicketType::Upfront(id) => id,
+	    		TicketType::Staking(id) => id, 
 			};
 
 			let ticket_info = Self::get_ticket_info(&sender, ticket, pool_id)?;
@@ -207,13 +209,13 @@ pub mod pallet {
 			);
 
 			match ticket {
-				TicketType::System(SystemTicket::Upfront(_)) => {
+				TicketType::Upfront(_) => {
 					T::UpfrontPool::join(sender.clone(), pool_id)?;
 				}
-				TicketType::System(SystemTicket::Staking(_)) => {
+				TicketType::Staking(_) => {
 					T::StakingPool::join(sender.clone(), pool_id)?;
 				}
-				TicketType::Custom(_) => {
+				TicketType::Sponsored(_) => {
 					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
 					let count_joined_pool = joined_sponsored_pool.count();
 
@@ -244,13 +246,13 @@ pub mod pallet {
 
 			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
-					TicketType::System(SystemTicket::Upfront(_)) => {
+					TicketType::Upfront(_) => {
 						T::UpfrontPool::leave(sender.clone())?
 					}
-					TicketType::System(SystemTicket::Staking(_)) => {
+					TicketType::Staking(_) => {
 						T::StakingPool::leave(sender.clone())?
 					}
-					TicketType::Custom(CustomTicket::Sponsored(_)) => {
+					TicketType::Sponsored(_) => {
 						T::SponsoredPool::leave(sender.clone())?
 					}
 				}
@@ -302,9 +304,9 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn insert_cache(sender: &T::AccountId, ticket: TicketType, data: TicketInfo) {
 			match ticket {
-				TicketType::System(SystemTicket::Upfront(_)) => {}
-				TicketType::System(SystemTicket::Staking(_)) => {}
-				TicketType::Custom(CustomTicket::Sponsored(_)) => {
+				TicketType::Upfront(_) => {}
+				TicketType::Staking(_) => {}
+				TicketType::Sponsored(_) => {
 					T::Cache::insert(sender, ticket, data);
 				}
 			}
@@ -331,9 +333,9 @@ pub mod pallet {
 
 		fn get_cache(sender: &T::AccountId, ticket: TicketType) -> Option<TicketInfo> {
 			match ticket {
-				TicketType::System(SystemTicket::Upfront(_)) => {}
-				TicketType::System(SystemTicket::Staking(_)) => {}
-				TicketType::Custom(CustomTicket::Sponsored(_)) => {
+				TicketType::Upfront(_) => {}
+				TicketType::Staking(_) => {}
+				TicketType::Sponsored(_) => {
 					if let Some(ticket_cache) = T::Cache::get(&sender, ticket) {
 						return Some(ticket_cache);
 					}
@@ -366,9 +368,9 @@ pub mod pallet {
 
 			for joined_ticket in joined_pools {
 				match joined_ticket.ticket_type {
-					TicketType::System(SystemTicket::Upfront(_)) => is_joined = true,
-					TicketType::System(SystemTicket::Staking(_)) => is_joined = true,
-					TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
+					TicketType::Upfront(_) => is_joined = true,
+					TicketType::Staking(_) => is_joined = true,
+					TicketType::Sponsored(joined_pool_id) => {
 						// We can join multiple sponsored pools so we must check equal id.
 						if joined_pool_id == pool_id {
 							is_joined = true;
@@ -376,7 +378,6 @@ pub mod pallet {
 					}
 				}
 			}
-
 			is_joined
 		}
 	}
@@ -387,20 +388,20 @@ pub mod pallet {
 
 			for ticket_info in ticket_infos {
 				match ticket_info.ticket_type {
-					TicketType::System(hello) => {
+					TicketType::Upfront(pool_id) | TicketType::Staking(pool_id) => {
 						if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
 							Tickets::<T>::insert(
 								player,
-								hello.using_encoded(blake2_256),
+								pool_id,
 								new_ticket_info,
 							);
 							return Some((
 								new_ticket_info.ticket_type,
-								hello.using_encoded(blake2_256),
+								pool_id,
 							));
 						}
 					}
-					TicketType::Custom(CustomTicket::Sponsored(pool_id)) => {
+					TicketType::Sponsored(pool_id) => {
 						if let Some(contract) = target {
 							let targets = Self::get_targets(pool_id);
 							if targets.contains(&contract) {
