@@ -1,5 +1,5 @@
 use crate::constant::ID;
-use crate::{pool::Service, ticket::{TicketLevel, SystemTicket}};
+use crate::{pool::Service};
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
@@ -12,15 +12,15 @@ use sp_io::hashing::blake2_256;
 	Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
 pub struct SystemService {
-	pub ticket_level: TicketLevel,
+	pub id: ID,
 	pub service: Service,
 	pub value: u128,
 }
 
 impl SystemService {
-	pub fn new(ticket_level: TicketLevel,tx_limit: u32, discount: Permill, value: u128) -> Self {
+	pub fn new(id: ID,tx_limit: u32, discount: Permill, value: u128) -> Self {
 		SystemService {
-			ticket_level,
+			id,
 			service: Service { tx_limit, discount },
 			value,
 		}
@@ -37,10 +37,10 @@ pub trait SystemDefaultServices {
 	fn get_default_services() -> [(ID, SystemService); 3];
 }
 
-pub struct Convertor;
+// pub struct Convertor;
 
-impl Convertor {
-	pub fn into_id(ticket: SystemTicket) -> ID {
-		ticket.using_encoded(blake2_256)
-	}
-}
+// impl Convertor {
+// 	pub fn into_id(ticket: SystemTicket) -> ID {
+// 		ticket.using_encoded(blake2_256)
+// 	}
+// }

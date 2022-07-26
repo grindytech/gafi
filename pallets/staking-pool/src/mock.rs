@@ -13,7 +13,6 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::{
-	ticket::{SystemTicket, TicketLevel},
 	constant::ID,
 	system_services::{SystemDefaultServices, SystemService},
 	currency::{unit, NativeToken::GAKI}
@@ -120,16 +119,16 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+				[0_u8;32].using_encoded(blake2_256),
+				SystemService::new([0_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+				[1_u8;32].using_encoded(blake2_256),
+				SystemService::new([1_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+				[2_u8;32].using_encoded(blake2_256),
+				SystemService::new([1_u8;32].using_encoded(blake2_256), 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
 			),
 		]
 	}
