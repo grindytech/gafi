@@ -1,18 +1,20 @@
 use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
+use codec::Encode;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::{
 	system_services::SystemPool,
 	constant::ID
 };
+use sp_core::blake2_256;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
-const UPFRONT_BASIC_ID: ID = [192, 153, 16, 32, 147, 221, 194, 86, 16, 108, 55, 91, 150, 248, 93, 75, 158, 180, 246, 128, 72, 1, 237, 12, 3, 89, 3, 209, 30, 8, 104, 20];
-const UPFRONT_MEDIUM_ID: ID = [1, 207, 121, 218, 73, 69, 195, 112, 198, 139, 38, 94, 247, 6, 65, 170, 166, 94, 170, 143, 89, 83, 227, 144, 13, 151, 114, 76, 44, 90, 160, 149];
-const UPFRONT_ADVANCE_ID: ID = [143, 31, 159, 208, 129, 106, 49, 10, 121, 208, 224, 196, 191, 96, 90, 84, 76, 38, 12, 86, 23, 64, 188, 222, 177, 117, 234, 70, 245, 49, 40, 144];
+const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -40,9 +42,9 @@ fn new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
 fn default_services_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
-		assert_eq!(UpfrontPool::get_service(UPFRONT_BASIC_ID).is_none(), false);
-		assert_eq!(UpfrontPool::get_service(UPFRONT_MEDIUM_ID).is_none(), false);
-		assert_eq!(UpfrontPool::get_service(UPFRONT_ADVANCE_ID).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(UPFRONT_BASIC_ID.using_encoded(blake2_256)).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(UPFRONT_MEDIUM_ID.using_encoded(blake2_256)).is_none(), false);
+		assert_eq!(UpfrontPool::get_service(UPFRONT_ADVANCE_ID.using_encoded(blake2_256)).is_none(), false);
 	})
 }
 
@@ -52,7 +54,7 @@ fn player_join_pool_should_works() {
 		run_to_block(10);
 		let count_before = PlayerCount::<Test>::get();
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 
 		let player = Tickets::<Test>::get(alice);
 		assert_ne!(player, None);
@@ -114,11 +116,11 @@ fn should_restrict_max_player() {
 		for account in accounts {
 			if count == max_player {
 				assert_err!(
-					UpfrontPool::join(account, UPFRONT_BASIC_ID),
+					UpfrontPool::join(account, UPFRONT_BASIC_ID.using_encoded(blake2_256)),
 					<Error<Test>>::ExceedMaxPlayer
 				);
 			} else {
-				assert_ok!(UpfrontPool::join(account, UPFRONT_BASIC_ID));
+				assert_ok!(UpfrontPool::join(account, UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 				count = count + 1;
 			}
 		}
@@ -130,7 +132,7 @@ fn new_player_leave_pool_should_work() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 		run_to_block(2);
 		assert_ok!(UpfrontPool::leave(alice.clone()));
 		assert_eq!(Tickets::<Test>::get(alice.clone()), None);
@@ -142,7 +144,7 @@ fn should_move_newplayers_to_ingame() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 
 		{
 			let new_players_before = NewPlayers::<Test>::get();
@@ -166,9 +168,9 @@ fn get_player_level_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 
-		let level = UpfrontPool::get_player_level(alice.clone());
+		let level = UpfrontPool::get_pool_joined(&alice);
 		assert_eq!(level.is_none(), false);
 	})
 }
@@ -178,7 +180,7 @@ fn get_player_service_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 
 		let serevice = UpfrontPool::get_player_service(alice.clone());
 		assert_eq!(serevice.is_none(), false);
@@ -190,13 +192,13 @@ fn charge_ingame_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(1);
 		let alice = new_account(1_000_000 * unit(GAKI));
-		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
+		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID.using_encoded(blake2_256)));
 
 		run_to_block(CIRCLE_BLOCK + 1); // move to ingame
 		let before_balance = Balances::free_balance(&alice);
 		let _ = UpfrontPool::charge_ingame();
 		let after_balance = Balances::free_balance(&alice);
-		let service = UpfrontPool::get_service(UPFRONT_BASIC_ID).unwrap();
+		let service = UpfrontPool::get_service(UPFRONT_BASIC_ID.using_encoded(blake2_256)).unwrap();
 		assert_eq!(before_balance, after_balance + service.value);
 	})
 }
