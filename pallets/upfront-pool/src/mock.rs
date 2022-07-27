@@ -13,7 +13,6 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::{
-	ticket::{SystemTicket, TicketLevel},
 	system_services::{SystemService, SystemDefaultServices},
 	currency::{unit, NativeToken::GAKI},
 	constant::ID
@@ -33,6 +32,10 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub const MAX_PLAYER: u32 = 1000;
 pub const TIME_SERVICE: u128 = 60 *
  60_000u128; // 1 hour
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -122,16 +125,16 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+				UPFRONT_BASIC_ID,
+				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 			),
 		]
 	}

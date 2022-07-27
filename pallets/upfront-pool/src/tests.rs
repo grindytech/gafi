@@ -1,18 +1,20 @@
 use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
+use codec::Encode;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gafi_primitives::{
 	system_services::SystemPool,
 	constant::ID
 };
+use sp_core::blake2_256;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
-const UPFRONT_BASIC_ID: ID = [192, 153, 16, 32, 147, 221, 194, 86, 16, 108, 55, 91, 150, 248, 93, 75, 158, 180, 246, 128, 72, 1, 237, 12, 3, 89, 3, 209, 30, 8, 104, 20];
-const UPFRONT_MEDIUM_ID: ID = [1, 207, 121, 218, 73, 69, 195, 112, 198, 139, 38, 94, 247, 6, 65, 170, 166, 94, 170, 143, 89, 83, 227, 144, 13, 151, 114, 76, 44, 90, 160, 149];
-const UPFRONT_ADVANCE_ID: ID = [143, 31, 159, 208, 129, 106, 49, 10, 121, 208, 224, 196, 191, 96, 90, 84, 76, 38, 12, 86, 23, 64, 188, 222, 177, 117, 234, 70, 245, 49, 40, 144];
+const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -168,7 +170,7 @@ fn get_player_level_works() {
 		let alice = new_account(1_000_000 * unit(GAKI));
 		assert_ok!(UpfrontPool::join(alice.clone(), UPFRONT_BASIC_ID));
 
-		let level = UpfrontPool::get_player_level(alice.clone());
+		let level = UpfrontPool::get_pool_joined(&alice);
 		assert_eq!(level.is_none(), false);
 	})
 }

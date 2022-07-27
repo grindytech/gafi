@@ -73,7 +73,7 @@ use sponsored_pool;
 use staking_pool;
 use upfront_pool;
 use gafi_primitives::{
-	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
+	ticket::{TicketType, TicketInfo},
 	constant::ID,
 	system_services::{SystemService, SystemDefaultServices},
 };
@@ -594,22 +594,50 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 // Local
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+				STAKING_BASIC_ID,
+				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+				STAKING_MEDIUM_ID,
+				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+				STAKING_ADVANCE_ID,
+				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+			),
+		]
+	}
+}
+
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				UPFRONT_BASIC_ID,
+				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
+			),
+			(
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
+			),
+			(
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
 			),
 		]
 	}
@@ -646,26 +674,7 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;
 }
 
-pub struct UpfrontPoolDefaultServices {}
 
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
-			),
-		]
-	}
-}
 
 parameter_types! {
 	pub const MaxPlayerStorage: u32 = 10000;
