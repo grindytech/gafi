@@ -31,13 +31,12 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
 	constant::ID,
-	system_services::{SystemDefaultServices, SystemPool, SystemService, Convertor},
-	ticket::{SystemTicket, Ticket, TicketLevel, TicketType},
+	system_services::{SystemDefaultServices, SystemPool, SystemService},
+	ticket::{Ticket, TicketType},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
 mod mock;
@@ -163,7 +162,7 @@ use super::*;
 		ExceedMaxPlayer,
 		CanNotClearNewPlayers,
 		IntoBalanceFail,
-		LevelNotFound,
+		PoolNotFound,
 	}
 
 	#[pallet::event]
@@ -213,7 +212,7 @@ use super::*;
 					ExistenceRequirement::KeepAlive,
 				)?;
 			}
-			Self::join_pool(sender, pool_id, new_player_count);
+			Self::join_pool(sender, pool_id, new_player_count)?;
 			Ok(())
 		}
 
@@ -225,9 +224,7 @@ use super::*;
 		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
-				if let TicketType::System(system_ticket) = ticket.ticket_type {
-					let pool_id = Convertor::into_id(system_ticket);
-
+				if let TicketType::Upfront(pool_id) = ticket.ticket_type {
 					let join_time = ticket.join_time;
 					let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
@@ -259,7 +256,7 @@ use super::*;
 					let new_player_count = Self::player_count()
 						.checked_sub(1)
 						.ok_or(<Error<T>>::PlayerCountOverflow)?;
-					Self::remove_player(&sender, pool_id, new_player_count);
+					Self::remove_player(&sender, new_player_count);
 					return Ok(());
 				}
 			}
@@ -304,7 +301,7 @@ impl<T: Config> Pallet<T> {
 		let ticket = Ticket::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
-			ticket_type: TicketType::System(SystemTicket::Upfront(pool.ticket_level)),
+			ticket_type: TicketType::Upfront(pool_id),
 		};
 		Tickets::<T>::insert(sender, ticket);
 		<PlayerCount<T>>::put(new_player_count);
@@ -333,8 +330,12 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn remove_player(player: &T::AccountId, pool_id: ID, new_player_count: u32) {
-		T::MasterPool::remove_player(player, pool_id);
+	fn remove_player(player: &T::AccountId, new_player_count: u32) {
+
+		if let Some(pool_id) = Self::get_pool_joined(&player) {
+			T::MasterPool::remove_player(player, pool_id);
+		}
+
 		Tickets::<T>::remove(player);
 
 		<IngamePlayers<T>>::mutate(|players| {
@@ -372,7 +373,6 @@ impl<T: Config> Pallet<T> {
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
 						let _ = Self::remove_player(
 							&player,
-							(SystemTicket::Upfront(service.ticket_level)).using_encoded(blake2_256),
 							new_player_count,
 						);
 					}
@@ -383,16 +383,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_player_service(player: T::AccountId) -> Option<SystemService> {
-		if let Some(level) = Self::get_player_level(player) {
-			return Self::get_service((SystemTicket::Upfront(level)).using_encoded(blake2_256));
+		if let Some(pool_id) = Self::get_pool_joined(&player) {
+			return Self::get_service(pool_id);
 		}
 		None
 	}
 
-	fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
+	fn get_pool_joined(player: &T::AccountId) -> Option<ID> {
 		if let Some(ticket) = Tickets::<T>::get(player) {
-			if let TicketType::System(SystemTicket::Upfront(level)) = ticket.ticket_type {
-				return Some(level);
+			if let TicketType::Upfront(pool_id) = ticket.ticket_type {
+				return Some(pool_id);
 			}
 		}
 		None
@@ -414,7 +414,7 @@ impl<T: Config> Pallet<T> {
 		match Services::<T>::get(pool_id) {
 			Some(service) => Ok(service),
 			//TODO: Change error message
-			None => Err(<Error<T>>::LevelNotFound),
+			None => Err(<Error<T>>::PoolNotFound),
 		}
 	}
 }

@@ -30,7 +30,6 @@ pub use gafi_primitives::{
 	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
-	ticket::TicketLevel,
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
