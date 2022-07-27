@@ -6,7 +6,7 @@ homepage = "https://substrate.io/"
 license = "Unlicense"
 name = "pallet-pool"
 publish = false
-repository = "https://github.com/cryptoviet/gafi"
+repository = "https://github.com/grindytech/gafi"
 version = "4.0.0-dev"
 
 [package.metadata.docs.rs]

@@ -1,4 +1,4 @@
-FROM cryptoviet/gafi-linux as builder
+FROM grindytech/gafi-linux as builder
 
 WORKDIR /gafi
 ADD . /gafi
