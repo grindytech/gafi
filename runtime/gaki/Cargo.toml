@@ -40,15 +40,15 @@ staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../p
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
 
 # Frontier
-fp-rpc = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-base-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-dynamic-fee = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-rpc = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-self-contained = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-base-fee = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-dynamic-fee = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm-precompile-modexp = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm-precompile-sha3fips = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm-precompile-simple = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.24"}

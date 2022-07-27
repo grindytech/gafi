@@ -19,7 +19,7 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
   make test
   ```
   #### Client Test
-  [client test](https://github.com/cryptoviet/gafi/tree/master/tests)
+  [client test](https://github.com/grindytech/gafi/tree/master/tests)
 
 ### Build
 

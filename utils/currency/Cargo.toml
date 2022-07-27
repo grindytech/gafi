@@ -28,7 +28,7 @@ gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../.
 
 [dev-dependencies]
 hex-literal = "0.2.1"
-parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1"}
+parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
 
 [features]
 default = ["std"]

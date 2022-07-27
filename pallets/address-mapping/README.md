@@ -51,7 +51,7 @@ otherwise, the None will be returned.
 
 ## Usage
 
-Please visit the [unittest](https://github.com/cryptoviet/gafi/blob/master/pallets/address-mapping/src/tests.rs)
+Please visit the [unittest](https://github.com/grindytech/gafi/blob/master/pallets/address-mapping/src/tests.rs)
 
 ### Prerequisites
 

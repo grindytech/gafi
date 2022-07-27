@@ -1,6 +1,6 @@
 // This file is part of Gafi Network.
 
-// Copyright (C) 2021-2022 CryptoViet.
+// Copyright (C) 2021-2022 Grindy Technologies.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
