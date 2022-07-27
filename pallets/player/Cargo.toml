@@ -36,6 +36,7 @@ gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
+staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 
 [features]
 default = ["std"]

@@ -36,7 +36,8 @@ frame_support::construct_runtime!(
 		PalletGame: pallet_player::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>}
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>}
 		// Event: Event,
 	}
 );
@@ -141,11 +142,41 @@ impl upfront_pool::Config for Test {
 	type Players = PalletGame;
 }
 
+pub struct StakingPoolDefaultServices {}
+
+impl SystemDefaultServices for StakingPoolDefaultServices {
+	fn get_default_services () -> [(ID, SystemService); 3] {
+		[
+			(
+				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
+			),
+			(
+				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
+				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
+			),
+		]
+	}
+}
+
+impl staking_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type StakingServices = StakingPoolDefaultServices;
+	type Players = PalletGame;
+}
+
 impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
 	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -140,6 +140,7 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = ();
 }
 
 // Build genesis storage according to the mock runtime.

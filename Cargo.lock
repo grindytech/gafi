@@ -6968,6 +6968,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "staking-pool",
  "upfront-pool",
 ]
 

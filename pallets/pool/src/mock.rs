@@ -186,6 +186,7 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = ();
 }
 
 impl pallet_player::Config for Test {
@@ -193,6 +194,7 @@ impl pallet_player::Config for Test {
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
 	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
 pub struct UpfrontPoolDefaultServices {}

@@ -46,6 +46,7 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use gafi_primitives::players::PlayersTime;
 	use super::*;
 	use frame_support::dispatch::DispatchResult;
 
@@ -69,6 +70,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		type StakingServices: SystemDefaultServices;
+
+		type Players: PlayersTime<Self::AccountId>;
 	}
 
 	//** Storage **//
@@ -162,6 +165,11 @@ pub mod pallet {
 				let new_player_count = Self::player_count()
 					.checked_sub(1)
 					.ok_or(<Error<T>>::StakeCountOverflow)?;
+
+				let join_time = ticket.join_time;
+				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+
+				T::Players::add_time_joined_staking(sender.clone(), _now.saturating_sub(join_time));
 
 				if let TicketType::System(system_ticket) = ticket.ticket_type {
 					let pool_id = Convertor::into_id(system_ticket);
