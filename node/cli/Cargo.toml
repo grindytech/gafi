@@ -18,8 +18,8 @@ log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
 # Frontier
-fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}

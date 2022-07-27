@@ -18,10 +18,10 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
 ]}
 
 # Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-self-contained = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 hex-literal = {version = "0.3.4", optional = true}
-pallet-ethereum = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm = {default-features = false, git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
@@ -44,7 +44,7 @@ gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../ut
 [dev-dependencies]
 hex-literal = "0.2.1"
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
-parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/cryptoviet/rust-secp256k1"}
+parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}

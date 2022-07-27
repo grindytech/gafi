@@ -31,7 +31,7 @@ The staking_pool module in Gafi is designed to make the following possible:
 
 ## Usage
 
-Please visit the [unittest](https://github.com/cryptoviet/gafi/blob/master/pallets/Staking-pool/src/tests.rs)
+Please visit the [unittest](https://github.com/grindytech/gafi/blob/master/pallets/Staking-pool/src/tests.rs)
 
 ### Prerequisites
 

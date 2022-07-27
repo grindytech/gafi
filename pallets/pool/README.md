@@ -35,7 +35,7 @@ The pallet_pool module in Gafi is designed to make the following possible:
 
 ## Usage
 
-Please visit the [unittest](https://github.com/cryptoviet/gafi/blob/master/tests)
+Please visit the [unittest](https://github.com/grindytech/gafi/blob/master/tests)
 
 ### Prerequisites
 
