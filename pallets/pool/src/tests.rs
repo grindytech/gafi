@@ -1,17 +1,19 @@
 use crate::{mock::*, Error, Tickets};
+use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
     constant::ID,
     currency::{unit, NativeToken::GAKI},
-    ticket::{CustomTicket, SystemTicket, TicketLevel, TicketType},
+    ticket::{TicketType},
 };
-use sp_core::H160;
+use sp_core::{H160};
 use sp_runtime::{AccountId32, Permill};
 use sponsored_pool::{PoolOwned, Pools};
 use std::str::FromStr;
 
 #[cfg(feature = "runtime-benchmarks")]
 use sponsored_pool::CustomPool;
+
 
 fn make_deposit(account: &AccountId32, balance: u128) {
     let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -31,10 +33,10 @@ fn join_staking_pool_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
 
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::System(SystemTicket::Staking(TicketLevel::Basic)),
-        );
+            TicketType::Staking(STAKING_BASIC_ID),
+        ));
 
         assert_eq!(
             Balances::free_balance(account),
@@ -49,10 +51,10 @@ fn leave_all_system_pool_works() {
         run_to_block(1);
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::System(SystemTicket::Staking(TicketLevel::Basic)),
-        );
+            TicketType::Staking(STAKING_BASIC_ID),
+        ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
         assert_eq!(
@@ -60,10 +62,10 @@ fn leave_all_system_pool_works() {
             0
         );
 
-        Pool::join(
+        assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
-        );
+            TicketType::Upfront(UPFRONT_BASIC_ID),
+        ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
         assert_eq!(
@@ -120,7 +122,7 @@ fn leave_all_custom_pool_works() {
             );
             assert_ok!(Pool::join(
                 Origin::signed(account2.clone()),
-                TicketType::Custom(CustomTicket::Sponsored(pool_id))
+                TicketType::Sponsored(pool_id)
             ));
         }
 
@@ -136,7 +138,7 @@ fn leave_all_custom_pool_works() {
             );
             assert_ok!(Pool::join(
                 Origin::signed(account2.clone()),
-                TicketType::Custom(CustomTicket::Sponsored(pool_id))
+                TicketType::Sponsored(pool_id)
             ));
         }
 

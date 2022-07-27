@@ -29,7 +29,7 @@
 #![allow(unused_imports)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
-use gafi_primitives::ticket::{TicketType, SystemTicket, CustomTicket};
+use gafi_primitives::ticket::{TicketType};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
@@ -80,15 +80,15 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 		.saturating_add(T::DbWeight::get().writes(base_w));
 
 		match ticket {
-   			TicketType::System(SystemTicket::Upfront(_)) => {
+   			TicketType::Upfront(_) => {
 				   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
 				   .saturating_add(T::DbWeight::get().writes(upfront_w));
 			   },
-    		TicketType::System(SystemTicket::Staking(_)) => {
+    		TicketType::Staking(_) => {
 				weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
 				.saturating_add(T::DbWeight::get().writes(staking_w));
 			},
-			TicketType::Custom(CustomTicket::Sponsored(_)) => {
+			TicketType::Sponsored(_) => {
 				weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
 				.saturating_add(T::DbWeight::get().writes(sponsored_w));
 			},
@@ -115,7 +115,7 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: StakingPool Services (r:1 w:0)
 	// Storage: PalletCache DataFlag (r:1 w:0)
 	// Storage: PalletCache DataLeft (r:0 w:1)
-	fn leave(s: u32 ) -> Weight {
+	fn leave(s: u32, ) -> Weight {
 			let total_read = 16_u64;
 			let total_write = 11_u64;
 	
@@ -133,15 +133,15 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(base_w));
 	
 			// match ticket {
-			// 	   TicketType::System(SystemTicket::Upfront(_)) => {
+			// 	   TicketType::Upfront(_) => {
 			// 		   weight = (weight).saturating_add(T::DbWeight::get().reads(upfront_r))
 			// 		   .saturating_add(T::DbWeight::get().writes(upfront_w));
 			// 	   },
-			// 	TicketType::System(SystemTicket::Staking(_)) => {
+			// 	TicketType::Staking(_) => {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(staking_r))
 			// 		.saturating_add(T::DbWeight::get().writes(staking_w));
 			// 	},
-			// 	TicketType::Custom(CustomTicket::Sponsored(_)) => {
+			// 	TicketType::Sponsored(_) => {
 			// 		weight = (weight).saturating_add(T::DbWeight::get().reads(sponsored_r))
 			// 		.saturating_add(T::DbWeight::get().writes(sponsored_w));
 			// 	},
@@ -192,15 +192,15 @@ impl WeightInfo for () {
 		.saturating_add(RocksDbWeight::get().writes(base_w));
 
 		match ticket {
-   			TicketType::System(SystemTicket::Upfront(_)) => {
+   			TicketType::Upfront(_) => {
 				   weight = (weight).saturating_add(RocksDbWeight::get().reads(upfront_r))
 				   .saturating_add(RocksDbWeight::get().writes(upfront_w));
 			   },
-			TicketType::System(SystemTicket::Staking(_)) => {
+			TicketType::Staking(_) => {
 				weight = (weight).saturating_add(RocksDbWeight::get().reads(staking_r))
 				.saturating_add(RocksDbWeight::get().writes(staking_w));
 			},
-			TicketType::Custom(CustomTicket::Sponsored(_)) => {
+			TicketType::Sponsored(_) => {
 				weight = (weight).saturating_add(RocksDbWeight::get().reads(sponsored_r))
 				.saturating_add(RocksDbWeight::get().writes(sponsored_w));
 			},

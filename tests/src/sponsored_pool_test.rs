@@ -4,7 +4,7 @@ use gafi_primitives::constant::ID;
 use gafi_primitives::ticket::PlayerTicket;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
-    ticket::{CustomTicket, TicketType},
+    ticket::{TicketType},
 };
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};
@@ -79,7 +79,7 @@ fn rejoin_sponsored_pool_works() {
         let account_1 = new_account([1_u8; 32], account_balance);
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
-            TicketType::Custom(CustomTicket::Sponsored(pool_id))
+            TicketType::Sponsored(pool_id)
         ));
 
         Pool::use_ticket(account_1.clone(), Some(H160::default()));
@@ -90,7 +90,7 @@ fn rejoin_sponsored_pool_works() {
         assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
-            TicketType::Custom(CustomTicket::Sponsored(pool_id))
+            TicketType::Sponsored(pool_id)
         ));
         assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
@@ -98,7 +98,7 @@ fn rejoin_sponsored_pool_works() {
         assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
             Origin::signed(account_1.clone()),
-            TicketType::Custom(CustomTicket::Sponsored(pool_id))
+            TicketType::Sponsored(pool_id)
         ));
         assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 100_u32);
     })
@@ -121,14 +121,14 @@ fn limit_join_sponsored_pool_works() {
 			let pool_id = create_pool(account.clone(), targets.clone(), pool_value, tx_limit, discount);
 			assert_ok!(Pool::join(
 				Origin::signed(account_1.clone()),
-				TicketType::Custom(CustomTicket::Sponsored(pool_id))
+				TicketType::Sponsored(pool_id)
 			));
 		}
 		run_to_block(10);
 		let pool_id1 = create_pool(account.clone(), targets, pool_value, tx_limit, discount);
 		assert_noop!(Pool::join(
 			Origin::signed(account_1.clone()),
-			TicketType::Custom(CustomTicket::Sponsored(pool_id1))
+			TicketType::Sponsored(pool_id1)
 		), pallet_pool::Error::<Test>::ExceedJoinedPool);
     })
 }
