@@ -25,8 +25,8 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	system_services::{Convertor, SystemDefaultServices, SystemPool, SystemService},
-	ticket::{SystemTicket, Ticket, TicketLevel, TicketType},
+	system_services::{ SystemDefaultServices, SystemPool, SystemService},
+	ticket::{ Ticket, TicketType},
 };
 use gu_convertor::u128_try_to_balance;
 pub use pallet::*;
@@ -150,7 +150,7 @@ pub mod pallet {
 				.checked_add(1)
 				.ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			Self::stake_pool(sender, pool_id, new_player_count);
+			Self::stake_pool(sender, pool_id, new_player_count)?;
 			Ok(())
 		}
 
@@ -171,8 +171,7 @@ pub mod pallet {
 
 				T::Players::add_time_joined_staking(sender.clone(), _now.saturating_sub(join_time));
 
-				if let TicketType::System(system_ticket) = ticket.ticket_type {
-					let pool_id = Convertor::into_id(system_ticket);
+				if let TicketType::Staking(pool_id) = ticket.ticket_type {
 					let service = Self::get_pool_by_id(pool_id)?;
 					let staking_amount = u128_try_to_balance::<
 						<T as pallet::Config>::Currency,
@@ -230,7 +229,7 @@ pub mod pallet {
 			let ticket = Ticket {
 				address: sender.clone(),
 				join_time: _now,
-				ticket_type: TicketType::System(SystemTicket::Staking(pool.ticket_level)),
+				ticket_type: TicketType::Staking(pool_id),
 			};
 			Tickets::<T>::insert(sender, ticket);
 			Ok(())
@@ -245,18 +244,6 @@ pub mod pallet {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
 
-		fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
-			match Tickets::<T>::get(player) {
-				Some(ticket) => {
-					if let TicketType::System(SystemTicket::Staking(level)) = ticket.ticket_type {
-						Some(level)
-					} else {
-						None
-					}
-				}
-				None => None,
-			}
-		}
 
 		fn get_pool_by_id(pool_id: ID) -> Result<SystemService, Error<T>> {
 			match Services::<T>::get(pool_id) {

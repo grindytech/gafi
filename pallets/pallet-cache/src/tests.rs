@@ -4,9 +4,12 @@ use gafi_primitives::cache::Cache;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
     ticket::TicketInfo,
-    ticket::{TicketLevel, TicketType, SystemTicket},
+    ticket::{ TicketType},
 };
 use sp_runtime::AccountId32;
+use sp_core::blake2_256;
+use codec::Encode;
+
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDL_BLOCK: u64 = 1_u64;
 
@@ -27,7 +30,7 @@ fn insert_data_works() {
         run_to_block(1);
         let account = new_account([0_u8; 32], 1_000_000_u128 * unit(GAKI));
         let data = TicketInfo {
-            ticket_type:  TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
+            ticket_type: TicketType::Upfront([10_u8; 32].using_encoded(blake2_256)),
             tickets: 100_u32,
         };
         Pallet::<Test>::insert(&account, data.ticket_type, data);
@@ -49,7 +52,7 @@ fn get_data_insert_early_work() {
         run_to_block(ADDL_BLOCK);
         let account = new_account([0_u8; 32], 1_000_000_u128 * unit(GAKI));
         let data = TicketInfo {
-            ticket_type: TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
+            ticket_type: TicketType::Upfront([10_u8; 32].using_encoded(blake2_256)),
             tickets: 100_u32,
         };
         Pallet::<Test>::insert(&account, data.ticket_type, data);
@@ -68,7 +71,7 @@ fn get_data_insert_late_work() {
         run_to_block(CIRCLE_BLOCK - ADDL_BLOCK);
         let account = new_account([0_u8; 32], 1_000_000_u128 * unit(GAKI));
         let data = TicketInfo {
-            ticket_type: TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
+            ticket_type: TicketType::Upfront([10_u8; 32].using_encoded(blake2_256)),
             tickets: 100_u32,
         };
         Pallet::<Test>::insert(&account, data.ticket_type, data);

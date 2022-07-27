@@ -1,9 +1,7 @@
 use crate::{self as gafi_membership};
-use codec::Encode;
 use frame_support::{parameter_types, traits::{GenesisBuild, OnFinalize, OnInitialize}};
 use frame_system as system;
 use sp_core::H256;
-use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup}, AccountId32, Permill,
@@ -11,7 +9,6 @@ use sp_runtime::{
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	system_services::{SystemService, SystemDefaultServices},
-	ticket::{SystemTicket, TicketLevel},
 	constant::ID
 };
 
@@ -105,22 +102,26 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
 pub struct UpfrontPoolDefaultServices {}
 
 impl SystemDefaultServices for UpfrontPoolDefaultServices {
 	fn get_default_services () -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+				UPFRONT_BASIC_ID,
+				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
 			),
 		]
 	}
@@ -145,6 +146,7 @@ impl pallet_player::Config for Test {
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
 	type UpfrontPool = UpfrontPool;
+	type StakingPool = ();
 }
 
 parameter_types! {

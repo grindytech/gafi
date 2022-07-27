@@ -1,8 +1,6 @@
 use crate::{mock::*, Error};
-use codec::Encode;
 use frame_support::{assert_ok, traits::Currency, assert_err};
-use gafi_primitives::{ticket::{TicketLevel, SystemTicket}, system_services::SystemPool, currency::{unit, NativeToken::GAKI}};
-use sp_io::hashing::blake2_256;
+use gafi_primitives::{system_services::SystemPool, currency::{unit, NativeToken::GAKI}};
 
 #[test]
 fn membership_registration_should_work() {
@@ -11,7 +9,7 @@ fn membership_registration_should_work() {
 
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
 
-		let _result = upfront_pool::Pallet::<Test>::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+		let _result = upfront_pool::Pallet::<Test>::join(ALICE, UPFRONT_BASIC_ID);
 
 		run_to_block(2000);
 
@@ -26,7 +24,7 @@ fn membership_registration_should_get_error_not_eligible() {
 
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
 
-		let _result = upfront_pool::Pallet::<Test>::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+		let _result = upfront_pool::Pallet::<Test>::join(ALICE, UPFRONT_BASIC_ID);
 
 		run_to_block(20);
 

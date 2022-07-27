@@ -1,26 +1,18 @@
 use crate::mock::*;
-use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
-    ticket::{PlayerTicket, SystemTicket, TicketLevel, TicketType, CustomTicket},
+    ticket::{PlayerTicket, TicketType},
 };
 use gafi_tx::Config;
-use sp_io::hashing::blake2_256;
 use sp_runtime::AccountId32;
 const TICKETS: [TicketType; 6] = [
-    TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
-    TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)),
-    TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)),
-    TicketType::System(SystemTicket::Staking(TicketLevel::Basic)),
-    TicketType::System(SystemTicket::Staking(TicketLevel::Medium)),
-    TicketType::System(SystemTicket::Staking(TicketLevel::Advance)),
-];
-
-const LEVELS: [TicketLevel; 3] = [
-    TicketLevel::Basic,
-    TicketLevel::Medium,
-    TicketLevel::Advance,
+    TicketType::Upfront(UPFRONT_BASIC_ID),
+    TicketType::Upfront(UPFRONT_MEDIUM_ID),
+    TicketType::Upfront(UPFRONT_ADVANCE_ID),
+    TicketType::Staking(STAKING_BASIC_ID),
+    TicketType::Staking(STAKING_MEDIUM_ID),
+    TicketType::Staking(STAKING_ADVANCE_ID),
 ];
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
@@ -29,11 +21,10 @@ const ADDITIONAL_BLOCK: u64 = 1;
 fn use_tickets(ticket: TicketType, account: AccountId32) {
     let base_balance = 1_000_000 * unit(GAKI);
 	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
+		TicketType::Sponsored(id) |
+        TicketType::Staking(id) |
+         TicketType::Upfront(id) => {
+			id
 		}
 	};
     let _ = <Test as Config>::Currency::deposit_creating(&account, base_balance);
@@ -63,11 +54,11 @@ fn use_tickets_works() {
 
 #[test]
 fn renew_upfront_ticket_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
-            use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
+            use_tickets(TICKETS[i], account.clone());
             assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
             assert_ne!(Pool::use_ticket(account.clone(), None), None);
@@ -77,11 +68,11 @@ fn renew_upfront_ticket_works() {
 
 #[test]
 fn trigger_renew_upfront_tickets_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
-            use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
+            use_tickets(TICKETS[i], account.clone());
             assert_eq!(Pool::use_ticket(account.clone(), None), None);
             run_to_block(CIRCLE_BLOCK + ADDITIONAL_BLOCK);
             assert_ne!(Pool::use_ticket(account.clone(), None), None);
@@ -91,11 +82,11 @@ fn trigger_renew_upfront_tickets_works() {
 
 #[test]
 fn renew_staking_ticket_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
-            use_tickets(TicketType::System(SystemTicket::Staking(LEVELS[i])), account.clone());
+            use_tickets(TICKETS[i], account.clone());
             assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
             assert_ne!(Pool::use_ticket(account.clone(), None), None);
@@ -105,11 +96,11 @@ fn renew_staking_ticket_works() {
 
 #[test]
 fn trigger_renew_staking_tickets_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             run_to_block(1);
             let account = AccountId32::new([i as u8; 32]);
-            use_tickets(TicketType::System(SystemTicket::Upfront(LEVELS[i])), account.clone());
+            use_tickets(TICKETS[i], account.clone());
             assert_eq!(Pool::use_ticket(account.clone(), None), None);
             Pool::renew_tickets();
             assert_ne!(Pool::use_ticket(account.clone(), None), None);

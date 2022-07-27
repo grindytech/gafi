@@ -8,7 +8,7 @@ use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::ticket::{TicketLevel, TicketType};
+use gafi_primitives::ticket::{TicketType};
 use scale_info::prelude::format;
 use scale_info::prelude::string::String;
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
@@ -29,14 +29,22 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u128) -> T::Acco
 const MAX_TICKETS: usize = 7;
 const POOL_ID: ID = [0_u8; 32];
 
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
 const TICKETS: [TicketType; MAX_TICKETS] = [
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)),
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)),
-	TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)),
-	TicketType::System(SystemTicket::Staking(TicketLevel::Basic)),
-	TicketType::System(SystemTicket::Staking(TicketLevel::Medium)),
-	TicketType::System(SystemTicket::Staking(TicketLevel::Advance)),
-	TicketType::Custom(CustomTicket::Sponsored(POOL_ID)),
+	TicketType::Staking(STAKING_BASIC_ID),
+	TicketType::Staking(STAKING_MEDIUM_ID),
+	TicketType::Staking(STAKING_ADVANCE_ID),
+	TicketType::Upfront(UPFRONT_BASIC_ID),
+	TicketType::Upfront(UPFRONT_MEDIUM_ID),
+	TicketType::Upfront(UPFRONT_ADVANCE_ID),
+	TicketType::Sponsored(POOL_ID),
 ];
 
 benchmarks! {
@@ -50,11 +58,10 @@ benchmarks! {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let pool_id =  match TICKETS[s as usize] {
-			TicketType::System(system_ticket) => {
-				system_ticket.using_encoded(blake2_256)
-			}
-			TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-				joined_pool_id
+			TicketType::Sponsored(id) |
+       		TicketType::Staking(id) |
+         	TicketType::Upfront(id) => {
+				id
 			}
 		};
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
@@ -66,11 +73,10 @@ benchmarks! {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 100_000_000u128 * UNIT);
 		let pool_id =  match TICKETS[s as usize] {
-			TicketType::System(system_ticket) => {
-				system_ticket.using_encoded(blake2_256)
-			}
-			TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-				joined_pool_id
+			TicketType::Sponsored(id) |
+        	TicketType::Staking(id) |
+         	TicketType::Upfront(id) => {
+				id
 			}
 		};
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
