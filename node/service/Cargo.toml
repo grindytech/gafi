@@ -20,17 +20,17 @@ log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
 # Frontier
-fc-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-mapping-sync = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24", features = ["rpc_binary_search_estimate"]}
-fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-consensus = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24", default-features = false}
-fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-evm = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-mapping-sync = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24", features = ["rpc_binary_search_estimate"]}
+fc-rpc-core = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-evm = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24", default-features = false}
+fp-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-storage = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-evm = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}

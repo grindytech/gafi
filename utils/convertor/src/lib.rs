@@ -17,7 +17,7 @@ pub type BalanceOf<C, A> = <C as Currency<A>>::Balance;
 /// balance value should be return otherwise Error will be throw
 /// 
 /// # Examples
-/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
+/// [Unittest](https://github.com/grindytech/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn u128_try_to_balance<C, A>(input: u128) -> Result<BalanceOf<C, A>, DispatchError>
 where
     C: Currency<A>,
@@ -40,7 +40,7 @@ where
 /// u128 value should be return otherwise Error will be throw
 /// 
 /// # Examples
-/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
+/// [Unittest](https://github.com/grindytech/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn balance_try_to_u128<C, A>(input: BalanceOf<C, A>) -> Result<u128, DispatchError>
 where
     C: Currency<A>,
@@ -54,7 +54,7 @@ where
 /// Convert [u8; 32] to AccountId
 /// 
 /// # Examples
-/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
+/// [Unittest](https://github.com/grindytech/gafi/blob/master/utils/dummy/src/convertor_tests.rs)
 pub fn into_account<AccountId>(id: ID) -> Option<AccountId> 
     where AccountId: Decode,
 {

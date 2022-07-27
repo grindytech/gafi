@@ -23,11 +23,11 @@ serde = {version = "1.0.132", features = ["derive"]}
 gafi-primitives = {path = "../../primitives"}
 
 # Frontier
-fc-db = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24", features = ["rpc_binary_search_estimate"]}
-fc-rpc-core = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-fp-storage = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24", features = ["rpc_binary_search_estimate"]}
+fc-rpc-core = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fp-storage = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 pallet-transaction-payment-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
