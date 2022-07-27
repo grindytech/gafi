@@ -232,18 +232,6 @@ pub mod pallet {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
 
-		// fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
-		// 	match Tickets::<T>::get(player) {
-		// 		Some(ticket) => {
-		// 			if let TicketType::System(SystemTicket::Staking(level)) = ticket.ticket_type {
-		// 				Some(level)
-		// 			} else {
-		// 				None
-		// 			}
-		// 		}
-		// 		None => None,
-		// 	}
-		// }
 
 		fn get_pool_by_id(pool_id: ID) -> Result<SystemService, Error<T>> {
 			match Services::<T>::get(pool_id) {
