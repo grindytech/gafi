@@ -31,6 +31,6 @@ panic = 'unwind'
 
 [patch.crates-io]
 
-evm-core = {git = "https://github.com/cryptoviet/evm", branch = "master"}
+evm-core = {git = "https://github.com/grindytech/evm", branch = "master"}
 
-ethereum = {git = "https://github.com/cryptoviet/ethereum", branch = "master"}
+ethereum = {git = "https://github.com/grindytech/ethereum", branch = "master"}

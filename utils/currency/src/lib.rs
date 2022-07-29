@@ -11,7 +11,7 @@ use frame_support::traits::fungible::{Inspect};
 /// - `keep_alive`: keep sender alive if `true` and allow death if `false`
 /// 
 /// # Examples
-/// [Unittest](https://github.com/cryptoviet/gafi/blob/master/utils/dummy/src/currency_tests.rs)
+/// [Unittest](https://github.com/grindytech/gafi/blob/master/utils/dummy/src/currency_tests.rs)
 pub fn transfer_all<T, C>(from: &T::AccountId, to: &T::AccountId, keep_alive: bool) -> DispatchResult
 where
     T: pallet_balances::Config,

@@ -1,6 +1,6 @@
 // This file is part of Gafi Network.
 
-// Copyright (C) 2021-2022 CryptoViet.
+// Copyright (C) 2021-2022 Grindy Technologies.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	game_creator::GetGameCreator,
-	ticket::{CustomTicket, PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketType},
 };
 use gu_convertor::{into_account, u128_to_balance};
 pub use pallet::*;
@@ -237,13 +237,13 @@ where
 		if let Some((ticket_type, pool_id)) = T::PlayerTicket::use_ticket(account_id, target) {
 			if let Some(service) = T::PlayerTicket::get_service(pool_id) {
 				match ticket_type {
-					TicketType::System(_) => {
+					TicketType::Upfront(_) | TicketType::Staking(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,
 							service.discount,
 						);
 					}
-					TicketType::Custom(_) => {
+					TicketType::Sponsored(_) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
 							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(

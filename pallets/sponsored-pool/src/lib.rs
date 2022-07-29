@@ -1,6 +1,6 @@
 // This file is part of Gafi Network.
 
-// Copyright (C) 2021-2022 CryptoViet.
+// Copyright (C) 2021-2022 Grindy Technologies.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,6 @@ pub use gafi_primitives::{
 	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
-	ticket::TicketLevel,
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;

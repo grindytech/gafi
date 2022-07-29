@@ -19,8 +19,8 @@ name = "gafi-node"
 [dependencies]
 
 # Frontier
-fc-rpc = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-ethereum = {git = "https://github.com/cryptoviet/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
 
 # Substrate
 sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
@@ -40,7 +40,7 @@ aura = [
   "sc-consensus-aura",
   "gafi-local/aura",
 ]
-default = []
+default = ["aura", "with-dev"]
 
 std = []
 

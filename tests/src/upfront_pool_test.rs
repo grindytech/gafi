@@ -2,31 +2,29 @@ use crate::mock::*;
 use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::system_services::SystemPool;
+use gafi_primitives::ticket::TicketType;
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketLevel, TicketType, SystemTicket, CustomTicket},
 };
 use gafi_tx::Config;
 use rand::prelude::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
+use gafi_primitives::constant::ID;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
-const LEVELS: [TicketLevel; 3] = [TicketLevel::Basic, TicketLevel::Medium, TicketLevel::Advance];
 
-fn init_join_pool(ticket: TicketType) {
+const TICKETS: [ID; 3] = [
+    UPFRONT_BASIC_ID,
+    UPFRONT_MEDIUM_ID,
+    UPFRONT_ADVANCE_ID,
+];
+
+fn init_join_pool(pool_id: ID) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
-	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
-		}
-	};
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
 	let base_balance = 1_000_000 * unit(GAKI);
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
@@ -38,7 +36,7 @@ fn init_join_pool(ticket: TicketType) {
 	}
 
 	let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
-	assert_ok!(Pool::join(Origin::signed(sender.clone()), ticket));
+	assert_ok!(Pool::join(Origin::signed(sender.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
 		before_balance - (pool_fee * 2)
@@ -56,46 +54,38 @@ fn init_join_pool(ticket: TicketType) {
 #[test]
 fn charge_join_pool_basic_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Basic)) );
+		init_join_pool(UPFRONT_BASIC_ID) ;
 	})
 }
 
 #[test]
 fn charge_join_pool_medium_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Medium)) );
+		init_join_pool(UPFRONT_MEDIUM_ID);
 	})
 }
 
 #[test]
 fn charge_join_advance_pool_work() {
 	ExtBuilder::default().build_and_execute(|| {
-		init_join_pool(TicketType::System(SystemTicket::Upfront(TicketLevel::Advance)) );
+		init_join_pool(UPFRONT_ADVANCE_ID) ;
 	})
 }
 
 fn init_leave_pool(
 	index: i32,
-	ticket: TicketType,
+	pool_id: ID,
 	start_block: u64,
 	leave_block: u64,
 ) {
 	let sender = AccountId32::new([index as u8; 32]);
-	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
-		}
-	};
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
 	let base_balance = 1_000_000 * unit(GAKI);
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
 	let original_balance = <Test as Config>::Currency::free_balance(sender.clone());
 
 	run_to_block(start_block);
-	assert_ok!(Pool::join(Origin::signed(sender.clone()), ticket));
+	assert_ok!(Pool::join(Origin::signed(sender.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
 		original_balance - (pool_fee * 2)
@@ -127,13 +117,13 @@ fn init_leave_pool(
 #[test]
 fn leave_pool_early_works() {
 	for i in 0..10 {
-		for level in LEVELS {
+		for ticket in TICKETS {
 			ExtBuilder::default().build_and_execute(|| {
 				let mut rng = thread_rng();
 				let leave_block = rng.gen_range(2..CIRCLE_BLOCK);
 				init_leave_pool(
 					i,
-					TicketType::System(SystemTicket::Upfront(level)),
+					ticket,
 					1,
 					leave_block,
 				);
@@ -145,14 +135,14 @@ fn leave_pool_early_works() {
 #[test]
 fn leave_pool_over_works() {
 	for i in 0..10 {
-		for level in LEVELS {
+		for ticket in TICKETS {
 			ExtBuilder::default().build_and_execute(|| {
 				let mut rng = thread_rng();
 				let start_block = rng.gen_range(1..CIRCLE_BLOCK);
 				let leave_block = rng.gen_range((CIRCLE_BLOCK * 2)..(CIRCLE_BLOCK * 4));
 				init_leave_pool(
 					i,
-					TicketType::System(SystemTicket::Upfront(level)),
+					ticket,
 					start_block,
 					leave_block,
 				);

@@ -3,25 +3,21 @@ use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketLevel, TicketType, SystemTicket, CustomTicket},
 };
 use gafi_tx::Config;
-use sp_io::hashing::blake2_256;
 use sp_runtime::AccountId32;
 use gafi_primitives::system_services::SystemPool;
+use gafi_primitives::constant::ID;
 
-const LEVELS: [TicketLevel; 3] = [TicketLevel::Basic, TicketLevel::Medium, TicketLevel::Advance];
+const TICKETS: [ID; 3] = [
+    STAKING_BASIC_ID,
+    STAKING_MEDIUM_ID,
+    STAKING_ADVANCE_ID,
+];
 
-fn join_pool(account: AccountId32, ticket: TicketType) {
+fn join_pool(account: AccountId32, pool_id: ID) {
 	let base_balance = 1_000_000 * unit(GAKI);
-	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
-		}
-	};
+	
 	let staking_amount = StakingPool::get_service(pool_id).unwrap().value;
 	let _ = <Test as Config>::Currency::deposit_creating(&account, base_balance);
 
@@ -29,23 +25,15 @@ fn join_pool(account: AccountId32, ticket: TicketType) {
 		assert_eq!(<Test as Config>::Currency::free_balance(account.clone()), base_balance);
 	}
 
-	assert_ok!(Pool::join(Origin::signed(account.clone()), ticket));
+	assert_ok!(Pool::join(Origin::signed(account.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(account.clone()),
 		base_balance - staking_amount
 	);
 }
 
-fn leave_pool(account: AccountId32, ticket: TicketType) {
+fn leave_pool(account: AccountId32, pool_id: ID) {
     let before_balance = <Test as Config>::Currency::free_balance(account.clone());
-	let pool_id =  match ticket {
-		TicketType::System(system_ticket) => {
-			system_ticket.using_encoded(blake2_256)
-		}
-		TicketType::Custom(CustomTicket::Sponsored(joined_pool_id)) => {
-			joined_pool_id
-		}
-	};
 	let staking_amount = StakingPool::get_service(pool_id).unwrap().value;
 
 	assert_ok!(Pool::leave(Origin::signed(account.clone()), pool_id));
@@ -57,11 +45,11 @@ fn leave_pool(account: AccountId32, ticket: TicketType) {
 
 #[test]
 fn join_pool_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             let account = AccountId32::new([i as u8; 32]);
 
-            join_pool(account, TicketType::System(SystemTicket::Staking(LEVELS[i])));
+            join_pool(account, TICKETS[i]);
         })
     }
 }
@@ -69,10 +57,10 @@ fn join_pool_works() {
 
 #[test]
 fn leave_pool_works() {
-    for i in 0..LEVELS.len() {
+    for i in 0..TICKETS.len() {
         ExtBuilder::default().build_and_execute(|| {
             let account = AccountId32::new([i as u8; 32]);
-			let ticket = TicketType::System(SystemTicket::Staking(LEVELS[i]));
+			let ticket = TICKETS[i];
 
             join_pool(account.clone(), ticket);
             leave_pool(account.clone(),ticket);

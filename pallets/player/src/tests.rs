@@ -1,8 +1,7 @@
 use crate::{mock::*, Config, Error, Players, PlayerOwned};
 use codec::Encode;
-use gafi_primitives::{system_services::SystemPool, ticket::{SystemTicket, TicketLevel}, currency::{unit, NativeToken::GAKI}, players::PlayersTime};
+use gafi_primitives::{system_services::SystemPool, currency::{unit, NativeToken::GAKI}, players::PlayersTime};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use sp_io::hashing::blake2_256;
 
 const START_BLOCK: u64 = 10;
 
@@ -89,7 +88,7 @@ fn get_total_time_joined_upfront_should_work() {
 	new_test_ext().execute_with(|| {
 		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		let _result = <Test as Config>::UpfrontPool::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+		let _result = <Test as Config>::UpfrontPool::join(ALICE, UPFRONT_BASIC_ID);
 
 		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), 0);
 
@@ -117,7 +116,7 @@ fn add_time_joined_upfront_should_add_with_existed_player_time() {
 	new_test_ext().execute_with(|| {
 		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		let _result = <Test as Config>::UpfrontPool::join(ALICE, (SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256));
+		let _result = <Test as Config>::UpfrontPool::join(ALICE, UPFRONT_BASIC_ID);
 
 		run_to_block(START_BLOCK + 10);
 		let _result = <Test as Config>::UpfrontPool::leave(ALICE);
