@@ -33,6 +33,7 @@ pallet-balances = { default-features = false, version = "4.0.0-dev", git = "http
 pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 pallet-player = { default-features = false, version = "4.0.0-dev", path = "../player" }
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../upfront-pool" }
+gu-mock = { default-features = false, version = "4.0.0-dev", path = "../../utils/mock" }
 
 [features]
 default = ["std"]

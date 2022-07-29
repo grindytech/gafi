@@ -1,5 +1,4 @@
 use crate::mock::*;
-use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::system_services::SystemPool;
 use gafi_primitives::ticket::TicketType;
@@ -8,9 +7,9 @@ use gafi_primitives::{
 };
 use gafi_tx::Config;
 use rand::prelude::*;
-use sp_io::hashing::blake2_256;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
+use gu_mock::*;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
