@@ -1,10 +1,8 @@
 use crate::{mock::*, Error, Tickets};
-use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
     constant::ID,
     currency::{unit, NativeToken::GAKI},
-    ticket::{TicketType},
 };
 use sp_core::{H160};
 use sp_runtime::{AccountId32, Permill};
@@ -35,7 +33,7 @@ fn join_staking_pool_works() {
 
         assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Staking(STAKING_BASIC_ID),
+            STAKING_BASIC_ID,
         ));
 
         assert_eq!(
@@ -53,7 +51,7 @@ fn leave_all_system_pool_works() {
         let account = new_account([0_u8; 32], account_balance);
         assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Staking(STAKING_BASIC_ID),
+            STAKING_BASIC_ID,
         ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
@@ -64,7 +62,7 @@ fn leave_all_system_pool_works() {
 
         assert_ok!(Pool::join(
             Origin::signed(account.clone()),
-            TicketType::Upfront(UPFRONT_BASIC_ID),
+            UPFRONT_BASIC_ID,
         ));
         assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
 
@@ -122,7 +120,7 @@ fn leave_all_custom_pool_works() {
             );
             assert_ok!(Pool::join(
                 Origin::signed(account2.clone()),
-                TicketType::Sponsored(pool_id)
+                pool_id
             ));
         }
 
@@ -138,7 +136,7 @@ fn leave_all_custom_pool_works() {
             );
             assert_ok!(Pool::join(
                 Origin::signed(account2.clone()),
-                TicketType::Sponsored(pool_id)
+                pool_id
             ));
         }
 

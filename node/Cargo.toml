@@ -40,7 +40,7 @@ aura = [
   "sc-consensus-aura",
   "gafi-local/aura",
 ]
-default = []
+default = ["aura", "with-dev"]
 
 std = []
 
