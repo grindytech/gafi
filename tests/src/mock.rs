@@ -140,7 +140,7 @@ parameter_types! {
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = CleanTime;
 }
 

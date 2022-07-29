@@ -77,7 +77,7 @@ pub mod pallet {
 		type TimeServiceStorage: Get<u128>;
 
 		/// Add Cache
-		type Cache: Cache<Self::AccountId, TicketType, TicketInfo>;
+		type Cache: Cache<Self::AccountId, ID, TicketInfo>;
 	}
 
 	#[pallet::pallet]
@@ -177,6 +177,7 @@ pub mod pallet {
 		TicketNotFound,
 		ComingSoon,
 		ExceedJoinedPool,
+		PoolNotFound,
 	}
 
 	#[pallet::call]
@@ -189,25 +190,18 @@ pub mod pallet {
 		/// - `ticket`: ticket type
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32, *ticket))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32))]
 		#[transactional]
-		pub fn join(origin: OriginFor<T>, ticket: TicketType) -> DispatchResult {
+		pub fn join(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			let pool_id = match ticket {
-				TicketType::Sponsored(id)=>id,
-    			TicketType::Upfront(id) => id,
-	    		TicketType::Staking(id) => id, 
-			};
-
-			let ticket_info = Self::get_ticket_info(&sender, ticket, pool_id)?;
 
 			ensure!(
 				Self::is_joined_pool(sender.clone(), pool_id) == false,
 				<Error<T>>::AlreadyJoined
 			);
 
-			match ticket {
+			let ticket_type = Self::get_ticket_type(pool_id)?;
+			match ticket_type {
 				TicketType::Upfront(_) => {
 					T::UpfrontPool::join(sender.clone(), pool_id)?;
 				}
@@ -226,6 +220,8 @@ pub mod pallet {
 					T::SponsoredPool::join(sender.clone(), pool_id)?
 				}
 			}
+
+			let ticket_info = Self::create_ticket(&sender, pool_id)?;
 
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
 
@@ -255,7 +251,7 @@ pub mod pallet {
 						T::SponsoredPool::leave(sender.clone())?
 					}
 				}
-				Self::insert_cache(&sender, ticket.ticket_type, ticket);
+				T::Cache::insert(&sender, pool_id, ticket);
 				Tickets::<T>::remove(sender.clone(), pool_id);
 				Self::deposit_event(Event::<T>::Leaved {
 					sender,
@@ -301,44 +297,29 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn insert_cache(sender: &T::AccountId, ticket: TicketType, data: TicketInfo) {
-			match ticket {
-				TicketType::Upfront(_) => {}
-				TicketType::Staking(_) => {}
-				TicketType::Sponsored(_) => {
-					T::Cache::insert(sender, ticket, data);
-				}
-			}
-		}
-
-		fn get_ticket_info(
+		fn create_ticket(
 			sender: &T::AccountId,
-			ticket: TicketType,
 			pool_id: ID,
 		) -> Result<TicketInfo, Error<T>> {
-			let service = Self::get_ticket_service(pool_id)?;
-			if let Some(cache) = Self::get_cache(&sender, ticket) {
+			let ticket_type = Self::get_ticket_type(pool_id)?;
+			if let Some(cache) = Self::get_cache(&sender, pool_id) {
 				return Ok(TicketInfo {
-					ticket_type: ticket,
+					ticket_type,
 					tickets: cache.tickets,
 				});
 			}
 
+			let service = Self::get_ticket_service(ticket_type)?;
+
 			Ok(TicketInfo {
-				ticket_type: ticket,
+				ticket_type,
 				tickets: service.tx_limit,
 			})
 		}
 
-		fn get_cache(sender: &T::AccountId, ticket: TicketType) -> Option<TicketInfo> {
-			match ticket {
-				TicketType::Upfront(_) => {}
-				TicketType::Staking(_) => {}
-				TicketType::Sponsored(_) => {
-					if let Some(ticket_cache) = T::Cache::get(&sender, ticket) {
-						return Some(ticket_cache);
-					}
-				}
+		fn get_cache(sender: &T::AccountId, pool_id: ID) -> Option<TicketInfo> {
+			if let Some(info) = T::Cache::get(&sender, pool_id) {
+				return Some(info);
 			}
 			None
 		}
@@ -352,13 +333,6 @@ pub mod pallet {
 					}
 				}
 			});
-		}
-
-		pub(crate) fn get_ticket_service(pool_id: ID) -> Result<Service, Error<T>> {
-			match Self::get_service(pool_id) {
-				Some(service) => Ok(service),
-				None => Err(<Error<T>>::TicketNotFound),
-			}
 		}
 
 		fn is_joined_pool(sender: T::AccountId, pool_id: ID) -> bool {
@@ -378,6 +352,41 @@ pub mod pallet {
 				}
 			}
 			is_joined
+		}
+
+		fn get_ticket_service(ticket: TicketType) -> Result<Service, Error<T>> {
+			match ticket {
+				TicketType::Staking(pool_id) => {
+					if let Some(service) = T::StakingPool::get_service(pool_id) {
+						return Ok(service.service);
+					}
+				}
+				TicketType::Upfront(pool_id) => {
+					if let Some(service) = T::UpfrontPool::get_service(pool_id) {
+						return Ok(service.service);
+					}
+				}
+				TicketType::Sponsored(pool_id) => {
+					if let Some(service) = T::SponsoredPool::get_service(pool_id) {
+						return Ok(service.service);
+					}
+				}
+			}
+
+			Err(Error::<T>::PoolNotFound)
+		}
+
+		fn get_ticket_type(pool_id: ID) -> Result<TicketType, Error<T>> {
+			if T::UpfrontPool::get_service(pool_id).is_some() {
+				return Ok(TicketType::Upfront(pool_id));
+			}
+			if T::StakingPool::get_service(pool_id).is_some() {
+				return Ok(TicketType::Staking(pool_id));
+			}
+			if T::SponsoredPool::get_service(pool_id).is_some() {
+				return Ok(TicketType::Sponsored(pool_id));
+			}
+			Err(Error::<T>::PoolNotFound)
 		}
 	}
 
