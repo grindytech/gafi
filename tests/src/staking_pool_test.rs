@@ -1,13 +1,13 @@
 use crate::mock::*;
-use codec::Encode;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI}, ticket::TicketType,
 };
 use gafi_tx::Config;
-use sp_io::hashing::blake2_256;
 use sp_runtime::AccountId32;
 use gafi_primitives::system_services::SystemPool;
+use gu_mock::*;
+
 const TICKETS: [TicketType; 3] = [
     TicketType::Staking(STAKING_BASIC_ID),
     TicketType::Staking(STAKING_MEDIUM_ID),

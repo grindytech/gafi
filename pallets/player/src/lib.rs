@@ -114,7 +114,7 @@ use super::*;
 		fn get_total_time_joined_upfront(player: T::AccountId) -> u128 {
 			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player.clone()).unwrap_or(0u128);
 
-			if let Some(ticket) = T::UpfrontPool::get_ticket(player.clone()) {
+			if let Some(ticket) = T::UpfrontPool::get_ticket(player) {
 				let join_time = ticket.join_time;
 				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
@@ -127,7 +127,7 @@ use super::*;
 		fn get_total_time_joined_staking(player: T::AccountId) -> u128 {
 			let current_joined_time = TotalTimeJoinedStaking::<T>::get(player.clone()).unwrap_or(0u128);
 
-			if let Some(ticket) = T::StakingPool::get_ticket(player.clone()) {
+			if let Some(ticket) = T::StakingPool::get_ticket(player) {
 				let join_time = ticket.join_time;
 				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 

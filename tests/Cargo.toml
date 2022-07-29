@@ -61,6 +61,7 @@ pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pall
 pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../pallets/pool-names"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../pallets/game-creator"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../pallets/player"}
+gu-mock = { version = "4.0.0-dev", default-features = false, path = "../utils/mock" }
 
 [features]
 default = ["std"]

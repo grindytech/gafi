@@ -182,7 +182,7 @@ pub mod pallet {
 					return Ok(());
 				}
 			}
-			return Err(Error::<T>::PlayerNotStake.into());
+			Err(Error::<T>::PlayerNotStake.into())
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
@@ -190,7 +190,7 @@ pub mod pallet {
 		}
 
 		fn get_ticket(sender: T::AccountId) -> Option<Ticket<T::AccountId>> {
-			Tickets::<T>::get(sender.clone())
+			Tickets::<T>::get(sender)
 		}
 	}
 
@@ -224,7 +224,6 @@ pub mod pallet {
 			new_player_count: u32,
 		) -> Result<(), Error<T>> {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-			let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 			<PlayerCount<T>>::put(new_player_count);
 			let ticket = Ticket {
 				address: sender.clone(),

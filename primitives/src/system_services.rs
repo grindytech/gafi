@@ -36,10 +36,10 @@ pub trait SystemPool<AccountId> {
 
 impl<AccountId> SystemPool<AccountId> for () {
 	fn join(_sender: AccountId, _pool_id: ID) -> DispatchResult {
-		Ok(Default::default())
+		Ok(())
 	}
 	fn leave(_sender: AccountId) -> DispatchResult {
-		Ok(Default::default())
+		Ok(())
 	}
 	fn get_service(_pool_id: ID) -> Option<SystemService> {
 		Default::default()

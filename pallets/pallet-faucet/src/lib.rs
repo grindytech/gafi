@@ -179,7 +179,7 @@ pub mod pallet {
 		}
 
 		fn get_cache(sender: &T::AccountId) -> Option<u128> {
-			if let Some(faucet_cache) = T::Cache::get(&sender, sender.clone()) {
+			if let Some(faucet_cache) = T::Cache::get(sender, sender.clone()) {
 				return Some(faucet_cache);
 			}
 			None

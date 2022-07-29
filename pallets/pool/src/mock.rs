@@ -4,7 +4,6 @@
 */
 
 use crate::{self as pallet_pool};
-use codec::Encode;
 use frame_support::{parameter_types, traits::{ConstU32, GenesisBuild}};
 use frame_system as system;
 
@@ -14,10 +13,9 @@ use frame_support::{
 };
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketInfo, TicketType},
-	system_services::{SystemService, SystemDefaultServices},
-	constant::ID
+	ticket::{TicketInfo, TicketType}
 };
+pub use gu_mock::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -33,14 +31,6 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
-
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -58,8 +48,7 @@ frame_support::construct_runtime!(
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>},
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
-		Players: pallet_player::{Pallet, Call, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
 	}
 );
 
@@ -167,62 +156,12 @@ impl pallet_pool::Config for Test {
 	type TimeServiceStorage = TimeServiceStorage;
 }
 
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-			),
-		]
-	}
-}
-
 impl staking_pool::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
 	type Players = ();
-}
-
-impl pallet_player::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type GameRandomness = RandomnessCollectiveFlip;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-}
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-			),
-		]
-	}
 }
 
 parameter_types! {
@@ -236,7 +175,7 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
 	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = Players;
+	type Players = ();
 }
 
 parameter_types! {

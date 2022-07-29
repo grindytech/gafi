@@ -42,6 +42,7 @@ sp-core = {default-features = false, version = "6.0.0", git = "https://github.co
 sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 pallet-player = { version = "4.0.0-dev", default-features = false, path = "../player" }
+gu-mock = { default-features = false, version = "4.0.0-dev", path = "../../utils/mock" }
 
 [features]
 default = ["std"]

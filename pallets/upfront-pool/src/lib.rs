@@ -260,7 +260,7 @@ use super::*;
 					return Ok(());
 				}
 			}
-			return Err(Error::<T>::PlayerNotFound.into());
+			Err(Error::<T>::PlayerNotFound.into())
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
@@ -268,7 +268,7 @@ use super::*;
 		}
 
 		fn get_ticket(sender: T::AccountId) -> Option<Ticket<T::AccountId>> {
-			Tickets::<T>::get(sender.clone())
+			Tickets::<T>::get(sender)
 		}
 	}
 
@@ -297,7 +297,6 @@ use super::*;
 impl<T: Config> Pallet<T> {
 	fn join_pool(sender: T::AccountId, pool_id: ID, new_player_count: u32) -> Result<(), Error<T>> {
 		let _now = <timestamp::Pallet<T>>::get();
-		let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 		let ticket = Ticket::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
@@ -332,7 +331,7 @@ impl<T: Config> Pallet<T> {
 
 	fn remove_player(player: &T::AccountId, new_player_count: u32) {
 
-		if let Some(pool_id) = Self::get_pool_joined(&player) {
+		if let Some(pool_id) = Self::get_pool_joined(player) {
 			T::MasterPool::remove_player(player, pool_id);
 		}
 

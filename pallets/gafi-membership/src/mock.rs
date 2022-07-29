@@ -4,13 +4,9 @@ use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup}, AccountId32, Permill,
+	traits::{BlakeTwo256, IdentityLookup}, AccountId32
 };
-use gafi_primitives::{
-	currency::{unit, NativeToken::GAKI},
-	system_services::{SystemService, SystemDefaultServices},
-	constant::ID
-};
+pub use gu_mock::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -100,31 +96,6 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
-}
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-			),
-		]
-	}
 }
 
 parameter_types! {

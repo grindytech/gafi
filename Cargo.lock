@@ -3470,6 +3470,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gu-mock",
  "pallet-balances",
  "pallet-player",
  "pallet-randomness-collective-flip",
@@ -4015,6 +4016,24 @@ dependencies = [
 name = "gu-ethereum"
 version = "4.0.0-dev"
 dependencies = [
+ "hex-literal 0.2.2",
+ "parity-scale-codec",
+ "parity-secp256k1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sha3 0.10.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "gu-mock"
+version = "4.0.0-dev"
+dependencies = [
+ "gafi-primitives",
  "hex-literal 0.2.2",
  "parity-scale-codec",
  "parity-secp256k1",
@@ -6958,6 +6977,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gu-mock",
  "pallet-balances",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -6990,10 +7010,10 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-primitives",
+ "gu-mock",
  "log",
  "pallet-balances",
  "pallet-cache",
- "pallet-player",
  "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -12328,6 +12348,7 @@ dependencies = [
  "gafi-tx",
  "game-creator",
  "gu-ethereum",
+ "gu-mock",
  "hex",
  "hex-literal 0.3.4",
  "more-asserts",
@@ -12901,6 +12922,7 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "gu-convertor",
+ "gu-mock",
  "log",
  "pallet-balances",
  "pallet-player",
