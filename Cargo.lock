@@ -2007,6 +2007,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "gafi-membership",
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
@@ -3477,9 +3478,11 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
  "upfront-pool",
 ]
 
@@ -6976,6 +6979,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-membership",
  "gafi-primitives",
  "gu-mock",
  "pallet-balances",

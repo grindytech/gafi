@@ -31,7 +31,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>}
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>},
+		GafiMembership: gafi_membership
 		// Event: Event,
 	}
 );
@@ -123,10 +124,24 @@ impl staking_pool::Config for Test {
 	type Players = PalletGame;
 }
 
+parameter_types! {
+	pub const MaxMembers: u32 = 100u32;
+	pub const MinJoinTime: u128 = 60 * 1000; // 60 minutes
+}
+
+impl gafi_membership::Config for Test {
+	type Event = Event;
+	type ApproveOrigin = system::EnsureRoot<AccountId32>;
+	type MaxMembers = MaxMembers;
+	type MinJoinTime = MinJoinTime;
+	type Players = PalletGame;
+}
+
 impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }

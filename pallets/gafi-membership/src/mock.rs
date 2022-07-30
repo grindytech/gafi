@@ -1,12 +1,16 @@
 use crate::{self as gafi_membership};
-use frame_support::{parameter_types, traits::{GenesisBuild, OnFinalize, OnInitialize}};
+use frame_support::{
+	parameter_types,
+	traits::{GenesisBuild, OnFinalize, OnInitialize},
+};
 use frame_system as system;
+pub use gu_mock::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup}, AccountId32
+	traits::{BlakeTwo256, IdentityLookup},
+	AccountId32,
 };
-pub use gu_mock::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -82,7 +86,6 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
@@ -116,6 +119,7 @@ impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = ();
 }
@@ -137,24 +141,23 @@ impl gafi_membership::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&upfront_pool::GenesisConfig::default(),
-		&mut storage,
-	)
-	.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
+		.unwrap();
 
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
 }
 
-
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
+			GafiMembership::on_finalize(System::block_number());
 			System::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }

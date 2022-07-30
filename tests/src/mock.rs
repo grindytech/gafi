@@ -153,6 +153,7 @@ impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }

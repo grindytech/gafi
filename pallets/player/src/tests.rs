@@ -82,7 +82,7 @@ fn get_total_time_joined_upfront_should_return_zero() {
 		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
 
-		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), 0);
+		assert_eq!(PalletGame::get_total_time_joined_upfront(&ALICE), 0);
 	});
 }
 
@@ -93,11 +93,11 @@ fn get_total_time_joined_upfront_should_work() {
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
 		let _result = <Test as Config>::UpfrontPool::join(ALICE, UPFRONT_BASIC_ID);
 
-		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), 0);
+		assert_eq!(PalletGame::get_total_time_joined_upfront(&ALICE), 0);
 
 		run_to_block(START_BLOCK + 10);
 
-		assert_eq!(PalletGame::get_total_time_joined_upfront(ALICE), (MILLISECS_PER_BLOCK * 10).into());
+		assert_eq!(PalletGame::get_total_time_joined_upfront(&ALICE), (MILLISECS_PER_BLOCK * 10).into());
 	});
 }
 
@@ -106,6 +106,7 @@ fn add_time_joined_upfront_should_work() {
 	new_test_ext().execute_with(|| {
 		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+		let _result = GafiMembership::registration(Origin::signed(ALICE));
 
 		PalletGame::add_time_joined_upfront(ALICE, 100);
 
@@ -119,6 +120,7 @@ fn add_time_joined_upfront_should_add_with_existed_player_time() {
 	new_test_ext().execute_with(|| {
 		run_to_block(START_BLOCK);
 		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
+		let _result = GafiMembership::registration(Origin::signed(ALICE));
 		let _result = <Test as Config>::UpfrontPool::join(ALICE, UPFRONT_BASIC_ID);
 
 		run_to_block(START_BLOCK + 10);

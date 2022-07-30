@@ -9,6 +9,6 @@ impl<AccountId> PlayersTime<AccountId> for () {
 }
 
 pub trait PlayerJoinedPoolStatistic<AccountId> {
-	fn get_total_time_joined_upfront(player: AccountId) -> u128;
-	fn get_total_time_joined_staking(player: AccountId) -> u128;
+	fn get_total_time_joined_upfront(player: &AccountId) -> u128;
+	fn get_total_time_joined_staking(player: &AccountId) -> u128;
 }

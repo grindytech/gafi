@@ -1,29 +1,33 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use crate::player::Player;
+use codec::Encode;
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Randomness},
 };
 use frame_system::pallet_prelude::*;
-use codec::{Encode};
-use gafi_primitives::constant::ID;
-use sp_io::hashing::blake2_256;
+use gafi_primitives::{
+	constant::ID,
+	membership::Membership,
+	players::{PlayerJoinedPoolStatistic, PlayersTime},
+	system_services::SystemPool,
+};
 use pallet_timestamp::{self as timestamp};
-use crate::player::Player;
+use sp_io::hashing::blake2_256;
 
 pub use pallet::*;
-mod player;
 #[cfg(test)]
 mod mock;
+mod player;
 
 #[cfg(test)]
 mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use gafi_primitives::{system_services::SystemPool, players::{PlayersTime, PlayerJoinedPoolStatistic}};
 
-use super::*;
+	use super::*;
 	pub type NAME = [u8; 16];
 
 	#[pallet::pallet]
@@ -39,6 +43,8 @@ use super::*;
 		type Currency: Currency<Self::AccountId>;
 
 		type GameRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+
+		type Membership: Membership<Self::AccountId>;
 
 		type UpfrontPool: SystemPool<Self::AccountId>;
 
@@ -88,16 +94,25 @@ use super::*;
 
 	impl<T: Config> Pallet<T> {
 		pub fn gen_id() -> Result<ID, Error<T>> {
-			let payload =
-				(T::GameRandomness::random(&b""[..]).0, <frame_system::Pallet<T>>::block_number());
+			let payload = (
+				T::GameRandomness::random(&b""[..]).0,
+				<frame_system::Pallet<T>>::block_number(),
+			);
 			Ok(payload.using_encoded(blake2_256))
 		}
 
 		pub fn create_new_player(sender: T::AccountId, user_name: NAME) -> Result<ID, Error<T>> {
-			ensure!(Self::player_owned(sender.clone()).is_none(), <Error<T>>::PlayerExisted);
+			ensure!(
+				Self::player_owned(sender.clone()).is_none(),
+				<Error<T>>::PlayerExisted
+			);
 			let id = Self::gen_id()?;
 			ensure!(Players::<T>::get(id).is_none(), <Error<T>>::PlayerIdUsed);
-			let player = Player::<T::AccountId> { id, owner: sender.clone(), name: user_name };
+			let player = Player::<T::AccountId> {
+				id,
+				owner: sender.clone(),
+				name: user_name,
+			};
 
 			<Players<T>>::insert(id, player);
 			<PlayerOwned<T>>::insert(sender, id);
@@ -107,31 +122,30 @@ use super::*;
 		fn moment_to_u128(input: T::Moment) -> u128 {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
-
 	}
 
-	impl<T: Config> PlayerJoinedPoolStatistic<T::AccountId> for Pallet<T>{
-		fn get_total_time_joined_upfront(player: T::AccountId) -> u128 {
-			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player.clone()).unwrap_or(0u128);
+	impl<T: Config> PlayerJoinedPoolStatistic<T::AccountId> for Pallet<T> {
+		fn get_total_time_joined_upfront(player: &T::AccountId) -> u128 {
+			let current_joined_time = TotalTimeJoinedUpfront::<T>::get(player).unwrap_or(0u128);
 
 			if let Some(ticket) = T::UpfrontPool::get_ticket(player) {
 				let join_time = ticket.join_time;
 				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
-				return now.saturating_sub(join_time).saturating_add(current_joined_time);
+				return now.saturating_sub(join_time).saturating_add(current_joined_time)
 			}
 
 			current_joined_time
 		}
 
-		fn get_total_time_joined_staking(player: T::AccountId) -> u128 {
-			let current_joined_time = TotalTimeJoinedStaking::<T>::get(player.clone()).unwrap_or(0u128);
+		fn get_total_time_joined_staking(player: &T::AccountId) -> u128 {
+			let current_joined_time = TotalTimeJoinedStaking::<T>::get(player).unwrap_or(0u128);
 
 			if let Some(ticket) = T::StakingPool::get_ticket(player) {
 				let join_time = ticket.join_time;
 				let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
-				return now.saturating_sub(join_time).saturating_add(current_joined_time);
+				return now.saturating_sub(join_time).saturating_add(current_joined_time)
 			}
 
 			current_joined_time
@@ -140,23 +154,29 @@ use super::*;
 
 	impl<T: Config> PlayersTime<T::AccountId> for Pallet<T> {
 		fn add_time_joined_upfront(player: T::AccountId, time: u128) {
-			let mut add_time = time;
+			if T::Membership::is_registered(&player) {
+				let mut add_time = time;
 
-			if let Some(current_joined_time) = TotalTimeJoinedUpfront::<T>::get(player.clone()) {
-				add_time = current_joined_time.saturating_add(add_time);
+				if let Some(current_joined_time) = TotalTimeJoinedUpfront::<T>::get(player.clone())
+				{
+					add_time = current_joined_time.saturating_add(add_time);
+				}
+
+				TotalTimeJoinedUpfront::<T>::insert(player, add_time);
 			}
-
-			TotalTimeJoinedUpfront::<T>::insert(player, add_time);
 		}
 
 		fn add_time_joined_staking(player: T::AccountId, time: u128) {
-			let mut add_time = time;
+			if T::Membership::is_registered(&player) {
+				let mut add_time = time;
 
-			if let Some(current_joined_time) = TotalTimeJoinedStaking::<T>::get(player.clone()) {
-				add_time = current_joined_time.saturating_add(add_time);
+				if let Some(current_joined_time) = TotalTimeJoinedStaking::<T>::get(player.clone())
+				{
+					add_time = current_joined_time.saturating_add(add_time);
+				}
+
+				TotalTimeJoinedStaking::<T>::insert(player, add_time);
 			}
-
-			TotalTimeJoinedStaking::<T>::insert(player, add_time);
 		}
 	}
 }

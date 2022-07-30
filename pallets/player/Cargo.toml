@@ -37,6 +37,7 @@ sp-core = {default-features = false, version = "6.0.0", git = "https://github.co
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
+gafi-membership = { version = "4.0.0-dev", default-features = false, path = "../gafi-membership" }
 gu-mock = { version = "4.0.0-dev", default-features = false, path = "../../utils/mock" }
 
 [features]
@@ -52,7 +53,8 @@ std = [
   "pallet-balances/std",
   'pallet-randomness-collective-flip/std',
   "pallet-timestamp/std",
-  "upfront-pool/std"
+  "upfront-pool/std",
+  "gafi-membership/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
