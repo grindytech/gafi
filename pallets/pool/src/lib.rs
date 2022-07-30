@@ -49,7 +49,8 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+
+use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
@@ -180,6 +181,7 @@ pub mod pallet {
 		ComingSoon,
 		ExceedJoinedPool,
 		PoolNotFound,
+		NotPoolOwner,
 	}
 
 	#[pallet::call]
@@ -223,11 +225,7 @@ pub mod pallet {
 				}
 			}
 
-			let ticket_info = Self::create_ticket(&sender, pool_id)?;
-
-			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
-
-			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
+			Self::join_pool(sender, pool_id)?;
 			Ok(())
 		}
 
@@ -302,15 +300,9 @@ pub mod pallet {
 			
 			let sender = ensure_signed(origin)?;
 
-			// ensure!(SponsoredPool::get_pool_owner(pool_id) == Some(pool_id), Error::<);
+			Self::is_sponsored_pool_owner(&sender, pool_id)?;
 
-			// if let Some(pool) = Whitelist::<T>::get(player) {
-
-			// }
-
-			let ticket_info = Self::get_ticket_info(&player, TicketType::Custom(CustomTicket::Sponsored(pool_id)), pool_id)?;
-			Tickets::<T>::insert(player.clone(), pool_id, ticket_info);
-
+			Self::join_pool(player, pool_id)?;
 			Ok(())
 		}
 
@@ -318,6 +310,8 @@ pub mod pallet {
 		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 
 			let sender = ensure_signed(origin)?;
+
+			ensure!(T::SponsoredPool::get_service(pool_id).is_some(), Error::<T>::PoolNotFound);
 
 			Whitelist::<T>::insert(sender, pool_id);
 
@@ -345,6 +339,17 @@ pub mod pallet {
 				ticket_type,
 				tickets: service.tx_limit,
 			})
+		}
+
+		fn is_sponsored_pool_owner(sender: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+			if let Some(owner) = T::SponsoredPool::get_pool_owner(pool_id) {
+				if owner == *sender {
+					return Ok(())
+				} else {
+					return Err(Error::<T>::NotPoolOwner);
+				}
+			}
+			Err(Error::<T>::PoolNotFound)
 		}
 
 		fn get_cache(sender: &T::AccountId, pool_id: ID) -> Option<TicketInfo> {
@@ -417,6 +422,15 @@ pub mod pallet {
 				return Ok(TicketType::Sponsored(pool_id));
 			}
 			Err(Error::<T>::PoolNotFound)
+		}
+
+		fn join_pool(sender: T::AccountId, pool_id: ID) -> Result<(), Error<T>>{
+			let ticket_info = Self::create_ticket(&sender, pool_id)?;
+
+			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
+
+			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
+			Ok(())
 		}
 	}
 

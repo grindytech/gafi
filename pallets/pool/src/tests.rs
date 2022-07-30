@@ -1,5 +1,5 @@
 use crate::{mock::*, Error, Tickets, Whitelist};
-use frame_support::{assert_ok, traits::Currency};
+use frame_support::{assert_ok, traits::Currency, assert_err};
 use gafi_primitives::{
     constant::ID,
     currency::{unit, NativeToken::GAKI},
@@ -170,15 +170,25 @@ fn get_ticket_service_works() {
 #[test]
 fn whitelist_works() {
     ExtBuilder::default().build_and_execute(||{
+        run_to_block(1);
+
         let balance = 100_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], balance);
+        let pool_value = 1000 * unit(GAKI);
 
-        let pool_id = [1_u8; 32];
+        let pool_id = create_pool(
+                account.clone(),
+                vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+                pool_value,
+                10,
+                Permill::from_percent(70),
+        );
 
-        assert_ok!(Pool::whitelist(Origin::signed(account.clone()), pool_id));
+        let player = new_account([1_u8; 32], balance);
 
-        assert_eq!(Whitelist::<Test>::get(account.clone()).unwrap(), pool_id);
-        // assert_eq!(Balances::free_balance(account.clone()), balance - )
+        assert_ok!(Pool::query_whitelist(Origin::signed(player.clone()), pool_id));
+
+        assert_eq!(Whitelist::<Test>::get(player.clone()).unwrap(), pool_id);
     })
 
 }
@@ -186,7 +196,86 @@ fn whitelist_works() {
 #[test]
 fn approve_whitelist_works() {
     ExtBuilder::default().build_and_execute(||{
+        run_to_block(1);
 
+        let account_balance = 1_000_000 * unit(GAKI);
+        let account = new_account([0_u8; 32], account_balance);
+        let pool_value = 1000 * unit(GAKI);
+
+        let pool_id = create_pool(
+            account.clone(),
+                vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+                pool_value,
+                10,
+                Permill::from_percent(70),
+        );
+          
+        let player = new_account([1_u8; 32], account_balance);
+
+        assert_ok!(Pool::query_whitelist(Origin::signed(player.clone()), pool_id));
+
+        assert_ok!(Pool::approve_whitelist(Origin::signed(account), pool_id, player));
     })
 }
 
+#[test]
+fn query_whitelist_should_fail_pool_not_found() {
+    ExtBuilder::default().build_and_execute(||{
+        run_to_block(1);
+        let pool_id = [0_u8; 32];
+        let account_balance = 1_000_000 * unit(GAKI);
+          
+        let player = new_account([1_u8; 32], account_balance);
+
+        assert_err!(Pool::query_whitelist(Origin::signed(player.clone()), pool_id), Error::<Test>::PoolNotFound);
+    })
+}
+
+#[test]
+fn approve_whitelist_should_fail_pool_not_found() {
+    ExtBuilder::default().build_and_execute(||{
+    run_to_block(1);
+
+    let account_balance = 1_000_000 * unit(GAKI);
+    let account = new_account([0_u8; 32], account_balance);
+    let pool_value = 1000 * unit(GAKI);
+
+    let pool_id = create_pool(
+        account.clone(),
+            vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+            pool_value,
+            10,
+            Permill::from_percent(70),
+    );
+      
+    let player = new_account([1_u8; 32], account_balance);
+    assert_ok!(Pool::query_whitelist(Origin::signed(player.clone()), pool_id));
+    let pool_id = [0_u8; 32];
+    assert_err!(Pool::approve_whitelist(Origin::signed(account), pool_id, player), Error::<Test>::PoolNotFound);
+    })
+}
+
+#[test]
+fn approve_whitelist_should_fail_not_pool_owner() {
+    ExtBuilder::default().build_and_execute(||{
+    run_to_block(1);
+
+    let account_balance = 1_000_000 * unit(GAKI);
+    let account = new_account([0_u8; 32], account_balance);
+    let pool_value = 1000 * unit(GAKI);
+
+    let pool_id = create_pool(
+        account.clone(),
+            vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+            pool_value,
+            10,
+            Permill::from_percent(70),
+    );
+      
+    let player = new_account([1_u8; 32], account_balance);
+    assert_ok!(Pool::query_whitelist(Origin::signed(player.clone()), pool_id));
+
+    let account2 = new_account([2_u8; 32], account_balance);
+    assert_err!(Pool::approve_whitelist(Origin::signed(account2), pool_id, player), Error::<Test>::NotPoolOwner);
+    })
+}
