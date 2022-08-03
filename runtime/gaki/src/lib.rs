@@ -674,7 +674,7 @@ parameter_types! {
 impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = CleanTime;
 }
 

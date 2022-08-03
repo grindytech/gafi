@@ -7,34 +7,30 @@ use gafi_primitives::{
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
-const TICKETS: [TicketType; 6] = [
-    TicketType::Upfront(UPFRONT_BASIC_ID),
-    TicketType::Upfront(UPFRONT_MEDIUM_ID),
-    TicketType::Upfront(UPFRONT_ADVANCE_ID),
-    TicketType::Staking(STAKING_BASIC_ID),
-    TicketType::Staking(STAKING_MEDIUM_ID),
-    TicketType::Staking(STAKING_ADVANCE_ID),
+use gafi_primitives::constant::ID;
+
+const TICKETS: [ID; 6] = [
+    UPFRONT_BASIC_ID,
+    UPFRONT_MEDIUM_ID,
+    UPFRONT_ADVANCE_ID,
+    STAKING_BASIC_ID,
+    STAKING_MEDIUM_ID,
+    STAKING_ADVANCE_ID,
 ];
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
 
-fn use_tickets(ticket: TicketType, account: AccountId32) {
+fn use_tickets(pool_id: ID, account: AccountId32) {
     let base_balance = 1_000_000 * unit(GAKI);
-	let pool_id =  match ticket {
-		TicketType::Sponsored(id) |
-        TicketType::Staking(id) |
-         TicketType::Upfront(id) => {
-			id
-		}
-	};
+	
     let _ = <Test as Config>::Currency::deposit_creating(&account, base_balance);
 
     assert_eq!(
         <Test as Config>::Currency::free_balance(account.clone()),
         base_balance
     );
-    assert_ok!(Pool::join(Origin::signed(account.clone()), ticket));
+    assert_ok!(Pool::join(Origin::signed(account.clone()), pool_id));
 
     let service = Pool::get_service(pool_id).unwrap();
 

@@ -1,10 +1,13 @@
 /*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
+ * This unittest should only test logic function e.g. Storage, Computation
+ * and not related with Currency e.g. Balances, Transaction Payment
+ */
 
 use crate::{self as pallet_pool};
-use frame_support::{parameter_types, traits::{ConstU32, GenesisBuild}};
+use frame_support::{
+	parameter_types,
+	traits::{ConstU32, GenesisBuild},
+};
 use frame_system as system;
 
 use frame_support::{
@@ -12,17 +15,18 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::{
+	constant::ID,
 	currency::{unit, NativeToken::GAKI},
-	ticket::{TicketInfo, TicketType}
+	ticket::TicketInfo,
 };
 pub use gu_mock::*;
+pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Permill,
 };
-pub use pallet_balances::Call as BalancesCall;
 
 pub use staking_pool;
 pub use upfront_pool;
@@ -51,7 +55,6 @@ frame_support::construct_runtime!(
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
 	}
 );
-
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -134,10 +137,9 @@ parameter_types! {
 impl pallet_cache::Config for Test {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = CleanTime;
 }
-
 
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
@@ -214,17 +216,11 @@ impl system::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&upfront_pool::GenesisConfig::default(),
-		&mut storage,
-	)
-	.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
+		.unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&staking_pool::GenesisConfig::default(),
-		&mut storage,
-	)
-	.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&staking_pool::GenesisConfig::default(), &mut storage)
+		.unwrap();
 
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
@@ -237,7 +233,9 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 

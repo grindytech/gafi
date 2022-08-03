@@ -589,7 +589,7 @@ parameter_types! {
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = PoolCleanTime;
 }
 

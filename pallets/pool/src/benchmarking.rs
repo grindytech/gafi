@@ -37,14 +37,14 @@ pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
 pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
-const TICKETS: [TicketType; MAX_TICKETS] = [
-	TicketType::Staking(STAKING_BASIC_ID),
-	TicketType::Staking(STAKING_MEDIUM_ID),
-	TicketType::Staking(STAKING_ADVANCE_ID),
-	TicketType::Upfront(UPFRONT_BASIC_ID),
-	TicketType::Upfront(UPFRONT_MEDIUM_ID),
-	TicketType::Upfront(UPFRONT_ADVANCE_ID),
-	TicketType::Sponsored(POOL_ID),
+const TICKETS: [ID; MAX_TICKETS] = [
+	STAKING_BASIC_ID,
+	STAKING_MEDIUM_ID,
+	STAKING_ADVANCE_ID,
+	UPFRONT_BASIC_ID,
+	UPFRONT_MEDIUM_ID,
+	UPFRONT_ADVANCE_ID,
+	POOL_ID,
 ];
 
 benchmarks! {
@@ -57,30 +57,18 @@ benchmarks! {
 	leave {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
-		let pool_id =  match TICKETS[s as usize] {
-			TicketType::Sponsored(id) |
-       		TicketType::Staking(id) |
-         	TicketType::Upfront(id) => {
-				id
-			}
-		};
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), TICKETS[s as usize]);
+		let pool_id = TICKETS[s as usize];
+		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), pool_id);
 	}: _(RawOrigin::Signed(caller), pool_id)
 
 
 	leave_all {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 100_000_000u128 * UNIT);
-		let pool_id =  match TICKETS[s as usize] {
-			TicketType::Sponsored(id) |
-        	TicketType::Staking(id) |
-         	TicketType::Upfront(id) => {
-				id
-			}
-		};
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), TICKETS[s as usize]);
+		let pool_id = TICKETS[s as usize];
+		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), pool_id);
 	}: _(RawOrigin::Signed(caller))
 
 	impl_benchmark_test_suite!(Pool, crate::mock::new_test_ext(), crate::mock::Test);
