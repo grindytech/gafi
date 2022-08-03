@@ -1,10 +1,9 @@
-use frame_support::RuntimeDebug;
-use frame_support::pallet_prelude::*;
 use codec::{Decode, Encode};
-use scale_info::TypeInfo;
-use gafi_primitives::constant::ID;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
+use frame_support::{pallet_prelude::*, RuntimeDebug};
+use gafi_primitives::constant::ID;
+use scale_info::TypeInfo;
 
 use crate::pallet::NAME;
 

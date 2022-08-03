@@ -1,9 +1,11 @@
-use crate::{self as gafi_membership};
+use crate::{self as gafi_membership, UpfrontPoolTimeAchievement};
 use frame_support::{
 	parameter_types,
-	traits::{GenesisBuild, OnFinalize, OnInitialize},
+	traits::{GenesisBuild, Get, OnFinalize, OnInitialize},
+	BoundedVec,
 };
 use frame_system as system;
+use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
 pub use gu_mock::*;
 use sp_core::H256;
 use sp_runtime::{
@@ -126,15 +128,48 @@ impl pallet_player::Config for Test {
 
 parameter_types! {
 	pub const MaxMembers: u32 = 100u32;
-	pub const MinJoinTime: u128 = 60 * 1000; // 60 minutes
+	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
+	pub const MaxAchievement: u32 = 100;
+	pub const TotalMembershipLevel: u32 = 10;
+}
+
+pub struct MembershipAchievements {}
+
+impl Achievements<UpfrontPoolTimeAchievement<Test, Player>, MaxAchievement>
+	for MembershipAchievements
+{
+	fn get_membership_achievements(
+	) -> BoundedVec<UpfrontPoolTimeAchievement<Test, Player>, MaxAchievement> {
+		vec![UpfrontPoolTimeAchievement {
+			phantom: Default::default(),
+			id: [20; 32],
+			min_joined_time: MinJoinTime::get(),
+		}]
+		.try_into()
+		.unwrap_or_default()
+	}
+}
+
+pub struct MembershipLevels {}
+
+impl<TotalMembershipLevel: Get<u32>> MembershipLevelPoints<TotalMembershipLevel>
+	for MembershipLevels
+{
+	fn get_membership_level_points() -> BoundedVec<u32, TotalMembershipLevel> {
+		vec![50, 100, 200, 400].try_into().unwrap_or_default()
+	}
 }
 
 impl gafi_membership::Config for Test {
 	type Event = Event;
 	type ApproveOrigin = system::EnsureRoot<AccountId32>;
-	type MaxMembers = MaxMembers;
 	type MinJoinTime = MinJoinTime;
+	type MaxMembers = MaxMembers;
 	type Players = Player;
+	type MaxAchievement = MaxAchievement;
+	type Achievements = MembershipAchievements;
+	type TotalMembershipLevel = TotalMembershipLevel;
+	type MembershipLevelPoints = MembershipLevels;
 }
 
 // Build genesis storage according to the mock runtime.

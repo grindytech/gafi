@@ -2,14 +2,14 @@ use crate as pallet_player;
 use frame_support::parameter_types;
 use frame_system as system;
 
-use frame_support::traits::{OnFinalize, OnInitialize, GenesisBuild};
+use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
+pub use gu_mock::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32
+	AccountId32,
 };
-pub use gu_mock::*;
 
 pub use pallet_balances::Call as BalancesCall;
 
@@ -126,15 +126,20 @@ impl staking_pool::Config for Test {
 
 parameter_types! {
 	pub const MaxMembers: u32 = 100u32;
-	pub const MinJoinTime: u128 = 60 * 1000; // 60 minutes
+	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
+	pub const MaxAchievement: u32 = 100;
+	pub const TotalMembershipLevel: u32 = 10;
 }
-
 impl gafi_membership::Config for Test {
 	type Event = Event;
 	type ApproveOrigin = system::EnsureRoot<AccountId32>;
 	type MaxMembers = MaxMembers;
 	type MinJoinTime = MinJoinTime;
 	type Players = PalletGame;
+	type MaxAchievement = MaxAchievement;
+	type Achievements = ();
+	type TotalMembershipLevel = TotalMembershipLevel;
+	type MembershipLevelPoints = ();
 }
 
 impl pallet_player::Config for Test {
@@ -150,11 +155,8 @@ impl pallet_player::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&upfront_pool::GenesisConfig::default(),
-		&mut storage,
-	)
-	.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
+		.unwrap();
 
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
@@ -167,7 +169,9 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
@@ -183,7 +187,6 @@ pub fn run_to_block(n: u64) {
 // 		}
 // 		.assimilate_storage(&mut t)
 // 		.unwrap();
-
 
 // 		let mut ext = sp_io::TestExternalities::new(t);
 // 		ext.execute_with(|| System::set_block_number(1));

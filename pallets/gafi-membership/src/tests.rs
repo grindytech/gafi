@@ -2,6 +2,7 @@ use crate::{mock::*, Error};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
+	membership::{Achievement, Achievements},
 	system_services::SystemPool,
 };
 
@@ -20,7 +21,7 @@ fn membership_registration_should_work() {
 }
 
 #[test]
-fn membership_hook_check_user_reached_should_work() {
+fn membership_hook_add_point_for_user_should_work() {
 	new_test_ext().execute_with(|| {
 		run_to_block(10);
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
@@ -29,7 +30,10 @@ fn membership_hook_check_user_reached_should_work() {
 		let _result = upfront_pool::Pallet::<Test>::join(ALICE, UPFRONT_BASIC_ID);
 		run_to_block(2000);
 
-		assert_eq!(GafiMembership::members(&ALICE).unwrap().is_reached, true);
+		assert_eq!(
+			GafiMembership::members(&ALICE).unwrap().membership_point,
+			MembershipAchievements::get_membership_achievements()[0].get_achievement_point()
+		);
 	});
 }
 

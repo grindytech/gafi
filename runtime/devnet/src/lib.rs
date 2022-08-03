@@ -9,6 +9,8 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
+use frame_support::BoundedVec;
+use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -40,7 +42,7 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU8, EnsureOneOf, FindAuthor, KeyOwnerProofSystem, LockIdentifier,
+		ConstU32, ConstU8, EnsureOneOf, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
 		PrivilegeCmp, Randomness,
 	},
 	weights::{
@@ -70,6 +72,8 @@ pub use gafi_primitives::{
 	system_services::{SystemDefaultServices, SystemService},
 	ticket::{TicketInfo, TicketType},
 };
+
+pub use gafi_membership::UpfrontPoolTimeAchievement;
 
 // import local pallets
 pub use gafi_membership;
@@ -647,6 +651,41 @@ impl pallet_pool_names::Config for Runtime {
 parameter_types! {
 	pub const MembershipMaxMembers: u32 = 100u32;
 	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
+	pub const MaxAchievement: u32 = 100;
+	pub const TotalMembershipLevel: u32 = 10;
+
+}
+
+pub struct MembershipAchievements {}
+
+impl Achievements<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement>
+	for MembershipAchievements
+{
+	fn get_membership_achievements(
+	) -> BoundedVec<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement> {
+		vec![
+			UpfrontPoolTimeAchievement {
+				phantom: Default::default(),
+				id: [20; 32],
+				min_joined_time: MinJoinTime::get(),
+			},
+			UpfrontPoolTimeAchievement {
+				phantom: Default::default(),
+				id: [21; 32],
+				min_joined_time: MinJoinTime::get(),
+			},
+		]
+		.try_into()
+		.unwrap_or_default()
+	}
+}
+
+pub struct MembershipLevels {}
+
+impl MembershipLevelPoints<TotalMembershipLevel> for MembershipLevels {
+	fn get_membership_level_points() -> BoundedVec<u32, TotalMembershipLevel> {
+		vec![50, 100, 200, 400].try_into().unwrap_or_default()
+	}
 }
 
 impl gafi_membership::Config for Runtime {
@@ -655,6 +694,10 @@ impl gafi_membership::Config for Runtime {
 	type MinJoinTime = MinJoinTime;
 	type MaxMembers = MembershipMaxMembers;
 	type Players = Player;
+	type MaxAchievement = MaxAchievement;
+	type Achievements = MembershipAchievements;
+	type TotalMembershipLevel = TotalMembershipLevel;
+	type MembershipLevelPoints = MembershipLevels;
 }
 
 parameter_types! {

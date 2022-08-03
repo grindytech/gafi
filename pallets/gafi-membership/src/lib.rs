@@ -1,9 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
 pub use pallet::*;
 
-use frame_support::{pallet_prelude::*, traits::Get, transactional};
+use frame_support::{pallet_prelude::*, traits::Get, transactional, BoundedVec};
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{membership::Membership, players::PlayerJoinedPoolStatistic};
+use gafi_primitives::{
+	constant::ID,
+	membership::{Achievement, Achievements, Membership},
+	players::PlayerJoinedPoolStatistic,
+};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -16,16 +21,37 @@ mod tests;
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
+pub struct UpfrontPoolTimeAchievement<T, P> {
+	pub phantom: PhantomData<(T, P)>,
+	pub id: ID,
+	pub min_joined_time: u128,
+}
+
+impl<T: frame_system::Config, Players: PlayerJoinedPoolStatistic<T::AccountId>>
+	Achievement<T::AccountId> for UpfrontPoolTimeAchievement<T, Players>
+{
+	fn is_achieved(&self, sender: &T::AccountId) -> bool {
+		Players::get_total_time_joined_upfront(sender) > self.min_joined_time
+	}
+
+	fn get_achievement_point(&self) -> u32 {
+		10
+	}
+}
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
-)]
-pub struct MembershipInfo {
+#[derive(Clone, Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(MaxAchievement))]
+pub struct MembershipInfo<MaxAchievement: Get<u32>> {
 	pub is_reached: bool,
+	pub level: u8,
+	pub membership_point: u32,
+	pub achievement_ids: BoundedVec<ID, MaxAchievement>,
 }
 
 #[frame_support::pallet]
 pub mod pallet {
+
+	use gafi_primitives::membership::MembershipLevelPoints;
 
 	use super::*;
 
@@ -42,6 +68,21 @@ pub mod pallet {
 		type MaxMembers: Get<u32>;
 
 		#[pallet::constant]
+		type TotalMembershipLevel: Get<u32>;
+
+		#[pallet::constant]
+		type MaxAchievement: Get<u32>;
+
+		type MembershipLevelPoints: MembershipLevelPoints<
+			<Self as pallet::Config<I>>::TotalMembershipLevel,
+		>;
+
+		type Achievements: Achievements<
+			UpfrontPoolTimeAchievement<Self, <Self as Config<I>>::Players>,
+			<Self as pallet::Config<I>>::MaxAchievement,
+		>;
+
+		#[pallet::constant]
 		type MinJoinTime: Get<u128>;
 	}
 
@@ -55,8 +96,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn members)]
-	pub type Members<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::AccountId, MembershipInfo>;
+	pub(super) type Members<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::AccountId, MembershipInfo<T::MaxAchievement>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -76,14 +117,34 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
-			<Members<T, I>>::iter().for_each(|(member, _)| {
-				let is_reached = Self::is_reach_membership_discount(&member);
-				if is_reached {
-					let membership_info = MembershipInfo { is_reached };
+			<Members<T, I>>::iter().for_each(|(member, membership_info)| {
+				T::Achievements::get_membership_achievements().iter().for_each(|achievement| {
+					let is_achieved = achievement.is_achieved(&member) &&
+						!membership_info.achievement_ids.contains(&achievement.id);
 
-					<Members<T, I>>::insert(&member, membership_info);
-					Self::deposit_event(Event::ReachMembershipLevel(1, member));
-				}
+					if is_achieved {
+						let point = achievement.get_achievement_point();
+						let new_point = membership_info.membership_point + point;
+						let level = Self::get_level(new_point);
+						let mut member_achievement_ids = membership_info.achievement_ids.clone();
+
+						if member_achievement_ids.len() <
+							T::MaxAchievement::get().try_into().unwrap()
+						{
+							member_achievement_ids.try_push(achievement.id).unwrap();
+						}
+
+						let new_membership_info = MembershipInfo::<T::MaxAchievement> {
+							is_reached: false,
+							level,
+							membership_point: new_point,
+							achievement_ids: member_achievement_ids,
+						};
+
+						<Members<T, I>>::insert(&member, new_membership_info);
+						Self::deposit_event(Event::ReachMembershipLevel(1, member.clone()));
+					}
+				});
 			});
 		}
 	}
@@ -106,7 +167,12 @@ pub mod pallet {
 				Error::<T, I>::ExceedMaxMembers
 			);
 
-			let membership_info = MembershipInfo { is_reached: false };
+			let membership_info = MembershipInfo {
+				is_reached: false,
+				level: Default::default(),
+				membership_point: Default::default(),
+				achievement_ids: BoundedVec::default(),
+			};
 
 			<MemberCount<T, I>>::put(count + 1);
 			<Members<T, I>>::insert(sender.clone(), membership_info);
@@ -137,8 +203,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		fn is_reach_membership_discount(sender: &T::AccountId) -> bool {
-			T::Players::get_total_time_joined_upfront(sender) > T::MinJoinTime::get()
+		// fn is_added_point(sender: &T::AccountId) -> bool {}
+
+		fn get_level(point: u32) -> u8 {
+			let member_level_points = T::MembershipLevelPoints::get_membership_level_points();
+			let result =
+				member_level_points.into_iter().position(|level_point| point >= level_point);
+
+			result.unwrap_or_default() as u8
 		}
 	}
 
