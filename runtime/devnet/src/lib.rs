@@ -689,6 +689,7 @@ impl MembershipLevelPoints<TotalMembershipLevel> for MembershipLevels {
 }
 
 impl gafi_membership::Config for Runtime {
+	type Currency = Balances;
 	type Event = Event;
 	type ApproveOrigin = ApproveOrigin;
 	type MinJoinTime = MinJoinTime;
