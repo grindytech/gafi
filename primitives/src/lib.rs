@@ -21,3 +21,5 @@ pub mod custom_services;
 pub mod types;
 
 pub mod players;
+
+pub mod membership;

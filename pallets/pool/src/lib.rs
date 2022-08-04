@@ -196,7 +196,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				Self::is_joined_pool(sender.clone(), pool_id) == false,
+				!Self::is_joined_pool(sender.clone(), pool_id),
 				<Error<T>>::AlreadyJoined
 			);
 
@@ -275,17 +275,17 @@ pub mod pallet {
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			if let Ok(_) = T::UpfrontPool::leave(sender.clone()) {
+			if T::UpfrontPool::leave(sender.clone()).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
 					pool_type: PoolType::Upfront,
 				});
-			} else if let Ok(_) = T::StakingPool::leave(sender.clone()) {
+			} else if T::StakingPool::leave(sender.clone()).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
 					pool_type: PoolType::Staking,
 				});
-			} else if let Ok(_) = T::SponsoredPool::leave(sender.clone()) {
+			} else if T::SponsoredPool::leave(sender.clone()).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
 					pool_type: PoolType::Sponsored,
@@ -326,8 +326,8 @@ pub mod pallet {
 
 		pub fn renew_tickets() {
 			let _ = Tickets::<T>::iter().for_each(|player| {
-				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone(), player.1.clone()) {
-					if let Some(service) = Self::get_service(player.1.clone()) {
+				if let Some(ticket_info) = Tickets::<T>::get(player.0.clone(), player.1) {
+					if let Some(service) = Self::get_service(player.1) {
 						let new_ticket = ticket_info.renew_ticket(service.tx_limit);
 						Tickets::<T>::insert(player.0, player.1, new_ticket);
 					}
@@ -336,7 +336,7 @@ pub mod pallet {
 		}
 
 		fn is_joined_pool(sender: T::AccountId, pool_id: ID) -> bool {
-			let joined_pools = Tickets::<T>::iter_prefix_values(sender.clone());
+			let joined_pools = Tickets::<T>::iter_prefix_values(sender);
 			let mut is_joined = false;
 
 			for joined_ticket in joined_pools {
@@ -440,7 +440,7 @@ pub mod pallet {
 				return Some(sponsored_service.unwrap().service);
 			}
 
-			return None;
+			None
 		}
 
 		fn get_targets(pool_id: ID) -> Vec<H160> {

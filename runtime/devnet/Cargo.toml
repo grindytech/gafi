@@ -89,6 +89,7 @@ sponsored-pool = { version = "4.0.0-dev", default-features = false, path = "../.
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool" }
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool" }
 pallet-player-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api" }
+gafi-membership = { version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-membership" }
 
 # unit test
 [dev.dependencies]
@@ -122,6 +123,7 @@ runtime-benchmarks = [
   "sponsored-pool/runtime-benchmarks",
   "game-creator/runtime-benchmarks",
   "pallet-hotfix-sufficients/runtime-benchmarks",
+  "gafi-membership/runtime-benchmarks"
 ]
 std = [
   "codec/std",
@@ -174,8 +176,10 @@ std = [
   "sponsored-pool/std",
   "game-creator/std",
   "pallet-pool-names/std",
+  "gafi-membership/std",
   "runtime-common/std",
   "pallet-hotfix-sufficients/std",
+  "gafi-membership/std",
 ]
 with-dev = []
 with-rocksdb-weights = []

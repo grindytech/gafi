@@ -1,4 +1,5 @@
 use crate::mock::*;
+use gu_mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},

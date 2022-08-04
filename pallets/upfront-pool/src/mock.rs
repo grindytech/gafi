@@ -4,7 +4,6 @@
 */
 
 use crate::{self as upfront_pool};
-use codec::Encode;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -12,30 +11,20 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
-use gafi_primitives::{
-	system_services::{SystemService, SystemDefaultServices},
-	currency::{unit, NativeToken::GAKI},
-	constant::ID
-};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
-use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, Permill,
+	AccountId32
 };
+pub use gu_mock::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const MAX_PLAYER: u32 = 1000;
-pub const TIME_SERVICE: u128 = 60 *
- 60_000u128; // 1 hour
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -120,27 +109,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-			),
-		]
-	}
-}
-
 parameter_types! {
 	pub MaxPlayerStorage: u32 = 1000;
 }
@@ -159,6 +127,7 @@ impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = ();
 	type UpfrontPool = ();
 	type StakingPool = ();
 }
