@@ -100,9 +100,9 @@ async function join_pool(context, sub_account, service) {
     return unsub;
 }
 
-async function leave_pool(context, sub_account, pool_id) {
+async function leave_all_pool(context, sub_account) {
     const api = await ApiPromise.create({ provider: context.wsProvider });
-    const txExecute = api.tx.pool.leave(pool_id);
+    const txExecute = api.tx.pool.leaveAll();
 
     const unsub = await txExecute
         .signAndSend(sub_account);
@@ -148,7 +148,7 @@ module.exports = {
     transfer_erc20,
     proof_address_mapping,
     join_pool,
-    leave_pool,
+    leave_all_pool,
     create_pool,
     get_erc20_balance,
     claim_contract,
