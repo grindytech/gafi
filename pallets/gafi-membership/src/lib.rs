@@ -6,7 +6,7 @@ use frame_support::{pallet_prelude::*, traits::Get, transactional, BoundedVec};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	membership::{Achievement, Achievements, Membership},
+	membership::{Achievement, Achievements, Membership, MembershipLevelPoints},
 	players::PlayerJoinedPoolStatistic,
 };
 #[cfg(feature = "std")]
@@ -18,8 +18,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 pub struct UpfrontPoolTimeAchievement<T, P> {
 	pub phantom: PhantomData<(T, P)>,
@@ -51,13 +51,15 @@ pub struct MembershipInfo<MaxAchievement: Get<u32>> {
 #[frame_support::pallet]
 pub mod pallet {
 
-	use gafi_primitives::membership::MembershipLevelPoints;
+	use frame_support::traits::Currency;
 
 	use super::*;
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
 		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type Currency: Currency<Self::AccountId>;
 
 		/// Origin from which approvals must come.
 		type ApproveOrigin: EnsureOrigin<Self::Origin>;

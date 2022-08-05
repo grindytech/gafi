@@ -131,6 +131,7 @@ parameter_types! {
 	pub const TotalMembershipLevel: u32 = 10;
 }
 impl gafi_membership::Config for Test {
+	type Currency = Balances;
 	type Event = Event;
 	type ApproveOrigin = system::EnsureRoot<AccountId32>;
 	type MaxMembers = MaxMembers;

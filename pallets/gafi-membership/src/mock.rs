@@ -161,6 +161,7 @@ impl<TotalMembershipLevel: Get<u32>> MembershipLevelPoints<TotalMembershipLevel>
 }
 
 impl gafi_membership::Config for Test {
+	type Currency = Balances;
 	type Event = Event;
 	type ApproveOrigin = system::EnsureRoot<AccountId32>;
 	type MinJoinTime = MinJoinTime;
