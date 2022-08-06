@@ -1,21 +1,17 @@
-use codec::Encode;
 use frame_support::{
 	dispatch::Vec,
-	traits::{ConstU32, OnFinalize, OnInitialize},
-};
-use frame_support::{
 	parameter_types,
-	traits::{ConstU8, GenesisBuild},
+	traits::{ConstU32, ConstU8, GenesisBuild, OnFinalize, OnInitialize},
 	weights::IdentityFee,
 };
 use frame_system as system;
-use gafi_primitives::{currency::{unit, NativeToken::GAKI}, ticket::TicketType};
-use gafi_primitives::ticket::TicketInfo;
 use gafi_primitives::{
-	system_services::{SystemService, SystemDefaultServices},
-	constant::ID
+	constant::ID,
+	currency::{unit, NativeToken::GAKI},
+	ticket::TicketInfo,
 };
 use gafi_tx::GafiEVMCurrencyAdapter;
+use gu_mock::{StakingPoolDefaultServices, UpfrontPoolDefaultServices};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;
@@ -26,14 +22,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Permill,
 };
-
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -59,7 +47,7 @@ frame_support::construct_runtime!(
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
@@ -98,6 +86,7 @@ impl proof_address_mapping::Config for Test {
 }
 
 impl pallet_transaction_payment::Config for Test {
+	type Event = Event;
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<u128>;
@@ -165,28 +154,9 @@ impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
-}
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-			),
-		]
-	}
 }
 
 parameter_types! {
@@ -201,27 +171,6 @@ impl upfront_pool::Config for Test {
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
 	type Players = Players;
-}
-
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-			),
-		]
-	}
 }
 
 impl staking_pool::Config for Test {
@@ -354,10 +303,7 @@ impl gafi_tx::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn _new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap()
-		.into()
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
 pub fn run_to_block(n: u64) {
@@ -381,38 +327,25 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			balances: vec![],
-		}
+		Self { balances: vec![] }
 	}
 }
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		let _ = pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
 		}
 		.assimilate_storage(&mut storage);
 
-		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig {},
-			&mut storage,
-		)
-		.unwrap();
-		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig {},
-			&mut storage,
-		)
-		.unwrap();
-		GenesisBuild::<Test>::assimilate_storage(
-			&pallet_pool::GenesisConfig {},
-			&mut storage,
-		)
-		.unwrap();
+		GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig {}, &mut storage)
+			.unwrap();
+		GenesisBuild::<Test>::assimilate_storage(&staking_pool::GenesisConfig {}, &mut storage)
+			.unwrap();
+		GenesisBuild::<Test>::assimilate_storage(&pallet_pool::GenesisConfig {}, &mut storage)
+			.unwrap();
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext

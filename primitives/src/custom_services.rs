@@ -1,10 +1,9 @@
-use crate::constant::ID;
+use crate::{constant::ID, pool::Service};
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_core::H160;
-use sp_runtime::{RuntimeDebug, Permill};
+use sp_runtime::{Permill, RuntimeDebug};
 use sp_std::vec::Vec;
-use crate::pool::{Service};
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct CustomService<AccountId> {

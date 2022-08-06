@@ -1,19 +1,14 @@
 use crate as pallet_player;
-use codec::Encode;
 use frame_support::parameter_types;
 use frame_system as system;
 
-use frame_support::traits::{OnFinalize, OnInitialize, GenesisBuild};
-use gafi_primitives::{
-	system_services::{SystemDefaultServices, SystemService},
-	constant::ID,
-	currency::{unit, NativeToken::GAKI}
-};
-use sp_core::{H256, blake2_256};
+use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
+pub use gu_mock::*;
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, Permill,
+	AccountId32,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -36,7 +31,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>}
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>},
+		GafiMembership: gafi_membership
 		// Event: Event,
 	}
 );
@@ -106,57 +102,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
-
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-			),
-		]
-	}
-}
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(UPFRONT_BASIC_ID, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(UPFRONT_MEDIUM_ID, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(UPFRONT_ADVANCE_ID, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
-			),
-		]
-	}
-}
-
 parameter_types! {
 	pub MaxPlayerStorage: u32 = 1000;
 }
@@ -179,10 +124,30 @@ impl staking_pool::Config for Test {
 	type Players = PalletGame;
 }
 
+parameter_types! {
+	pub const MaxMembers: u32 = 100u32;
+	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
+	pub const MaxAchievement: u32 = 100;
+	pub const TotalMembershipLevel: u32 = 10;
+}
+impl gafi_membership::Config for Test {
+	type Currency = Balances;
+	type Event = Event;
+	type ApproveOrigin = system::EnsureRoot<AccountId32>;
+	type MaxMembers = MaxMembers;
+	type MinJoinTime = MinJoinTime;
+	type Players = PalletGame;
+	type MaxAchievement = MaxAchievement;
+	type Achievements = ();
+	type TotalMembershipLevel = TotalMembershipLevel;
+	type MembershipLevelPoints = ();
+}
+
 impl pallet_player::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }
@@ -191,11 +156,8 @@ impl pallet_player::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&upfront_pool::GenesisConfig::default(),
-		&mut storage,
-	)
-	.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
+		.unwrap();
 
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
@@ -208,7 +170,9 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
@@ -224,7 +188,6 @@ pub fn run_to_block(n: u64) {
 // 		}
 // 		.assimilate_storage(&mut t)
 // 		.unwrap();
-
 
 // 		let mut ext = sp_io::TestExternalities::new(t);
 // 		ext.execute_with(|| System::set_block_number(1));

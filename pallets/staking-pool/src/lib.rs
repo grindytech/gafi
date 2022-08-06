@@ -169,7 +169,7 @@ pub mod pallet {
 				let join_time = ticket.join_time;
 				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
-				T::Players::add_time_joined_upfront(sender.clone(), _now.saturating_sub(join_time));
+				T::Players::add_time_joined_staking(sender.clone(), _now.saturating_sub(join_time));
 
 				if let TicketType::Staking(pool_id) = ticket.ticket_type {
 					let service = Self::get_pool_by_id(pool_id)?;
@@ -182,15 +182,15 @@ pub mod pallet {
 					return Ok(());
 				}
 			}
-			return Err(Error::<T>::PlayerNotStake.into());
+			Err(Error::<T>::PlayerNotStake.into())
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
 			Services::<T>::get(pool_id)
 		}
 
-		fn get_ticket(sender: T::AccountId) -> Option<Ticket<T::AccountId>> {
-			Tickets::<T>::get(sender.clone())
+		fn get_ticket(sender: &T::AccountId) -> Option<Ticket<T::AccountId>> {
+			Tickets::<T>::get(sender)
 		}
 	}
 
@@ -224,7 +224,6 @@ pub mod pallet {
 			new_player_count: u32,
 		) -> Result<(), Error<T>> {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-			let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 			<PlayerCount<T>>::put(new_player_count);
 			let ticket = Ticket {
 				address: sender.clone(),
