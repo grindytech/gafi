@@ -24,8 +24,7 @@ use gafi_primitives::{
 	custom_services::CustomPool,
 	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
-	ticket::TicketInfo,
-	ticket::{PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketInfo, TicketType},
 };
 use pallet_timestamp::{self as timestamp};
 
@@ -34,6 +33,33 @@ use gafi_primitives::cache::Cache;
 pub use pallet::*;
 use sp_core::H160;
 use sp_std::vec::Vec;
+
+use frame_system::offchain::{
+	AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
+};
+use sp_core::crypto::KeyTypeId;
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"demo");
+pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
+
+pub mod crypto {
+	use super::KEY_TYPE;
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		traits::Verify,
+		MultiSignature, MultiSigner,
+	};
+	app_crypto!(sr25519, KEY_TYPE);
+	pub struct TestAuthId;
+
+	// implemented for runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
 
 #[cfg(test)]
 mod mock;
@@ -50,10 +76,10 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-use super::*;
+	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config + CreateSignedTransaction<Call<Self>>{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
@@ -131,6 +157,22 @@ use super::*;
 				MarkTime::<T>::put(_now);
 			}
 		}
+
+		fn offchain_worker(block_number: T::BlockNumber) {
+			log::info!("Hello from pallet-ocw.");
+
+			for query in Whitelist::<T>::iter() {
+				let call = Call::approve_whitelist_unsigned {
+					player: query.0,
+					pool_id: query.1,
+				};
+
+				let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
+					.map_err(|_| {
+						log::error!("Failed in offchain_unsigned_tx");
+					});
+			}
+		}
 	}
 
 	//** Genesis Conguration **//
@@ -148,10 +190,7 @@ use super::*;
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<TimeService<T>>::put(<T as Config>::TimeServiceStorage::get());
-			let _now: u128 = <timestamp::Pallet<T>>::get()
-				.try_into()
-				.ok()
-				.unwrap_or_default();
+			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap_or_default();
 			<MarkTime<T>>::put(_now);
 		}
 	}
@@ -182,6 +221,7 @@ use super::*;
 		ExceedJoinedPool,
 		PoolNotFound,
 		NotPoolOwner,
+		PlayerNotWhitelist,
 	}
 
 	#[pallet::call]
@@ -208,10 +248,10 @@ use super::*;
 			match ticket_type {
 				TicketType::Upfront(_) => {
 					T::UpfrontPool::join(sender.clone(), pool_id)?;
-				}
+				},
 				TicketType::Staking(_) => {
 					T::StakingPool::join(sender.clone(), pool_id)?;
-				}
+				},
 				TicketType::Sponsored(_) => {
 					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
 					let count_joined_pool = joined_sponsored_pool.count();
@@ -222,10 +262,11 @@ use super::*;
 					);
 
 					T::SponsoredPool::join(sender.clone(), pool_id)?
-				}
+				},
 			}
 
-			Self::join_pool(sender, pool_id)?;
+			Self::join_pool(&sender, pool_id)?;
+			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
 			Ok(())
 		}
 
@@ -241,15 +282,9 @@ use super::*;
 
 			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
-					TicketType::Upfront(_) => {
-						T::UpfrontPool::leave(sender.clone())?
-					}
-					TicketType::Staking(_) => {
-						T::StakingPool::leave(sender.clone())?
-					}
-					TicketType::Sponsored(_) => {
-						T::SponsoredPool::leave(sender.clone())?
-					}
+					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
+					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
+					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
 				T::Cache::insert(&sender, pool_id, ticket);
 				Tickets::<T>::remove(sender.clone(), pool_id);
@@ -294,43 +329,63 @@ use super::*;
 			Tickets::<T>::remove_prefix(sender, None);
 			Ok(())
 		}
-	
+
 		#[pallet::weight(0)]
-		pub fn approve_whitelist(origin: OriginFor<T>, pool_id: ID, player: T::AccountId) -> DispatchResult {
-			
+		pub fn approve_whitelist(
+			origin: OriginFor<T>,
+			player: T::AccountId,
+			pool_id: ID,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			Self::is_sponsored_pool_owner(&sender, pool_id)?;
 
-			Self::join_pool(player, pool_id)?;
+			Self::is_whitelist_player(&player, pool_id)?;
+
+			Self::join_pool(&player, pool_id)?;
+			Whitelist::<T>::remove(player.clone());
+			Self::deposit_event(Event::<T>::Joined { sender: player, pool_id });
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn approve_whitelist_unsigned(
+			origin: OriginFor<T>,
+			player: T::AccountId,
+			pool_id: ID,
+		) -> DispatchResult {
+			ensure_none(origin)?;
+
+			Self::is_whitelist_player(&player, pool_id)?;
+
+			Self::join_pool(&player, pool_id)?;
+			Whitelist::<T>::remove(player.clone());
+			Self::deposit_event(Event::<T>::Joined { sender: player, pool_id });
 			Ok(())
 		}
 
 		#[pallet::weight(0)]
 		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-
 			let sender = ensure_signed(origin)?;
 
-			ensure!(T::SponsoredPool::get_service(pool_id).is_some(), Error::<T>::PoolNotFound);
+			ensure!(
+				T::SponsoredPool::get_service(pool_id).is_some(),
+				Error::<T>::PoolNotFound
+			);
 
-			Whitelist::<T>::insert(sender, pool_id);
-
+			Whitelist::<T>::insert(sender.clone(), pool_id);
 			Ok(())
 		}
-
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn create_ticket(
-			sender: &T::AccountId,
-			pool_id: ID,
-		) -> Result<TicketInfo, Error<T>> {
+		fn create_ticket(sender: &T::AccountId, pool_id: ID) -> Result<TicketInfo, Error<T>> {
 			let ticket_type = Self::get_ticket_type(pool_id)?;
 			if let Some(cache) = Self::get_cache(&sender, pool_id) {
 				return Ok(TicketInfo {
 					ticket_type,
 					tickets: cache.tickets,
-				});
+				})
 			}
 
 			let service = Self::get_ticket_service(ticket_type)?;
@@ -346,7 +401,7 @@ use super::*;
 				if owner == *sender {
 					return Ok(())
 				} else {
-					return Err(Error::<T>::NotPoolOwner);
+					return Err(Error::<T>::NotPoolOwner)
 				}
 			}
 			Err(Error::<T>::PoolNotFound)
@@ -354,7 +409,7 @@ use super::*;
 
 		fn get_cache(sender: &T::AccountId, pool_id: ID) -> Option<TicketInfo> {
 			if let Some(info) = T::Cache::get(&sender, pool_id) {
-				return Some(info);
+				return Some(info)
 			}
 			None
 		}
@@ -383,7 +438,7 @@ use super::*;
 						if joined_pool_id == pool_id {
 							is_joined = true;
 						}
-					}
+					},
 				}
 			}
 			is_joined
@@ -393,19 +448,19 @@ use super::*;
 			match ticket {
 				TicketType::Staking(pool_id) => {
 					if let Some(service) = T::StakingPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 				TicketType::Upfront(pool_id) => {
 					if let Some(service) = T::UpfrontPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 				TicketType::Sponsored(pool_id) => {
 					if let Some(service) = T::SponsoredPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 			}
 
 			Err(Error::<T>::PoolNotFound)
@@ -413,24 +468,30 @@ use super::*;
 
 		fn get_ticket_type(pool_id: ID) -> Result<TicketType, Error<T>> {
 			if T::UpfrontPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Upfront(pool_id));
+				return Ok(TicketType::Upfront(pool_id))
 			}
 			if T::StakingPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Staking(pool_id));
+				return Ok(TicketType::Staking(pool_id))
 			}
 			if T::SponsoredPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Sponsored(pool_id));
+				return Ok(TicketType::Sponsored(pool_id))
 			}
 			Err(Error::<T>::PoolNotFound)
 		}
 
-		fn join_pool(sender: T::AccountId, pool_id: ID) -> Result<(), Error<T>>{
-			let ticket_info = Self::create_ticket(&sender, pool_id)?;
-
+		fn join_pool(sender: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+			let ticket_info = Self::create_ticket(sender, pool_id)?;
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
-
-			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
 			Ok(())
+		}
+
+		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+			if let Some(id) = Whitelist::<T>::get(player) {
+				if id == pool_id {
+					return Ok(())
+				}
+			}
+			Err(Error::<T>::PlayerNotWhitelist)
 		}
 	}
 
@@ -442,28 +503,20 @@ use super::*;
 				match ticket_info.ticket_type {
 					TicketType::Upfront(pool_id) | TicketType::Staking(pool_id) => {
 						if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
-							Tickets::<T>::insert(
-								player,
-								pool_id,
-								new_ticket_info,
-							);
-							return Some((
-								new_ticket_info.ticket_type,
-								pool_id,
-							));
+							Tickets::<T>::insert(player, pool_id, new_ticket_info);
+							return Some((new_ticket_info.ticket_type, pool_id))
 						}
-					}
-					TicketType::Sponsored(pool_id) => {
+					},
+					TicketType::Sponsored(pool_id) =>
 						if let Some(contract) = target {
 							let targets = Self::get_targets(pool_id);
 							if targets.contains(&contract) {
 								if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
 									Tickets::<T>::insert(player, pool_id, new_ticket_info);
-									return Some((new_ticket_info.ticket_type, pool_id));
+									return Some((new_ticket_info.ticket_type, pool_id))
 								}
 							}
-						}
-					}
+						},
 				}
 			}
 			None
@@ -475,13 +528,13 @@ use super::*;
 			let sponsored_service = T::SponsoredPool::get_service(pool_id);
 
 			if upfront_service.is_some() {
-				return Some(upfront_service.unwrap().service);
+				return Some(upfront_service.unwrap().service)
 			}
 			if staking_service.is_some() {
-				return Some(staking_service.unwrap().service);
+				return Some(staking_service.unwrap().service)
 			}
 			if sponsored_service.is_some() {
-				return Some(sponsored_service.unwrap().service);
+				return Some(sponsored_service.unwrap().service)
 			}
 
 			None
@@ -506,6 +559,33 @@ use super::*;
 
 		fn get_marktime() -> u128 {
 			MarkTime::<T>::get()
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+
+		/// Validate unsigned call to this module.
+		///
+		/// By default unsigned transactions are disallowed, but implementing the validator
+		/// here we make sure that some particular calls (the ones produced by offchain worker)
+		/// are being whitelisted and marked as valid.
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			let valid_tx = |provide| {
+				ValidTransaction::with_tag_prefix("pallet-pool")
+					.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+					.and_provides([&provide])
+					.longevity(3)
+					.propagate(true)
+					.build()
+			};
+
+			match call {
+				Call::approve_whitelist_unsigned { pool_id, player } =>
+					valid_tx(b"approve_whitelist_unsigned".to_vec()),
+				_ => InvalidTransaction::Call.into(),
+			}
 		}
 	}
 }
