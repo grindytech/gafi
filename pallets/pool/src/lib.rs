@@ -348,7 +348,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(10000000)]
 		pub fn approve_whitelist_unsigned(
 			origin: OriginFor<T>,
 			player: T::AccountId,

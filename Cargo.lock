@@ -1869,6 +1869,7 @@ dependencies = [
  "gafi-tx",
  "game-creator",
  "hex-literal 0.3.4",
+ "log",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
