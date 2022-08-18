@@ -24,6 +24,7 @@ members = [
   'pallets/pallet-cache',
   'pallets/game-creator',
   'pallets/gafi-membership',
+  'pallets/sponsored-pool-join-type',
   'tests',
   'primitives',
 ]

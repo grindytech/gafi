@@ -3,6 +3,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
+use sp_std::vec::Vec;
 
 use crate::constant::ID;
 
@@ -37,4 +38,26 @@ impl<AccountId> MasterPool<AccountId> for () {
 	fn get_marktime() -> u128 {
 		u128::default()
 	}
+}
+
+// sponsored pool external service
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum SponsoredPoolJoinType {
+	Default,
+	Whitelist,
+}
+pub trait SponsoredPoolJoinTypeHandle<AccountId> {
+	fn set_join_type(
+		pool_id: ID,
+		join_type: SponsoredPoolJoinType,
+		call_check_url: Vec<u8>,
+		account_id: AccountId,
+	) -> DispatchResult;
+	fn reset(pool_id: ID, account_id: AccountId) -> DispatchResult;
+	fn get_join_type(pool_id: ID) -> Option<(SponsoredPoolJoinType, Vec<u8>)>;
+}
+pub trait GetSponsoredPoolJoinType {
+	fn get_join_type(pool_id: ID) -> (SponsoredPoolJoinType, Vec<u8>);
 }
