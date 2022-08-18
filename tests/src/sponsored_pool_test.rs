@@ -4,7 +4,6 @@ use gafi_primitives::constant::ID;
 use gafi_primitives::ticket::PlayerTicket;
 use gafi_primitives::{
     currency::{unit, NativeToken::GAKI},
-    ticket::{TicketType},
 };
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};
@@ -52,7 +51,7 @@ fn create_pool(
 fn create_sponsored_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(1);
-        let account_balance = 1_000_000 * unit(GAKI);
+        let account_balance = one_mil_gaki();
         let account = new_account([0_u8; 32], account_balance);
         let targets = vec![H160::default()];
         let pool_value = 1000 * unit(GAKI);
@@ -67,7 +66,7 @@ fn create_sponsored_pool_works() {
 fn rejoin_sponsored_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(ADD_BLOCK);
-        let account_balance = 1_000_000 * unit(GAKI);
+        let account_balance = one_mil_gaki();
         let account = new_account([0_u8; 32], account_balance);
         let targets = vec![H160::default()];
         let pool_value = 1000 * unit(GAKI);
@@ -108,7 +107,7 @@ fn rejoin_sponsored_pool_works() {
 fn limit_join_sponsored_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(ADD_BLOCK);
-        let account_balance = 1_000_000 * unit(GAKI);
+        let account_balance = one_mil_gaki();
         let account = new_account([0_u8; 32], account_balance);
         let targets = vec![H160::default()];
         let pool_value = 1000 * unit(GAKI);

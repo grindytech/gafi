@@ -2,12 +2,10 @@ use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	constant::ID,
-	currency::{unit, NativeToken::GAKI},
 	system_services::SystemPool,
-	ticket::TicketType,
 };
 use gafi_tx::Config;
-use gu_mock::*;
+use gu_mock::one_mil_gaki;
 use rand::prelude::*;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
@@ -21,7 +19,7 @@ fn init_join_pool(pool_id: ID) {
 	let sender = AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap(); //ALICE
 
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
-	let base_balance = 1_000_000 * unit(GAKI);
+	let base_balance = one_mil_gaki();
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
 	{
 		assert_eq!(
@@ -70,7 +68,7 @@ fn charge_join_advance_pool_work() {
 fn init_leave_pool(index: i32, pool_id: ID, start_block: u64, leave_block: u64) {
 	let sender = AccountId32::new([index as u8; 32]);
 	let pool_fee = UpfrontPool::get_service(pool_id).unwrap().value;
-	let base_balance = 1_000_000 * unit(GAKI);
+	let base_balance = one_mil_gaki();
 	let _ = <Test as Config>::Currency::deposit_creating(&sender, base_balance);
 	let original_balance = <Test as Config>::Currency::free_balance(sender.clone());
 

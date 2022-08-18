@@ -57,6 +57,7 @@ game-creator = {default-features = false, version = "4.0.0-dev", path = "../game
 proof-address-mapping = {default-features = false, version = "4.0.0-dev", path = "../address-mapping"}
 staking-pool = {default-features = false, version = "4.0.0-dev", path = "../staking-pool"}
 upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../upfront-pool"}
+gu-mock = {path = "../../utils/mock"}
 
 [features]
 default = ["std"]

@@ -3,7 +3,7 @@ use frame_support::parameter_types;
 use frame_system as system;
 
 use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
-pub use gu_mock::*;
+pub use gu_mock::pool::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,

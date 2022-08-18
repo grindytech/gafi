@@ -19,7 +19,7 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	ticket::TicketInfo,
 };
-pub use gu_mock::*;
+pub use gu_mock::pool::*;
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
