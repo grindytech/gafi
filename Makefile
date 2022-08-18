@@ -10,6 +10,10 @@ build-test:
 build-dev:
 	cargo build --release --features with-dev
 
+.PHONY: build-fast-runtime
+build-fast-runtime:
+	cargo build --release --features with-dev,fast-runtime
+
 .PHONY: build-gaki
 build-gaki:
 	cargo build --release --features with-gaki

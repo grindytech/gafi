@@ -100,3 +100,5 @@ with-gari = [
 with-gaki = [
   "gafi-service/with-gaki",
 ]
+
+fast-runtime = [ "gafi-service/fast-runtime" ]

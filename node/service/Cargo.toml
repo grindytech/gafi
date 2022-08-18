@@ -123,3 +123,8 @@ rococo-native = [
   "polkadot-cli/rococo-native",
   "polkadot-service/rococo-native",
 ]
+
+fast-runtime = [
+	"gaki-runtime/fast-runtime",
+	"gari-runtime/fast-runtime",
+]

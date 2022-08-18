@@ -14,7 +14,7 @@ use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
-use runtime_common::impls::DealWithFees;
+use runtime_common::{prod_or_fast, impls::DealWithFees};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
@@ -822,7 +822,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub ProposalBondMinimum: Balance = 100 * unit(GAKI);
 	pub ProposalBondMaximum: Balance = 500 * unit(GAKI);
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub SpendPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 5 * MINUTES, "GAKI_SPEND_PERIOD");
 	pub const Burn: Permill = Permill::from_percent(1);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 
@@ -854,12 +854,12 @@ impl pallet_treasury::Config for Runtime {
 }
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = 7 * DAYS;
-	pub VotingPeriod: BlockNumber = 7 * DAYS;
-	pub FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "GAKI_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES, "GAKI_VOTING_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 1 * MINUTES, "GAKI_FAST_TRACK_VOTING_PERIOD");
 	pub MinimumDeposit: Balance = 100 * centi(GAKI);
-	pub EnactmentPeriod: BlockNumber = 8 * DAYS;
-	pub CooloffPeriod: BlockNumber = 7 * DAYS;
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(8 * DAYS, 1, "GAKI_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES, "GAKI_COOLOFF_PERIOD");
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -921,7 +921,7 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(3 * DAYS, 2 * MINUTES, "GAKI_MOTION_DURATION");
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -945,7 +945,7 @@ parameter_types! {
 	// additional data per vote is 32 bytes (account id).
 	pub VotingBondFactor: Balance = deposit(0, 32, GAKI);
 	/// Daily council elections
-	pub TermDuration: BlockNumber = 24 * HOURS;
+	pub TermDuration: BlockNumber = prod_or_fast!(24 * HOURS, 2 * MINUTES, "GAKI_TERM_DURATION");
 	pub const DesiredMembers: u32 = 19;
 	pub const DesiredRunnersUp: u32 = 19;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
