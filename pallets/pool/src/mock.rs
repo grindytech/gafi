@@ -19,7 +19,7 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	ticket::TicketInfo,
 };
-pub use gu_mock::pool::*;
+pub use gu_mock::{pool::*, AN_HOUR};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
@@ -33,8 +33,6 @@ pub use upfront_pool;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -131,7 +129,7 @@ impl sponsored_pool::Config for Test {
 }
 
 parameter_types! {
-	pub CleanTime: u128 = TIME_SERVICE;
+	pub CleanTime: u128 = AN_HOUR;
 }
 
 impl pallet_cache::Config for Test {
@@ -213,7 +211,7 @@ impl system::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn _new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
@@ -240,15 +238,13 @@ pub fn run_to_block(n: u64) {
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId32, u128)>,
 	pub time_service: u128,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			balances: vec![],
-			time_service: TIME_SERVICE,
+			time_service: AN_HOUR,
 		}
 	}
 }

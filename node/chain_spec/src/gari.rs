@@ -386,7 +386,7 @@ fn testnet_genesis(
 		base_fee: Default::default(),
 		evm: EVMConfig {
 			accounts: {
-				let mut map = BTreeMap::new();
+				let map = BTreeMap::new();
 				map
 			},
 		},

@@ -53,3 +53,31 @@ fn membership_registration_should_dispatch_error_when_already_registered() {
 		);
 	});
 }
+
+#[test]
+fn membership_registration_should_dispatch_error_when_exceed_max_members() {
+	new_test_ext().execute_with(|| {
+		run_to_block(10);
+
+		let accounts = vec![[0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32]];
+
+		for account in accounts {
+			let _ = pallet_balances::Pallet::<Test>::deposit_creating(
+				&AccountId32::new(account),
+				one_mil_gaki(),
+			);
+			if account == [5; 32] {
+				assert_err!(
+					GafiMembership::registration(Origin::signed(AccountId32::new(account))),
+					<Error<Test>>::ExceedMaxMembers
+				);
+			} else {
+				assert_ok!(GafiMembership::registration(Origin::signed(
+					AccountId32::new(account)
+				)));
+			}
+		}
+
+		run_to_block(20);
+	});
+}
