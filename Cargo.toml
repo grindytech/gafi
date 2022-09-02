@@ -23,6 +23,7 @@ members = [
   'pallets/sponsored-pool',
   'pallets/pallet-cache',
   'pallets/game-creator',
+  'pallets/gafi-membership',
   'tests',
   'primitives',
 ]

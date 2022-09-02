@@ -9,16 +9,19 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
+use frame_support::BoundedVec;
+use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
-use runtime_common::impls::DealWithFees;
+use runtime_common::{prod_or_fast, impls::DealWithFees};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
 	crypto::{ByteArray, KeyTypeId},
 	OpaqueMetadata, H160, H256, U256,
 };
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -33,14 +36,14 @@ use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
-use sp_io::hashing::blake2_256;
 
 // A few exports that help ease life for downstream crates.
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU8, EnsureOneOf, FindAuthor, KeyOwnerProofSystem, LockIdentifier, Randomness, PrivilegeCmp
+		ConstU32, ConstU8, EnsureOneOf, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
+		PrivilegeCmp, Randomness,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -52,9 +55,9 @@ pub use frame_system::{Call as SystemCall, EnsureRoot};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, HashedAddressMapping, Runner,
+	Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressRoot,
+	FeeCalculator, HashedAddressMapping, Runner,
 };
-use pallet_evm::{EVMCurrencyAdapter, FeeCalculator};
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -63,13 +66,17 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
 	cache::Cache,
+	constant::ID,
 	currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},
-	system_services::{SystemService, SystemDefaultServices},
-	ticket::{TicketInfo, TicketType, SystemTicket, TicketLevel},
-	constant::ID
+	players::PlayerJoinedPoolStatistic,
+	system_services::{SystemDefaultServices, SystemService},
+	ticket::{TicketInfo, TicketType},
 };
 
+pub use gafi_membership::UpfrontPoolTimeAchievement;
+
 // import local pallets
+pub use gafi_membership;
 pub use gafi_tx;
 pub use game_creator;
 pub use pallet_cache;
@@ -305,6 +312,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
@@ -325,7 +333,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]))
 		}
 		None
 	}
@@ -399,31 +407,91 @@ impl pallet_player::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = GafiMembership;
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
 }
 
-parameter_types! {
-	pub const MaxPlayerStorage: u32 = 10000;
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
+impl SystemDefaultServices for StakingPoolDefaultServices {
+	fn get_default_services() -> [(ID, SystemService); 3] {
+		[
+			(
+				STAKING_BASIC_ID,
+				SystemService::new(
+					STAKING_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					1000 * unit(GAKI),
+				),
+			),
+			(
+				STAKING_MEDIUM_ID,
+				SystemService::new(
+					STAKING_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					1500 * unit(GAKI),
+				),
+			),
+			(
+				STAKING_ADVANCE_ID,
+				SystemService::new(
+					STAKING_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					2000 * unit(GAKI),
+				),
+			),
+		]
+	}
 }
 
 pub struct UpfrontPoolDefaultServices {}
 
 impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
+	fn get_default_services() -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAKI)),
+				UPFRONT_BASIC_ID,
+				SystemService::new(
+					UPFRONT_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					5 * unit(GAKI),
+				),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAKI)),
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(
+					UPFRONT_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					7 * unit(GAKI),
+				),
 			),
 			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAKI)),
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(
+					UPFRONT_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					10 * unit(GAKI),
+				),
 			),
 		]
 	}
+}
+
+parameter_types! {
+	pub const MaxPlayerStorage: u32 = 10000;
 }
 
 impl upfront_pool::Config for Runtime {
@@ -433,34 +501,17 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Player;
 }
 
 pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-			),
-			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-			),
-			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-			),
-		]
-	}
-}
 
 impl staking_pool::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {
@@ -539,7 +590,7 @@ parameter_types! {
 impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = PoolCleanTime;
 }
 
@@ -596,6 +647,59 @@ impl pallet_pool_names::Config for Runtime {
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
+}
+
+parameter_types! {
+	pub const MembershipMaxMembers: u32 = 100u32;
+	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
+	pub const MaxAchievement: u32 = 100;
+	pub const TotalMembershipLevel: u32 = 10;
+
+}
+
+pub struct MembershipAchievements {}
+
+impl Achievements<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement>
+	for MembershipAchievements
+{
+	fn get_membership_achievements(
+	) -> BoundedVec<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement> {
+		vec![
+			UpfrontPoolTimeAchievement {
+				phantom: Default::default(),
+				id: [20; 32],
+				min_joined_time: MinJoinTime::get(),
+			},
+			UpfrontPoolTimeAchievement {
+				phantom: Default::default(),
+				id: [21; 32],
+				min_joined_time: MinJoinTime::get(),
+			},
+		]
+		.try_into()
+		.unwrap_or_default()
+	}
+}
+
+pub struct MembershipLevels {}
+
+impl MembershipLevelPoints<TotalMembershipLevel> for MembershipLevels {
+	fn get_membership_level_points() -> BoundedVec<u32, TotalMembershipLevel> {
+		vec![50, 100, 200, 400].try_into().unwrap_or_default()
+	}
+}
+
+impl gafi_membership::Config for Runtime {
+	type Currency = Balances;
+	type Event = Event;
+	type ApproveOrigin = ApproveOrigin;
+	type MinJoinTime = MinJoinTime;
+	type MaxMembers = MembershipMaxMembers;
+	type Players = Player;
+	type MaxAchievement = MaxAchievement;
+	type Achievements = MembershipAchievements;
+	type TotalMembershipLevel = TotalMembershipLevel;
+	type MembershipLevelPoints = MembershipLevels;
 }
 
 parameter_types! {
@@ -667,7 +771,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub ProposalBondMinimum: Balance = 100 * unit(GAKI);
 	pub ProposalBondMaximum: Balance = 500 * unit(GAKI);
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub SpendPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 5 * MINUTES, "GAKI_SPEND_PERIOD");
 	pub const Burn: Permill = Permill::from_percent(1);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 
@@ -695,15 +799,16 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type MaxApprovals = MaxApprovals;
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = 7 * DAYS;
-	pub VotingPeriod: BlockNumber = 7 * DAYS;
-	pub FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "GAKI_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES, "GAKI_VOTING_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 1 * MINUTES, "GAKI_FAST_TRACK_VOTING_PERIOD");
 	pub MinimumDeposit: Balance = 100 * centi(GAKI);
-	pub EnactmentPeriod: BlockNumber = 8 * DAYS;
-	pub CooloffPeriod: BlockNumber = 7 * DAYS;
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(8 * DAYS, 1, "GAKI_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES, "GAKI_COOLOFF_PERIOD");
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -729,7 +834,8 @@ impl pallet_democracy::Config for Runtime {
 	type ExternalDefaultOrigin =
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
 	/// Two thirds of the technical committee can have an `ExternalMajority/ExternalDefault` vote
-	/// be tabled immediately and with a shorter voting/enactment period but change to CouncilCollective at this time.
+	/// be tabled immediately and with a shorter voting/enactment period but change to
+	/// CouncilCollective at this time.
 	type FastTrackOrigin =
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
 	type InstantOrigin =
@@ -749,7 +855,8 @@ impl pallet_democracy::Config for Runtime {
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>,
 	>;
 	// Any single technical committee member may veto a coming council proposal, however they can
-	// only do it once and it lasts only for the cooloff period but change to CouncilCollective at this time.
+	// only do it once and it lasts only for the cooloff period but change to CouncilCollective at
+	// this time.
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
@@ -763,7 +870,7 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(3 * DAYS, 2 * MINUTES, "GAKI_MOTION_DURATION");
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -787,7 +894,7 @@ parameter_types! {
 	// additional data per vote is 32 bytes (account id).
 	pub VotingBondFactor: Balance = deposit(0, 32, GAKI);
 	/// Daily council elections
-	pub TermDuration: BlockNumber = 24 * HOURS;
+	pub TermDuration: BlockNumber = prod_or_fast!(24 * HOURS, 2 * MINUTES, "GAKI_TERM_DURATION");
 	pub const DesiredMembers: u32 = 19;
 	pub const DesiredRunnersUp: u32 = 19;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
@@ -832,13 +939,14 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 		HotfixSufficients: pallet_hotfix_sufficients::{Pallet, Call},
+
 
 		Player: pallet_player,
 		Pool: pallet_pool,
@@ -852,6 +960,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
+		GafiMembership: gafi_membership,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
@@ -928,57 +1037,57 @@ pub type Executive = frame_executive::Executive<
 >;
 
 impl fp_self_contained::SelfContainedCall for Call {
-    type SignedInfo = H160;
+	type SignedInfo = H160;
 
-    fn is_self_contained(&self) -> bool {
-        match self {
-            Call::Ethereum(call) => call.is_self_contained(),
-            _ => false,
-        }
-    }
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
 
-    fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
-        match self {
-            Call::Ethereum(call) => call.check_self_contained(),
-            _ => None,
-        }
-    }
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
 
-    fn validate_self_contained(
-        &self,
-        info: &Self::SignedInfo,
-        dispatch_info: &DispatchInfoOf<Call>,
-        len: usize,
-    ) -> Option<TransactionValidity> {
-        match self {
-            Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
-            _ => None,
-        }
-    }
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
+			_ => None,
+		}
+	}
 
-    fn pre_dispatch_self_contained(
-        &self,
-        info: &Self::SignedInfo,
-        dispatch_info: &DispatchInfoOf<Call>,
-        len: usize,
-    ) -> Option<Result<(), TransactionValidityError>> {
-        match self {
-            Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
-            _ => None,
-        }
-    }
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			_ => None,
+		}
+	}
 
-    fn apply_self_contained(
-        self,
-        info: Self::SignedInfo,
-    ) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
-        match self {
-            call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-                Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-            )),
-            _ => None,
-        }
-    }
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1207,6 +1316,12 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_player_rpc_runtime_api::PlayerRuntimeRPCApi<Block, AccountId> for Runtime {
+		fn get_total_time_joined_upfront(player: AccountId) -> u128 {
+			Player::get_total_time_joined_upfront(&player)
+		}
+	}
+
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
 		fn convert_transaction(transaction: EthereumTransaction) -> <Block as BlockT>::Extrinsic {
 			UncheckedExtrinsic::new_unsigned(
@@ -1294,6 +1409,7 @@ impl_runtime_apis! {
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
+			use gafi_membership::Pallet as GafiMembershipBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
@@ -1305,6 +1421,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
+			list_benchmark!(list, extra, gafi_membership, GafiMembershipBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1326,6 +1443,7 @@ impl_runtime_apis! {
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
+			use gafi_membership::Pallet as GafiMembershipBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -1342,6 +1460,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
+			add_benchmark!(params, batches, gafi_membership, GafiMembershipBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

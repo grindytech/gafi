@@ -18,17 +18,23 @@ use sp_core::{
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, PostDispatchInfoOf, DispatchInfoOf, Verify, Dispatchable},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionPriority, TransactionValidityError},
+	traits::{
+		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
+		IdentifyAccount, PostDispatchInfoOf, Verify,
+	},
+	transaction_validity::{
+		TransactionPriority, TransactionSource, TransactionValidity, TransactionValidityError,
+	},
 	ApplyExtrinsicResult, MultiSignature,
 };
 
-use sp_std::prelude::*;
 use sp_io::hashing::blake2_256;
+use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+pub use frame_support::traits::EqualPrivilegeOnly;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Everything, FindAuthor},
@@ -42,7 +48,6 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-pub use frame_support::traits::EqualPrivilegeOnly;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{H160, H256, U256};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
@@ -53,9 +58,8 @@ use runtime_common::impls::DealWithFees;
 
 // Frontier
 use pallet_ethereum;
-use pallet_evm;
 use pallet_evm::{
-	Account as EVMAccount, AddressMapping, EVMCurrencyAdapter, EnsureAddressNever,
+	self, Account as EVMAccount, AddressMapping, EVMCurrencyAdapter, EnsureAddressNever,
 	EnsureAddressRoot, FeeCalculator, GasWeightMapping, HashedAddressMapping, Runner,
 };
 mod precompiles;
@@ -64,19 +68,18 @@ use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use precompiles::FrontierPrecompiles;
 
 // Local
-use gafi_tx;
-use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
+use gafi_primitives::{
+	constant::ID,
+	system_services::{SystemDefaultServices, SystemService},
+	ticket::{TicketInfo, TicketType},
+};
+use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
 use pallet_pool;
 use pallet_pool_names;
 use sponsored_pool;
 use staking_pool;
 use upfront_pool;
-use gafi_primitives::{
-	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
-	constant::ID,
-	system_services::{SystemService, SystemDefaultServices},
-};
 
 // Primitives
 use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
@@ -141,7 +144,7 @@ pub type SignedExtra = (
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-    fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
@@ -430,6 +433,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -451,11 +455,21 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
+
+impl pallet_player::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = ();
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
@@ -538,7 +552,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]))
 		}
 		None
 	}
@@ -561,7 +575,7 @@ impl pallet_scheduler::Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PreimageProvider = ();
 	type NoPreimagePostponement = ();
-   }
+}
 
 // Frontier
 parameter_types! {
@@ -594,22 +608,80 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 // Local
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
+	fn get_default_services() -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+				STAKING_BASIC_ID,
+				SystemService::new(
+					STAKING_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					1000 * unit(GAFI),
+				),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+				STAKING_MEDIUM_ID,
+				SystemService::new(
+					STAKING_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					1500 * unit(GAFI),
+				),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+				STAKING_ADVANCE_ID,
+				SystemService::new(
+					STAKING_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					2000 * unit(GAFI),
+				),
+			),
+		]
+	}
+}
+
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services() -> [(ID, SystemService); 3] {
+		[
+			(
+				UPFRONT_BASIC_ID,
+				SystemService::new(
+					UPFRONT_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					5 * unit(GAFI),
+				),
+			),
+			(
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(
+					UPFRONT_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					7 * unit(GAFI),
+				),
+			),
+			(
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(
+					UPFRONT_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					10 * unit(GAFI),
+				),
 			),
 		]
 	}
@@ -620,6 +692,7 @@ impl staking_pool::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {
@@ -629,7 +702,7 @@ parameter_types! {
 impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = CleanTime;
 }
 
@@ -646,27 +719,6 @@ impl proof_address_mapping::Config for Runtime {
 	type ReservationFee = Fee;
 }
 
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
-			),
-		]
-	}
-}
-
 parameter_types! {
 	pub const MaxPlayerStorage: u32 = 10000;
 }
@@ -678,6 +730,7 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {
@@ -770,7 +823,7 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
@@ -800,6 +853,7 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
 		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
+		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68
 	}
 );
 
@@ -844,57 +898,57 @@ mod benches {
 }
 
 impl fp_self_contained::SelfContainedCall for Call {
-    type SignedInfo = H160;
+	type SignedInfo = H160;
 
-    fn is_self_contained(&self) -> bool {
-        match self {
-            Call::Ethereum(call) => call.is_self_contained(),
-            _ => false,
-        }
-    }
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
 
-    fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
-        match self {
-            Call::Ethereum(call) => call.check_self_contained(),
-            _ => None,
-        }
-    }
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
 
-    fn validate_self_contained(
-        &self,
-        info: &Self::SignedInfo,
-        dispatch_info: &DispatchInfoOf<Call>,
-        len: usize,
-    ) -> Option<TransactionValidity> {
-        match self {
-            Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
-            _ => None,
-        }
-    }
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
+			_ => None,
+		}
+	}
 
-    fn pre_dispatch_self_contained(
-        &self,
-        info: &Self::SignedInfo,
-        dispatch_info: &DispatchInfoOf<Call>,
-        len: usize,
-    ) -> Option<Result<(), TransactionValidityError>> {
-        match self {
-            Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
-            _ => None,
-        }
-    }
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			_ => None,
+		}
+	}
 
-    fn apply_self_contained(
-        self,
-        info: Self::SignedInfo,
-    ) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
-        match self {
-            call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-                Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-            )),
-            _ => None,
-        }
-    }
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
 }
 
 impl_runtime_apis! {

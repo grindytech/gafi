@@ -29,7 +29,7 @@ function percentage_of(oldNumber, newNumber) {
 
 /// Situation: Alice map with account_1, Bob map with account_2
 /// Alice is the pool owner, Bob is the player
-describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
+describeWithFrontier("Sponsored Pool Fee", (context) => {
 
     step('step should create new erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -94,13 +94,13 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
 
     step('leave any pool before join sponsored pool works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.leave_pool(context, Bob);
+        await utils.leave_all_pool(context, Bob);
     }).timeout(20000);
 
 
     step('join sponsored sponsored works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        await utils.join_pool(context, Bob, { Custom: { Sponsored: NewPool } });
+        await utils.join_pool(context, Bob, NewPool);
     }).timeout(20000);
 
     step('discount on sponsored pool works', async () => {

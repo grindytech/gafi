@@ -17,22 +17,22 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::traits::tokens::{ExistenceRequirement, WithdrawReasons};
 use frame_support::{
 	pallet_prelude::*,
-	traits::{Currency, Imbalance, OnUnbalanced},
+	traits::{
+		tokens::{ExistenceRequirement, WithdrawReasons},
+		Currency, Imbalance, OnUnbalanced,
+	},
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
 	game_creator::GetGameCreator,
-	ticket::{CustomTicket, PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketType},
 };
 use gu_convertor::{into_account, u128_to_balance};
 pub use pallet::*;
-use pallet_evm::FeeCalculator;
-use pallet_evm::OnChargeEVMTransaction;
-use pallet_evm::{AddressMapping, GasWeightMapping};
+use pallet_evm::{AddressMapping, FeeCalculator, GasWeightMapping, OnChargeEVMTransaction};
 use sp_core::{H160, U256};
 use sp_runtime::Permill;
 use sp_std::vec::Vec;
@@ -158,7 +158,7 @@ pub mod pallet {
 			discount: Permill,
 		) -> Option<u128> {
 			if !Self::is_target(targets, &target) {
-				return None;
+				return None
 			}
 
 			if let Some(sponsor) = into_account::<T::AccountId>(pool_id) {
@@ -172,8 +172,10 @@ pub mod pallet {
 					fee,
 					WithdrawReasons::FEE,
 					ExistenceRequirement::KeepAlive,
-				).is_ok() {
-					return Some(service_fee.saturating_sub(sponsor_fee));
+				)
+				.is_ok()
+				{
+					return Some(service_fee.saturating_sub(sponsor_fee))
 				}
 			}
 			None
@@ -237,13 +239,13 @@ where
 		if let Some((ticket_type, pool_id)) = T::PlayerTicket::use_ticket(account_id, target) {
 			if let Some(service) = T::PlayerTicket::get_service(pool_id) {
 				match ticket_type {
-					TicketType::System(_) => {
+					TicketType::Upfront(_) | TicketType::Staking(_) => {
 						service_fee = Pallet::<T>::correct_and_deposit_fee_service(
 							service_fee,
 							service.discount,
 						);
-					}
-					TicketType::Custom(_) => {
+					},
+					TicketType::Sponsored(_) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
 							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
@@ -256,7 +258,7 @@ where
 								service_fee = fee;
 							}
 						}
-					}
+					},
 				}
 			}
 		}

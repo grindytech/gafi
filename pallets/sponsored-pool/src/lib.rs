@@ -30,7 +30,6 @@ pub use gafi_primitives::{
 	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
-	ticket::TicketLevel,
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
@@ -206,8 +205,8 @@ pub mod pallet {
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
 			ensure!(
-				balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)?
-					>= T::MinPoolBalance::get(),
+				balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)? >=
+					T::MinPoolBalance::get(),
 				Error::<T>::NotReachMinPoolBalance
 			);
 			ensure!(
@@ -251,7 +250,7 @@ pub mod pallet {
 			Targets::<T>::try_mutate(pool_config.id, |target_vec| {
 				for target in targets {
 					if target_vec.try_push(target).is_err() {
-						return Err(());
+						return Err(())
 					}
 				}
 				Ok(())
@@ -289,7 +288,7 @@ pub mod pallet {
 				PoolOwned::<T>::try_mutate(&sender, |pool_owned| {
 					if let Some(ind) = pool_owned.iter().position(|&id| id == pool_id) {
 						pool_owned.swap_remove(ind);
-						return Ok(());
+						return Ok(())
 					}
 					Err(())
 				})
@@ -334,7 +333,7 @@ pub mod pallet {
 			Targets::<T>::try_mutate(&pool_id, |target_vec| {
 				for target in targets {
 					if target_vec.try_push(target).is_err() {
-						return Err(());
+						return Err(())
 					}
 				}
 				Ok(())
@@ -345,10 +344,11 @@ pub mod pallet {
 		}
 
 		/// Set a pool's name. The name should be a UTF-8-encoded string by convention, though
-		/// we don't check it. Fail if the pool is not exist or the origin is not the owner of the pool.
+		/// we don't check it. Fail if the pool is not exist or the origin is not the owner of the
+		/// pool.
 		///
-		/// The name may not be more than `T::MaxLength` bytes, nor less than `T::MinLength` bytes which
-		/// defined in the name pallet's config.
+		/// The name may not be more than `T::MaxLength` bytes, nor less than `T::MinLength` bytes
+		/// which defined in the name pallet's config.
 		///
 		/// If the pool doesn't already have a name, then a fee of `ReservationFee` is reserved
 		/// in the account.
@@ -482,7 +482,7 @@ pub mod pallet {
 					pool.tx_limit,
 					pool.discount,
 					pool.owner,
-				));
+				))
 			}
 			None
 		}

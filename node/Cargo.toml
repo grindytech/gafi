@@ -19,13 +19,13 @@ name = "gafi-node"
 [dependencies]
 
 # Frontier
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
-pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.24"}
+fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
+pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
 
 # Substrate
-sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", features = ["wasmtime"]}
-sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
-sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true}
+sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", features = ["wasmtime"]}
+sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
+sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
 
 # Local
 gafi-cli = {path = "cli", default-features = false, optional = true}
@@ -33,14 +33,14 @@ gafi-local = {path = "local", default-features = false, optional = true}
 gafi-service = {path = "service", default-features = false, optional = true}
 
 [build-dependencies]
-substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24"}
+substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 [features]
 aura = [
   "sc-consensus-aura",
   "gafi-local/aura",
 ]
-default = []
+default = ["aura", "with-dev"]
 
 std = []
 

@@ -23,11 +23,11 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature,
 };
 
+use sp_io::hashing::blake2_256;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use sp_io::hashing::blake2_256;
 
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -53,9 +53,8 @@ use runtime_common::impls::DealWithFees;
 
 // Frontier
 use pallet_ethereum;
-use pallet_evm;
 use pallet_evm::{
-	Account as EVMAccount, AddressMapping, EVMCurrencyAdapter, EnsureAddressNever,
+	self, Account as EVMAccount, AddressMapping, EVMCurrencyAdapter, EnsureAddressNever,
 	EnsureAddressRoot, FeeCalculator, GasWeightMapping, HashedAddressMapping, Runner,
 };
 mod precompiles;
@@ -64,22 +63,21 @@ use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use precompiles::FrontierPrecompiles;
 
 // Local
-use gafi_tx;
-use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
+use gafi_primitives::{
+	constant::ID,
+	system_services::{SystemDefaultServices, SystemService},
+	ticket::{TicketInfo, TicketType},
+};
+use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
 use pallet_pool;
 use pallet_pool_names;
 use sponsored_pool;
 use staking_pool;
 use upfront_pool;
-use gafi_primitives::{
-	ticket::{TicketType, TicketInfo, SystemTicket, TicketLevel},
-	constant::ID,
-	system_services::{SystemService, SystemDefaultServices},
-};
 
 // Primitives
-use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
+use gafi_primitives::currency::{centi, unit, NativeToken::GAKI};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -396,7 +394,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	pub DefaultBaseFeePerGas: U256 = centi(GAFI).into(); //0.01 GAFI
+	pub DefaultBaseFeePerGas: U256 = centi(GAKI).into(); //0.01 GAKI
 }
 
 pub struct BaseFeeThreshold;
@@ -426,6 +424,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -447,11 +446,21 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
+
+impl pallet_player::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type GameRandomness = RandomnessCollectiveFlip;
+	type Membership = ();
+	type UpfrontPool = UpfrontPool;
+	type StakingPool = StakingPool;
+}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
@@ -534,7 +543,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]))
 		}
 		None
 	}
@@ -572,23 +581,81 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 // Local
+pub const STAKING_BASIC_ID: ID = [0_u8; 32];
+pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
+pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
+
+pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
+pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
+pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
+	fn get_default_services() -> [(ID, SystemService); 3] {
 		[
 			(
-				(SystemTicket::Staking(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 1000 * unit(GAFI)),
+				STAKING_BASIC_ID,
+				SystemService::new(
+					STAKING_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					1000 * unit(GAKI),
+				),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 1500 * unit(GAFI)),
+				STAKING_MEDIUM_ID,
+				SystemService::new(
+					STAKING_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					1500 * unit(GAKI),
+				),
 			),
 			(
-				(SystemTicket::Staking(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 2000 * unit(GAFI)),
+				STAKING_ADVANCE_ID,
+				SystemService::new(
+					STAKING_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					2000 * unit(GAKI),
+				),
+			),
+		]
+	}
+}
+
+pub struct UpfrontPoolDefaultServices {}
+
+impl SystemDefaultServices for UpfrontPoolDefaultServices {
+	fn get_default_services() -> [(ID, SystemService); 3] {
+		[
+			(
+				UPFRONT_BASIC_ID,
+				SystemService::new(
+					UPFRONT_BASIC_ID,
+					10_u32,
+					Permill::from_percent(30),
+					5 * unit(GAKI),
+				),
+			),
+			(
+				UPFRONT_MEDIUM_ID,
+				SystemService::new(
+					UPFRONT_MEDIUM_ID,
+					10_u32,
+					Permill::from_percent(50),
+					7 * unit(GAKI),
+				),
+			),
+			(
+				UPFRONT_ADVANCE_ID,
+				SystemService::new(
+					UPFRONT_ADVANCE_ID,
+					10_u32,
+					Permill::from_percent(70),
+					10 * unit(GAKI),
+				),
 			),
 		]
 	}
@@ -599,6 +666,7 @@ impl staking_pool::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
+	type Players = Player;
 }
 
 parameter_types! {
@@ -608,13 +676,13 @@ parameter_types! {
 impl pallet_cache::Config for Runtime {
 	type Event = Event;
 	type Data = TicketInfo;
-	type Action = TicketType;
+	type Action = ID;
 	type CleanTime = CleanTime;
 }
 
 parameter_types! {
 	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
-	pub Fee: u128 = 1 * unit(GAFI);
+	pub Fee: u128 = 1 * unit(GAKI);
 }
 
 impl proof_address_mapping::Config for Runtime {
@@ -623,27 +691,6 @@ impl proof_address_mapping::Config for Runtime {
 	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
 	type ReservationFee = Fee;
-}
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				(SystemTicket::Upfront(TicketLevel::Basic)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Basic, 10_u32, Permill::from_percent(30), 5 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Medium)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Medium, 10_u32, Permill::from_percent(50), 7 * unit(GAFI)),
-			),
-			(
-				(SystemTicket::Upfront(TicketLevel::Advance)).using_encoded(blake2_256),
-				SystemService::new(TicketLevel::Advance, 10_u32, Permill::from_percent(70), 10 * unit(GAFI)),
-			),
-		]
-	}
 }
 
 parameter_types! {
@@ -657,6 +704,7 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
+	type Players = Player;
 }
 
 // parameter_types! {
@@ -674,7 +722,7 @@ impl upfront_pool::Config for Runtime {
 // }
 
 parameter_types! {
-	pub ReservationFee:u128 = 1 * unit(GAFI);
+	pub ReservationFee:u128 = 1 * unit(GAKI);
 	pub MinLength: u32 = 8;
 	pub MaxLength: u32 = 32;
 }
@@ -689,7 +737,7 @@ impl pallet_pool_names::Config for Runtime {
 }
 
 parameter_types! {
-	pub MinPoolBalance: u128 = 1000 * unit(GAFI);
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
 	pub MinDiscountPercent: Permill = Permill::from_percent(30);
 	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
 	pub MinTxLimit: u32 = 50;
@@ -748,7 +796,7 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
@@ -778,6 +826,7 @@ construct_runtime!(
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
 		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
+		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68
 	}
 );
 

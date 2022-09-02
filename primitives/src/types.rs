@@ -1,7 +1,7 @@
 use sp_runtime::{
-    generic,
-    traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiSignature
+	generic,
+	traits::{BlakeTwo256, IdentifyAccount, Verify},
+	MultiSignature,
 };
 
 pub type BlockNumber = u32;

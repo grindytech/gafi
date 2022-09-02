@@ -28,16 +28,15 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::pool::MasterPool;
 use gafi_primitives::{
 	constant::ID,
-	system_services::{SystemDefaultServices, SystemPool, SystemService, Convertor},
-	ticket::{SystemTicket, Ticket, TicketLevel, TicketType},
+	pool::MasterPool,
+	system_services::{SystemDefaultServices, SystemPool, SystemService},
+	ticket::{Ticket, TicketType},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
-use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
 mod mock;
@@ -53,6 +52,8 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use gafi_primitives::players::PlayersTime;
+
 	use super::*;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -81,13 +82,14 @@ pub mod pallet {
 		type MaxPlayerStorage: Get<u32>;
 
 		type UpfrontServices: SystemDefaultServices;
+
+		type Players: PlayersTime<Self::AccountId>;
 	}
 
 	/// on_finalize following by steps:
 	/// 1. Check if current timestamp is the correct time to charge service fee
 	///	2. Charge player in the IngamePlayers - Kick player when they can't pay
 	///	3. Move all players from NewPlayer to IngamePlayers
-	///
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
@@ -159,7 +161,7 @@ pub mod pallet {
 		ExceedMaxPlayer,
 		CanNotClearNewPlayers,
 		IntoBalanceFail,
-		LevelNotFound,
+		PoolNotFound,
 	}
 
 	#[pallet::event]
@@ -180,9 +182,8 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[transactional]
 		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
-			let new_player_count = Self::player_count()
-				.checked_add(1)
-				.ok_or(<Error<T>>::PlayerCountOverflow)?;
+			let new_player_count =
+				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 
 			ensure!(
 				new_player_count <= Self::max_player(),
@@ -209,7 +210,7 @@ pub mod pallet {
 					ExistenceRequirement::KeepAlive,
 				)?;
 			}
-			Self::join_pool(sender, pool_id, new_player_count);
+			Self::join_pool(sender, pool_id, new_player_count)?;
 			Ok(())
 		}
 
@@ -221,11 +222,14 @@ pub mod pallet {
 		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
-				if let TicketType::System(system_ticket) = ticket.ticket_type {
-					let pool_id = Convertor::into_id(system_ticket);
-
+				if let TicketType::Upfront(pool_id) = ticket.ticket_type {
 					let join_time = ticket.join_time;
 					let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
+
+					T::Players::add_time_joined_upfront(
+						sender.clone(),
+						_now.saturating_sub(join_time),
+					);
 
 					let service_fee;
 					let charge_fee;
@@ -253,15 +257,19 @@ pub mod pallet {
 					let new_player_count = Self::player_count()
 						.checked_sub(1)
 						.ok_or(<Error<T>>::PlayerCountOverflow)?;
-					Self::remove_player(&sender, pool_id, new_player_count);
-					return Ok(());
+					Self::remove_player(&sender, new_player_count);
+					return Ok(())
 				}
 			}
-			return Err(Error::<T>::PlayerNotFound.into());
+			Err(Error::<T>::PlayerNotFound.into())
 		}
 
 		fn get_service(pool_id: ID) -> Option<SystemService> {
 			Services::<T>::get(pool_id)
+		}
+
+		fn get_ticket(sender: &T::AccountId) -> Option<Ticket<T::AccountId>> {
+			Tickets::<T>::get(sender)
 		}
 	}
 
@@ -290,11 +298,10 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	fn join_pool(sender: T::AccountId, pool_id: ID, new_player_count: u32) -> Result<(), Error<T>> {
 		let _now = <timestamp::Pallet<T>>::get();
-		let pool: SystemService = Self::get_pool_by_id(pool_id)?;
 		let ticket = Ticket::<T::AccountId> {
 			address: sender.clone(),
 			join_time: Self::moment_to_u128(_now),
-			ticket_type: TicketType::System(SystemTicket::Upfront(pool.ticket_level)),
+			ticket_type: TicketType::Upfront(pool_id),
 		};
 		Tickets::<T>::insert(sender, ticket);
 		<PlayerCount<T>>::put(new_player_count);
@@ -323,8 +330,11 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn remove_player(player: &T::AccountId, pool_id: ID, new_player_count: u32) {
-		T::MasterPool::remove_player(player, pool_id);
+	fn remove_player(player: &T::AccountId, new_player_count: u32) {
+		if let Some(pool_id) = Self::get_pool_joined(player) {
+			T::MasterPool::remove_player(player, pool_id);
+		}
+
 		Tickets::<T>::remove(player);
 
 		<IngamePlayers<T>>::mutate(|players| {
@@ -355,17 +365,13 @@ impl<T: Config> Pallet<T> {
 					WithdrawReasons::FEE,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(_) => {}
+					Ok(_) => {},
 					Err(_) => {
 						let new_player_count = Self::player_count()
 							.checked_sub(1)
 							.ok_or(<Error<T>>::PlayerCountOverflow)?;
-						let _ = Self::remove_player(
-							&player,
-							(SystemTicket::Upfront(service.ticket_level)).using_encoded(blake2_256),
-							new_player_count,
-						);
-					}
+						let _ = Self::remove_player(&player, new_player_count);
+					},
 				};
 			}
 		}
@@ -373,16 +379,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_player_service(player: T::AccountId) -> Option<SystemService> {
-		if let Some(level) = Self::get_player_level(player) {
-			return Self::get_service((SystemTicket::Upfront(level)).using_encoded(blake2_256));
+		if let Some(pool_id) = Self::get_pool_joined(&player) {
+			return Self::get_service(pool_id)
 		}
 		None
 	}
 
-	fn get_player_level(player: T::AccountId) -> Option<TicketLevel> {
+	fn get_pool_joined(player: &T::AccountId) -> Option<ID> {
 		if let Some(ticket) = Tickets::<T>::get(player) {
-			if let TicketType::System(SystemTicket::Upfront(level)) = ticket.ticket_type {
-				return Some(level);
+			if let TicketType::Upfront(pool_id) = ticket.ticket_type {
+				return Some(pool_id)
 			}
 		}
 		None
@@ -393,10 +399,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_timestamp() -> u128 {
-		let _now: u128 = <timestamp::Pallet<T>>::get()
-			.try_into()
-			.ok()
-			.unwrap_or_default();
+		let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap_or_default();
 		_now
 	}
 
@@ -404,7 +407,7 @@ impl<T: Config> Pallet<T> {
 		match Services::<T>::get(pool_id) {
 			Some(service) => Ok(service),
 			//TODO: Change error message
-			None => Err(<Error<T>>::LevelNotFound),
+			None => Err(<Error<T>>::PoolNotFound),
 		}
 	}
 }

@@ -10,6 +10,10 @@ build-test:
 build-dev:
 	cargo build --release --features with-dev
 
+.PHONY: build-fast-runtime
+build-fast-runtime:
+	cargo build --release --features with-dev,fast-runtime
+
 .PHONY: build-gaki
 build-gaki:
 	cargo build --release --features with-gaki
@@ -137,3 +141,13 @@ benchmark_game_creator:
     --repeat 10 \
     --output ./benchmarking/game-creator/weights.rs
 
+.PHONY: benchmark_membership
+benchmark_membership:
+	./target/release/gafi-node benchmark pallet \
+    --chain dev \
+    --wasm-execution compiled \
+    --pallet gafi_membership\
+    --extrinsic '*' \
+    --steps 20 \
+    --repeat 10 \
+    --output ./benchmarking/gafi-membership/weights.rs
