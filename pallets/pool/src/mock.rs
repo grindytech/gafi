@@ -40,7 +40,7 @@ use sp_runtime::{
 	}, Permill,
 };
 
-type Extrinsic = TestXt<Call, ()>;
+pub type Extrinsic = TestXt<Call, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;

@@ -1,14 +1,22 @@
 use crate::{mock::*, Error, Tickets, Whitelist};
+use codec::Decode;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
 };
-use sp_core::{H160, sr25519};
-use sp_runtime::{Permill, app_crypto::RuntimePublic};
-use sponsored_pool::{PoolOwned, Pools};
-use std::str::FromStr;
+use sp_core::{
+	offchain::{testing::TestOffchainExt, OffchainWorkerExt},
+	sr25519, H160,
+};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
+use sp_runtime::{
+	app_crypto::RuntimePublic,
+	offchain::{testing, TransactionPoolExt},
+	Permill,
+};
+use sponsored_pool::{PoolOwned, Pools};
+use std::{str::FromStr, sync::Arc};
 
 #[cfg(feature = "runtime-benchmarks")]
 use sponsored_pool::CustomPool;
@@ -19,7 +27,9 @@ fn make_deposit(account: &sr25519::Public, balance: u128) {
 
 fn new_account(account: u32, balance: u128) -> sr25519::Public {
 	let keystore = KeyStore::new();
-	let acc: sr25519::Public = keystore.sr25519_generate_new(sp_runtime::KeyTypeId::from(account), None).unwrap();
+	let acc: sr25519::Public = keystore
+		.sr25519_generate_new(sp_runtime::KeyTypeId::from(account), None)
+		.unwrap();
 	make_deposit(&acc, balance);
 	assert_eq!(Balances::free_balance(&acc), balance);
 	return acc
@@ -186,6 +196,64 @@ fn whitelist_works() {
 
 		assert_eq!(Whitelist::<Test>::get(player.clone()).unwrap(), pool_id);
 	})
+}
+
+fn test_pub() -> sp_core::sr25519::Public {
+	sp_core::sr25519::Public::from_raw([1u8; 32])
+}
+
+#[test]
+fn should_submit_raw_unsigned_transaction_on_chain() {
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+
+	let keystore = KeyStore::new();
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(Arc::new(keystore)));
+
+	t.execute_with(|| {
+		// when query pool
+		let mut pool_id;
+		let account_balance = 1_000_000 * unit(GAKI);
+		let player = new_account(1, account_balance);
+		run_to_block(1);
+		{
+			let account = new_account(0, account_balance);
+			let pool_value = 1000 * unit(GAKI);
+
+			pool_id = create_pool(
+				account.clone(),
+				vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+				pool_value,
+				10,
+				Permill::from_percent(70),
+			);
+
+			assert_ok!(Pool::query_whitelist(
+				Origin::signed(player.clone()),
+				pool_id
+			));
+		}
+
+		assert_eq!(Whitelist::<Test>::get(player.clone()).unwrap(), pool_id);
+		assert_ok!(Pool::verify_whitelist_and_send_raw_unsign(2));
+
+		// then
+		let tx = pool_state.write().transactions.pop().unwrap();
+		assert!(pool_state.read().transactions.is_empty());
+		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		assert_eq!(tx.signature, None);
+		assert_eq!(
+			tx.call,
+			Call::Pool(crate::Call::approve_whitelist_unsigned {
+				player,
+				pool_id,
+			})
+		);
+	});
 }
 
 #[test]

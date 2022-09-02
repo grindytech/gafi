@@ -161,16 +161,9 @@ pub mod pallet {
 		fn offchain_worker(block_number: T::BlockNumber) {
 			log::info!("Hello from pallet-ocw.");
 
-			for query in Whitelist::<T>::iter() {
-				let call = Call::approve_whitelist_unsigned {
-					player: query.0,
-					pool_id: query.1,
-				};
-
-				let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
-					.map_err(|_| {
-						log::error!("Failed in offchain_unsigned_tx");
-					});
+			let res = Self::verify_whitelist_and_send_raw_unsign(block_number);
+			if let Err(e) = res {
+				log::error!("Error: {}", e);
 			}
 		}
 	}
@@ -378,6 +371,7 @@ pub mod pallet {
 		}
 	}
 
+
 	impl<T: Config> Pallet<T> {
 		fn create_ticket(sender: &T::AccountId, pool_id: ID) -> Result<TicketInfo, Error<T>> {
 			let ticket_type = Self::get_ticket_type(pool_id)?;
@@ -493,6 +487,28 @@ pub mod pallet {
 			}
 			Err(Error::<T>::PlayerNotWhitelist)
 		}
+	}
+
+
+	// whitelist implement
+	impl<T: Config> Pallet<T> {
+
+		pub fn verify_whitelist_and_send_raw_unsign(block_number: T::BlockNumber) -> Result<(), &'static str> {
+
+			for query in Whitelist::<T>::iter() {
+				let call = Call::approve_whitelist_unsigned {
+					player: query.0,
+					pool_id: query.1,
+				};
+
+				let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
+					.map_err(|_| {
+						log::error!("Failed in offchain_unsigned_tx");
+					});
+			}
+			return Ok(())
+		}
+
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {
