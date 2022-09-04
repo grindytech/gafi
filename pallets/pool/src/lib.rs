@@ -31,13 +31,20 @@ use pallet_timestamp::{self as timestamp};
 use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
+use scale_info::prelude::format;
 use sp_core::H160;
-use sp_std::vec::Vec;
+use sp_std::{fmt::Display, str, vec::Vec};
 
 use frame_system::offchain::{
 	AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
 };
+use lite_json::json::JsonValue;
 use sp_core::crypto::KeyTypeId;
+use sp_runtime::offchain::{
+	http,
+	storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
+	Duration,
+};
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"demo");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -79,7 +86,9 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config + CreateSignedTransaction<Call<Self>>{
+	pub trait Config:
+		frame_system::Config + pallet_timestamp::Config + CreateSignedTransaction<Call<Self>>
+	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
@@ -337,7 +346,10 @@ pub mod pallet {
 
 			Self::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
-			Self::deposit_event(Event::<T>::Joined { sender: player, pool_id });
+			Self::deposit_event(Event::<T>::Joined {
+				sender: player,
+				pool_id,
+			});
 			Ok(())
 		}
 
@@ -353,7 +365,10 @@ pub mod pallet {
 
 			Self::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
-			Self::deposit_event(Event::<T>::Joined { sender: player, pool_id });
+			Self::deposit_event(Event::<T>::Joined {
+				sender: player,
+				pool_id,
+			});
 			Ok(())
 		}
 
@@ -371,7 +386,7 @@ pub mod pallet {
 		}
 	}
 
-
+	// common function
 	impl<T: Config> Pallet<T> {
 		fn create_ticket(sender: &T::AccountId, pool_id: ID) -> Result<TicketInfo, Error<T>> {
 			let ticket_type = Self::get_ticket_type(pool_id)?;
@@ -478,23 +493,13 @@ pub mod pallet {
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
 			Ok(())
 		}
-
-		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
-			if let Some(id) = Whitelist::<T>::get(player) {
-				if id == pool_id {
-					return Ok(())
-				}
-			}
-			Err(Error::<T>::PlayerNotWhitelist)
-		}
 	}
-
 
 	// whitelist implement
 	impl<T: Config> Pallet<T> {
-
-		pub fn verify_whitelist_and_send_raw_unsign(block_number: T::BlockNumber) -> Result<(), &'static str> {
-
+		pub fn verify_whitelist_and_send_raw_unsign(
+			block_number: T::BlockNumber,
+		) -> Result<(), &'static str> {
 			for query in Whitelist::<T>::iter() {
 				let call = Call::approve_whitelist_unsigned {
 					player: query.0,
@@ -509,6 +514,47 @@ pub mod pallet {
 			return Ok(())
 		}
 
+		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+			if let Some(id) = Whitelist::<T>::get(player) {
+				if id == pool_id {
+					return Ok(())
+				}
+			}
+			Err(Error::<T>::PlayerNotWhitelist)
+		}
+
+		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error>
+		where
+			<T as frame_system::Config>::AccountId: Display,
+		{
+			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+
+			let request = http::Request::get(url);
+
+			let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
+
+			let response =
+				pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
+
+			if response.code != 200 {
+				log::warn!("Unexpected status code: {}", response.code);
+				return Err(http::Error::Unknown)
+			}
+
+			let body = response.body().collect::<Vec<u8>>();
+
+			let body_str = sp_std::str::from_utf8(&body).map_err(|_| {
+				log::warn!("No UTF8 body");
+				http::Error::Unknown
+			})?;
+
+			let verify: bool = match body_str {
+				"true" => true,
+				_ => false,
+			};
+
+			Ok(verify)
+		}
 	}
 
 	impl<T: Config> PlayerTicket<T::AccountId> for Pallet<T> {

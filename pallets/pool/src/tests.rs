@@ -6,14 +6,16 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 };
 use sp_core::{
+	blake2_256,
 	offchain::{testing::TestOffchainExt, OffchainWorkerExt},
 	sr25519, H160,
 };
+use sp_io::hashing::sha2_256;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	app_crypto::RuntimePublic,
 	offchain::{testing, TransactionPoolExt},
-	Permill,
+	AccountId32, Permill,
 };
 use sponsored_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
@@ -248,10 +250,7 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 		assert_eq!(tx.signature, None);
 		assert_eq!(
 			tx.call,
-			Call::Pool(crate::Call::approve_whitelist_unsigned {
-				player,
-				pool_id,
-			})
+			Call::Pool(crate::Call::approve_whitelist_unsigned { player, pool_id })
 		);
 	});
 }
@@ -423,4 +422,85 @@ fn approve_whitelist_unsigned_works() {
 			pool_id
 		));
 	})
+}
+
+#[test]
+fn should_make_http_call_and_parse_result() {
+	let (offchain, state) = testing::TestOffchainExt::new();
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
+
+	let pool_id = "0x3a77d059474c1143d0d9cfc55f1d8601099a37c30c943f2807d6a7aa9eddd386";
+
+	let alice =
+		sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+
+	let uri = format!(
+		"http://whitelist.gafi.network/whitelist/verify?pool_id={}&address={:#}",
+		pool_id, alice
+	);
+
+	// let uri = format!(
+	// 	"http://127.0.0.1:3030/whitelist/verify?pool_id={}&address={:#}",
+	// 	pool_id, alice
+	// );
+
+	whitelist_response_work(&mut state.write(), &uri);
+
+	// let id = match str::from_utf8(&pool_id) {
+	// 	Ok(v) => v,
+	// 	Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+	// };
+
+	t.execute_with(|| {
+		// when
+		let verify = Pool::fetch_whitelist(&uri).unwrap();
+		// then
+		assert_eq!(verify, true);
+	});
+}
+
+fn whitelist_response_work(state: &mut testing::OffchainState, uri: &str) {
+	state.expect_request(testing::PendingRequest {
+		method: "GET".into(),
+		uri: uri.into(),
+		response: Some(br#"true"#.to_vec()),
+		sent: true,
+		..Default::default()
+	});
+}
+
+#[test]
+fn make_http_call_and_parse_result_should_fail() {
+	let (offchain, state) = testing::TestOffchainExt::new();
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
+
+	let pool_id = "0x3a77d059474c1143d0d9cfc55f1d8601099a37c30c943f2807d6a7aa9eddd386";
+
+	let dave =
+		sr25519::Public::from_str("5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy").unwrap();
+
+	let uri = format!(
+		"http://whitelist.gafi.network/whitelist/verify?pool_id={}&address={:#}",
+		pool_id, dave
+	);
+	whitelist_response_fail(&mut state.write(), &uri);
+
+	t.execute_with(|| {
+		// when
+		let verify = Pool::fetch_whitelist(&uri).unwrap();
+		// then
+		assert_eq!(verify, false);
+	});
+}
+
+fn whitelist_response_fail(state: &mut testing::OffchainState, uri: &str) {
+	state.expect_request(testing::PendingRequest {
+		method: "GET".into(),
+		uri: uri.into(),
+		response: Some(br#"false"#.to_vec()),
+		sent: true,
+		..Default::default()
+	});
 }

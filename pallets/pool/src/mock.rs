@@ -196,7 +196,7 @@ impl upfront_pool::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
