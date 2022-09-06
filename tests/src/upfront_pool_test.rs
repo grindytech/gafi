@@ -4,7 +4,6 @@ use gafi_primitives::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
 	system_services::SystemPool,
-	ticket::TicketType,
 };
 use gafi_tx::Config;
 use gu_mock::*;

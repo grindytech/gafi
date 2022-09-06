@@ -21,18 +21,27 @@ use gafi_primitives::{
 };
 pub use gu_mock::*;
 pub use pallet_balances::Call as BalancesCall;
-use sp_core::H256;
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, Permill,
+
+use frame_system::{mocking};
+use sp_core::{
+	sr25519::{self, Signature},
+	H256,
 };
+use sp_runtime::{
+	testing::{Header, TestXt},
+	traits::{
+		BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
+		Verify,
+	}, Permill,
+};
+
+pub type Extrinsic = TestXt<Call, ()>;
+type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
+type Block = mocking::MockBlock<Test>;
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 pub use staking_pool;
 pub use upfront_pool;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
@@ -46,7 +55,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Pool: pallet_pool::{Pallet, Storage, Event<T>},
+		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>, ValidateUnsigned},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>},
@@ -182,7 +191,7 @@ impl upfront_pool::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
@@ -196,7 +205,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
+	type AccountId = sr25519::Public;
 	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
@@ -210,6 +219,37 @@ impl system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+}
+
+parameter_types! {
+	pub const UnsignedPriority: u64 = 100;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+where
+	Call: From<C>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 // Build genesis storage according to the mock runtime.
@@ -240,7 +280,7 @@ pub fn run_to_block(n: u64) {
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId32, u128)>,
+	balances: Vec<(sr25519::Public, u128)>,
 	pub time_service: u128,
 }
 

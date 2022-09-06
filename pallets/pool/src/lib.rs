@@ -25,50 +25,15 @@ use gafi_primitives::{
 	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
 	ticket::{PlayerTicket, TicketInfo, TicketType},
+	whitelist::WhitelistPool,
 };
 use pallet_timestamp::{self as timestamp};
 
 use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
-use scale_info::prelude::{format, string::String};
-use sp_core::{crypto::AccountId32, H160};
-use sp_runtime::traits::MaybeDisplay;
-use sp_std::{fmt::Display, str, vec::Vec};
-
-use frame_system::offchain::{
-	AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
-};
-use lite_json::json::JsonValue;
-use rustc_hex::ToHex;
-use sp_core::crypto::KeyTypeId;
-use sp_runtime::offchain::{
-	http,
-	storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
-	Duration,
-};
-
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"demo");
-pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
-
-pub mod crypto {
-	use super::KEY_TYPE;
-	use sp_core::sr25519::Signature as Sr25519Signature;
-	use sp_runtime::{
-		app_crypto::{app_crypto, sr25519},
-		traits::Verify,
-		MultiSignature, MultiSigner,
-	};
-	app_crypto!(sr25519, KEY_TYPE);
-	pub struct TestAuthId;
-
-	// implemented for runtime
-	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
-		type RuntimeAppPublic = Public;
-		type GenericSignature = sp_core::sr25519::Signature;
-		type GenericPublic = sp_core::sr25519::Public;
-	}
-}
+use sp_core::{H160};
+use sp_std::{str, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -89,7 +54,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_timestamp::Config + CreateSignedTransaction<Call<Self>>
+		frame_system::Config + pallet_timestamp::Config
 	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -166,15 +131,6 @@ pub mod pallet {
 			if _now - Self::mark_time() >= Self::time_service() {
 				Self::renew_tickets();
 				MarkTime::<T>::put(_now);
-			}
-		}
-
-		fn offchain_worker(block_number: T::BlockNumber) {
-			log::info!("Hello from pallet-ocw.");
-
-			let res = Self::verify_whitelist_and_send_raw_unsign(block_number);
-			if let Err(e) = res {
-				log::error!("Error: {}", e);
 			}
 		}
 	}
@@ -334,59 +290,6 @@ pub mod pallet {
 			Tickets::<T>::remove_prefix(sender, None);
 			Ok(())
 		}
-
-		#[pallet::weight(0)]
-		pub fn approve_whitelist(
-			origin: OriginFor<T>,
-			player: T::AccountId,
-			pool_id: ID,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-
-			Self::is_sponsored_pool_owner(&sender, pool_id)?;
-
-			Self::is_whitelist_player(&player, pool_id)?;
-
-			Self::join_pool(&player, pool_id)?;
-			Whitelist::<T>::remove(player.clone());
-			Self::deposit_event(Event::<T>::Joined {
-				sender: player,
-				pool_id,
-			});
-			Ok(())
-		}
-
-		#[pallet::weight(10000000)]
-		pub fn approve_whitelist_unsigned(
-			origin: OriginFor<T>,
-			player: T::AccountId,
-			pool_id: ID,
-		) -> DispatchResult {
-			ensure_none(origin)?;
-
-			Self::is_whitelist_player(&player, pool_id)?;
-
-			Self::join_pool(&player, pool_id)?;
-			Whitelist::<T>::remove(player.clone());
-			Self::deposit_event(Event::<T>::Joined {
-				sender: player,
-				pool_id,
-			});
-			Ok(())
-		}
-
-		#[pallet::weight(0)]
-		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-
-			ensure!(
-				T::SponsoredPool::get_service(pool_id).is_some(),
-				Error::<T>::PoolNotFound
-			);
-
-			Whitelist::<T>::insert(sender.clone(), pool_id);
-			Ok(())
-		}
 	}
 
 	// common function
@@ -491,101 +394,14 @@ pub mod pallet {
 			Err(Error::<T>::PoolNotFound)
 		}
 
-		fn join_pool(sender: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+		
+	}
+
+	impl<T: Config> WhitelistPool<T::AccountId> for Pallet<T> {
+		fn join_pool(sender: &T::AccountId, pool_id: ID) -> Result<(), &'static str> {
 			let ticket_info = Self::create_ticket(sender, pool_id)?;
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
 			Ok(())
-		}
-	}
-
-	// whitelist implement
-	impl<T: Config> Pallet<T> {
-		pub fn verify_whitelist_and_send_raw_unsign(
-			block_number: T::BlockNumber,
-		) -> Result<(), &'static str> {
-			for query in Whitelist::<T>::iter() {
-				log::info!("query: {:?}", query);
-
-				let player = query.0;
-				let pool_id = query.1;
-
-				let link = "http://whitelist.gafi.network/whitelist/verify";
-
-				let uri = Self::get_uri(link, pool_id, &player);
-
-				log::info!("uri: {:?}", uri);
-
-				let _ = Self::verify_and_approve(&uri, player, pool_id);
-			}
-			return Ok(())
-		}
-
-		pub fn verify_and_approve(
-			uri: &str,
-			player: T::AccountId,
-			pool_id: ID,
-		) -> Result<(), &'static str> {
-			let verify = Self::fetch_whitelist(&uri);
-
-			if verify == Ok(true) {
-				let call = Call::approve_whitelist_unsigned { player, pool_id };
-
-				let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
-					.map_err(|_| {
-						log::error!("Failed in offchain_unsigned_tx");
-					});
-			}
-
-			Ok(())
-		}
-
-		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
-			if let Some(id) = Whitelist::<T>::get(player) {
-				if id == pool_id {
-					return Ok(())
-				}
-			}
-			Err(Error::<T>::PlayerNotWhitelist)
-		}
-
-		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error> {
-			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
-
-			let request = http::Request::get(url);
-
-			let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
-
-			let response =
-				pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
-
-			if response.code != 200 {
-				log::warn!("Unexpected status code: {}", response.code);
-				return Err(http::Error::Unknown)
-			}
-
-			let body = response.body().collect::<Vec<u8>>();
-
-			let body_str = sp_std::str::from_utf8(&body).map_err(|_| {
-				log::warn!("No UTF8 body");
-				http::Error::Unknown
-			})?;
-
-			let verify: bool = match body_str {
-				"true" => true,
-				_ => false,
-			};
-
-			Ok(verify)
-		}
-
-		pub fn get_uri(link: &str, pool_id: ID, player: &T::AccountId) -> String {
-			let pool_id_hex: String = pool_id.to_hex();
-
-			let address = player.encode();
-
-			let hex_address: String = address.to_hex();
-			let uri = format!("{link}?pool_id={pool_id_hex}&address={hex_address}");
-			uri
 		}
 	}
 
@@ -656,30 +472,4 @@ pub mod pallet {
 		}
 	}
 
-	#[pallet::validate_unsigned]
-	impl<T: Config> ValidateUnsigned for Pallet<T> {
-		type Call = Call<T>;
-
-		/// Validate unsigned call to this module.
-		///
-		/// By default unsigned transactions are disallowed, but implementing the validator
-		/// here we make sure that some particular calls (the ones produced by offchain worker)
-		/// are being whitelisted and marked as valid.
-		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			let valid_tx = |provide| {
-				ValidTransaction::with_tag_prefix("pallet-pool")
-					.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
-					.and_provides([&provide])
-					.longevity(3)
-					.propagate(true)
-					.build()
-			};
-
-			match call {
-				Call::approve_whitelist_unsigned { pool_id, player } =>
-					valid_tx(b"approve_whitelist_unsigned".to_vec()),
-				_ => InvalidTransaction::Call.into(),
-			}
-		}
-	}
 }
