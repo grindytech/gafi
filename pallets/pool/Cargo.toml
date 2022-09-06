@@ -22,6 +22,7 @@ scale-info = {version = "2.1.0", default-features = false, features = [
 ]}
 serde = {version = "1.0.119"}
 lite-json = { version = "0.1", default-features = false }
+rustc-hex = {version = "2.1.0", default-features = false}
 
 # Substrate
 frame-benchmarking = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
@@ -74,6 +75,7 @@ std = [
   "pallet-randomness-collective-flip/std",
   "sp-runtime/std",
   "lite-json/std",
+  "rustc-hex/std",
 ]
 
 runtime-benchmarks = [

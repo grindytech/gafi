@@ -1,10 +1,12 @@
 use crate::{mock::*, Error, Tickets, Whitelist};
-use codec::Decode;
+use codec::{Decode, Encode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
+	pool,
 };
+use rustc_hex::{FromHex, ToHex};
 use sp_core::{
 	blake2_256,
 	offchain::{testing::TestOffchainExt, OffchainWorkerExt},
@@ -216,32 +218,20 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 	t.register_extension(TransactionPoolExt::new(pool));
 	t.register_extension(KeystoreExt(Arc::new(keystore)));
 
+	let player =
+		sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+	let pool_id = [0_u8; 32];
+
+	let pool_id_hex: String = pool_id.to_hex();
+
+	let uri = format!(
+		"http://whitelist.gafi.network/whitelist/verify?pool_id=${}&address=${}",
+		pool_id_hex, player
+	);
+	whitelist_response_work(&mut offchain_state.write(), &uri);
+
 	t.execute_with(|| {
-		// when query pool
-		let mut pool_id;
-		let account_balance = 1_000_000 * unit(GAKI);
-		let player = new_account(1, account_balance);
-		run_to_block(1);
-		{
-			let account = new_account(0, account_balance);
-			let pool_value = 1000 * unit(GAKI);
-
-			pool_id = create_pool(
-				account.clone(),
-				vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-				pool_value,
-				10,
-				Permill::from_percent(70),
-			);
-
-			assert_ok!(Pool::query_whitelist(
-				Origin::signed(player.clone()),
-				pool_id
-			));
-		}
-
-		assert_eq!(Whitelist::<Test>::get(player.clone()).unwrap(), pool_id);
-		assert_ok!(Pool::verify_whitelist_and_send_raw_unsign(2));
+		assert_ok!(Pool::verify_and_approve(&uri, player, pool_id));
 
 		// then
 		let tx = pool_state.write().transactions.pop().unwrap();
@@ -440,11 +430,6 @@ fn should_make_http_call_and_parse_result() {
 		pool_id, alice
 	);
 
-	// let uri = format!(
-	// 	"http://127.0.0.1:3030/whitelist/verify?pool_id={}&address={:#}",
-	// 	pool_id, alice
-	// );
-
 	whitelist_response_work(&mut state.write(), &uri);
 
 	// let id = match str::from_utf8(&pool_id) {
@@ -503,4 +488,21 @@ fn whitelist_response_fail(state: &mut testing::OffchainState, uri: &str) {
 		sent: true,
 		..Default::default()
 	});
+}
+
+#[test]
+fn get_uri_should_works() {
+	let pool_id = [
+		207, 230, 173, 83, 217, 51, 140, 68, 153, 115, 233, 133, 14, 172, 41, 148, 140, 128, 69,
+		225, 252, 179, 101, 159, 177, 181, 25, 72, 221, 222, 133, 111,
+	];
+
+	let player = sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+
+	let link = "http://whitelist.gafi.network/whitelist/verify";
+
+	let uri = Pool::get_uri(link, pool_id, &player);
+
+	assert_eq!(uri, "http://whitelist.gafi.network/whitelist/verify?pool_id=cfe6ad53d9338c449973e9850eac29948c8045e1fcb3659fb1b51948ddde856f&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+
 }

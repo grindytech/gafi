@@ -31,14 +31,16 @@ use pallet_timestamp::{self as timestamp};
 use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
-use scale_info::prelude::format;
-use sp_core::H160;
+use scale_info::prelude::{format, string::String};
+use sp_core::{crypto::AccountId32, H160};
+use sp_runtime::traits::MaybeDisplay;
 use sp_std::{fmt::Display, str, vec::Vec};
 
 use frame_system::offchain::{
 	AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
 };
 use lite_json::json::JsonValue;
+use rustc_hex::ToHex;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::offchain::{
 	http,
@@ -224,6 +226,7 @@ pub mod pallet {
 		PoolNotFound,
 		NotPoolOwner,
 		PlayerNotWhitelist,
+		ParserIdFail,
 	}
 
 	#[pallet::call]
@@ -501,17 +504,39 @@ pub mod pallet {
 			block_number: T::BlockNumber,
 		) -> Result<(), &'static str> {
 			for query in Whitelist::<T>::iter() {
-				let call = Call::approve_whitelist_unsigned {
-					player: query.0,
-					pool_id: query.1,
-				};
+				log::info!("query: {:?}", query);
+
+				let player = query.0;
+				let pool_id = query.1;
+
+				let link = "http://whitelist.gafi.network/whitelist/verify";
+
+				let uri = Self::get_uri(link, pool_id, &player);
+
+				log::info!("uri: {:?}", uri);
+
+				let _ = Self::verify_and_approve(&uri, player, pool_id);
+			}
+			return Ok(())
+		}
+
+		pub fn verify_and_approve(
+			uri: &str,
+			player: T::AccountId,
+			pool_id: ID,
+		) -> Result<(), &'static str> {
+			let verify = Self::fetch_whitelist(&uri);
+
+			if verify == Ok(true) {
+				let call = Call::approve_whitelist_unsigned { player, pool_id };
 
 				let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
 					.map_err(|_| {
 						log::error!("Failed in offchain_unsigned_tx");
 					});
 			}
-			return Ok(())
+
+			Ok(())
 		}
 
 		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
@@ -523,10 +548,7 @@ pub mod pallet {
 			Err(Error::<T>::PlayerNotWhitelist)
 		}
 
-		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error>
-		where
-			<T as frame_system::Config>::AccountId: Display,
-		{
+		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error> {
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
 
 			let request = http::Request::get(url);
@@ -554,6 +576,16 @@ pub mod pallet {
 			};
 
 			Ok(verify)
+		}
+
+		pub fn get_uri(link: &str, pool_id: ID, player: &T::AccountId) -> String {
+			let pool_id_hex: String = pool_id.to_hex();
+
+			let address = player.encode();
+
+			let hex_address: String = address.to_hex();
+			let uri = format!("{link}?pool_id={pool_id_hex}&address={hex_address}");
+			uri
 		}
 	}
 

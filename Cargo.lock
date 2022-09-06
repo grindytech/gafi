@@ -6824,6 +6824,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rustc-hex",
  "scale-info",
  "serde",
  "sp-core",
