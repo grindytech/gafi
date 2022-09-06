@@ -7153,11 +7153,13 @@ dependencies = [
  "frame-system",
  "gafi-primitives",
  "log",
+ "pallet-balances",
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
 ]

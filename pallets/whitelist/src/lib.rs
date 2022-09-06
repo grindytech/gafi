@@ -7,7 +7,7 @@ use gafi_primitives::{
 	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
 	ticket::{PlayerTicket, TicketInfo, TicketType},
-	whitelist::WhitelistPool,
+	whitelist::{WhitelistPool, WhitelistSponsor},
 };
 
 pub use pallet::*;
@@ -20,11 +20,11 @@ use rustc_hex::ToHex;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::offchain::{http, Duration};
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
@@ -60,6 +60,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
+		type WhitelistSponsor: WhitelistSponsor<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -72,12 +73,14 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Whitelisted {sender: T::AccountId, pool_id: ID},
+		Whitelisted { sender: T::AccountId, pool_id: ID },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		PlayerNotWhitelist,
+		NotPoolOwner,
+		PoolNotFound,
 	}
 
 	#[pallet::hooks]
@@ -92,28 +95,26 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn approve_whitelist(
+			origin: OriginFor<T>,
+			player: T::AccountId,
+			pool_id: ID,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
-		// #[pallet::weight(0)]
-		// pub fn approve_whitelist(
-		// 	origin: OriginFor<T>,
-		// 	player: T::AccountId,
-		// 	pool_id: ID,
-		// ) -> DispatchResult {
-		// 	let sender = ensure_signed(origin)?;
+			Self::is_pool_owner(pool_id, &sender)?;
 
-		// 	// Self::is_sponsored_pool_owner(&sender, pool_id)?;
+			Self::is_whitelist_player(&player, pool_id)?;
 
-		// 	// Self::is_whitelist_player(&player, pool_id)?;
-
-		// 	// Self::join_pool(&player, pool_id)?;
-		// 	// Whitelist::<T>::remove(player.clone());
-		// 	// Self::deposit_event(Event::<T>::Joined {
-		// 	// 	sender: player,
-		// 	// 	pool_id,
-		// 	// });
-
-		// 	Ok(())
-		// }
+			T::WhitelistPool::join_pool(&player, pool_id)?;
+			Whitelist::<T>::remove(player.clone());
+			Self::deposit_event(Event::<T>::Whitelisted {
+				sender: player,
+				pool_id,
+			});
+			Ok(())
+		}
 
 		#[pallet::weight(10000000)]
 		pub fn approve_whitelist_unsigned(
@@ -139,10 +140,10 @@ pub mod pallet {
 		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			// ensure!(
-			// 	T::SponsoredPool::get_service(pool_id).is_some(),
-			// 	Error::<T>::PoolNotFound
-			// );
+			ensure!(
+				T::WhitelistSponsor::is_pool(pool_id),
+				Error::<T>::PoolNotFound
+			);
 
 			Whitelist::<T>::insert(sender.clone(), pool_id);
 			Ok(())
@@ -233,6 +234,17 @@ pub mod pallet {
 			let hex_address: String = address.to_hex();
 			let uri = format!("{link}?pool_id={pool_id_hex}&address={hex_address}");
 			uri
+		}
+
+		fn is_pool_owner(pool_id: ID, sender: &T::AccountId) -> Result<(), Error<T>> {
+			if let Ok(owner) = T::WhitelistSponsor::get_pool_owner(pool_id) {
+				if owner == *sender {
+					return Ok(())
+				} else {
+					return Err(Error::<T>::NotPoolOwner)
+				}
+			}
+			return Err(Error::<T>::PoolNotFound)
 		}
 	}
 

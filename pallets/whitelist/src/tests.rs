@@ -1,26 +1,22 @@
-use crate::{mock::*, Error, Tickets, Whitelist};
+use crate::{mock::*, Error, Whitelist};
 use codec::{Decode, Encode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
-	constant::ID,
 	currency::{unit, NativeToken::GAKI},
-	pool,
 };
-use rustc_hex::{FromHex, ToHex};
+use rustc_hex::{ToHex};
 use sp_core::{
-	blake2_256,
-	offchain::{testing::TestOffchainExt, OffchainWorkerExt},
-	sr25519, H160,
+	offchain::{OffchainWorkerExt},
+	sr25519,
 };
-use sp_io::hashing::sha2_256;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
-	app_crypto::RuntimePublic,
 	offchain::{testing, TransactionPoolExt},
-	AccountId32, Permill,
 };
-use sponsored_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
+
+#[cfg(feature = "runtime-benchmarks")]
+use sponsored_pool::CustomPool;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -34,35 +30,6 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 	make_deposit(&acc, balance);
 	assert_eq!(Balances::free_balance(&acc), balance);
 	return acc
-}
-
-
-#[test]
-fn whitelist_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let balance = 100_000_000 * unit(GAKI);
-		let account = new_account(0, balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, balance);
-
-		assert_ok!(Pool::query_whitelist(
-			Origin::signed(player.clone()),
-			pool_id
-		));
-
-		assert_eq!(Whitelist::<Test>::get(player.clone()).unwrap(), pool_id);
-	})
 }
 
 fn test_pub() -> sp_core::sr25519::Public {
@@ -94,7 +61,7 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 	whitelist_response_work(&mut offchain_state.write(), &uri);
 
 	t.execute_with(|| {
-		assert_ok!(Pool::verify_and_approve(&uri, player, pool_id));
+		assert_ok!(PalletWhitelist::verify_and_approve(&uri, player, pool_id));
 
 		// then
 		let tx = pool_state.write().transactions.pop().unwrap();
@@ -103,43 +70,9 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 		assert_eq!(tx.signature, None);
 		assert_eq!(
 			tx.call,
-			Call::Pool(crate::Call::approve_whitelist_unsigned { player, pool_id })
+			Call::PalletWhitelist(crate::Call::approve_whitelist_unsigned { player, pool_id })
 		);
 	});
-}
-
-#[test]
-fn approve_whitelist_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let account_balance = 1_000_000 * unit(GAKI);
-		let account = new_account(0, account_balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, account_balance);
-
-		assert_ok!(Pool::query_whitelist(
-			Origin::signed(player.clone()),
-			pool_id
-		));
-
-		assert_ok!(Pool::approve_whitelist(
-			Origin::signed(account),
-			player,
-			pool_id
-		));
-
-		assert_eq!(Whitelist::<Test>::get(player).is_none(), true);
-	})
 }
 
 #[test]
@@ -152,128 +85,9 @@ fn query_whitelist_should_fail_pool_not_found() {
 		let player = new_account(1, account_balance);
 
 		assert_err!(
-			Pool::query_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::query_whitelist(Origin::signed(player.clone()), pool_id),
 			Error::<Test>::PoolNotFound
 		);
-	})
-}
-
-#[test]
-fn approve_whitelist_should_fail_pool_not_found() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let account_balance = 1_000_000 * unit(GAKI);
-		let account = new_account(0, account_balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, account_balance);
-		assert_ok!(Pool::query_whitelist(
-			Origin::signed(player.clone()),
-			pool_id
-		));
-		let pool_id = [0; 32];
-		assert_err!(
-			Pool::approve_whitelist(Origin::signed(account), player, pool_id),
-			Error::<Test>::PoolNotFound
-		);
-	})
-}
-
-#[test]
-fn approve_whitelist_should_fail_not_pool_owner() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let account_balance = 1_000_000 * unit(GAKI);
-		let account = new_account(0, account_balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, account_balance);
-		assert_ok!(Pool::query_whitelist(
-			Origin::signed(player.clone()),
-			pool_id
-		));
-
-		let account2 = new_account(2, account_balance);
-		assert_err!(
-			Pool::approve_whitelist(Origin::signed(account2), player, pool_id),
-			Error::<Test>::NotPoolOwner
-		);
-	})
-}
-
-#[test]
-fn approve_whitelist_should_fail_player_not_whitelist() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let account_balance = 1_000_000 * unit(GAKI);
-		let account = new_account(0, account_balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, account_balance);
-
-		assert_err!(
-			Pool::approve_whitelist(Origin::signed(account), player, pool_id),
-			Error::<Test>::PlayerNotWhitelist
-		);
-	})
-}
-
-#[test]
-fn approve_whitelist_unsigned_works() {
-	ExtBuilder::default().build_and_execute(|| {
-		run_to_block(1);
-
-		let account_balance = 1_000_000 * unit(GAKI);
-		let account = new_account(0, account_balance);
-		let pool_value = 1000 * unit(GAKI);
-
-		let pool_id = create_pool(
-			account.clone(),
-			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-			pool_value,
-			10,
-			Permill::from_percent(70),
-		);
-
-		let player = new_account(1, account_balance);
-
-		assert_ok!(Pool::query_whitelist(
-			Origin::signed(player.clone()),
-			pool_id
-		));
-
-		assert_ok!(Pool::approve_whitelist(
-			Origin::signed(account),
-			player,
-			pool_id
-		));
 	})
 }
 
@@ -302,7 +116,7 @@ fn should_make_http_call_and_parse_result() {
 
 	t.execute_with(|| {
 		// when
-		let verify = Pool::fetch_whitelist(&uri).unwrap();
+		let verify = PalletWhitelist::fetch_whitelist(&uri).unwrap();
 		// then
 		assert_eq!(verify, true);
 	});
@@ -337,7 +151,7 @@ fn make_http_call_and_parse_result_should_fail() {
 
 	t.execute_with(|| {
 		// when
-		let verify = Pool::fetch_whitelist(&uri).unwrap();
+		let verify = PalletWhitelist::fetch_whitelist(&uri).unwrap();
 		// then
 		assert_eq!(verify, false);
 	});
@@ -364,7 +178,7 @@ fn get_uri_should_works() {
 
 	let link = "http://whitelist.gafi.network/whitelist/verify";
 
-	let uri = Pool::get_uri(link, pool_id, &player);
+	let uri = PalletWhitelist::get_uri(link, pool_id, &player);
 
 	assert_eq!(uri, "http://whitelist.gafi.network/whitelist/verify?pool_id=cfe6ad53d9338c449973e9850eac29948c8045e1fcb3659fb1b51948ddde856f&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
 

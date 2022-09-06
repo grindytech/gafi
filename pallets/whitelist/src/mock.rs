@@ -3,7 +3,7 @@
  * and not related with Currency e.g. Balances, Transaction Payment
  */
 
-use crate::{self as pallet_pool};
+use crate::{self as pallet_whitelist};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, GenesisBuild},
@@ -19,7 +19,6 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	ticket::TicketInfo,
 };
-pub use gu_mock::*;
 pub use pallet_balances::Call as BalancesCall;
 
 use frame_system::{mocking};
@@ -40,9 +39,6 @@ type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
-pub use staking_pool;
-pub use upfront_pool;
-
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
@@ -54,20 +50,11 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>, ValidateUnsigned},
-		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>},
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
+		PalletWhitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
-
-impl pallet_randomness_collective_flip::Config for Test {}
 
 parameter_types! {
 	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
@@ -85,109 +72,12 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const INIT_TIMESTAMP: u64 = 30_000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
-
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
-pub const RESERVATION_FEE: u128 = 2;
-
-parameter_types! {
-	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
-}
-impl pallet_pool_names::Config for Test {
+impl  pallet_whitelist::Config for Test {
 	type Event = Event;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = ConstU32<3>;
-	type MaxLength = ConstU32<16>;
+	type WhitelistPool = ();
+	type WhitelistSponsor = ();
 }
 
-parameter_types! {
-	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
-	pub MinDiscountPercent: Permill = Permill::from_percent(10);
-	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
-	pub MinTxLimit: u32 = 10;
-	pub MaxTxLimit: u32 = 100;
-	pub MaxPoolOwned: u32 =  10;
-	pub MaxPoolTarget: u32 =  10;
-}
-
-impl sponsored_pool::Config for Test {
-	type Event = Event;
-	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
-	type PoolName = PoolNames;
-	type MaxPoolOwned = MaxPoolOwned;
-	type MaxPoolTarget = MaxPoolTarget;
-	type MinDiscountPercent = MinDiscountPercent;
-	type MaxDiscountPercent = MaxDiscountPercent;
-	type MinTxLimit = MinTxLimit;
-	type MaxTxLimit = MaxTxLimit;
-	type MinPoolBalance = MinPoolBalance;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub CleanTime: u128 = TIME_SERVICE;
-}
-
-impl pallet_cache::Config for Test {
-	type Event = Event;
-	type Data = TicketInfo;
-	type Action = ID;
-	type CleanTime = CleanTime;
-}
-
-parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
-	pub TimeServiceStorage: u128 = 30 * 60_000u128;
-}
-
-impl pallet_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type WeightInfo = ();
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
-	type Cache = PalletCache;
-	type TimeServiceStorage = TimeServiceStorage;
-}
-
-impl staking_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type StakingServices = StakingPoolDefaultServices;
-	type Players = ();
-}
-
-parameter_types! {
-	pub MaxPlayerStorage: u32 = 1000;
-}
-
-impl upfront_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type MaxPlayerStorage = MaxPlayerStorage;
-	type MasterPool = ();
-	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = ();
-}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -256,12 +146,6 @@ where
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
-		.unwrap();
-
-	GenesisBuild::<Test>::assimilate_storage(&staking_pool::GenesisConfig::default(), &mut storage)
-		.unwrap();
-
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
 }
@@ -273,9 +157,6 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp(
-			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
-		);
 	}
 }
 
@@ -296,18 +177,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig::default(),
-			&mut storage,
-		)
-		.unwrap();
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig::default(),
-			&mut storage,
-		)
-		.unwrap();
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext

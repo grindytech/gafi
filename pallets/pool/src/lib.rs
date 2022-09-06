@@ -311,17 +311,6 @@ pub mod pallet {
 			})
 		}
 
-		fn is_sponsored_pool_owner(sender: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
-			if let Some(owner) = T::SponsoredPool::get_pool_owner(pool_id) {
-				if owner == *sender {
-					return Ok(())
-				} else {
-					return Err(Error::<T>::NotPoolOwner)
-				}
-			}
-			Err(Error::<T>::PoolNotFound)
-		}
-
 		fn get_cache(sender: &T::AccountId, pool_id: ID) -> Option<TicketInfo> {
 			if let Some(info) = T::Cache::get(&sender, pool_id) {
 				return Some(info)
