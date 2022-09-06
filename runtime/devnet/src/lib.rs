@@ -88,6 +88,7 @@ pub use pallet_pool_names;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
+pub use pallet_whitelist;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -668,6 +669,12 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
+impl pallet_whitelist::Config for Runtime {
+	type Event = Event;
+	type WhitelistPool = Pool;
+	type WhitelistSponsor = SponsoredPool;
+}
+
 parameter_types! {
 	pub MaxJoinedSponsoredPool: u32 = 5;
 	pub TimeServiceStorage: u128 = 30 * 60_000u128;
@@ -1012,6 +1019,7 @@ construct_runtime!(
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
 		GafiMembership: gafi_membership,
+		PalletWhitelist: pallet_whitelist,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},

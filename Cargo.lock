@@ -1898,6 +1898,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-whitelist",
  "parity-scale-codec",
  "proof-address-mapping",
  "runtime-common",

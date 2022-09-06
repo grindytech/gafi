@@ -91,6 +91,7 @@ staking-pool = { version = "4.0.0-dev", default-features = false, path = "../../
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool" }
 pallet-player-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api" }
 gafi-membership = { version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-membership" }
+pallet-whitelist = { version = "4.0.0-dev", default-features = false, path = "../../pallets/whitelist" }
 
 # unit test
 [dev.dependencies]
@@ -181,6 +182,7 @@ std = [
   "runtime-common/std",
   "pallet-hotfix-sufficients/std",
   "gafi-membership/std",
+  "pallet-whitelist/std",
   "log/std",
 ]
 with-dev = []
