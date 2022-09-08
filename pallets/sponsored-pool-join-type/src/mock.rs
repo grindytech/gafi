@@ -1,14 +1,15 @@
-use crate as pallet_pool_names;
+use crate as pallet_sponsored_pool_join_type;
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, OnFinalize, OnInitialize},
 };
+use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup}, AccountId32,
+	traits::{BlakeTwo256, IdentityLookup},
+	AccountId32,
 };
-use gafi_primitives::currency::{unit, NativeToken::GAKI};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -21,7 +22,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
+		SponsoredPoolJoin: pallet_sponsored_pool_join_type::{Pallet, Storage, Event<T>},
 	}
 );
 
@@ -80,19 +81,15 @@ pub const RESERVATION_FEE: u128 = 1;
 parameter_types! {
 	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
 }
-impl pallet_pool_names::Config for Test {
+impl pallet_sponsored_pool_join_type::Config for Test {
+	type MaxLength = ConstU32<255>;
 	type Event = Event;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = ConstU32<3>;
-	type MaxLength = ConstU32<16>;
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
-}
+// pub fn new_test_ext() -> sp_io::TestExternalities {
+// 	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+// }
 
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
@@ -110,9 +107,7 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			balances: vec![],
-		}
+		Self { balances: vec![] }
 	}
 }
 
@@ -120,8 +115,10 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext

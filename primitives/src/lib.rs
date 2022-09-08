@@ -23,3 +23,5 @@ pub mod types;
 pub mod players;
 
 pub mod membership;
+
+pub mod whitelist;

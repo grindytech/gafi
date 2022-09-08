@@ -27,6 +27,8 @@ pub trait CustomPool<AccountId> {
 	fn leave(sender: AccountId) -> DispatchResult;
 	fn get_service(pool_id: ID) -> Option<CustomService<AccountId>>;
 
+	fn get_pool_owner(pool_id: ID)-> Option<AccountId>;
+
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add_default(owner: AccountId, pool_id: ID);
 }

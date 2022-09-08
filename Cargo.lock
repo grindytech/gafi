@@ -1869,6 +1869,7 @@ dependencies = [
  "gafi-tx",
  "game-creator",
  "hex-literal 0.3.4",
+ "log",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -1897,6 +1898,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-whitelist",
  "parity-scale-codec",
  "proof-address-mapping",
  "runtime-common",
@@ -7144,6 +7146,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-whitelist"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "rustc-hex",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-xcm"
 version = "0.9.26"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.26#d8785970175dce344f2a6ad1cd88297529a6dd59"
@@ -11741,6 +11763,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sponsored-pool-join-type"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "url",
+]
+
+[[package]]
 name = "ss58-registry"
 version = "1.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12676,6 +12717,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

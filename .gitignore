@@ -30,3 +30,6 @@ package-lock.json
 
 # Custome chain spec
 genesis/
+
+
+*.log

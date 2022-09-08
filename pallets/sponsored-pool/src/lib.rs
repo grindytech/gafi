@@ -30,6 +30,7 @@ pub use gafi_primitives::{
 	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
+	whitelist::WhitelistSponsor,
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
@@ -487,6 +488,13 @@ pub mod pallet {
 			None
 		}
 
+		fn get_pool_owner(pool_id: ID) -> Option<T::AccountId> {
+			if let Some(pool) = Pools::<T>::get(pool_id) {
+				return Some(pool.owner);
+			}
+			return None;
+		}
+
 		/// Add new sponsored-pool with default values, return pool_id
 		///
 		/// ** Should be used for benchmarking only!!! **
@@ -503,6 +511,22 @@ pub mod pallet {
 			Pools::<T>::insert(pool_id, sponsored_pool);
 			let _ = PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
 				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned);
+		}
+	}
+
+	impl<T: Config> WhitelistSponsor<T::AccountId> for Pallet<T> {
+		fn is_pool(pool_id: ID) -> bool {
+			match Pools::<T>::get(pool_id) {
+				Some(_) => true,
+				None => false,
+			}
+		}
+	
+		fn get_pool_owner(pool_id: ID) -> Result<T::AccountId, &'static str> {
+			if let Some(pool) = Pools::<T>::get(pool_id) {
+				return Ok(pool.owner);
+			}
+			Err("PoolNotFound")
 		}
 	}
 }

@@ -24,16 +24,16 @@ use gafi_primitives::{
 	custom_services::CustomPool,
 	pool::{MasterPool, PoolType, Service},
 	system_services::SystemPool,
-	ticket::TicketInfo,
-	ticket::{PlayerTicket, TicketType},
+	ticket::{PlayerTicket, TicketInfo, TicketType},
+	whitelist::WhitelistPool,
 };
 use pallet_timestamp::{self as timestamp};
 
 use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
-use sp_core::H160;
-use sp_std::vec::Vec;
+use sp_core::{H160};
+use sp_std::{str, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -49,11 +49,13 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use super::*;
-	use frame_support::Twox64Concat;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+	pub trait Config:
+		frame_system::Config + pallet_timestamp::Config
+	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
@@ -116,6 +118,9 @@ pub mod pallet {
 	#[pallet::getter(fn time_service)]
 	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
 
+	#[pallet::storage]
+	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
+
 	/// on_finalize following by steps:
 	/// 1. renew tickets
 	/// 2. Update new Marktime
@@ -145,10 +150,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<TimeService<T>>::put(<T as Config>::TimeServiceStorage::get());
-			let _now: u128 = <timestamp::Pallet<T>>::get()
-				.try_into()
-				.ok()
-				.unwrap_or_default();
+			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap_or_default();
 			<MarkTime<T>>::put(_now);
 		}
 	}
@@ -178,6 +180,9 @@ pub mod pallet {
 		ComingSoon,
 		ExceedJoinedPool,
 		PoolNotFound,
+		NotPoolOwner,
+		PlayerNotWhitelist,
+		ParserIdFail,
 	}
 
 	#[pallet::call]
@@ -204,10 +209,10 @@ pub mod pallet {
 			match ticket_type {
 				TicketType::Upfront(_) => {
 					T::UpfrontPool::join(sender.clone(), pool_id)?;
-				}
+				},
 				TicketType::Staking(_) => {
 					T::StakingPool::join(sender.clone(), pool_id)?;
-				}
+				},
 				TicketType::Sponsored(_) => {
 					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
 					let count_joined_pool = joined_sponsored_pool.count();
@@ -218,13 +223,10 @@ pub mod pallet {
 					);
 
 					T::SponsoredPool::join(sender.clone(), pool_id)?
-				}
+				},
 			}
 
-			let ticket_info = Self::create_ticket(&sender, pool_id)?;
-
-			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
-
+			Self::join_pool(&sender, pool_id)?;
 			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
 			Ok(())
 		}
@@ -241,15 +243,9 @@ pub mod pallet {
 
 			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
-					TicketType::Upfront(_) => {
-						T::UpfrontPool::leave(sender.clone())?
-					}
-					TicketType::Staking(_) => {
-						T::StakingPool::leave(sender.clone())?
-					}
-					TicketType::Sponsored(_) => {
-						T::SponsoredPool::leave(sender.clone())?
-					}
+					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
+					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
+					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
 				T::Cache::insert(&sender, pool_id, ticket);
 				Tickets::<T>::remove(sender.clone(), pool_id);
@@ -296,17 +292,15 @@ pub mod pallet {
 		}
 	}
 
+	// common function
 	impl<T: Config> Pallet<T> {
-		fn create_ticket(
-			sender: &T::AccountId,
-			pool_id: ID,
-		) -> Result<TicketInfo, Error<T>> {
+		fn create_ticket(sender: &T::AccountId, pool_id: ID) -> Result<TicketInfo, Error<T>> {
 			let ticket_type = Self::get_ticket_type(pool_id)?;
 			if let Some(cache) = Self::get_cache(&sender, pool_id) {
 				return Ok(TicketInfo {
 					ticket_type,
 					tickets: cache.tickets,
-				});
+				})
 			}
 
 			let service = Self::get_ticket_service(ticket_type)?;
@@ -319,7 +313,7 @@ pub mod pallet {
 
 		fn get_cache(sender: &T::AccountId, pool_id: ID) -> Option<TicketInfo> {
 			if let Some(info) = T::Cache::get(&sender, pool_id) {
-				return Some(info);
+				return Some(info)
 			}
 			None
 		}
@@ -348,7 +342,7 @@ pub mod pallet {
 						if joined_pool_id == pool_id {
 							is_joined = true;
 						}
-					}
+					},
 				}
 			}
 			is_joined
@@ -358,19 +352,19 @@ pub mod pallet {
 			match ticket {
 				TicketType::Staking(pool_id) => {
 					if let Some(service) = T::StakingPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 				TicketType::Upfront(pool_id) => {
 					if let Some(service) = T::UpfrontPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 				TicketType::Sponsored(pool_id) => {
 					if let Some(service) = T::SponsoredPool::get_service(pool_id) {
-						return Ok(service.service);
+						return Ok(service.service)
 					}
-				}
+				},
 			}
 
 			Err(Error::<T>::PoolNotFound)
@@ -378,15 +372,25 @@ pub mod pallet {
 
 		fn get_ticket_type(pool_id: ID) -> Result<TicketType, Error<T>> {
 			if T::UpfrontPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Upfront(pool_id));
+				return Ok(TicketType::Upfront(pool_id))
 			}
 			if T::StakingPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Staking(pool_id));
+				return Ok(TicketType::Staking(pool_id))
 			}
 			if T::SponsoredPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Sponsored(pool_id));
+				return Ok(TicketType::Sponsored(pool_id))
 			}
 			Err(Error::<T>::PoolNotFound)
+		}
+
+		
+	}
+
+	impl<T: Config> WhitelistPool<T::AccountId> for Pallet<T> {
+		fn join_pool(sender: &T::AccountId, pool_id: ID) -> Result<(), &'static str> {
+			let ticket_info = Self::create_ticket(sender, pool_id)?;
+			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
+			Ok(())
 		}
 	}
 
@@ -398,28 +402,20 @@ pub mod pallet {
 				match ticket_info.ticket_type {
 					TicketType::Upfront(pool_id) | TicketType::Staking(pool_id) => {
 						if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
-							Tickets::<T>::insert(
-								player,
-								pool_id,
-								new_ticket_info,
-							);
-							return Some((
-								new_ticket_info.ticket_type,
-								pool_id,
-							));
+							Tickets::<T>::insert(player, pool_id, new_ticket_info);
+							return Some((new_ticket_info.ticket_type, pool_id))
 						}
-					}
-					TicketType::Sponsored(pool_id) => {
+					},
+					TicketType::Sponsored(pool_id) =>
 						if let Some(contract) = target {
 							let targets = Self::get_targets(pool_id);
 							if targets.contains(&contract) {
 								if let Some(new_ticket_info) = ticket_info.withdraw_ticket() {
 									Tickets::<T>::insert(player, pool_id, new_ticket_info);
-									return Some((new_ticket_info.ticket_type, pool_id));
+									return Some((new_ticket_info.ticket_type, pool_id))
 								}
 							}
-						}
-					}
+						},
 				}
 			}
 			None
@@ -431,13 +427,13 @@ pub mod pallet {
 			let sponsored_service = T::SponsoredPool::get_service(pool_id);
 
 			if upfront_service.is_some() {
-				return Some(upfront_service.unwrap().service);
+				return Some(upfront_service.unwrap().service)
 			}
 			if staking_service.is_some() {
-				return Some(staking_service.unwrap().service);
+				return Some(staking_service.unwrap().service)
 			}
 			if sponsored_service.is_some() {
-				return Some(sponsored_service.unwrap().service);
+				return Some(sponsored_service.unwrap().service)
 			}
 
 			None
@@ -464,4 +460,5 @@ pub mod pallet {
 			MarkTime::<T>::get()
 		}
 	}
+
 }
