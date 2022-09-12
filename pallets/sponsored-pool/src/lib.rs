@@ -123,6 +123,9 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// The maximum length of whitelist url'
+		type MaxWhitelistLength: Get<u32>;
 	}
 
 	//** Storages **//
@@ -139,6 +142,11 @@ pub mod pallet {
 	#[pallet::getter(fn pool_owned)]
 	pub type PoolOwned<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BoundedVec<ID, T::MaxPoolOwned>, ValueQuery>;
+
+	/// Get whitelist url
+	#[pallet::storage]
+	#[pallet::getter(fn whitelist_url)]
+	pub type WhitelistURL<T: Config> = StorageMap<_, Twox64Concat, ID, BoundedVec<u8, T::MaxWhitelistLength>>;
 
 	/// Holding the contract addresses
 	#[pallet::storage]
@@ -169,6 +177,7 @@ pub mod pallet {
 		GreaterThanMaxTxLimit,
 		LessThanMinDiscountPercent,
 		GreaterThanMinDiscountPercent,
+		URLTooLong,
 	}
 
 	#[pallet::call]
@@ -424,6 +433,26 @@ pub mod pallet {
 				None => Err(<Error<T>>::PoolNotExist.into()),
 				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
 			}
+		}
+	
+		#[pallet::weight(0)]
+		pub fn set_whitelist_url(origin: OriginFor<T>, pool_id: ID, url: Option<Vec<u8>>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(
+				Self::is_pool_owner(&pool_id, &sender)?,
+				<Error<T>>::NotTheOwner
+			);
+
+			if let Some(wl_url) = url {
+				let bounded_url: BoundedVec<_, _> =
+				wl_url.try_into().map_err(|()| Error::<T>::URLTooLong)?;
+				WhitelistURL::<T>::insert(pool_id, bounded_url);
+			} else {
+				WhitelistURL::<T>::remove(pool_id);
+			}
+			Ok(())
 		}
 	}
 
