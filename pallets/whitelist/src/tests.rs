@@ -1,18 +1,18 @@
-use crate::{mock::*, Error, Whitelist};
+use crate::{mock::*, Error, Whitelist, WhitelistURL};
 use codec::{Decode, Encode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
+	constant::ID,
 	currency::{unit, NativeToken::GAKI},
 };
-use rustc_hex::{ToHex};
-use sp_core::{
-	offchain::{OffchainWorkerExt},
-	sr25519,
-};
+use rustc_hex::ToHex;
+use sp_core::{offchain::OffchainWorkerExt, sr25519, H160};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	offchain::{testing, TransactionPoolExt},
+	Permill,
 };
+use sponsored_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -34,6 +34,35 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 
 fn test_pub() -> sp_core::sr25519::Public {
 	sp_core::sr25519::Public::from_raw([1u8; 32])
+}
+
+fn create_pool(
+	account: sr25519::Public,
+	account_balance: u128,
+	targets: Vec<H160>,
+	pool_value: u128,
+	tx_limit: u32,
+	discount: Permill,
+) -> ID {
+	assert_ok!(Sponsored::create_pool(
+		Origin::signed(account.clone()),
+		targets,
+		pool_value,
+		discount,
+		tx_limit
+	));
+
+	assert_eq!(
+		Balances::free_balance(&account),
+		account_balance - pool_value
+	);
+	let pool_owned = PoolOwned::<Test>::get(account.clone());
+	assert_eq!(pool_owned.len(), 1);
+	let new_pool = Pools::<Test>::get(pool_owned[0]).unwrap();
+	assert_eq!(new_pool.owner, account);
+	assert_eq!(new_pool.tx_limit, tx_limit);
+	assert_eq!(new_pool.discount, discount);
+	new_pool.id
 }
 
 #[test]
@@ -174,12 +203,77 @@ fn get_uri_should_works() {
 		225, 252, 179, 101, 159, 177, 181, 25, 72, 221, 222, 133, 111,
 	];
 
-	let player = sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
+	let player =
+		sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 
 	let link = "http://whitelist.gafi.network/whitelist/verify";
 
 	let uri = PalletWhitelist::get_uri(link, pool_id, &player);
 
 	assert_eq!(uri, "http://whitelist.gafi.network/whitelist/verify?pool_id=cfe6ad53d9338c449973e9850eac29948c8045e1fcb3659fb1b51948ddde856f&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+}
 
+#[test]
+fn set_whitelist_url_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let account_balance = 1_000_000 * unit(GAKI);
+		let account = new_account(0, account_balance);
+		let pool_value = 1000 * unit(GAKI);
+		create_pool(
+			account.clone(),
+			account_balance,
+			vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+			pool_value,
+			10,
+			Permill::from_percent(70),
+		);
+
+		let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
+
+		let url = b"http://whitelist.gafi.network/whitelist/verify";
+
+		assert_ok!(PalletWhitelist::set_whitelist_url(
+			Origin::signed(account.clone()),
+			pool_id,
+			Some(url.to_vec())
+		));
+
+		assert_eq!(WhitelistURL::<Test>::get(pool_id).unwrap(), url.to_vec());
+
+		assert_ok!(PalletWhitelist::set_whitelist_url(
+			Origin::signed(account),
+			pool_id,
+			None
+		));
+
+		assert_eq!(WhitelistURL::<Test>::get(pool_id), None);
+	})
+}
+
+#[test]
+fn set_whitelist_url_fails() {
+	new_test_ext().execute_with(|| {
+        run_to_block(1);
+        let account_balance = 1_000_000 * unit(GAKI);
+        let account = new_account(0, account_balance);
+        let account2 = new_account(1, account_balance);
+        let pool_value = 1000 * unit(GAKI);
+        create_pool(
+            account.clone(),
+            account_balance,
+            vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
+            pool_value,
+            10,
+            Permill::from_percent(70),
+        );
+
+        let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
+
+        let url = b"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+        assert_err!(PalletWhitelist::set_whitelist_url(Origin::signed(account.clone()), pool_id, Some(url.to_vec())), Error::<Test>::URLTooLong);
+        assert_err!(PalletWhitelist::set_whitelist_url(Origin::signed(account.clone()), [0_u8; 32], None), Error::<Test>::PoolNotFound);
+        assert_err!(PalletWhitelist::set_whitelist_url(Origin::signed(account2.clone()), pool_id, None), Error::<Test>::NotPoolOwner);
+    })
 }

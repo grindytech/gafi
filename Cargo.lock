@@ -7155,6 +7155,7 @@ dependencies = [
  "gafi-primitives",
  "log",
  "pallet-balances",
+ "pallet-randomness-collective-flip",
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",
@@ -7163,6 +7164,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-std",
+ "sponsored-pool",
 ]
 
 [[package]]

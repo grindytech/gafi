@@ -61,6 +61,7 @@ pub mod pallet {
 
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 		type WhitelistSponsor: WhitelistSponsor<Self::AccountId>;
+		type MaxWhitelistLength: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -69,6 +70,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
+
+
+	/// Get whitelist url
+	#[pallet::storage]
+	#[pallet::getter(fn whitelist_url)]
+	pub type WhitelistURL<T: Config> = StorageMap<_, Twox64Concat, ID, BoundedVec<u8, T::MaxWhitelistLength>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -81,6 +88,7 @@ pub mod pallet {
 		PlayerNotWhitelist,
 		NotPoolOwner,
 		PoolNotFound,
+		URLTooLong,
 	}
 
 	#[pallet::hooks]
@@ -146,6 +154,22 @@ pub mod pallet {
 			);
 
 			Whitelist::<T>::insert(sender.clone(), pool_id);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_whitelist_url(origin: OriginFor<T>, pool_id: ID, url: Option<Vec<u8>>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::is_pool_owner(pool_id, &sender)?;
+
+			if let Some(wl_url) = url {
+				let bounded_url: BoundedVec<_, _> =
+				wl_url.try_into().map_err(|()| Error::<T>::URLTooLong)?;
+				WhitelistURL::<T>::insert(pool_id, bounded_url);
+			} else {
+				WhitelistURL::<T>::remove(pool_id);
+			}
 			Ok(())
 		}
 	}

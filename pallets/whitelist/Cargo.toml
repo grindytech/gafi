@@ -35,6 +35,8 @@ gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../.
 [dev-dependencies]
 pallet-balances = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
 
 [features]
 default = ["std"]
@@ -52,6 +54,8 @@ std = [
 	"sp-io/std",
 	"pallet-balances/std",
 	"sp-keystore/std",
+	"sponsored-pool/std",
+	"pallet-randomness-collective-flip/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

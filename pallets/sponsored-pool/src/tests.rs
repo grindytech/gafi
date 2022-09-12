@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, PoolOwned, Pools, Targets, WhitelistURL};
+use crate::{mock::*, Error, PoolOwned, Pools, Targets};
 use frame_support::assert_err;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use gafi_primitives::constant::ID;
@@ -18,16 +18,6 @@ fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
     make_deposit(&acc, balance);
     assert_eq!(Balances::free_balance(&acc), balance);
     return acc;
-}
-
-#[test]
-fn new_pool_works() {
-    ExtBuilder::default().build_and_execute(|| {
-        run_to_block(1);
-
-        let new_pool = Sponsored::new_pool();
-        assert_eq!(new_pool.unwrap().id.len(), 32);
-    })
 }
 
 fn create_pool(
@@ -57,6 +47,16 @@ fn create_pool(
     assert_eq!(new_pool.tx_limit, tx_limit);
     assert_eq!(new_pool.discount, discount);
     new_pool.id
+}
+
+#[test]
+fn new_pool_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        run_to_block(1);
+
+        let new_pool = Sponsored::new_pool();
+        assert_eq!(new_pool.unwrap().id.len(), 32);
+    })
 }
 
 #[test]
@@ -385,61 +385,4 @@ fn error_catching_should_work() {
 
 
 	});
-}
-
-#[test]
-fn set_whitelist_url_works() {
-    new_test_ext().execute_with(|| {
-        run_to_block(1);
-        let account_balance = 1_000_000 * unit(GAKI);
-        let account = new_account([0_u8; 32], account_balance);
-        let pool_value = 1000 * unit(GAKI);
-        create_pool(
-            account.clone(),
-            account_balance,
-            vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-            pool_value,
-            10,
-            Permill::from_percent(70),
-        );
-
-        let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
-
-        let url = b"http://whitelist.gafi.network/whitelist/verify";
-
-        assert_ok!(Sponsored::set_whitelist_url(Origin::signed(account.clone()), pool_id, Some(url.to_vec())));
-
-        assert_eq!(WhitelistURL::<Test>::get(pool_id).unwrap(), url.to_vec());
-
-        assert_ok!(Sponsored::set_whitelist_url(Origin::signed(account), pool_id, None));
-
-        assert_eq!(WhitelistURL::<Test>::get(pool_id), None);
-    })
-}
-
-#[test]
-fn set_whitelist_url_fails() {
-    new_test_ext().execute_with(|| {
-        run_to_block(1);
-        let account_balance = 1_000_000 * unit(GAKI);
-        let account = new_account([0_u8; 32], account_balance);
-        let account2 = new_account([1_u8; 32], account_balance);
-        let pool_value = 1000 * unit(GAKI);
-        create_pool(
-            account.clone(),
-            account_balance,
-            vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
-            pool_value,
-            10,
-            Permill::from_percent(70),
-        );
-
-        let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
-
-        let url = b"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-
-        assert_err!(Sponsored::set_whitelist_url(Origin::signed(account.clone()), pool_id, Some(url.to_vec())), Error::<Test>::URLTooLong);
-        assert_err!(Sponsored::set_whitelist_url(Origin::signed(account.clone()), [0_u8; 32], None), Error::<Test>::PoolNotExist);
-        assert_err!(Sponsored::set_whitelist_url(Origin::signed(account2.clone()), pool_id, None), Error::<Test>::NotTheOwner);
-    })
 }

@@ -118,7 +118,6 @@ parameter_types! {
 	pub MaxTxLimit: u32 = 100;
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 =  10;
-	pub MaxWhitelistLength: u32 = 80;
 }
 
 impl sponsored_pool::Config for Test {
@@ -134,7 +133,6 @@ impl sponsored_pool::Config for Test {
 	type MaxTxLimit = MaxTxLimit;
 	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
-	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
 pub const RESERVATION_FEE: u128 = 2;

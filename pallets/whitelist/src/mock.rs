@@ -51,8 +51,12 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		PalletWhitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>},
+		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
+
+impl pallet_randomness_collective_flip::Config for Test {}
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
@@ -72,10 +76,40 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinTxLimit: u32 = 10;
+	pub MaxTxLimit: u32 = 100;
+	pub MaxPoolOwned: u32 =  10;
+	pub MaxPoolTarget: u32 =  10;
+}
+
+impl sponsored_pool::Config for Test {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type PoolName = ();
+	type MaxPoolOwned = MaxPoolOwned;
+	type MaxPoolTarget = MaxPoolTarget;
+	type MinDiscountPercent = MinDiscountPercent;
+	type MaxDiscountPercent = MaxDiscountPercent;
+	type MinTxLimit = MinTxLimit;
+	type MaxTxLimit = MaxTxLimit;
+	type MinPoolBalance = MinPoolBalance;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxWhitelistLength: u32 = 80;
+}
+
 impl  pallet_whitelist::Config for Test {
 	type Event = Event;
 	type WhitelistPool = ();
-	type WhitelistSponsor = ();
+	type WhitelistSponsor = Sponsored;
+	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
 

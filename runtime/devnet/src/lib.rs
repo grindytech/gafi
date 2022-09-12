@@ -669,10 +669,15 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
+parameter_types! {
+	pub MaxWhitelistLength: u32 = 80;
+}
+
 impl pallet_whitelist::Config for Runtime {
 	type Event = Event;
 	type WhitelistPool = Pool;
 	type WhitelistSponsor = SponsoredPool;
+	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
 parameter_types! {
