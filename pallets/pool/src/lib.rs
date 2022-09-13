@@ -181,7 +181,7 @@ pub mod pallet {
 		ExceedJoinedPool,
 		PoolNotFound,
 		NotPoolOwner,
-		PlayerNotWhitelist,
+		NotWhitelist,
 		ParserIdFail,
 	}
 

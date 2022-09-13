@@ -9,3 +9,8 @@ impl<AccountId> WhitelistPool<AccountId> for () {
         Err("default")
     }
 }
+
+pub trait IWhitelist<AccountId> {
+    fn is_whitelist(pool_id: ID) -> bool;
+    fn insert_whitelist(pool_id: ID, player: AccountId) -> Result<(), &'static str>;
+}
