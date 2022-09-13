@@ -114,7 +114,7 @@ fn query_whitelist_should_fail_pool_not_found() {
 		let player = new_account(1, account_balance);
 
 		assert_err!(
-			PalletWhitelist::query_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
 			Error::<Test>::PoolNotFound
 		);
 	})

@@ -1,9 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	whitelist::{WhitelistPool, WhitelistSponsor},
+	whitelist::{WhitelistPool},
+	custom_services::CustomPool,
 };
 
 pub use pallet::*;
@@ -21,8 +22,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -52,8 +56,14 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + CreateSignedTransaction<Call<Self>> {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		/// The currency mechanism.
+		type Currency: Currency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
+
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
-		type WhitelistSponsor: WhitelistSponsor<Self::AccountId>;
+		type SponsoredPool: CustomPool<Self::AccountId>;
 		type MaxWhitelistLength: Get<u32>;
 	}
 
@@ -96,7 +106,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist(50u32))]
 		pub fn approve_whitelist(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -117,7 +127,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10000000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist_unsigned(50u32))]
 		pub fn approve_whitelist_unsigned(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -137,12 +147,12 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
-		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::apply_whitelist(50u32))]
+		pub fn apply_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				T::WhitelistSponsor::is_pool(pool_id),
+				T::SponsoredPool::is_pool(pool_id),
 				Error::<T>::PoolNotFound
 			);
 
@@ -150,7 +160,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_whitelist_url(50u32))]
 		pub fn set_whitelist_url(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -175,7 +185,7 @@ pub mod pallet {
 	// whitelist implement
 	impl<T: Config> Pallet<T> {
 		pub fn verify_whitelist_and_send_raw_unsign(
-			block_number: T::BlockNumber,
+			_block_number: T::BlockNumber,
 		) -> Result<(), &'static str> {
 			for query in Whitelist::<T>::iter() {
 				let player = query.0;
@@ -267,7 +277,7 @@ pub mod pallet {
 		}
 
 		fn is_pool_owner(pool_id: ID, sender: &T::AccountId) -> Result<(), Error<T>> {
-			if let Ok(owner) = T::WhitelistSponsor::get_pool_owner(pool_id) {
+			if let Some(owner) = T::SponsoredPool::get_pool_owner(pool_id) {
 				if owner == *sender {
 					return Ok(())
 				} else {

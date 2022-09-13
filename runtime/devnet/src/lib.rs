@@ -676,7 +676,9 @@ parameter_types! {
 impl pallet_whitelist::Config for Runtime {
 	type Event = Event;
 	type WhitelistPool = Pool;
-	type WhitelistSponsor = SponsoredPool;
+	type SponsoredPool = SponsoredPool;
+	type Currency =  Balances;
+	type WeightInfo = pallet_whitelist::weights::WhitelistWeight<Runtime>;
 	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
@@ -1474,6 +1476,7 @@ impl_runtime_apis! {
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
 			use gafi_membership::Pallet as GafiMembershipBench;
+			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
@@ -1486,6 +1489,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_membership, GafiMembershipBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_whitelist, WhitelistBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1508,6 +1512,7 @@ impl_runtime_apis! {
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
 			use gafi_membership::Pallet as GafiMembershipBench;
+			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -1524,6 +1529,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_whitelist, WhitelistBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_membership, GafiMembershipBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

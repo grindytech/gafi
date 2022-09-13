@@ -108,7 +108,9 @@ parameter_types! {
 impl  pallet_whitelist::Config for Test {
 	type Event = Event;
 	type WhitelistPool = ();
-	type WhitelistSponsor = Sponsored;
+	type Currency = Balances;
+	type WeightInfo = ();
+	type SponsoredPool = Sponsored;
 	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
