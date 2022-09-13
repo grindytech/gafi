@@ -107,6 +107,7 @@ pub mod pallet {
 		/// # </weight>
 
 		fn set_name(account_id: AccountIdOf<T>,pool_id: ID, name: Vec<u8>) -> DispatchResult{
+
 			let bounded_name: BoundedVec<_, _> =
 				name.try_into().map_err(|()| Error::<T>::TooLong)?;
 			ensure!(bounded_name.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);

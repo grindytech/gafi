@@ -1,19 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{pallet_prelude::*, traits::Currency, transactional};
+use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	custom_services::CustomPool,
-	pool::{MasterPool, PoolType, Service},
-	system_services::SystemPool,
-	ticket::{PlayerTicket, TicketInfo, TicketType},
 	whitelist::{WhitelistPool, WhitelistSponsor},
 };
 
 pub use pallet::*;
 use scale_info::prelude::{format, string::String};
-use sp_core::H160;
-use sp_std::{str, vec::Vec};
+use sp_std::{prelude::*, str};
 
 use frame_system::offchain::{CreateSignedTransaction, SubmitTransaction};
 use rustc_hex::ToHex;
@@ -52,8 +47,6 @@ pub mod crypto {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + CreateSignedTransaction<Call<Self>> {
@@ -61,6 +54,7 @@ pub mod pallet {
 
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 		type WhitelistSponsor: WhitelistSponsor<Self::AccountId>;
+		type MaxWhitelistLength: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -70,10 +64,16 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
 
+	/// Get whitelist url
+	#[pallet::storage]
+	pub type WhitelistURL<T: Config> =
+		StorageMap<_, Twox64Concat, ID, BoundedVec<u8, T::MaxWhitelistLength>>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Whitelisted { sender: T::AccountId, pool_id: ID },
+		AddedURL { pool_id: ID, url: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -81,6 +81,7 @@ pub mod pallet {
 		PlayerNotWhitelist,
 		NotPoolOwner,
 		PoolNotFound,
+		URLTooLong,
 	}
 
 	#[pallet::hooks]
@@ -148,6 +149,27 @@ pub mod pallet {
 			Whitelist::<T>::insert(sender.clone(), pool_id);
 			Ok(())
 		}
+
+		#[pallet::weight(0)]
+		pub fn set_whitelist_url(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			url: Vec<u8>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::is_pool_owner(pool_id, &sender)?;
+
+			let bounded_url: BoundedVec<_, _> =
+				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
+			<WhitelistURL<T>>::insert(pool_id, bounded_url);
+
+			Self::deposit_event(Event::<T>::AddedURL {
+				pool_id,
+				url,
+			});
+			Ok(())
+		}
 	}
 
 	// whitelist implement
@@ -159,11 +181,10 @@ pub mod pallet {
 				let player = query.0;
 				let pool_id = query.1;
 
-				let link = "http://whitelist.gafi.network/whitelist/verify";
-
-				let uri = Self::get_uri(link, pool_id, &player);
-
-				let _ = Self::verify_and_approve(&uri, player, pool_id);
+				if let Some(url) = Self::get_url(pool_id) {
+					let api = Self::get_api(&url, pool_id, &player);
+					let _ = Self::verify_and_approve(&api, player, pool_id);
+				}
 			}
 			return Ok(())
 		}
@@ -226,7 +247,7 @@ pub mod pallet {
 			Ok(verify)
 		}
 
-		pub fn get_uri(link: &str, pool_id: ID, player: &T::AccountId) -> String {
+		pub fn get_api(link: &str, pool_id: ID, player: &T::AccountId) -> String {
 			let pool_id_hex: String = pool_id.to_hex();
 
 			let address = player.encode();
@@ -234,6 +255,15 @@ pub mod pallet {
 			let hex_address: String = address.to_hex();
 			let uri = format!("{link}?pool_id={pool_id_hex}&address={hex_address}");
 			uri
+		}
+
+		pub fn get_url(pool_id: ID) -> Option<String> {
+			if let Some(link) = WhitelistURL::<T>::get(pool_id) {
+				if let Ok(url) = sp_std::str::from_utf8(&link) {
+					return Some(format!("{}", url))
+				}
+			}
+			return None
 		}
 
 		fn is_pool_owner(pool_id: ID, sender: &T::AccountId) -> Result<(), Error<T>> {
