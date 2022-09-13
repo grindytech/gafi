@@ -676,7 +676,8 @@ parameter_types! {
 impl pallet_whitelist::Config for Runtime {
 	type Event = Event;
 	type WhitelistPool = Pool;
-	type WhitelistSponsor = SponsoredPool;
+	type SponsoredPool = SponsoredPool;
+	type Currency =  Balances;
 	type MaxWhitelistLength = MaxWhitelistLength;
 }
 
