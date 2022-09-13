@@ -132,6 +132,7 @@ impl sponsored_pool::Config for Test {
 	type MinTxLimit = MinTxLimit;
 	type MaxTxLimit = MaxTxLimit;
 	type MinPoolBalance = MinPoolBalance;
+	type IWhitelist = ();
 	type WeightInfo = ();
 }
 

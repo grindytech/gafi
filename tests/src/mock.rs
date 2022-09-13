@@ -204,6 +204,7 @@ impl sponsored_pool::Config for Test {
 	type MaxTxLimit = MaxTxLimit;
 	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
+	type IWhitelist = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

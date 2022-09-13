@@ -30,6 +30,7 @@ pub use gafi_primitives::{
 	custom_services::{CustomPool, CustomService},
 	name::Name,
 	pool::Service,
+	whitelist::IWhitelist,
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
@@ -123,6 +124,7 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		type IWhitelist: IWhitelist<Self::AccountId>;
 	}
 
 	//** Storages **//
@@ -467,8 +469,13 @@ pub mod pallet {
 	}
 
 	impl<T: Config> CustomPool<T::AccountId> for Pallet<T> {
-		fn join(_sender: T::AccountId, pool_id: ID) -> DispatchResult {
-			ensure!(Pools::<T>::get(pool_id).is_some(), Error::<T>::PoolNotExist);
+		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+			ensure!(Self::is_pool(pool_id), Error::<T>::PoolNotExist);
+
+			if T::IWhitelist::is_whitelist(pool_id) {
+				T::IWhitelist::insert_whitelist(pool_id, sender)?;
+			}
+
 			Ok(())
 		}
 		fn leave(_sender: T::AccountId) -> DispatchResult {
