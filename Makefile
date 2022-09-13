@@ -151,3 +151,14 @@ benchmark_membership:
     --steps 20 \
     --repeat 10 \
     --output ./benchmarking/gafi-membership/weights.rs
+
+.PHONY: benchmark_whitelist
+benchmark_whitelist:
+	./target/release/gafi-node benchmark pallet \
+    --chain dev \
+    --wasm-execution compiled \
+    --pallet pallet_whitelist \
+    --extrinsic '*' \
+    --steps 20 \
+    --repeat 10 \
+    --output ./benchmarking/whitelist/weights.rs

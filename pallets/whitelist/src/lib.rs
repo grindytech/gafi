@@ -25,6 +25,9 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+pub mod weights;
+pub use weights::*;
+
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
 
@@ -55,6 +58,9 @@ pub mod pallet {
 
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 		type SponsoredPool: CustomPool<Self::AccountId>;
@@ -100,7 +106,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist(50u32))]
 		pub fn approve_whitelist(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -121,7 +127,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10000000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist_unsigned(50u32))]
 		pub fn approve_whitelist_unsigned(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -141,8 +147,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
-		pub fn query_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::apply_whitelist(50u32))]
+		pub fn apply_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
@@ -154,7 +160,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_whitelist_url(50u32))]
 		pub fn set_whitelist_url(
 			origin: OriginFor<T>,
 			pool_id: ID,

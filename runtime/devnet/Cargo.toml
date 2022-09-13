@@ -125,7 +125,8 @@ runtime-benchmarks = [
   "sponsored-pool/runtime-benchmarks",
   "game-creator/runtime-benchmarks",
   "pallet-hotfix-sufficients/runtime-benchmarks",
-  "gafi-membership/runtime-benchmarks"
+  "gafi-membership/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks"
 ]
 std = [
   "codec/std",
