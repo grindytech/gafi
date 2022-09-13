@@ -538,6 +538,7 @@ impl sponsored_pool::Config for Runtime {
 	type MaxTxLimit = MaxTxLimit;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type IWhitelist = PalletWhitelist;
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 

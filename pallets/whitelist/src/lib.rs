@@ -3,7 +3,7 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	whitelist::{WhitelistPool},
+	whitelist::{WhitelistPool, IWhitelist},
 	custom_services::CustomPool,
 };
 
@@ -88,9 +88,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		PlayerNotWhitelist,
+		NotWhitelist,
+		AlreadyWhitelist,
 		NotPoolOwner,
 		PoolNotFound,
+		PoolNotWhitelist,
 		URLTooLong,
 	}
 
@@ -116,7 +118,7 @@ pub mod pallet {
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
-			Self::is_whitelist_player(&player, pool_id)?;
+			ensure!(Self::is_whitelist_player(&player, pool_id), <Error<T>>::NotWhitelist);
 
 			T::WhitelistPool::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
@@ -135,7 +137,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_none(origin)?;
 
-			Self::is_whitelist_player(&player, pool_id)?;
+			ensure!(Self::is_whitelist_player(&player, pool_id), <Error<T>>::NotWhitelist);
 
 			T::WhitelistPool::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
@@ -151,12 +153,8 @@ pub mod pallet {
 		pub fn apply_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			ensure!(
-				T::SponsoredPool::is_pool(pool_id),
-				Error::<T>::PoolNotFound
-			);
-
-			Whitelist::<T>::insert(sender.clone(), pool_id);
+			Self::insert_whitelist(pool_id, sender)?;
+			
 			Ok(())
 		}
 
@@ -178,6 +176,36 @@ pub mod pallet {
 				pool_id,
 				url,
 			});
+			Ok(())
+		}
+	}
+
+	impl<T: Config> IWhitelist<T::AccountId> for Pallet<T> {
+		fn is_whitelist(pool_id: ID) -> bool {
+			match WhitelistURL::<T>::get(pool_id) {
+				Some(_) => true,
+				None => false,
+			}
+		}
+
+		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
+
+			ensure!(
+				T::SponsoredPool::is_pool(pool_id),
+				Error::<T>::PoolNotFound
+			);
+
+			ensure!(
+				Self::is_whitelist(pool_id),
+				<Error::<T>>::PoolNotWhitelist,
+			);
+
+			ensure!(
+				!Self::is_whitelist_player(&player, pool_id),
+				<Error::<T>>::AlreadyWhitelist,
+			);
+
+			Whitelist::<T>::insert(player, pool_id);
 			Ok(())
 		}
 	}
@@ -218,13 +246,13 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> Result<(), Error<T>> {
+		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> bool {
 			if let Some(id) = Whitelist::<T>::get(player) {
 				if id == pool_id {
-					return Ok(())
+					return true;
 				}
 			}
-			Err(Error::<T>::PlayerNotWhitelist)
+			false
 		}
 
 		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error> {
