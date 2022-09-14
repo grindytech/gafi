@@ -151,6 +151,13 @@ fn query_whitelist_should_fails() {
 			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
 			Error::<Test>::AlreadyWhitelist.as_str()
 		);
+
+		assert_ok!(PalletWhitelist::approve_whitelist(Origin::signed(account.clone()), player.clone(), pool_id));
+
+		assert_err!(
+			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
+			Error::<Test>::AlreadyJoined.as_str()
+		);
 	})
 }
 

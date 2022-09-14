@@ -201,7 +201,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				!Self::is_joined_pool(sender.clone(), pool_id),
+				!Self::is_joined_pool(&sender, pool_id),
 				<Error<T>>::AlreadyJoined
 			);
 
@@ -329,7 +329,7 @@ pub mod pallet {
 			});
 		}
 
-		fn is_joined_pool(sender: T::AccountId, pool_id: ID) -> bool {
+		fn is_joined_pool(sender: &T::AccountId, pool_id: ID) -> bool {
 			let joined_pools = Tickets::<T>::iter_prefix_values(sender);
 			let mut is_joined = false;
 
@@ -391,6 +391,10 @@ pub mod pallet {
 			let ticket_info = Self::create_ticket(sender, pool_id)?;
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
 			Ok(())
+		}
+
+		fn is_joined_pool(sender: &T::AccountId, pool_id: ID) -> bool {
+			Self::is_joined_pool(sender, pool_id)
 		}
 	}
 

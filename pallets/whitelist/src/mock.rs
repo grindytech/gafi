@@ -50,9 +50,12 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletWhitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>},
 		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		PalletPool: pallet_pool::{Pallet, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 	}
 );
 
@@ -75,6 +78,22 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const INIT_TIMESTAMP: u64 = 30_000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
@@ -103,12 +122,40 @@ impl sponsored_pool::Config for Test {
 }
 
 parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
+}
+
+impl pallet_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type UpfrontPool = ();
+	type StakingPool = ();
+	type WeightInfo = ();
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
+	type SponsoredPool = Sponsored;
+	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
+}
+
+parameter_types! {
+	pub CleanTime: u128 = TIME_SERVICE;
+}
+
+impl pallet_cache::Config for Test {
+	type Event = Event;
+	type Data = TicketInfo;
+	type Action = ID;
+	type CleanTime = CleanTime;
+}
+
+parameter_types! {
 	pub const MaxWhitelistLength: u32 = 80;
 }
 
 impl  pallet_whitelist::Config for Test {
 	type Event = Event;
-	type WhitelistPool = ();
+	type WhitelistPool = PalletPool;
 	type Currency = Balances;
 	type WeightInfo = ();
 	type SponsoredPool = Sponsored;
