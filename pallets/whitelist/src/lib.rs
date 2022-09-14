@@ -94,6 +94,7 @@ pub mod pallet {
 		PoolNotFound,
 		PoolNotWhitelist,
 		URLTooLong,
+		AlreadyJoined,
 	}
 
 	#[pallet::hooks]
@@ -203,6 +204,11 @@ pub mod pallet {
 			ensure!(
 				!Self::is_whitelist_player(&player, pool_id),
 				<Error::<T>>::AlreadyWhitelist,
+			);
+
+			ensure!(
+				!T::WhitelistPool::is_joined_pool(&player, pool_id),
+				<Error::<T>>::AlreadyJoined,
 			);
 
 			Whitelist::<T>::insert(player, pool_id);
