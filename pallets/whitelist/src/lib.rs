@@ -3,8 +3,8 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	whitelist::{WhitelistPool, IWhitelist},
 	custom_services::CustomPool,
+	whitelist::{IWhitelist, WhitelistPool},
 };
 
 pub use pallet::*;
@@ -119,7 +119,10 @@ pub mod pallet {
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
-			ensure!(Self::is_whitelist_player(&player, pool_id), <Error<T>>::NotWhitelist);
+			ensure!(
+				Self::is_whitelist_player(&player, pool_id),
+				<Error<T>>::NotWhitelist
+			);
 
 			T::WhitelistPool::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
@@ -138,7 +141,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_none(origin)?;
 
-			ensure!(Self::is_whitelist_player(&player, pool_id), <Error<T>>::NotWhitelist);
+			ensure!(
+				Self::is_whitelist_player(&player, pool_id),
+				<Error<T>>::NotWhitelist
+			);
 
 			T::WhitelistPool::join_pool(&player, pool_id)?;
 			Whitelist::<T>::remove(player.clone());
@@ -155,7 +161,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::insert_whitelist(pool_id, sender)?;
-			
+
 			Ok(())
 		}
 
@@ -173,10 +179,7 @@ pub mod pallet {
 				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
 			<WhitelistURL<T>>::insert(pool_id, bounded_url);
 
-			Self::deposit_event(Event::<T>::AddedURL {
-				pool_id,
-				url,
-			});
+			Self::deposit_event(Event::<T>::AddedURL { pool_id, url });
 			Ok(())
 		}
 	}
@@ -190,16 +193,9 @@ pub mod pallet {
 		}
 
 		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
+			ensure!(T::SponsoredPool::is_pool(pool_id), Error::<T>::PoolNotFound);
 
-			ensure!(
-				T::SponsoredPool::is_pool(pool_id),
-				Error::<T>::PoolNotFound
-			);
-
-			ensure!(
-				Self::is_whitelist(pool_id),
-				<Error::<T>>::PoolNotWhitelist,
-			);
+			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist,);
 
 			ensure!(
 				!Self::is_whitelist_player(&player, pool_id),
@@ -255,7 +251,7 @@ pub mod pallet {
 		fn is_whitelist_player(player: &T::AccountId, pool_id: ID) -> bool {
 			if let Some(id) = Whitelist::<T>::get(player) {
 				if id == pool_id {
-					return true;
+					return true
 				}
 			}
 			false
@@ -342,8 +338,11 @@ pub mod pallet {
 			};
 
 			match call {
-				Call::approve_whitelist_unsigned { pool_id, player } =>
-					valid_tx(b"approve_whitelist_unsigned".to_vec()),
+				Call::approve_whitelist_unsigned { pool_id, player } => match source {
+					TransactionSource::Local | TransactionSource::InBlock =>
+						valid_tx(b"approve_whitelist_unsigned".to_vec()),
+					_ => InvalidTransaction::Call.into(),
+				},
 				_ => InvalidTransaction::Call.into(),
 			}
 		}
