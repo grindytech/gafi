@@ -33,7 +33,7 @@ use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn set_whitelist_url(s: u32, ) -> Weight;
+	fn enable_whitelist(s: u32, ) -> Weight;
 	fn apply_whitelist(s: u32, ) -> Weight;
 	fn approve_whitelist(s: u32, ) -> Weight;
 	fn approve_whitelist_unsigned(s: u32, ) -> Weight;
@@ -50,7 +50,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: PalletWhitelist WhitelistURL (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn set_whitelist_url(_s: u32, ) -> Weight {
+	fn enable_whitelist(_s: u32, ) -> Weight {
 		(14_527_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -103,7 +103,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 }
 
 impl WeightInfo for () {
-	fn set_whitelist_url(_s: u32, ) -> Weight {
+	fn enable_whitelist(_s: u32, ) -> Weight {
 		(14_527_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))

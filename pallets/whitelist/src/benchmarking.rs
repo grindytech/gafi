@@ -29,7 +29,7 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u128) -> T::Acco
 }
 
 benchmarks! {
-	set_whitelist_url {
+	enable_whitelist {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
