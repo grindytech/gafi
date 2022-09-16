@@ -149,8 +149,11 @@ impl pallet_cache::Config for Test {
 	type CleanTime = CleanTime;
 }
 
+pub const WHITELIST_FEE: u128 = 10_000_000_000_000_000_000_u128;
+
 parameter_types! {
 	pub const MaxWhitelistLength: u32 = 80;
+	pub const WhitelistFee: u128 = WHITELIST_FEE;
 }
 
 impl  pallet_whitelist::Config for Test {
@@ -160,8 +163,8 @@ impl  pallet_whitelist::Config for Test {
 	type WeightInfo = ();
 	type SponsoredPool = Sponsored;
 	type MaxWhitelistLength = MaxWhitelistLength;
+	type WhitelistFee = WhitelistFee;
 }
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;

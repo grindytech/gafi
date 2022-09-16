@@ -1,5 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{pallet_prelude::*, traits::Currency};
+use frame_support::{
+	pallet_prelude::*,
+	traits::{Currency, ReservableCurrency},
+};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
@@ -52,12 +55,15 @@ pub mod crypto {
 pub mod pallet {
 	use super::*;
 
+	pub type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + CreateSignedTransaction<Call<Self>> {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency mechanism.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: ReservableCurrency<Self::AccountId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -65,6 +71,9 @@ pub mod pallet {
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 		type SponsoredPool: CustomPool<Self::AccountId>;
 		type MaxWhitelistLength: Get<u32>;
+
+		#[pallet::constant]
+		type WhitelistFee: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -83,7 +92,9 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Whitelisted { sender: T::AccountId, pool_id: ID },
-		AddedURL { pool_id: ID, url: Vec<u8> },
+		WhitelistEnabled { pool_id: ID, url: Vec<u8> },
+		WhitelistChanged { pool_id: ID, url: Vec<u8> },
+		WhitelistWithdrew { pool_id: ID },
 	}
 
 	#[pallet::error]
@@ -165,21 +176,39 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_whitelist_url(50u32))]
-		pub fn set_whitelist_url(
-			origin: OriginFor<T>,
-			pool_id: ID,
-			url: Vec<u8>,
-		) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::enable_whitelist(50u32))]
+		pub fn enable_whitelist(origin: OriginFor<T>, pool_id: ID, url: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
 			let bounded_url: BoundedVec<_, _> =
 				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
-			<WhitelistURL<T>>::insert(pool_id, bounded_url);
 
-			Self::deposit_event(Event::<T>::AddedURL { pool_id, url });
+			if <WhitelistURL<T>>::get(pool_id) == None {
+				let deposit = T::WhitelistFee::get();
+				T::Currency::reserve(&sender, deposit)?;
+				Self::deposit_event(Event::<T>::WhitelistEnabled { pool_id, url });
+			} else {
+				Self::deposit_event(Event::<T>::WhitelistChanged { pool_id, url });
+			}
+			<WhitelistURL<T>>::insert(pool_id, bounded_url);
+			Ok(())
+		}
+
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_whitelist(50u32))]
+		pub fn withdraw_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::is_pool_owner(pool_id, &sender)?;
+
+			let deposit = T::WhitelistFee::get();
+			T::Currency::unreserve(&sender, deposit);
+
+			<WhitelistURL<T>>::remove(pool_id);
+
+			Self::deposit_event(Event::<T>::WhitelistWithdrew { pool_id });
+
 			Ok(())
 		}
 	}

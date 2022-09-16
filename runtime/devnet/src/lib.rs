@@ -672,6 +672,7 @@ where
 
 parameter_types! {
 	pub MaxWhitelistLength: u32 = 80;
+	pub WhitelistFee: u128 = 10 * unit(GAKI);
 }
 
 impl pallet_whitelist::Config for Runtime {
@@ -681,6 +682,7 @@ impl pallet_whitelist::Config for Runtime {
 	type Currency =  Balances;
 	type WeightInfo = pallet_whitelist::weights::WhitelistWeight<Runtime>;
 	type MaxWhitelistLength = MaxWhitelistLength;
+	type WhitelistFee = WhitelistFee;
 }
 
 parameter_types! {

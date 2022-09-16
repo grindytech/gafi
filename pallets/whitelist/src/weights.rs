@@ -33,10 +33,11 @@ use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn set_whitelist_url(s: u32, ) -> Weight;
+	fn enable_whitelist(s: u32, ) -> Weight;
 	fn apply_whitelist(s: u32, ) -> Weight;
 	fn approve_whitelist(s: u32, ) -> Weight;
 	fn approve_whitelist_unsigned(s: u32, ) -> Weight;
+	fn withdraw_whitelist(s: u32, ) -> Weight;
 }
 
 /// Weight functions for `pallet_whitelist`.
@@ -50,7 +51,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: PalletWhitelist WhitelistURL (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn set_whitelist_url(_s: u32, ) -> Weight {
+	fn enable_whitelist(_s: u32, ) -> Weight {
 		(14_527_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -100,10 +101,26 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
+	// Storage: SponsoredPool Pools (r:1 w:0)
+	// Storage: System Account (r:1 w:1)
+	// Storage: System Number (r:1 w:0)
+	// Storage: System ExecutionPhase (r:1 w:0)
+	// Storage: System EventCount (r:1 w:1)
+	// Storage: System Events (r:1 w:1)
+	// Storage: PalletWhitelist WhitelistURL (r:0 w:1)
+	/// The range of component `s` is `[0, 100]`.
+	fn withdraw_whitelist(s: u32, ) -> Weight {
+		(21_120_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
 }
 
 impl WeightInfo for () {
-	fn set_whitelist_url(_s: u32, ) -> Weight {
+	fn enable_whitelist(_s: u32, ) -> Weight {
 		(14_527_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
@@ -128,6 +145,14 @@ impl WeightInfo for () {
 			// Standard Error: 1_000
 			.saturating_add((2_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn withdraw_whitelist(s: u32, ) -> Weight {
+		(21_120_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 }
