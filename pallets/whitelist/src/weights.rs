@@ -49,7 +49,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	// Storage: PalletWhitelist WhitelistURL (r:0 w:1)
+	// Storage: PalletWhitelist WhitelistSource (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
 	fn enable_whitelist(_s: u32, ) -> Weight {
 		(14_527_000 as Weight)
@@ -108,7 +108,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	// Storage: PalletWhitelist WhitelistURL (r:0 w:1)
+	// Storage: PalletWhitelist WhitelistSource (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
 	fn withdraw_whitelist(s: u32, ) -> Weight {
 		(21_120_000 as Weight)

@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Whitelist, WhitelistURL};
+use crate::{mock::*, Error, Whitelist, WhitelistSource};
 use codec::{Decode, Encode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
@@ -282,7 +282,7 @@ fn enable_whitelist_works() {
 
 		assert_eq!(Balances::reserved_balance(account.clone()), WHITELIST_FEE);
 
-		assert_eq!(WhitelistURL::<Test>::get(pool_id).unwrap(), url.to_vec());
+		assert_eq!(WhitelistSource::<Test>::get(pool_id).unwrap().0, url.to_vec());
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
 			Origin::signed(account),
@@ -293,7 +293,7 @@ fn enable_whitelist_works() {
 		assert_eq!(Balances::reserved_balance(account.clone()), WHITELIST_FEE);
 
 		assert_eq!(
-			WhitelistURL::<Test>::get(pool_id).unwrap().to_vec(),
+			WhitelistSource::<Test>::get(pool_id).unwrap().0.to_vec(),
 			b"".to_vec()
 		);
 	})
@@ -393,7 +393,7 @@ fn withdraw_whitelist_works() {
 			pool_id
 		));
 
-		assert_eq!(WhitelistURL::<Test>::get(pool_id), None);
+		assert_eq!(WhitelistSource::<Test>::get(pool_id), None);
 
 		assert_eq!(Balances::reserved_balance(account.clone()), 0);
 	})
