@@ -85,8 +85,8 @@ pub mod pallet {
 
 	/// Get whitelist url
 	#[pallet::storage]
-	pub type WhitelistURL<T: Config> =
-		StorageMap<_, Twox64Concat, ID, BoundedVec<u8, T::MaxWhitelistLength>>;
+	pub type WhitelistSource<T: Config> =
+		StorageMap<_, Twox64Concat, ID, (BoundedVec<u8, T::MaxWhitelistLength>, BalanceOf<T>)>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -185,14 +185,14 @@ pub mod pallet {
 			let bounded_url: BoundedVec<_, _> =
 				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
 
-			if <WhitelistURL<T>>::get(pool_id) == None {
-				let deposit = T::WhitelistFee::get();
+			let deposit = T::WhitelistFee::get();
+			if <WhitelistSource<T>>::get(pool_id) == None {
 				T::Currency::reserve(&sender, deposit)?;
 				Self::deposit_event(Event::<T>::WhitelistEnabled { pool_id, url });
 			} else {
 				Self::deposit_event(Event::<T>::WhitelistChanged { pool_id, url });
 			}
-			<WhitelistURL<T>>::insert(pool_id, bounded_url);
+			<WhitelistSource<T>>::insert(pool_id, (bounded_url, deposit));
 			Ok(())
 		}
 
@@ -202,10 +202,14 @@ pub mod pallet {
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
-			let deposit = T::WhitelistFee::get();
-			T::Currency::unreserve(&sender, deposit);
+			if let Some(source) = WhitelistSource::<T>::get(pool_id) {
+				let deposit = source.1;
+				T::Currency::unreserve(&sender, deposit);
+			} else {
+				return Err(<Error::<T>>::PoolNotWhitelist.into());
+			}
 
-			<WhitelistURL<T>>::remove(pool_id);
+			<WhitelistSource<T>>::remove(pool_id);
 
 			Self::deposit_event(Event::<T>::WhitelistWithdrew { pool_id });
 
@@ -215,7 +219,7 @@ pub mod pallet {
 
 	impl<T: Config> IWhitelist<T::AccountId> for Pallet<T> {
 		fn is_whitelist(pool_id: ID) -> bool {
-			match WhitelistURL::<T>::get(pool_id) {
+			match WhitelistSource::<T>::get(pool_id) {
 				Some(_) => true,
 				None => false,
 			}
@@ -327,8 +331,8 @@ pub mod pallet {
 		}
 
 		pub fn get_url(pool_id: ID) -> Option<String> {
-			if let Some(link) = WhitelistURL::<T>::get(pool_id) {
-				if let Ok(url) = sp_std::str::from_utf8(&link) {
+			if let Some(source) = WhitelistSource::<T>::get(pool_id) {
+				if let Ok(url) = sp_std::str::from_utf8(&source.0) {
 					return Some(format!("{}", url))
 				}
 			}

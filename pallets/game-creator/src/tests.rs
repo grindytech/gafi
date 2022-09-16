@@ -61,8 +61,8 @@ fn claim_contract_works() {
             contract_address
         ));
         assert_eq!(
-            ContractOwner::<Test>::get(contract_address),
-            Some(sub_acc.clone())
+            ContractOwner::<Test>::get(contract_address).unwrap().0,
+            sub_acc.clone()
         );
 
         assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance - GAME_CREATE_FEE);
@@ -129,8 +129,8 @@ fn change_ownership_works() {
         ));
 
         assert_eq!(
-            ContractOwner::<Test>::get(contract_address),
-            Some(new_owner.clone())
+            ContractOwner::<Test>::get(contract_address).unwrap().0,
+            new_owner.clone()
         );
 
         assert_eq!(Balances::free_balance(&sub_acc), sub_acc_balance - GAME_CREATE_FEE);
