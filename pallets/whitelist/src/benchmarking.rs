@@ -40,15 +40,24 @@ benchmarks! {
 	apply_whitelist {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		let player = new_funded_account::<T>(s + MAX, s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-	}: _(RawOrigin::Signed(caller), POOL_ID)
+		let url = b"http://whitelist.gafi.network/whitelist/verify";
+
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+
+	}: _(RawOrigin::Signed(player), POOL_ID)
 
 	approve_whitelist {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		
+
+		let url = b"http://whitelist.gafi.network/whitelist/verify";
+
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+
 		let _ = Whitelist::<T>::apply_whitelist(RawOrigin::Signed(player.clone()).into(), POOL_ID);
 
 	}: _(RawOrigin::Signed(caller), player,  POOL_ID)
@@ -59,9 +68,23 @@ benchmarks! {
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
 
+		let url = b"http://whitelist.gafi.network/whitelist/verify";
+
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+
 		let _ = Whitelist::<T>::apply_whitelist(RawOrigin::Signed(player.clone()).into(), POOL_ID);
 
 	}: _(RawOrigin::None, player,  POOL_ID)
+
+	withdraw_whitelist {
+		let s in 0 .. MAX;
+		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
+		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		let url = b"http://whitelist.gafi.network/whitelist/verify";
+
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+
+	}: _(RawOrigin::Signed(caller), POOL_ID)
 
 	impl_benchmark_test_suite!(Whitelist, crate::mock::new_test_ext(), crate::mock::Test);
 }

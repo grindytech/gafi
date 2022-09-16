@@ -93,6 +93,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		Whitelisted { sender: T::AccountId, pool_id: ID },
 		WhitelistEnabled { pool_id: ID, url: Vec<u8> },
+		WhitelistChanged { pool_id: ID, url: Vec<u8> },
 		WhitelistWithdrew { pool_id: ID },
 	}
 
@@ -184,24 +185,26 @@ pub mod pallet {
 			let bounded_url: BoundedVec<_, _> =
 				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
 
-			let deposit = T::WhitelistFee::get();
-			T::Currency::reserve(&sender, deposit)?;
-
+			if <WhitelistURL<T>>::get(pool_id) == None {
+				let deposit = T::WhitelistFee::get();
+				T::Currency::reserve(&sender, deposit)?;
+				Self::deposit_event(Event::<T>::WhitelistEnabled { pool_id, url });
+			} else {
+				Self::deposit_event(Event::<T>::WhitelistChanged { pool_id, url });
+			}
 			<WhitelistURL<T>>::insert(pool_id, bounded_url);
-			Self::deposit_event(Event::<T>::WhitelistEnabled { pool_id, url });
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_whitelist(50u32))]
 		pub fn withdraw_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-
 			let sender = ensure_signed(origin)?;
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
 			let deposit = T::WhitelistFee::get();
 			T::Currency::unreserve(&sender, deposit);
-			
+
 			<WhitelistURL<T>>::remove(pool_id);
 
 			Self::deposit_event(Event::<T>::WhitelistWithdrew { pool_id });

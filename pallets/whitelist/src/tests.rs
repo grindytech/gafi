@@ -290,6 +290,8 @@ fn enable_whitelist_works() {
 			b"".to_vec(),
 		));
 
+		assert_eq!(Balances::reserved_balance(account.clone()), WHITELIST_FEE);
+
 		assert_eq!(
 			WhitelistURL::<Test>::get(pool_id).unwrap().to_vec(),
 			b"".to_vec()
