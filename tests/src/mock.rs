@@ -204,6 +204,7 @@ impl sponsored_pool::Config for Test {
 	type MaxTxLimit = MaxTxLimit;
 	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
+	type IWhitelist = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -257,7 +258,7 @@ impl pallet_pool_names::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {

@@ -25,8 +25,8 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	system_services::{ SystemDefaultServices, SystemPool, SystemService},
-	ticket::{ Ticket, TicketType},
+	system_services::{SystemDefaultServices, SystemPool, SystemService},
+	ticket::{Ticket, TicketType},
 };
 use gu_convertor::u128_try_to_balance;
 pub use pallet::*;
@@ -46,9 +46,9 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use gafi_primitives::players::PlayersTime;
 	use super::*;
 	use frame_support::dispatch::DispatchResult;
+	use gafi_primitives::players::PlayersTime;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -82,7 +82,8 @@ pub mod pallet {
 
 	/// Holding the tickets detail
 	#[pallet::storage]
-	pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Ticket<T::AccountId>>;
+	pub type Tickets<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (Ticket<T::AccountId>, BalanceOf<T>)>;
 
 	/// Player count
 	#[pallet::storage]
@@ -146,11 +147,10 @@ pub mod pallet {
 			>(service.value)?;
 			<T as pallet::Config>::Currency::reserve(&sender, staking_amount)?;
 
-			let new_player_count = Self::player_count()
-				.checked_add(1)
-				.ok_or(<Error<T>>::StakeCountOverflow)?;
+			let new_player_count =
+				Self::player_count().checked_add(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
-			Self::stake_pool(sender, pool_id, new_player_count)?;
+			Self::stake_pool(sender, pool_id, new_player_count, staking_amount)?;
 			Ok(())
 		}
 
@@ -161,26 +161,20 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[transactional]
 		fn leave(sender: T::AccountId) -> DispatchResult {
-			if let Some(ticket) = Tickets::<T>::get(&sender) {
-				let new_player_count = Self::player_count()
-					.checked_sub(1)
-					.ok_or(<Error<T>>::StakeCountOverflow)?;
+			if let Some(data) = Tickets::<T>::get(&sender) {
+				let ticket = data.0;
+				let staking_amount = data.1;
+				let new_player_count =
+					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
 
 				let join_time = ticket.join_time;
 				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
 				T::Players::add_time_joined_staking(sender.clone(), _now.saturating_sub(join_time));
 
-				if let TicketType::Staking(pool_id) = ticket.ticket_type {
-					let service = Self::get_pool_by_id(pool_id)?;
-					let staking_amount = u128_try_to_balance::<
-						<T as pallet::Config>::Currency,
-						T::AccountId,
-					>(service.value)?;
-					<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
-					Self::unstake_pool(sender, new_player_count);
-					return Ok(());
-				}
+				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
+				Self::unstake_pool(sender, new_player_count);
+				return Ok(())
 			}
 			Err(Error::<T>::PlayerNotStake.into())
 		}
@@ -190,7 +184,10 @@ pub mod pallet {
 		}
 
 		fn get_ticket(sender: &T::AccountId) -> Option<Ticket<T::AccountId>> {
-			Tickets::<T>::get(sender)
+			match Tickets::<T>::get(sender) {
+				Some(data) => Some(data.0),
+				None => None,
+			}
 		}
 	}
 
@@ -222,6 +219,7 @@ pub mod pallet {
 			sender: T::AccountId,
 			pool_id: ID,
 			new_player_count: u32,
+			staking_amount: BalanceOf<T>,
 		) -> Result<(), Error<T>> {
 			let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 			<PlayerCount<T>>::put(new_player_count);
@@ -230,7 +228,7 @@ pub mod pallet {
 				join_time: _now,
 				ticket_type: TicketType::Staking(pool_id),
 			};
-			Tickets::<T>::insert(sender, ticket);
+			Tickets::<T>::insert(sender, (ticket, staking_amount));
 			Ok(())
 		}
 
@@ -242,7 +240,6 @@ pub mod pallet {
 		pub fn moment_to_u128(input: T::Moment) -> u128 {
 			sp_runtime::SaturatedConversion::saturated_into(input)
 		}
-
 
 		fn get_pool_by_id(pool_id: ID) -> Result<SystemService, Error<T>> {
 			match Services::<T>::get(pool_id) {

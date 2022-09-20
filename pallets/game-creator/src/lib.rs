@@ -80,7 +80,7 @@ pub mod pallet {
 
 	/// Holing the contract owner
 	#[pallet::storage]
-	pub type ContractOwner<T: Config> = StorageMap<_, Twox64Concat, H160, T::AccountId>;
+	pub type ContractOwner<T: Config> = StorageMap<_, Twox64Concat, H160, (T::AccountId, BalanceOf<T>)>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -132,8 +132,10 @@ pub mod pallet {
 				<Error<T>>::ContractClaimed
 			);
 			Self::verify_owner(&sender, &contract)?;
-			<T as pallet::Config>::Currency::reserve(&sender, T::ReservationFee::get())?;
-			ContractOwner::<T>::insert(contract, sender.clone());
+
+			let deposit = T::ReservationFee::get();
+			<T as pallet::Config>::Currency::reserve(&sender, deposit)?;
+			ContractOwner::<T>::insert(contract, (sender.clone(), deposit));
 
 			Self::deposit_event(Event::Claimed {
 				contract,
@@ -163,14 +165,19 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			Self::verify_owner(&sender, &contract)?;
 
+			let mut deposit = T::ReservationFee::get();
+			if let Some(data) = ContractOwner::<T>::get(contract) {
+				deposit = data.1;
+			}
+
 			<T as pallet::Config>::Currency::repatriate_reserved(
 				&sender,
 				&new_owner,
-				T::ReservationFee::get(),
+				deposit,
 				BalanceStatus::Reserved,
 			)?;
 
-			ContractOwner::<T>::insert(contract, new_owner.clone());
+			ContractOwner::<T>::insert(contract, (new_owner.clone(), deposit));
 			Self::deposit_event(Event::Changed {
 				contract,
 				new_owner,
@@ -194,8 +201,13 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			Self::verify_owner(&sender, &contract)?;
 
+			let mut deposit = T::ReservationFee::get();
+			if let Some(data) = ContractOwner::<T>::get(contract) {
+				deposit = data.1;
+			}
+
 			ContractOwner::<T>::remove(contract);
-			<T as pallet::Config>::Currency::unreserve(&sender, T::ReservationFee::get());
+			<T as pallet::Config>::Currency::unreserve(&sender, deposit);
 			Self::deposit_event(Event::Withdrew {
 				contract,
 				owner: sender
@@ -207,7 +219,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn verify_owner(sender: &T::AccountId, contract: &H160) -> Result<(), Error<T>> {
 			if let Some(owner) = ContractOwner::<T>::get(&contract) {
-				if owner != *sender {
+				if owner.0 != *sender {
 					return Err(Error::<T>::NotContractOwner);
 				}
 			} else {
@@ -229,7 +241,10 @@ pub mod pallet {
 
 	impl<T: Config> GetGameCreator<T::AccountId> for Pallet<T> {
 		fn get_game_creator(contract: &H160) -> Option<T::AccountId> {
-			ContractOwner::<T>::get(contract)
+			match ContractOwner::<T>::get(contract) {
+				Some(contract) => Some(contract.0),
+				None => None
+			}
 		}
 	}
 }

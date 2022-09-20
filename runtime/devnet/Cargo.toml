@@ -20,6 +20,7 @@ scale-info = {version = "2.1.0", default-features = false, features = [
   "derive",
 ]}
 static_assertions = "1.1.0"
+log = { version = "0.4.17", default-features = false }
 
 # Frontier
 fp-rpc = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
@@ -90,6 +91,7 @@ staking-pool = { version = "4.0.0-dev", default-features = false, path = "../../
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool" }
 pallet-player-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api" }
 gafi-membership = { version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-membership" }
+pallet-whitelist = { version = "4.0.0-dev", default-features = false, path = "../../pallets/whitelist" }
 
 # unit test
 [dev.dependencies]
@@ -123,7 +125,8 @@ runtime-benchmarks = [
   "sponsored-pool/runtime-benchmarks",
   "game-creator/runtime-benchmarks",
   "pallet-hotfix-sufficients/runtime-benchmarks",
-  "gafi-membership/runtime-benchmarks"
+  "gafi-membership/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks"
 ]
 std = [
   "codec/std",
@@ -180,6 +183,8 @@ std = [
   "runtime-common/std",
   "pallet-hotfix-sufficients/std",
   "gafi-membership/std",
+  "pallet-whitelist/std",
+  "log/std",
 ]
 with-dev = []
 with-rocksdb-weights = []

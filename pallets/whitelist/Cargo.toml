@@ -1,0 +1,70 @@
+[package]
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+description = "FRAME pallet template for defining custom runtime logic."
+edition = "2021"
+homepage = "https://substrate.io/"
+license = "Unlicense"
+name = "pallet-whitelist"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+version = "4.0.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+  "derive",
+]}
+log = {version = "0.4.16"}
+rustc-hex = {version = "2.1.0", default-features = false}
+scale-info = {version = "2.0.1", default-features = false, features = ["derive"]}
+
+# Substrate
+frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sp-core = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sp-std = {version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+
+# Local
+gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+
+[dev-dependencies]
+pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
+pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "sp-core/std",
+  "rustc-hex/std",
+  "sp-runtime/std",
+  "gafi-primitives/std",
+  "sp-std/std",
+  "sp-io/std",
+  "pallet-balances/std",
+  "sp-keystore/std",
+  "sponsored-pool/std",
+  "pallet-randomness-collective-flip/std",
+  "pallet-pool/std",
+  "pallet-timestamp/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking/runtime-benchmarks",
+  "sponsored-pool/runtime-benchmarks",
+]
+try-runtime = ["frame-support/try-runtime"]

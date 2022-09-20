@@ -20,16 +20,6 @@ fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
     return acc;
 }
 
-#[test]
-fn new_pool_works() {
-    ExtBuilder::default().build_and_execute(|| {
-        run_to_block(1);
-
-        let new_pool = Sponsored::new_pool();
-        assert_eq!(new_pool.unwrap().id.len(), 32);
-    })
-}
-
 fn create_pool(
     account: AccountId32,
     account_balance: u128,
@@ -57,6 +47,16 @@ fn create_pool(
     assert_eq!(new_pool.tx_limit, tx_limit);
     assert_eq!(new_pool.discount, discount);
     new_pool.id
+}
+
+#[test]
+fn new_pool_works() {
+    ExtBuilder::default().build_and_execute(|| {
+        run_to_block(1);
+
+        let new_pool = Sponsored::new_pool();
+        assert_eq!(new_pool.unwrap().id.len(), 32);
+    })
 }
 
 #[test]

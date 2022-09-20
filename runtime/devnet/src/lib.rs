@@ -63,6 +63,7 @@ pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use sp_runtime::SaturatedConversion;
 
 pub use gafi_primitives::{
 	cache::Cache,
@@ -87,6 +88,7 @@ pub use pallet_pool_names;
 pub use sponsored_pool;
 pub use staking_pool;
 pub use upfront_pool;
+pub use pallet_whitelist;
 
 // custom traits
 use gafi_tx::{GafiEVMCurrencyAdapter, GafiGasWeightMapping};
@@ -188,7 +190,7 @@ parameter_types! {
 		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -536,6 +538,7 @@ impl sponsored_pool::Config for Runtime {
 	type MaxTxLimit = MaxTxLimit;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
+	type IWhitelist = PalletWhitelist;
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
@@ -615,6 +618,71 @@ impl game_creator::Config for Runtime {
 	type ContractCreator = EVM;
 	type ReservationFee = GameCreatorFee;
 	type WeightInfo = game_creator::weights::GameCreatorWeight<Runtime>;
+}
+
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
+		account: AccountId,
+		index: Index,
+	) -> Option<(Call, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+		let period = BlockHashCount::get() as u64;
+		let current_block = System::block_number().saturated_into::<u64>().saturating_sub(1);
+		let tip = 0;
+		let extra: SignedExtra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				log::warn!("Unable to create signed payload: {:?}", e);
+			})
+			.ok()?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+		let address = account;
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (sp_runtime::MultiAddress::Id(address), signature.into(), extra)))
+	}
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = UncheckedExtrinsic;
+}
+
+parameter_types! {
+	pub MaxWhitelistLength: u32 = 80;
+	pub WhitelistFee: u128 = 10 * unit(GAKI);
+}
+
+impl pallet_whitelist::Config for Runtime {
+	type Event = Event;
+	type WhitelistPool = Pool;
+	type SponsoredPool = SponsoredPool;
+	type Currency =  Balances;
+	type WeightInfo = pallet_whitelist::weights::WhitelistWeight<Runtime>;
+	type MaxWhitelistLength = MaxWhitelistLength;
+	type WhitelistFee = WhitelistFee;
 }
 
 parameter_types! {
@@ -961,6 +1029,7 @@ construct_runtime!(
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
 		GafiMembership: gafi_membership,
+		PalletWhitelist: pallet_whitelist,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
@@ -1410,6 +1479,7 @@ impl_runtime_apis! {
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
 			use gafi_membership::Pallet as GafiMembershipBench;
+			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
@@ -1422,6 +1492,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_membership, GafiMembershipBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_whitelist, WhitelistBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1444,6 +1515,7 @@ impl_runtime_apis! {
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
 			use gafi_membership::Pallet as GafiMembershipBench;
+			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 
@@ -1460,6 +1532,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_whitelist, WhitelistBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_membership, GafiMembershipBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

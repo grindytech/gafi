@@ -79,7 +79,7 @@ impl pallet_timestamp::Config for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
@@ -132,6 +132,7 @@ impl sponsored_pool::Config for Test {
 	type MinTxLimit = MinTxLimit;
 	type MaxTxLimit = MaxTxLimit;
 	type MinPoolBalance = MinPoolBalance;
+	type IWhitelist = ();
 	type WeightInfo = ();
 }
 
@@ -148,7 +149,6 @@ impl pallet_pool_names::Config for Test {
 	type MinLength = ConstU32<3>;
 	type MaxLength = ConstU32<16>;
 }
-
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

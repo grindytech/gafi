@@ -3,7 +3,7 @@
  * and not related with Currency e.g. Balances, Transaction Payment
  */
 
-use crate::{self as pallet_pool};
+use crate::{self as pallet_whitelist};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, GenesisBuild},
@@ -19,20 +19,25 @@ use gafi_primitives::{
 	currency::{unit, NativeToken::GAKI},
 	ticket::TicketInfo,
 };
-pub use gu_mock::*;
 pub use pallet_balances::Call as BalancesCall;
-use sp_core::H256;
+
+use frame_system::{mocking};
+use sp_core::{
+	sr25519::{self, Signature},
+	H256,
+};
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, Permill,
+	testing::{Header, TestXt},
+	traits::{
+		BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
+		Verify,
+	}, Permill,
 };
 
-pub use staking_pool;
-pub use upfront_pool;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+pub type Extrinsic = TestXt<Call, ()>;
+type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
+type Block = mocking::MockBlock<Test>;
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
@@ -46,19 +51,17 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Pool: pallet_pool::{Pallet, Storage, Event<T>},
-		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>},
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
+		PalletWhitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>},
+		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
+		PalletPool: pallet_pool::{Pallet, Storage, Event<T>},
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 	}
 );
 
-pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
-
 impl pallet_randomness_collective_flip::Config for Test {}
+
+pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
 parameter_types! {
 	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
@@ -91,19 +94,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-pub const RESERVATION_FEE: u128 = 2;
-
-parameter_types! {
-	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
-}
-impl pallet_pool_names::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = ConstU32<3>;
-	type MaxLength = ConstU32<16>;
-}
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
@@ -119,7 +109,7 @@ impl sponsored_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type PoolName = PoolNames;
+	type PoolName = ();
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type MinDiscountPercent = MinDiscountPercent;
@@ -129,6 +119,23 @@ impl sponsored_pool::Config for Test {
 	type MinPoolBalance = MinPoolBalance;
 	type WeightInfo = ();
 	type IWhitelist = ();
+}
+
+parameter_types! {
+	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub TimeServiceStorage: u128 = 30 * 60_000u128;
+}
+
+impl pallet_pool::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type UpfrontPool = ();
+	type StakingPool = ();
+	type WeightInfo = ();
+	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
+	type SponsoredPool = Sponsored;
+	type Cache = PalletCache;
+	type TimeServiceStorage = TimeServiceStorage;
 }
 
 parameter_types! {
@@ -142,48 +149,26 @@ impl pallet_cache::Config for Test {
 	type CleanTime = CleanTime;
 }
 
-parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
-	pub TimeServiceStorage: u128 = 30 * 60_000u128;
-}
-
-impl pallet_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type WeightInfo = ();
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
-	type Cache = PalletCache;
-	type TimeServiceStorage = TimeServiceStorage;
-}
-
-impl staking_pool::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type StakingServices = StakingPoolDefaultServices;
-	type Players = ();
-}
+pub const WHITELIST_FEE: u128 = 10_000_000_000_000_000_000_u128;
 
 parameter_types! {
-	pub MaxPlayerStorage: u32 = 1000;
+	pub const MaxWhitelistLength: u32 = 80;
+	pub const WhitelistFee: u128 = WHITELIST_FEE;
 }
 
-impl upfront_pool::Config for Test {
+impl  pallet_whitelist::Config for Test {
 	type Event = Event;
+	type WhitelistPool = PalletPool;
 	type Currency = Balances;
 	type WeightInfo = ();
-	type MaxPlayerStorage = MaxPlayerStorage;
-	type MasterPool = ();
-	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = ();
+	type SponsoredPool = Sponsored;
+	type MaxWhitelistLength = MaxWhitelistLength;
+	type WhitelistFee = WhitelistFee;
 }
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 24;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
@@ -197,7 +182,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
+	type AccountId = sr25519::Public;
 	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
@@ -213,15 +198,40 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub const UnsignedPriority: u64 = 100;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+where
+	Call: From<C>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-	GenesisBuild::<Test>::assimilate_storage(&upfront_pool::GenesisConfig::default(), &mut storage)
-		.unwrap();
-
-	GenesisBuild::<Test>::assimilate_storage(&staking_pool::GenesisConfig::default(), &mut storage)
-		.unwrap();
 
 	let ext = sp_io::TestExternalities::from(storage);
 	ext
@@ -234,14 +244,11 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp(
-			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
-		);
 	}
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId32, u128)>,
+	balances: Vec<(sr25519::Public, u128)>,
 	pub time_service: u128,
 }
 
@@ -257,18 +264,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&upfront_pool::GenesisConfig::default(),
-			&mut storage,
-		)
-		.unwrap();
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&staking_pool::GenesisConfig::default(),
-			&mut storage,
-		)
-		.unwrap();
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext
