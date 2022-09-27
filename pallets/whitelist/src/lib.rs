@@ -87,7 +87,7 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-		
+
 		/// Traits for joining the pool
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 
@@ -147,9 +147,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Approve whitelist
-		/// 
+		///
 		/// The pool owner approves the request whitelist of player
 		///
 		/// The origin must be Signed
@@ -184,7 +183,7 @@ pub mod pallet {
 		}
 
 		/// Approve whitelist unsigned
-		/// 
+		///
 		/// Unsigned approve the request whitelist of players, this function disable by default
 		/// This function should be called only by offchain-worker
 		///
@@ -219,7 +218,7 @@ pub mod pallet {
 		}
 
 		/// Apply whitelist
-		/// 
+		///
 		/// Player request to whitelist
 		///
 		/// The origin must be Signed
@@ -238,7 +237,7 @@ pub mod pallet {
 		}
 
 		/// Enable whitelist
-		/// 
+		///
 		/// Pool owners enable whitelist access function
 		///
 		/// The origin must be Signed
@@ -269,7 +268,7 @@ pub mod pallet {
 		}
 
 		/// Withdraw whitelist
-		/// 
+		///
 		/// Pool owners withdraw whitelist
 		///
 		/// The origin must be Signed
@@ -288,7 +287,7 @@ pub mod pallet {
 				let deposit = source.1;
 				T::Currency::unreserve(&sender, deposit);
 			} else {
-				return Err(<Error::<T>>::PoolNotWhitelist.into());
+				return Err(<Error<T>>::PoolNotWhitelist.into())
 			}
 
 			<WhitelistSource<T>>::remove(pool_id);
