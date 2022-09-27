@@ -15,6 +15,7 @@ use gafi_primitives::{
 };
 use pallet_timestamp::{self as timestamp};
 use sp_io::hashing::blake2_256;
+use sp_runtime::traits::StaticLookup;
 
 pub use pallet::*;
 #[cfg(test)]
@@ -29,6 +30,8 @@ pub mod pallet {
 
 	use super::*;
 	pub type NAME = [u8; 16];
+
+	pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -46,9 +49,9 @@ pub mod pallet {
 
 		type Membership: Membership<Self::AccountId>;
 
-		type UpfrontPool: SystemPool<Self::AccountId>;
+		type UpfrontPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 
-		type StakingPool: SystemPool<Self::AccountId>;
+		type StakingPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 	}
 
 	// Errors.
