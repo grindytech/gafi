@@ -3,14 +3,15 @@ use frame_support::parameter_types;
 use frame_system as system;
 
 use frame_support::traits::{OnFinalize, OnInitialize};
+use gu_mock::SLOT_DURATION;
+pub use pallet_balances::Call as BalancesCall;
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, EVMCurrencyAdapter};
-pub use pallet_balances::Call as BalancesCall;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -53,9 +54,6 @@ impl pallet_evm::Config for Test {
 	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
 }
-
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -137,7 +135,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
 // Build genesis storage according to the mock runtime.
 pub fn _new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
@@ -153,13 +150,11 @@ pub fn run_to_block(n: u64) {
 	}
 }
 
-pub struct ExtBuilder {
-}
+pub struct ExtBuilder {}
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-		}
+		Self {}
 	}
 }
 

@@ -1,11 +1,12 @@
 pub use crate::{self as game_creator};
 use frame_support::{
 	dispatch::Vec,
+	parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
-use frame_support::{parameter_types};
 use frame_system as system;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
+use gu_mock::{AN_HOUR, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
 use sp_core::{H256, U256};
@@ -17,8 +18,6 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub const TIME_SERVICE: u128 = 60 * 60_000u128; // 1 hour
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -96,10 +95,6 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-pub const INIT_TIMESTAMP: u64 = 30_000;
-
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
@@ -162,10 +157,7 @@ impl system::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn _new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap()
-		.into()
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
 pub fn _run_to_block(n: u64) {
@@ -190,16 +182,14 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![],
-			time_service: TIME_SERVICE,
+			time_service: AN_HOUR,
 		}
 	}
 }
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		let _ = pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,

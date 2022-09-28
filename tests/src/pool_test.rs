@@ -1,9 +1,7 @@
 use crate::mock::*;
-use gu_mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
-    currency::{unit, NativeToken::GAKI},
-    ticket::{PlayerTicket, TicketType},
+    ticket::PlayerTicket,
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
@@ -22,7 +20,7 @@ const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
 const ADDITIONAL_BLOCK: u64 = 1;
 
 fn use_tickets(pool_id: ID, account: AccountId32) {
-    let base_balance = 1_000_000 * unit(GAKI);
+    let base_balance = one_mil_gaki();
 	
     let _ = <Test as Config>::Currency::deposit_creating(&account, base_balance);
 

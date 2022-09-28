@@ -2,17 +2,16 @@ use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_primitives::{
 	constant::ID,
-	currency::{unit, NativeToken::GAKI},
 	system_services::SystemPool,
 };
 use gafi_tx::Config;
-use gu_mock::*;
 use sp_runtime::AccountId32;
+use gu_mock::one_mil_gaki;
 
 const TICKETS: [ID; 3] = [STAKING_BASIC_ID, STAKING_MEDIUM_ID, STAKING_ADVANCE_ID];
 
 fn join_pool(account: AccountId32, pool_id: ID) {
-	let base_balance = 1_000_000 * unit(GAKI);
+	let base_balance = one_mil_gaki();
 
 	let staking_amount = StakingPool::get_service(pool_id).unwrap().value;
 	let _ = <Test as Config>::Currency::deposit_creating(&account, base_balance);
