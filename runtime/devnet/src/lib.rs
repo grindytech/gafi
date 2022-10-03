@@ -157,7 +157,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -185,9 +185,11 @@ type MoreThanHalfCouncil = EnsureOneOf<
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 256;
-	/// We allow for 2 seconds of compute with a 6 second average block time.
+	/// We allow for 4 seconds of compute with a 12 second average block time.
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
+		::with_sensible_defaults(4 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
+	
+	/// we allow for 5M per block with a 12 second average block time.
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
@@ -429,7 +431,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				STAKING_BASIC_ID,
 				SystemService::new(
 					STAKING_BASIC_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(30),
 					1000 * unit(GAKI),
 				),
@@ -438,7 +440,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				STAKING_MEDIUM_ID,
 				SystemService::new(
 					STAKING_MEDIUM_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(50),
 					1500 * unit(GAKI),
 				),
@@ -447,7 +449,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				STAKING_ADVANCE_ID,
 				SystemService::new(
 					STAKING_ADVANCE_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(70),
 					2000 * unit(GAKI),
 				),
@@ -465,27 +467,27 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 				UPFRONT_BASIC_ID,
 				SystemService::new(
 					UPFRONT_BASIC_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(30),
-					5 * unit(GAKI),
+					40 * unit(GAKI),
 				),
 			),
 			(
 				UPFRONT_MEDIUM_ID,
 				SystemService::new(
 					UPFRONT_MEDIUM_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(50),
-					7 * unit(GAKI),
+					60 * unit(GAKI),
 				),
 			),
 			(
 				UPFRONT_ADVANCE_ID,
 				SystemService::new(
 					UPFRONT_ADVANCE_ID,
-					10_u32,
+					200_u32,
 					Permill::from_percent(70),
-					10 * unit(GAKI),
+					80 * unit(GAKI),
 				),
 			),
 		]
@@ -518,10 +520,10 @@ impl staking_pool::Config for Runtime {
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
-	pub MinDiscountPercent: Permill = Permill::from_percent(30);
-	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(100);
 	pub MinTxLimit: u32 = 50;
-	pub MaxTxLimit: u32 = 100;
+	pub MaxTxLimit: u32 = 200;
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 =  10;
 }

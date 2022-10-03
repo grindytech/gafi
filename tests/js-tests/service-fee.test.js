@@ -51,7 +51,7 @@ function create_erc20_token_circle(context, ticket, expect_rate, tx_limit) {
       let rate = percentage_of(staking_fee, nomal_fee);
 
       if (count < tx_limit) {
-        assert.equal(Math.round(rate), expect_rate);
+        assert.equal(Math.round(rate), expect_rate, `rate not correct, tx_number: ${count}`);
       } else {
         assert.notEqual(Math.round(rate), expect_rate);
       }
@@ -79,10 +79,10 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
     await utils.proof_address_mapping(context, account2, alice);
   }).timeout(10000);
 
-  create_erc20_token_circle(context, UPFRONT_BASIC_ID, 30, 10);
-  create_erc20_token_circle(context, UPFRONT_MEDIUM_ID, 50, 10);
-  create_erc20_token_circle(context, UPFRONT_ADVANCE_ID, 70, 10);
-  create_erc20_token_circle(context, STAKING_BASIC_ID, 30, 10);
-  create_erc20_token_circle(context, STAKING_MEDIUM_ID, 50, 10);
-  create_erc20_token_circle(context, STAKING_ADVANCE_ID, 70, 10);
+  create_erc20_token_circle(context, UPFRONT_BASIC_ID, 30, 200);
+  create_erc20_token_circle(context, UPFRONT_MEDIUM_ID, 50, 200);
+  create_erc20_token_circle(context, UPFRONT_ADVANCE_ID, 70, 200);
+  create_erc20_token_circle(context, STAKING_BASIC_ID, 30, 200);
+  create_erc20_token_circle(context, STAKING_MEDIUM_ID, 50, 200);
+  create_erc20_token_circle(context, STAKING_ADVANCE_ID, 70, 200);
 })
