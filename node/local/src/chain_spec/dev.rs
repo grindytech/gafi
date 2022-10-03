@@ -168,7 +168,7 @@ fn dev_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1_000_000 * unit(GAKI)))
+				.map(|k| (k, 200_000_000 * unit(GAKI)))
 				.collect(),
 		},
 		aura: AuraConfig {
