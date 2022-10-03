@@ -1,14 +1,14 @@
 {
-  "name": "Gaki Testnet",
-  "id": "gaki_testnet",
+  "name": "Gafi Testnet",
+  "id": "gafi_testnet",
   "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {
     "tokenDecimals": 18,
-    "tokenName": "GAKI Token",
-    "tokenSymbol": "GAKI"
+    "tokenName": "GAFI Token",
+    "tokenSymbol": "GAFI"
   },
   "codeSubstitutes": {},
   "genesis": {
