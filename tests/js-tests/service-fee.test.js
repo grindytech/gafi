@@ -80,9 +80,9 @@ describeWithFrontier("Upfront and Staking Pool Fee", (context) => {
   }).timeout(10000);
 
   create_erc20_token_circle(context, UPFRONT_BASIC_ID, 30, 200);
-  create_erc20_token_circle(context, UPFRONT_MEDIUM_ID, 50, 200);
-  create_erc20_token_circle(context, UPFRONT_ADVANCE_ID, 70, 200);
-  create_erc20_token_circle(context, STAKING_BASIC_ID, 30, 200);
-  create_erc20_token_circle(context, STAKING_MEDIUM_ID, 50, 200);
-  create_erc20_token_circle(context, STAKING_ADVANCE_ID, 70, 200);
+  create_erc20_token_circle(context, UPFRONT_MEDIUM_ID, 40, 200);
+  create_erc20_token_circle(context, UPFRONT_ADVANCE_ID, 50, 200);
+  create_erc20_token_circle(context, STAKING_BASIC_ID, 10, 200);
+  create_erc20_token_circle(context, STAKING_MEDIUM_ID, 20, 200);
+  create_erc20_token_circle(context, STAKING_ADVANCE_ID, 30, 200);
 })
