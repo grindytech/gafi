@@ -153,7 +153,7 @@ fn dev_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 
-	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
+	let min_gas_price: U256 = U256::from(1_000_000_000_000u128);
 
 	// pallet-faucet
 	let faucet_amount: u128 = 1500 * unit(GAKI);

@@ -432,7 +432,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				SystemService::new(
 					STAKING_BASIC_ID,
 					200_u32,
-					Permill::from_percent(30),
+					Permill::from_percent(10),
 					1000 * unit(GAKI),
 				),
 			),
@@ -441,8 +441,8 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				SystemService::new(
 					STAKING_MEDIUM_ID,
 					200_u32,
-					Permill::from_percent(50),
-					1500 * unit(GAKI),
+					Permill::from_percent(20),
+					2000 * unit(GAKI),
 				),
 			),
 			(
@@ -450,8 +450,8 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				SystemService::new(
 					STAKING_ADVANCE_ID,
 					200_u32,
-					Permill::from_percent(70),
-					2000 * unit(GAKI),
+					Permill::from_percent(30),
+					3000 * unit(GAKI),
 				),
 			),
 		]
@@ -469,7 +469,7 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 					UPFRONT_BASIC_ID,
 					200_u32,
 					Permill::from_percent(30),
-					40 * unit(GAKI),
+					15 * unit(GAKI),
 				),
 			),
 			(
@@ -477,8 +477,8 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 				SystemService::new(
 					UPFRONT_MEDIUM_ID,
 					200_u32,
-					Permill::from_percent(50),
-					60 * unit(GAKI),
+					Permill::from_percent(40),
+					20 * unit(GAKI),
 				),
 			),
 			(
@@ -486,8 +486,8 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 				SystemService::new(
 					UPFRONT_ADVANCE_ID,
 					200_u32,
-					Permill::from_percent(70),
-					80 * unit(GAKI),
+					Permill::from_percent(50),
+					25 * unit(GAKI),
 				),
 			),
 		]

@@ -102,7 +102,7 @@ pub mod pallet {
 	impl Default for GenesisConfig {
 		fn default() -> Self {
 			Self {
-				gas_price: U256::from(100_000_000_000u128),
+				gas_price: U256::from(1_000_000_000_000u128),
 			}
 		}
 	}
