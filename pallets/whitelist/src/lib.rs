@@ -337,6 +337,7 @@ pub mod pallet {
 
 				if let Some(url) = Self::get_url(pool_id) {
 					let api = Self::get_api(&url, pool_id, &player);
+					log::info!("api: {}", api);
 					let _ = Self::verify_and_approve(&api, player, pool_id);
 				}
 			}

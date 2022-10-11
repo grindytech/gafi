@@ -6,9 +6,9 @@ use crate::{Balances, Event, PalletWhitelist, PoolName, RandomnessCollectiveFlip
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
-	pub MinDiscountPercent: Permill = Permill::from_percent(30);
-	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
-	pub MinTxLimit: u32 = 50;
+	pub MinDiscountPercent: Permill = Permill::from_percent(10);
+	pub MaxDiscountPercent: Permill = Permill::from_percent(100);
+	pub MinTxLimit: u32 = 30;
 	pub MaxTxLimit: u32 = 100;
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 =  10;

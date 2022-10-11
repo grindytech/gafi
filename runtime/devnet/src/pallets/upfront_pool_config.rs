@@ -20,27 +20,27 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 				UPFRONT_BASIC_ID,
 				SystemService::new(
 					UPFRONT_BASIC_ID,
-					10_u32,
+					100_u32,
 					Permill::from_percent(30),
-					5 * unit(GAKI),
+					15 * unit(GAKI),
 				),
 			),
 			(
 				UPFRONT_MEDIUM_ID,
 				SystemService::new(
 					UPFRONT_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					7 * unit(GAKI),
+					100_u32,
+					Permill::from_percent(40),
+					20 * unit(GAKI),
 				),
 			),
 			(
 				UPFRONT_ADVANCE_ID,
 				SystemService::new(
 					UPFRONT_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					10 * unit(GAKI),
+					100_u32,
+					Permill::from_percent(50),
+					25 * unit(GAKI),
 				),
 			),
 		]

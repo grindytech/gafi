@@ -18,8 +18,8 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				STAKING_BASIC_ID,
 				SystemService::new(
 					STAKING_BASIC_ID,
-					10_u32,
-					Permill::from_percent(30),
+					100_u32,
+					Permill::from_percent(10),
 					1000 * unit(GAKI),
 				),
 			),
@@ -27,18 +27,18 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 				STAKING_MEDIUM_ID,
 				SystemService::new(
 					STAKING_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					1500 * unit(GAKI),
+					100_u32,
+					Permill::from_percent(20),
+					2000 * unit(GAKI),
 				),
 			),
 			(
 				STAKING_ADVANCE_ID,
 				SystemService::new(
 					STAKING_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					2000 * unit(GAKI),
+					100_u32,
+					Permill::from_percent(30),
+					3000 * unit(GAKI),
 				),
 			),
 		]
