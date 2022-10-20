@@ -1,5 +1,5 @@
 use crate::mock::*;
-use frame_support::{assert_ok, assert_noop, traits::Currency};
+use frame_support::{assert_ok, assert_noop, assert_err, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::ticket::PlayerTicket;
 use gafi_primitives::{
@@ -125,9 +125,9 @@ fn limit_join_sponsored_pool_works() {
 		}
 		run_to_block(10);
 		let pool_id1 = create_pool(account.clone(), targets, pool_value, tx_limit, discount);
-		assert_noop!(Pool::join(
+		assert_ne!(Pool::join(
 			Origin::signed(account_1.clone()),
 			pool_id1
-		), pallet_pool::Error::<Test>::ExceedJoinedPool);
+		), Ok(()));
     })
 }

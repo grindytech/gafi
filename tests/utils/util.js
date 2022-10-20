@@ -40,7 +40,7 @@ async function create_new_contract(context, account) {
     return receipt.result;
 }
 
-async function get_erc20_balance(context, token_address, target ) {
+async function get_erc20_balance(context, token_address, target) {
     const erc20_contract = new context.web3.eth.Contract(ERC20ABI.abi, token_address);
     const balance = await erc20_contract.methods.balanceOf(target).call();
     return balance;
@@ -121,25 +121,47 @@ async function create_pool(context, sub_account, arguments) {
 }
 
 async function claim_contract(context, sub_account, arguments) {
-  const api = await ApiPromise.create({ provider: context.wsProvider });
+    const api = await ApiPromise.create({ provider: context.wsProvider });
 
-  const txExecute = api.tx.gameCreator.claimContract(arguments.contractAddress);
-  const unsub = await txExecute
-      .signAndSend(sub_account);
+    const txExecute = api.tx.gameCreator.claimContract(arguments.contractAddress);
+    const unsub = await txExecute
+        .signAndSend(sub_account);
 
-  await createAndFinalizeBlock(context.web3);
-  return unsub;
+    await createAndFinalizeBlock(context.web3);
+    return unsub;
 }
 
 async function get_game_creator_reward(wsProvider) {
-  const api = await ApiPromise.create({ provider: wsProvider });
+    const api = await ApiPromise.create({ provider: wsProvider });
 
-  const reward = api.consts.txHandler.gameCreatorReward
-  return permillOf(new BN(100), new BN(reward.toString()));
+    const reward = api.consts.txHandler.gameCreatorReward
+    return permillOf(new BN(100), new BN(reward.toString()));
 }
 
-function permillOf (value, perMill) {
-  return value.mul(perMill).div(BN_MILLION);
+function permillOf(value, perMill) {
+    return value.mul(perMill).div(BN_MILLION);
+}
+
+async function add_whitelist(context, pool_id, pool_owner, url) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
+
+    const txExecute = api.tx.palletWhitelist.enableWhitelist(pool_id, url);
+    const unsub = await txExecute
+        .signAndSend(pool_owner);
+
+    await createAndFinalizeBlock(context.web3);
+    return unsub;
+}
+
+async function approve_whitelist(context, pool_id, pool_owner, player) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
+
+    const txExecute = api.tx.palletWhitelist.approveWhitelist(player, pool_id);
+    const unsub = await txExecute
+        .signAndSend(pool_owner);
+
+    await createAndFinalizeBlock(context.web3);
+    return unsub;   
 }
 
 module.exports = {
@@ -153,5 +175,7 @@ module.exports = {
     get_erc20_balance,
     claim_contract,
     get_game_creator_reward,
-    permillOf
+    permillOf,
+    add_whitelist,
+    approve_whitelist,
 }
