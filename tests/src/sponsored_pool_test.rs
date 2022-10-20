@@ -125,9 +125,9 @@ fn limit_join_sponsored_pool_works() {
 		}
 		run_to_block(10);
 		let pool_id1 = create_pool(account.clone(), targets, pool_value, tx_limit, discount);
-		assert_ne!(Pool::join(
+		assert_noop!(Pool::join(
 			Origin::signed(account_1.clone()),
 			pool_id1
-		), Ok(()));
+		), pallet_pool::Error::<Test>::ExceedJoinedPool);
     })
 }

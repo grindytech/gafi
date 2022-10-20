@@ -153,6 +153,17 @@ async function add_whitelist(context, pool_id, pool_owner, url) {
     return unsub;
 }
 
+async function apply_whitelist(context, pool_id, player) {
+    const api = await ApiPromise.create({ provider: context.wsProvider });
+
+    const txExecute = api.tx.palletWhitelist.applyWhitelist(pool_id);
+    const unsub = await txExecute
+        .signAndSend(player);
+
+    await createAndFinalizeBlock(context.web3);
+    return unsub;
+}
+
 async function approve_whitelist(context, pool_id, pool_owner, player) {
     const api = await ApiPromise.create({ provider: context.wsProvider });
 
@@ -178,4 +189,5 @@ module.exports = {
     permillOf,
     add_whitelist,
     approve_whitelist,
+    apply_whitelist,
 }

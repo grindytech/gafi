@@ -29,7 +29,7 @@ function percentage_of(oldNumber, newNumber) {
 
 /// Situation: Alice map with account_1, Bob map with account_2
 /// Alice is the pool owner, Bob is the player
-describeWithFrontier("Sponsored Pool Fee", (context) => {
+describeWithFrontier("Whitelist", (context) => {
 
     step('step should create new erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -98,7 +98,8 @@ describeWithFrontier("Sponsored Pool Fee", (context) => {
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
 
         await utils.add_whitelist(context, NewPool, Alice, "https://whitelist.gafi.network/test/always_true");
-
+        let source = await api.query.palletWhitelist.whitelistSource(NewPool);
+        assert.notEqual(source.toHuman(), null);
     })
 
     step('leave any pool before join sponsored pool works', async () => {
@@ -106,59 +107,72 @@ describeWithFrontier("Sponsored Pool Fee", (context) => {
         await utils.leave_all_pool(context, Bob);
     }).timeout(20000);
 
-
-    step('join sponsored sponsored by approving works', async () => {
+    step('apply whitelist works', async () => {
+        const api = await ApiPromise.create({ provider: context.wsProvider });
         const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-        const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        await utils.approve_whitelist(context, NewPool, Alice, Bob.address);
-    }).timeout(20000);
+        await utils.apply_whitelist(context, NewPool, Bob);
+        let whitelist = await api.query.palletWhitelist.whitelist(Bob.address);
+        assert.notEqual(whitelist.toHuman(), null);
+    })
 
-    // step('discount on sponsored pool works', async () => {
+    // step('join sponsored sponsored by approving works', async () => {
     //     const api = await ApiPromise.create({ provider: context.wsProvider });
-    //     const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
-    //     const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
-    //     let before_balance = await context.web3.eth.getBalance(account_2.address);
 
-    //     let pool_account_before = await api.query.system.account(NewPool);
-    //     let pool_before_balance = BigNumber.from(pool_account_before.data.free.toString()).toString();
+    //     const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+    //     const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+    //     await utils.approve_whitelist(context, NewPool, Alice, Bob.address);
 
-    //     let token_balance = "10000000000";
-    //     await utils.transfer_erc20(context, ERC20_ADDRESS, account_2, account_1.address, token_balance);
-
-    //     let after_balance = await context.web3.eth.getBalance(account_2.address);
-    //     let pool_account_after = await api.query.system.account(NewPool);
-    //     let pool_after_balance = BigNumber.from(pool_account_after.data.free.toString()).toString();
-
-    //     let discount_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-    //     let pool_fee = context.web3.utils.fromWei(BigNumber.from(pool_before_balance).sub(BigNumber.from(pool_after_balance)).toString(), "ether");
-
-    //     let discount_rate = percentage_of(discount_fee, NormalFee);
-    //     assert.equal(Math.round(discount_rate), DISCOUNT);
-
-    //     let pool_fee_rate = percentage_of(pool_fee, NormalFee);
-    //     assert.equal(Math.round(pool_fee_rate), 100 - DISCOUNT);
+    //     let ticket = await api.query.pool.tickets(Bob.address, NewPool);
+    //     console.log("ticket: ", ticket.toHuman());
 
     // }).timeout(20000);
 
-    // step('Discount with tx limit works', async () => {
-    //     const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
-    //     const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
+    step('discount on sponsored pool works', async () => {
+        const api = await ApiPromise.create({ provider: context.wsProvider });
+        const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
+        const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
+        let before_balance = await context.web3.eth.getBalance(account_2.address);
 
-    //     let count = 0;
-    //     for (let i = 0; i < TX_LIMIT + 2; i++) {
-    //         let before_balance = await context.web3.eth.getBalance(account_2.address);
-    //         await utils.transfer_erc20(context, ERC20_ADDRESS, account_2,
-    //             account_1.address, "100");
-    //         let after_balance = await context.web3.eth.getBalance(account_2.address);
-    //         let transfer_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-    //         let rate = percentage_of(transfer_fee, NormalFee);
+        let pool_account_before = await api.query.system.account(NewPool);
+        let pool_before_balance = BigNumber.from(pool_account_before.data.free.toString()).toString();
 
-    //         count++;
-    //         if (count <= TX_LIMIT - 1) {
-    //             assert.equal(Math.round(rate), DISCOUNT);
-    //         } else {
-    //             assert.notEqual(Math.round(rate), DISCOUNT);
-    //         }
-    //     }
-    // }).timeout(30000);
+        let token_balance = "10000000000";
+        await utils.transfer_erc20(context, ERC20_ADDRESS, account_2, account_1.address, token_balance);
+
+        let after_balance = await context.web3.eth.getBalance(account_2.address);
+        let pool_account_after = await api.query.system.account(NewPool);
+        let pool_after_balance = BigNumber.from(pool_account_after.data.free.toString()).toString();
+
+        let discount_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+        let pool_fee = context.web3.utils.fromWei(BigNumber.from(pool_before_balance).sub(BigNumber.from(pool_after_balance)).toString(), "ether");
+
+        let discount_rate = percentage_of(discount_fee, NormalFee);
+        assert.equal(Math.round(discount_rate), DISCOUNT);
+
+        let pool_fee_rate = percentage_of(pool_fee, NormalFee);
+        assert.equal(Math.round(pool_fee_rate), 100 - DISCOUNT);
+
+    }).timeout(20000);
+
+    step('Discount with tx limit works', async () => {
+        const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
+        const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
+
+        let count = 0;
+        for (let i = 0; i < TX_LIMIT + 2; i++) {
+            let before_balance = await context.web3.eth.getBalance(account_2.address);
+            await utils.transfer_erc20(context, ERC20_ADDRESS, account_2,
+                account_1.address, "100");
+            let after_balance = await context.web3.eth.getBalance(account_2.address);
+            let transfer_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+            let rate = percentage_of(transfer_fee, NormalFee);
+
+            count++;
+            if (count <= TX_LIMIT - 1) {
+                assert.equal(Math.round(rate), DISCOUNT);
+            } else {
+                assert.notEqual(Math.round(rate), DISCOUNT);
+            }
+        }
+    }).timeout(30000);
 })

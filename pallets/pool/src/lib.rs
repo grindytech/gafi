@@ -202,9 +202,37 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let sender_lookup = T::Lookup::unlookup(sender.clone());
 
-			Self::join_pool(&sender, pool_id)?;
-			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
-			Ok(())
+			ensure!(
+				!Self::is_joined_pool(&sender, pool_id),
+				<Error<T>>::AlreadyJoined
+			);
+
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
+
+			let ticket_type = Self::get_ticket_type(pool_id)?;
+			let pool_match = match ticket_type {
+				TicketType::Upfront(_) => T::UpfrontPool::join(sender_lookup.clone(), pool_id),
+				TicketType::Staking(_) => T::StakingPool::join(sender_lookup, pool_id),
+				TicketType::Sponsored(_) => {
+					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
+					let count_joined_pool = joined_sponsored_pool.count();
+
+					ensure!(
+						count_joined_pool <= T::MaxJoinedSponsoredPool::get() as usize,
+						<Error<T>>::ExceedJoinedPool
+					);
+
+					T::SponsoredPool::join(sender.clone(), pool_id)
+				},
+			};
+
+			if let Err(err) = pool_match {
+				Err(err)
+			} else {
+				Self::join_pool(&sender, pool_id)?;
+				Self::deposit_event(Event::<T>::Joined { sender, pool_id });
+				Ok(())
+			}
 		}
 
 		/// leave pool
@@ -363,34 +391,6 @@ pub mod pallet {
 
 	impl<T: Config> WhitelistPool<T::AccountId> for Pallet<T> {
 		fn join_pool(sender: &T::AccountId, pool_id: ID) -> Result<(), &'static str> {
-			ensure!(
-				!Self::is_joined_pool(&sender, pool_id),
-				<Error<T>>::AlreadyJoined
-			);
-
-			let sender_lookup = T::Lookup::unlookup(sender.clone());
-
-			let ticket_type = Self::get_ticket_type(pool_id)?;
-			match ticket_type {
-				TicketType::Upfront(_) => {
-					T::UpfrontPool::join(sender_lookup.clone(), pool_id)?;
-				},
-				TicketType::Staking(_) => {
-					T::StakingPool::join(sender_lookup, pool_id)?;
-				},
-				TicketType::Sponsored(_) => {
-					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
-					let count_joined_pool = joined_sponsored_pool.count();
-
-					ensure!(
-						count_joined_pool <= T::MaxJoinedSponsoredPool::get() as usize,
-						<Error<T>>::ExceedJoinedPool
-					);
-
-					T::SponsoredPool::join(sender.clone(), pool_id)?;
-				},
-			};
-
 			let ticket_info = Self::create_ticket(sender, pool_id)?;
 			Tickets::<T>::insert(sender.clone(), pool_id, ticket_info);
 			Ok(())
