@@ -1,5 +1,5 @@
 use crate::mock::*;
-use frame_support::{assert_ok, assert_noop, traits::Currency};
+use frame_support::{assert_ok, assert_noop, assert_err, traits::Currency};
 use gafi_primitives::constant::ID;
 use gafi_primitives::ticket::PlayerTicket;
 use gafi_primitives::{

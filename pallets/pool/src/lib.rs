@@ -207,14 +207,12 @@ pub mod pallet {
 				<Error<T>>::AlreadyJoined
 			);
 
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
+
 			let ticket_type = Self::get_ticket_type(pool_id)?;
-			match ticket_type {
-				TicketType::Upfront(_) => {
-					T::UpfrontPool::join(sender_lookup.clone(), pool_id)?;
-				},
-				TicketType::Staking(_) => {
-					T::StakingPool::join(sender_lookup, pool_id)?;
-				},
+			let pool_match = match ticket_type {
+				TicketType::Upfront(_) => T::UpfrontPool::join(sender_lookup.clone(), pool_id),
+				TicketType::Staking(_) => T::StakingPool::join(sender_lookup, pool_id),
 				TicketType::Sponsored(_) => {
 					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
 					let count_joined_pool = joined_sponsored_pool.count();
@@ -224,13 +222,17 @@ pub mod pallet {
 						<Error<T>>::ExceedJoinedPool
 					);
 
-					T::SponsoredPool::join(sender.clone(), pool_id)?
+					T::SponsoredPool::join(sender.clone(), pool_id)
 				},
-			}
+			};
 
-			Self::join_pool(&sender, pool_id)?;
-			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
-			Ok(())
+			if let Err(err) = pool_match {
+				Err(err)
+			} else {
+				Self::join_pool(&sender, pool_id)?;
+				Self::deposit_event(Event::<T>::Joined { sender, pool_id });
+				Ok(())
+			}
 		}
 
 		/// leave pool

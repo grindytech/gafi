@@ -171,6 +171,7 @@ pub mod pallet {
 		GreaterThanMaxTxLimit,
 		LessThanMinDiscountPercent,
 		GreaterThanMinDiscountPercent,
+		WhitelistedPool,
 	}
 
 	#[pallet::call]
@@ -474,8 +475,8 @@ pub mod pallet {
 
 			if T::IWhitelist::is_whitelist(pool_id) {
 				T::IWhitelist::insert_whitelist(pool_id, sender)?;
+				return Err(<Error<T>>::WhitelistedPool.into());
 			}
-
 			Ok(())
 		}
 		fn leave(_sender: T::AccountId) -> DispatchResult {

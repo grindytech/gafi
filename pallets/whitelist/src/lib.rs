@@ -309,7 +309,7 @@ pub mod pallet {
 		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
 			ensure!(T::SponsoredPool::is_pool(pool_id), Error::<T>::PoolNotFound);
 
-			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist,);
+			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist);
 
 			ensure!(
 				!Self::is_whitelist_player(&player, pool_id),
