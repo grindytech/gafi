@@ -37,6 +37,7 @@ use gafi_primitives::{
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(test)]
 mod mock;
@@ -57,6 +58,8 @@ pub mod pallet {
 	use super::*;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -168,10 +171,20 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		ChargePoolService,
-		UpfrontSetMaxPlayer { new_max_player: u32 },
+		UpfrontSetMaxPlayer {
+			new_max_player: u32,
+		},
+		UpfrontSetServiceTXLimit {
+			service: ID,
+			tx_limit: u32,
+		},
+		UpfrontSetServiceDiscount {
+			service: ID,
+			discount: sp_runtime::Permill,
+		},
 	}
 
-	impl<T: Config> SystemPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> SystemPool<AccountIdLookupOf<T>, T::AccountId> for Pallet<T> {
 		/// Join Upfront Pool
 		///
 		/// The origin must be Signed
@@ -181,7 +194,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+		fn join(sender: AccountIdLookupOf<T>, pool_id: ID) -> DispatchResult {
+			let sender = T::Lookup::lookup(sender)?;
 			let new_player_count =
 				Self::player_count().checked_add(1).ok_or(<Error<T>>::PlayerCountOverflow)?;
 
@@ -220,7 +234,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn leave(sender: T::AccountId) -> DispatchResult {
+		fn leave(sender: AccountIdLookupOf<T>) -> DispatchResult {
+			let sender = T::Lookup::lookup(sender)?;
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				if let TicketType::Upfront(pool_id) = ticket.ticket_type {
 					let join_time = ticket.join_time;
@@ -269,7 +284,10 @@ pub mod pallet {
 		}
 
 		fn get_ticket(sender: &T::AccountId) -> Option<Ticket<T::AccountId>> {
-			Tickets::<T>::get(sender)
+			match Tickets::<T>::get(sender) {
+				Some(data) => Some(data),
+				None => None,
+			}
 		}
 	}
 
@@ -290,6 +308,47 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::UpfrontSetMaxPlayer {
 				new_max_player: max_player,
 			});
+			Ok(())
+		}
+
+		// Should validate max, min for input
+		#[pallet::weight(0)]
+		pub fn set_services_tx_limit(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			tx_limit: u32,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let mut service_data = Self::get_pool_by_id(pool_id)?;
+
+			service_data.service.tx_limit = tx_limit;
+			Services::<T>::insert(pool_id, service_data);
+
+			Self::deposit_event(Event::<T>::UpfrontSetServiceTXLimit {
+				service: pool_id,
+				tx_limit,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_services_discount(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			discount: sp_runtime::Permill,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let mut service_data = Self::get_pool_by_id(pool_id)?;
+
+			service_data.service.discount = discount;
+			Services::<T>::insert(pool_id, service_data);
+
+			Self::deposit_event(Event::<T>::UpfrontSetServiceDiscount {
+				service: pool_id,
+				discount,
+			});
+
 			Ok(())
 		}
 	}

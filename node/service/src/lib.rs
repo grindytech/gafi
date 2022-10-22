@@ -35,7 +35,7 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 
 // std
-use futures::{lock::Mutex, StreamExt};
+use futures::StreamExt;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 // Frontier

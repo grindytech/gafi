@@ -1,20 +1,16 @@
 /*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
-use crate::{mock::*};
-use crate::{PlayerCount, Tickets};
-use codec::Encode;
+ * This unittest should only test logic function e.g. Storage, Computation
+ * and not related with Currency e.g. Balances, Transaction Payment
+ */
+use crate::{mock::*, PlayerCount, Tickets};
 use frame_support::{assert_ok, traits::Currency};
-use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::{system_services::SystemPool, constant::ID};
-use sp_core::blake2_256;
+use gafi_primitives::{
+	constant::ID,
+	currency::{unit, NativeToken::GAKI},
+	system_services::SystemPool,
+};
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
-
-const STAKING_BASIC_ID: ID = [0_u8; 32];
-const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-const STAKING_ADVANCE_ID: ID = [2_u8; 32];
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -25,7 +21,7 @@ fn new_account(balance: u128) -> AccountId32 {
 		AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 	make_deposit(&alice, balance);
 	assert_eq!(Balances::free_balance(&alice), balance);
-	return alice;
+	return alice
 }
 
 fn _new_accounts(count: u32, balance: u128) -> Vec<AccountId32> {
@@ -44,7 +40,10 @@ fn default_services_works() {
 		run_to_block(1);
 		assert_eq!(StakingPool::get_service(STAKING_BASIC_ID).is_none(), false);
 		assert_eq!(StakingPool::get_service(STAKING_MEDIUM_ID).is_none(), false);
-		assert_eq!(StakingPool::get_service(STAKING_ADVANCE_ID).is_none(), false);
+		assert_eq!(
+			StakingPool::get_service(STAKING_ADVANCE_ID).is_none(),
+			false
+		);
 	})
 }
 

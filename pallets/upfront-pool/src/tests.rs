@@ -3,18 +3,11 @@ use crate::{PlayerCount, Tickets};
 use codec::Encode;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::{
-	system_services::SystemPool,
-	constant::ID
-};
-use sp_core::blake2_256;
+use gafi_primitives::system_services::SystemPool;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 
 const CIRCLE_BLOCK: u64 = (TIME_SERVICE as u64) / SLOT_DURATION;
-const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);

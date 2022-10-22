@@ -31,6 +31,7 @@ use gafi_primitives::{
 use gu_convertor::u128_try_to_balance;
 pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(test)]
 mod mock;
@@ -56,6 +57,8 @@ pub mod pallet {
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
 	/// Configure the pallet by specifying the parameters and types it depends on.
 	#[pallet::config]
@@ -117,7 +120,17 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		StakingNewMaxPlayer { new_max_player: u32 },
+		StakingNewMaxPlayer {
+			new_max_player: u32,
+		},
+		StakingSetServiceTXLimit {
+			service: ID,
+			tx_limit: u32,
+		},
+		StakingSetServiceDiscount {
+			service: ID,
+			discount: sp_runtime::Permill,
+		},
 	}
 
 	#[pallet::error]
@@ -129,7 +142,7 @@ pub mod pallet {
 		PoolNotFound,
 	}
 
-	impl<T: Config> SystemPool<T::AccountId> for Pallet<T> {
+	impl<T: Config> SystemPool<AccountIdLookupOf<T>, T::AccountId> for Pallet<T> {
 		/// Join Staking Pool
 		///
 		/// The origin must be Signed
@@ -139,7 +152,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn join(sender: T::AccountId, pool_id: ID) -> DispatchResult {
+		fn join(sender: AccountIdLookupOf<T>, pool_id: ID) -> DispatchResult {
+			let sender = T::Lookup::lookup(sender)?;
 			let service = Self::get_pool_by_id(pool_id)?;
 			let staking_amount = u128_try_to_balance::<
 				<T as pallet::Config>::Currency,
@@ -160,7 +174,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[transactional]
-		fn leave(sender: T::AccountId) -> DispatchResult {
+		fn leave(sender: AccountIdLookupOf<T>) -> DispatchResult {
+			let sender = T::Lookup::lookup(sender)?;
 			if let Some(data) = Tickets::<T>::get(&sender) {
 				let ticket = data.0;
 				let staking_amount = data.1;
@@ -210,6 +225,47 @@ pub mod pallet {
 			ensure_root(origin)?;
 			MaxPlayer::<T>::put(new_max_player);
 			Self::deposit_event(Event::<T>::StakingNewMaxPlayer { new_max_player });
+			Ok(())
+		}
+
+		// Should validate max, min for input
+		#[pallet::weight(0)]
+		pub fn set_services_tx_limit(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			tx_limit: u32,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let mut service_data = Self::get_pool_by_id(pool_id)?;
+
+			service_data.service.tx_limit = tx_limit;
+			Services::<T>::insert(pool_id, service_data);
+
+			Self::deposit_event(Event::<T>::StakingSetServiceTXLimit {
+				service: pool_id,
+				tx_limit,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn set_services_discount(
+			origin: OriginFor<T>,
+			pool_id: ID,
+			discount: sp_runtime::Permill,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let mut service_data = Self::get_pool_by_id(pool_id)?;
+
+			service_data.service.discount = discount;
+			Services::<T>::insert(pool_id, service_data);
+
+			Self::deposit_event(Event::<T>::StakingSetServiceDiscount {
+				service: pool_id,
+				discount,
+			});
+
 			Ok(())
 		}
 	}
