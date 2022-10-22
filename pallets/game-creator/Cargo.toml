@@ -39,6 +39,7 @@ proof-address-mapping = {default-features = false, version = "4.0.0-dev", path =
 [dev-dependencies]
 # Substrate
 sp-io = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+gu-mock = { path="../../utils/mock" }
 
 [features]
 default = ["std"]

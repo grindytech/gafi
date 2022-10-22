@@ -12,27 +12,18 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
-use gafi_primitives::{
-	constant::ID,
-	system_services::{SystemDefaultServices, SystemService},
-	currency::{unit, NativeToken::GAKI}
-};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
-	Permill
 };
 use sp_io::hashing::blake2_256;
 pub use pallet_balances::Call as BalancesCall;
+pub use gu_mock::{pool::*, MILLISECS_PER_BLOCK, INIT_TIMESTAMP, SLOT_DURATION};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -68,10 +59,6 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
-
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const INIT_TIMESTAMP: u64 = 30_000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -115,27 +102,6 @@ impl system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services () -> [(ID, SystemService); 3] {
-		[
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(STAKING_BASIC_ID, 10_u32, Permill::from_percent(30), 1000 * unit(GAKI)),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(STAKING_MEDIUM_ID, 10_u32, Permill::from_percent(50), 1500 * unit(GAKI)),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(STAKING_ADVANCE_ID, 10_u32, Permill::from_percent(70), 2000 * unit(GAKI)),
-			),
-		]
-	}
 }
 
 impl staking_pool::Config for Test {

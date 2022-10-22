@@ -1,3 +1,22 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 Grindy Technologies.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	pallet_prelude::*,
@@ -60,6 +79,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + CreateSignedTransaction<Call<Self>> {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency mechanism.
@@ -68,10 +88,16 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// Traits for joining the pool
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
+
+		/// Traits CustomPool
 		type SponsoredPool: CustomPool<Self::AccountId>;
+
+		/// Maximum length of whitelist query api
 		type MaxWhitelistLength: Get<u32>;
 
+		/// The reserve fee when enable pool whitelist
 		#[pallet::constant]
 		type WhitelistFee: Get<BalanceOf<Self>>;
 	}
@@ -80,6 +106,7 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// The request to apply to the pool's whitelist
 	#[pallet::storage]
 	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
 
@@ -120,6 +147,17 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Approve whitelist
+		///
+		/// The pool owner approves the request whitelist of player
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `player`: the player, whose request to whitelist
+		/// - `pool_id`: pool id
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist(50u32))]
 		pub fn approve_whitelist(
 			origin: OriginFor<T>,
@@ -144,6 +182,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Approve whitelist unsigned
+		///
+		/// Unsigned approve the request whitelist of players, this function disable by default
+		/// This function should be called only by offchain-worker
+		///
+		/// Unsign
+		///
+		/// Parameters:
+		/// - `player`: the player, whose request to whitelist
+		/// - `pool_id`: pool id
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist_unsigned(50u32))]
 		pub fn approve_whitelist_unsigned(
 			origin: OriginFor<T>,
@@ -167,6 +217,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Apply whitelist
+		///
+		/// Player request to whitelist
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `pool_id`: pool id
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::apply_whitelist(50u32))]
 		pub fn apply_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -176,6 +236,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Enable whitelist
+		///
+		/// Pool owners enable whitelist access function
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `pool_id`: pool id
+		/// - `url`: verify api
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::enable_whitelist(50u32))]
 		pub fn enable_whitelist(origin: OriginFor<T>, pool_id: ID, url: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -196,6 +267,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Withdraw whitelist
+		///
+		/// Pool owners withdraw whitelist
+		///
+		/// The origin must be Signed
+		///
+		/// Parameters:
+		/// - `pool_id`: pool id
+		///
+		/// Weight: `O(1)`
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_whitelist(50u32))]
 		pub fn withdraw_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -206,7 +287,7 @@ pub mod pallet {
 				let deposit = source.1;
 				T::Currency::unreserve(&sender, deposit);
 			} else {
-				return Err(<Error::<T>>::PoolNotWhitelist.into());
+				return Err(<Error<T>>::PoolNotWhitelist.into())
 			}
 
 			<WhitelistSource<T>>::remove(pool_id);
@@ -228,7 +309,7 @@ pub mod pallet {
 		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
 			ensure!(T::SponsoredPool::is_pool(pool_id), Error::<T>::PoolNotFound);
 
-			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist,);
+			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist);
 
 			ensure!(
 				!Self::is_whitelist_player(&player, pool_id),
@@ -256,6 +337,7 @@ pub mod pallet {
 
 				if let Some(url) = Self::get_url(pool_id) {
 					let api = Self::get_api(&url, pool_id, &player);
+					log::info!("api: {}", api);
 					let _ = Self::verify_and_approve(&api, player, pool_id);
 				}
 			}

@@ -23,18 +23,18 @@ impl SystemService {
 	}
 }
 
-pub trait SystemPool<AccountId> {
-	fn join(sender: AccountId, pool_id: ID) -> DispatchResult;
-	fn leave(sender: AccountId) -> DispatchResult;
+pub trait SystemPool<AccountIdLookup, AccountId> {
+	fn join(sender: AccountIdLookup, pool_id: ID) -> DispatchResult;
+	fn leave(sender: AccountIdLookup) -> DispatchResult;
 	fn get_service(pool_id: ID) -> Option<SystemService>;
 	fn get_ticket(sender: &AccountId) -> Option<Ticket<AccountId>>;
 }
 
-impl<AccountId> SystemPool<AccountId> for () {
-	fn join(_sender: AccountId, _pool_id: ID) -> DispatchResult {
+impl<AccountIdLookup, AccountId> SystemPool<AccountIdLookup, AccountId> for () {
+	fn join(_sender: AccountIdLookup, _pool_id: ID) -> DispatchResult {
 		Ok(())
 	}
-	fn leave(_sender: AccountId) -> DispatchResult {
+	fn leave(_sender: AccountIdLookup) -> DispatchResult {
 		Ok(())
 	}
 	fn get_service(_pool_id: ID) -> Option<SystemService> {

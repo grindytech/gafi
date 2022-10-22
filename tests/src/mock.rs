@@ -11,7 +11,7 @@ use gafi_primitives::{
 	ticket::TicketInfo,
 };
 use gafi_tx::GafiEVMCurrencyAdapter;
-use gu_mock::{StakingPoolDefaultServices, UpfrontPoolDefaultServices};
+pub use gu_mock::{pool::*, one_mil_gaki};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use pallet_timestamp;

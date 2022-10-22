@@ -6,12 +6,12 @@ use frame_support::{
 };
 use frame_system as system;
 use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
-pub use gu_mock::*;
+pub use gu_mock::{one_mil_gaki, pool::*, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 use sp_core::H256;
+pub use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -88,10 +88,6 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const INIT_TIMESTAMP: u64 = 30_000;
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
@@ -127,7 +123,7 @@ impl pallet_player::Config for Test {
 }
 
 parameter_types! {
-	pub const MaxMembers: u32 = 100u32;
+	pub const MaxMembers: u32 = 5u32;
 	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
 	pub const MaxAchievement: u32 = 100;
 	pub const TotalMembershipLevel: u32 = 10;

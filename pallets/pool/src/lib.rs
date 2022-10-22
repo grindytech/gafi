@@ -32,7 +32,8 @@ use pallet_timestamp::{self as timestamp};
 use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
 pub use pallet::*;
-use sp_core::{H160};
+use sp_core::H160;
+use sp_runtime::traits::StaticLookup;
 use sp_std::{str, vec::Vec};
 
 #[cfg(test)]
@@ -52,10 +53,10 @@ pub mod pallet {
 
 	use super::*;
 
+	pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
+
 	#[pallet::config]
-	pub trait Config:
-		frame_system::Config + pallet_timestamp::Config
-	{
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
@@ -64,10 +65,10 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Add upfront pool
-		type UpfrontPool: SystemPool<Self::AccountId>;
+		type UpfrontPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 
 		/// Add Staking Pool
-		type StakingPool: SystemPool<Self::AccountId>;
+		type StakingPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 
 		/// Add Sponsored Pool
 		type SponsoredPool: CustomPool<Self::AccountId>;
@@ -199,20 +200,19 @@ pub mod pallet {
 		#[transactional]
 		pub fn join(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
 
 			ensure!(
 				!Self::is_joined_pool(&sender, pool_id),
 				<Error<T>>::AlreadyJoined
 			);
 
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
+
 			let ticket_type = Self::get_ticket_type(pool_id)?;
-			match ticket_type {
-				TicketType::Upfront(_) => {
-					T::UpfrontPool::join(sender.clone(), pool_id)?;
-				},
-				TicketType::Staking(_) => {
-					T::StakingPool::join(sender.clone(), pool_id)?;
-				},
+			let pool_match = match ticket_type {
+				TicketType::Upfront(_) => T::UpfrontPool::join(sender_lookup.clone(), pool_id),
+				TicketType::Staking(_) => T::StakingPool::join(sender_lookup, pool_id),
 				TicketType::Sponsored(_) => {
 					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
 					let count_joined_pool = joined_sponsored_pool.count();
@@ -222,13 +222,17 @@ pub mod pallet {
 						<Error<T>>::ExceedJoinedPool
 					);
 
-					T::SponsoredPool::join(sender.clone(), pool_id)?
+					T::SponsoredPool::join(sender.clone(), pool_id)
 				},
-			}
+			};
 
-			Self::join_pool(&sender, pool_id)?;
-			Self::deposit_event(Event::<T>::Joined { sender, pool_id });
-			Ok(())
+			if let Err(err) = pool_match {
+				Err(err)
+			} else {
+				Self::join_pool(&sender, pool_id)?;
+				Self::deposit_event(Event::<T>::Joined { sender, pool_id });
+				Ok(())
+			}
 		}
 
 		/// leave pool
@@ -240,11 +244,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn leave(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
 
 			if let Some(ticket) = Tickets::<T>::get(sender.clone(), pool_id) {
 				match ticket.ticket_type {
-					TicketType::Upfront(_) => T::UpfrontPool::leave(sender.clone())?,
-					TicketType::Staking(_) => T::StakingPool::leave(sender.clone())?,
+					TicketType::Upfront(_) => T::UpfrontPool::leave(sender_lookup.clone())?,
+					TicketType::Staking(_) => T::StakingPool::leave(sender_lookup)?,
 					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
 				}
 				T::Cache::insert(&sender, pool_id, ticket);
@@ -270,13 +275,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			if T::UpfrontPool::leave(sender.clone()).is_ok() {
+			let sender_lookup = T::Lookup::unlookup(sender.clone());
+			if T::UpfrontPool::leave(sender_lookup.clone()).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
 					pool_type: PoolType::Upfront,
 				});
-			} else if T::StakingPool::leave(sender.clone()).is_ok() {
+			} else if T::StakingPool::leave(sender_lookup).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
 					pool_type: PoolType::Staking,
@@ -287,7 +292,7 @@ pub mod pallet {
 					pool_type: PoolType::Sponsored,
 				});
 			}
-			Tickets::<T>::remove_prefix(sender, None);
+			let _result = Tickets::<T>::clear_prefix(sender, 6u32, None);
 			Ok(())
 		}
 	}
@@ -382,8 +387,6 @@ pub mod pallet {
 			}
 			Err(Error::<T>::PoolNotFound)
 		}
-
-		
 	}
 
 	impl<T: Config> WhitelistPool<T::AccountId> for Pallet<T> {
@@ -464,5 +467,4 @@ pub mod pallet {
 			MarkTime::<T>::get()
 		}
 	}
-
 }
