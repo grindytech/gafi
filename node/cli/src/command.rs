@@ -25,32 +25,48 @@ use gafi_primitives::types::Block;
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		// Local
-		#[cfg(feature = "with-gari")]
-		"dev" => Box::new(gafi_chain_spec::gari::development_config()),
+		"dev" => {
+			#[cfg(feature = "with-gari")]
+			return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::development_config()));
 
-		#[cfg(feature = "with-gaki")]
-		"dev" => Box::new(gafi_chain_spec::gaki::development_config()),
-        
+            #[allow(unreachable_code)]
+            {
+                #[cfg(feature = "with-gaki")]
+                return sc_service::Result::Ok(Box::new(gafi_chain_spec::gaki::development_config()));
+            }
+		},
+
 		// testnet
-		#[cfg(feature = "with-gari")]
-		"template-rococo" => Box::new(gafi_chain_spec::gari::local_testnet_config()),
+		"template-rococo" => {
+			#[cfg(feature = "with-gari")]
+			return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::local_testnet_config()));
 
-		#[cfg(feature = "with-gaki")]
-		"template-rococo" => Box::new(gafi_chain_spec::gaki::local_testnet_config()),
+            #[allow(unreachable_code)]
+            {
+                #[cfg(feature = "with-gaki")]
+                return sc_service::Result::Ok(Box::new(gafi_chain_spec::gaki::local_testnet_config()));
+            }
+		},
 
 		#[cfg(feature = "with-gari")]
 		"rococo" => Box::new(gafi_chain_spec::gari::rococo_config()),
 
 		// custome chain
-		#[cfg(feature = "with-gari")]
-		path => Box::new(gafi_chain_spec::gari::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
+		path => {
+            #[cfg(feature = "with-gari")]
+            return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::ChainSpec::from_json_file(
+                std::path::PathBuf::from(path),
+            )?));
 
-		#[cfg(feature = "with-gaki")]
-		path => Box::new(gafi_chain_spec::gaki::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
+            #[allow(unreachable_code)]
+            {
+                #[cfg(feature = "with-gaki")]
+                return sc_service::Result::Ok(Box::new(gafi_chain_spec::gaki::ChainSpec::from_json_file(
+                    std::path::PathBuf::from(path),
+                )?));
+            }
+        }
+
 	})
 }
 
@@ -344,10 +360,9 @@ pub fn run_gari() -> Result<()> {
 					cmd.run(config, partials.client.clone(), db, storage)
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) => {
+				BenchmarkCmd::Machine(cmd) =>
 					return runner
-						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
-				},
+						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 			}
 		},
 		Some(Subcommand::TryRuntime(cmd)) => {
@@ -611,10 +626,9 @@ pub fn run_gaki() -> Result<()> {
 					cmd.run(config, partials.client.clone(), db, storage)
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) => {
+				BenchmarkCmd::Machine(cmd) =>
 					return runner
-						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
-				},
+						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 			}
 		},
 		Some(Subcommand::TryRuntime(cmd)) => {

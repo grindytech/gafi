@@ -40,13 +40,6 @@ pub struct BenchmarkExtrinsicBuilder {
 	client: Arc<FullClient>,
 }
 
-impl BenchmarkExtrinsicBuilder {
-	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Arc<FullClient>) -> Self {
-		Self { client }
-	}
-}
-
 impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 	fn remark(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
 		let acc = Sr25519Keyring::Bob.pair();

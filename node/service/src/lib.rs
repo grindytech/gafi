@@ -56,17 +56,22 @@ impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
 		#[cfg(feature = "with-gari")]
 		return gari_runtime::api::dispatch(method, data);
 
-		#[cfg(feature = "with-gaki")]
-		return gaki_runtime::api::dispatch(method, data);
-
+		#[allow(unreachable_code)]
+		{
+			#[cfg(feature = "with-gaki")]
+			return gaki_runtime::api::dispatch(method, data);
+		}
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
 		#[cfg(feature = "with-gari")]
 		return gari_runtime::native_version();
 
-		#[cfg(feature = "with-gaki")]
-		return gaki_runtime::native_version();
+		#[allow(unreachable_code)]
+		{
+			#[cfg(feature = "with-gaki")]
+			return gaki_runtime::native_version();
+		}
 	}
 }
 

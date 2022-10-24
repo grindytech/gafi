@@ -25,7 +25,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify,
+		PostDispatchInfoOf, Verify, 
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiSignature,
@@ -41,7 +41,7 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU32, ConstU8, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, Randomness, EnsureOneOf,
+		PrivilegeCmp, Randomness, EitherOfDiverse,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -172,7 +172,7 @@ pub fn native_version() -> NativeVersion {
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-type MoreThanHalfCouncil = EnsureOneOf<
+type MoreThanHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
@@ -512,7 +512,7 @@ parameter_types! {
 	pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
-type ScheduleOrigin = EnsureOneOf<
+type ScheduleOrigin = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>,
 >;
@@ -581,7 +581,7 @@ parameter_types! {
 	pub const MaxApprovals: u32 = 100;
 }
 
-type ApproveOrigin = EnsureOneOf<
+type ApproveOrigin = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
 >;
@@ -646,14 +646,14 @@ impl pallet_democracy::Config for Runtime {
 	type InstantAllowed = InstantAllowed;
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
-	type CancellationOrigin = EnsureOneOf<
+	type CancellationOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
 	>;
 	type BlacklistOrigin = EnsureRoot<AccountId>;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree but change to CouncilCollective at this time.
-	type CancelProposalOrigin = EnsureOneOf<
+	type CancelProposalOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>,
 	>;
