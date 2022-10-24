@@ -1,6 +1,6 @@
 use devnet::{
 	AccountId, AuraConfig, BalancesConfig, CouncilConfig, EVMConfig, EthereumConfig, FaucetConfig,
-	GenesisConfig, GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig, PoolConfig,
+	GenesisConfig, GrandpaConfig, PalletCacheConfig, PalletCacheFaucetConfig,
 	Signature, StakingPoolConfig, SudoConfig, SystemConfig, TxHandlerConfig,
 	WASM_BINARY,
 };

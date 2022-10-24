@@ -1,5 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+#[allow(unreachable_code)]
+
 // Local Runtime Types
 #[cfg(feature = "with-gari")]
 pub use gari_runtime;
@@ -12,8 +14,7 @@ use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index as Nonce};
 // Cumulus Imports
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::{ParachainBlockImport, ParachainConsensus};
-use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
+use cumulus_client_consensus_common::{ParachainConsensus};
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -496,7 +497,7 @@ where
 #[cfg(feature = "with-gari")]
 pub fn gari_build_import_queue(
 	client: Arc<TFullClient<Block, gari_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
-	block_import: FrontierBlockImport<
+	_block_import: FrontierBlockImport<
 		Block,
 		Arc<TFullClient<Block, gari_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
 		TFullClient<Block, gari_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>,
@@ -547,7 +548,7 @@ pub fn gari_build_import_queue(
 #[cfg(feature = "with-gaki")]
 pub fn gaki_build_import_queue(
 	client: Arc<TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
-	block_import: FrontierBlockImport<
+	_block_import: FrontierBlockImport<
 		Block,
 		Arc<TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
 		TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>,

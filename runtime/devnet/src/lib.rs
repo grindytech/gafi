@@ -40,8 +40,8 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU8, EnsureOneOf, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, Randomness,
+		ConstU32, ConstU8, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
+		PrivilegeCmp, Randomness, EnsureOneOf,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -88,7 +88,6 @@ pub use staking_pool;
 pub use upfront_pool;
 
 mod pallets;
-use pallets::*;
 
 mod precompiles;
 
