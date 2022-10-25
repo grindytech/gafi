@@ -225,7 +225,7 @@ pub mod pallet {
 			};
 
 			if let Err(err) = pool_match {
-				Err(err)
+				Ok(())
 			} else {
 				Self::join_pool(&sender, pool_id)?;
 				Self::deposit_event(Event::<T>::Joined { sender, pool_id });
