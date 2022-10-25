@@ -2,7 +2,7 @@ use std::{marker::PhantomData, sync::Arc};
 
 use jsonrpsee::{core::{RpcResult as Result, async_trait}, proc_macros::rpc};
 use pallet_player_rpc_runtime_api::PlayerRuntimeRPCApi;
-use sp_api::{Core, ProvideRuntimeApi};
+use sp_api::{ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 

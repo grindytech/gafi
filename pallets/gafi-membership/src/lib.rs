@@ -187,7 +187,7 @@ pub mod pallet {
 		#[pallet::weight(50_000_000)]
 		#[transactional]
 		pub fn remove_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
-			let sender = T::ApproveOrigin::ensure_origin(origin)?;
+			let _sender = T::ApproveOrigin::ensure_origin(origin)?;
 			let count = Self::member_count();
 
 			ensure!(
