@@ -150,10 +150,10 @@ pub mod pallet {
 			let _now: u128 = Self::get_timestamp();
 			if _now - Self::mark_time() >= T::CleanTime::get() {
 				if DataFlag::<T, I>::get() == Flag::Left {
-					<DataRight<T, I>>::remove_all(None);
+					let _ = <DataRight<T, I>>::clear(0u32, None);
 					DataFlag::<T, I>::put(Flag::Right);
 				} else {
-					<DataLeft<T, I>>::remove_all(None);
+					let _ = <DataLeft<T, I>>::clear(0u32, None);
 					DataFlag::<T, I>::put(Flag::Left);
 				}
 				MarkTime::<T, I>::put(_now);

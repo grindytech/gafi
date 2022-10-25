@@ -30,11 +30,11 @@ use fc_rpc::{
 	EthPubSubApiServer, Net, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
 	SchemaV1Override, SchemaV2Override, SchemaV3Override, StorageOverride, Web3, Web3ApiServer,
 };
-use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 // Runtime
 
-use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index};
+use gafi_primitives::types::{Block, AccountId, Balance, Hash};
 
 pub fn frontier_database_dir(config: &Configuration, db_path: &str) -> std::path::PathBuf {
 	let config_dir = db_config_dir(&config);

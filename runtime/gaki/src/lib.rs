@@ -23,7 +23,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature,
 };
 
-use sp_io::hashing::blake2_256;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -45,31 +44,29 @@ use frame_system::{
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{H160, H256, U256};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData};
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 // Runtime common
-use runtime_common::impls::DealWithFees;
 use sp_runtime::SaturatedConversion;
 
 // Frontier
 use pallet_ethereum;
 use pallet_evm::{
-	self, Account as EVMAccount, AddressMapping, EVMCurrencyAdapter, EnsureAddressNever,
-	EnsureAddressRoot, FeeCalculator, GasWeightMapping, HashedAddressMapping, Runner,
+	self, Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever,
+	EnsureAddressRoot, FeeCalculator, HashedAddressMapping, Runner,
 };
 mod precompiles;
 use fp_rpc::TransactionStatus;
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use pallet_ethereum::{Transaction as EthereumTransaction};
 use precompiles::FrontierPrecompiles;
 
 // Local
 use gafi_primitives::{
 	constant::ID,
 	system_services::{SystemDefaultServices, SystemService},
-	ticket::{TicketInfo, TicketType},
+	ticket::{TicketInfo},
 };
-use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
 use pallet_pool;
 use pallet_pool_names;
@@ -792,7 +789,7 @@ where
 		);
 
 		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|e| {
+			.map_err(|_e| {
 				// log::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
@@ -1162,7 +1159,7 @@ impl_runtime_apis! {
 		}
 
 		fn extrinsic_filter(
-			xts: Vec<<Block as BlockT>::Extrinsic>,
+			_xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<EthereumTransaction> {
 			// xts.into_iter().filter_map(|xt| match xt.0.function {
 			// 	Call::Ethereum(transact { transaction }) => Some(transaction),

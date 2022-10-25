@@ -19,17 +19,15 @@
 //! Contains code to setup the command invocations in [`super::command`] which would
 //! otherwise bloat that module.
 
-use std::{sync::Arc, time::Duration};
+use std::{sync::Arc};
 
 use codec::Encode;
 use frame_system::Call as SystemCall;
 
 use devnet as runtime;
 
-use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sp_core::{sr25519, Pair};
-use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::{generic::Era, AccountId32, OpaqueExtrinsic, SaturatedConversion};
 
@@ -40,13 +38,6 @@ use crate::service::FullClient;
 /// Note: Should only be used for benchmarking.
 pub struct BenchmarkExtrinsicBuilder {
 	client: Arc<FullClient>,
-}
-
-impl BenchmarkExtrinsicBuilder {
-	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Arc<FullClient>) -> Self {
-		Self { client }
-	}
 }
 
 impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
@@ -121,18 +112,4 @@ pub fn create_benchmark_extrinsic(
 		runtime::Signature::Sr25519(signature.clone()),
 		extra.clone(),
 	)
-}
-
-/// Generates inherent data for the `benchmark overhead` command.
-///
-/// Note: Should only be used for benchmarking.
-pub fn inherent_benchmark_data() -> Result<InherentData> {
-	let mut inherent_data = InherentData::new();
-	let d = Duration::from_millis(0);
-	let timestamp = sp_timestamp::InherentDataProvider::new(d.into());
-
-	timestamp
-		.provide_inherent_data(&mut inherent_data)
-		.map_err(|e| format!("creating inherent data: {:?}", e))?;
-	Ok(inherent_data)
 }
