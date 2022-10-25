@@ -21,18 +21,16 @@ use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
 	traits::{Currency, Get, ReservableCurrency},
-	Twox64Concat,
-	transactional,
+	transactional, Twox64Concat,
 };
 use frame_system::pallet_prelude::*;
-pub use pallet::*;
-use pallet_evm::AddressMapping;
-use sp_core::crypto::AccountId32;
-use sp_core::H160;
-use sp_io::hashing::blake2_256;
-use gu_ethereum::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
 use gu_convertor::into_account;
 use gu_currency::transfer_all;
+use gu_ethereum::{eth_recover, to_ascii_hex, EcdsaSignature, EthereumAddress};
+pub use pallet::*;
+use pallet_evm::AddressMapping;
+use sp_core::{crypto::AccountId32, H160};
+use sp_io::hashing::blake2_256;
 
 #[cfg(test)]
 mod mock;
@@ -87,7 +85,8 @@ pub mod pallet {
 
 	// holding H160 address that bonded for AccountId32 address
 	#[pallet::storage]
-	pub type Id32Mapping<T: Config> = StorageMap<_, Twox64Concat, AccountId32, H160>;
+	pub type Id32Mapping<T: Config> =
+		StorageMap<_, Twox64Concat, AccountId32, (H160, BalanceOf<T>)>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -118,11 +117,13 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Parameters:
-		/// - `signature`: signature of the address that signed the message contain hex format of origin
+		/// - `signature`: signature of the address that signed the message contain hex format of
+		///   origin
 		///
 		/// - `address`: EVM(H160) address that you want to bond
 		///
-		/// - `withdraw`: true/false withdraw all the balance of original account of address trasfer to
+		/// - `withdraw`: true/false withdraw all the balance of original account of address trasfer
+		///   to
 		/// the origin, always KeepAlive original address
 		///
 		/// Emits `Bonded` event when successful.
@@ -140,8 +141,8 @@ pub mod pallet {
 			let account_id: AccountId32 = sender.clone().into();
 
 			ensure!(
-				Id32Mapping::<T>::get(account_id.clone()).is_none()
-					&& H160Mapping::<T>::get(address).is_none(),
+				Id32Mapping::<T>::get(account_id.clone()).is_none() &&
+					H160Mapping::<T>::get(address).is_none(),
 				<Error<T>>::AlreadyBond
 			);
 			ensure!(
@@ -177,15 +178,20 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let account_id: AccountId32 = sender.clone().into();
 
-			let evm_address = <Id32Mapping<T>>::get(account_id);
-			ensure!(evm_address.is_some(), <Error<T>>::NonbondAccount);
-			let id32_address = <H160Mapping<T>>::get(evm_address.unwrap());
+			let mapping_data = <Id32Mapping<T>>::get(account_id);
+			ensure!(mapping_data.is_some(), <Error<T>>::NonbondAccount);
+
+			let (evm_address, deposit) = mapping_data.unwrap();
+			let id32_address = <H160Mapping<T>>::get(evm_address);
 			ensure!(id32_address.is_some(), <Error<T>>::NonbondAccount);
 
-			<T as pallet::Config>::Currency::unreserve(&sender, T::ReservationFee::get());
+			<T as pallet::Config>::Currency::unreserve(&sender, deposit);
 
-			Self::remove_pair_bond(evm_address.unwrap(), id32_address.unwrap());
-			Self::deposit_event(Event::Unbonded { sender, address: evm_address.unwrap() });
+			Self::remove_pair_bond(evm_address, id32_address.unwrap());
+			Self::deposit_event(Event::Unbonded {
+				sender,
+				address: evm_address,
+			});
 			Ok(())
 		}
 	}
@@ -230,10 +236,13 @@ where
 		let origin_address: H160 = Self::get_or_create_evm_address(account_id.clone());
 
 		<H160Mapping<T>>::insert(address, account_id.clone());
-		<Id32Mapping<T>>::insert(account_id, address);
+		<Id32Mapping<T>>::insert(account_id, (address, T::ReservationFee::get()));
 
 		<H160Mapping<T>>::insert(origin_address, origin_account_id.clone());
-		<Id32Mapping<T>>::insert(origin_account_id, origin_address);
+		<Id32Mapping<T>>::insert(
+			origin_account_id,
+			(origin_address, T::ReservationFee::get()),
+		);
 	}
 
 	fn remove_pair_bond(address: H160, account_id: AccountId32)
@@ -250,7 +259,6 @@ where
 		<H160Mapping<T>>::remove(origin_address);
 		<Id32Mapping<T>>::remove(origin_account_id);
 	}
-
 }
 
 struct OriginAddressMapping;
