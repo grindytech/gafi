@@ -300,10 +300,7 @@ pub mod pallet {
 
 	impl<T: Config> IWhitelist<T::AccountId> for Pallet<T> {
 		fn is_whitelist(pool_id: ID) -> bool {
-			match WhitelistSource::<T>::get(pool_id) {
-				Some(_) => true,
-				None => false,
-			}
+			WhitelistSource::<T>::get(pool_id).is_some()
 		}
 
 		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
@@ -341,7 +338,7 @@ pub mod pallet {
 					let _ = Self::verify_and_approve(&api, player, pool_id);
 				}
 			}
-			return Ok(())
+			Ok(())
 		}
 
 		pub fn verify_and_approve(
@@ -349,7 +346,7 @@ pub mod pallet {
 			player: T::AccountId,
 			pool_id: ID,
 		) -> Result<(), &'static str> {
-			let verify = Self::fetch_whitelist(&uri);
+			let verify = Self::fetch_whitelist(uri);
 
 			if verify == Ok(true) {
 				let call = Call::approve_whitelist_unsigned { player, pool_id };
@@ -394,10 +391,7 @@ pub mod pallet {
 				http::Error::Unknown
 			})?;
 
-			let verify: bool = match body_str {
-				"true" => true,
-				_ => false,
-			};
+			let verify: bool = matches!(body_str, "true");
 
 			Ok(verify)
 		}
@@ -418,7 +412,7 @@ pub mod pallet {
 					return Some(format!("{}", url))
 				}
 			}
-			return None
+			None
 		}
 
 		fn is_pool_owner(pool_id: ID, sender: &T::AccountId) -> Result<(), Error<T>> {
@@ -429,7 +423,7 @@ pub mod pallet {
 					return Err(Error::<T>::NotPoolOwner)
 				}
 			}
-			return Err(Error::<T>::PoolNotFound)
+			Err(Error::<T>::PoolNotFound)
 		}
 	}
 
@@ -453,7 +447,7 @@ pub mod pallet {
 			};
 
 			match call {
-				Call::approve_whitelist_unsigned { pool_id, player } => match source {
+				Call::approve_whitelist_unsigned { pool_id: _, player: _} => match source {
 					TransactionSource::Local | TransactionSource::InBlock =>
 						valid_tx(b"approve_whitelist_unsigned".to_vec()),
 					_ => InvalidTransaction::Call.into(),

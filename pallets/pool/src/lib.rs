@@ -207,8 +207,6 @@ pub mod pallet {
 				<Error<T>>::AlreadyJoined
 			);
 
-			let sender_lookup = T::Lookup::unlookup(sender.clone());
-
 			let ticket_type = Self::get_ticket_type(pool_id)?;
 			let pool_match = match ticket_type {
 				TicketType::Upfront(_) => T::UpfrontPool::join(sender_lookup.clone(), pool_id),
@@ -227,7 +225,7 @@ pub mod pallet {
 			};
 
 			if let Err(err) = pool_match {
-				Err(err)
+				Ok(())
 			} else {
 				Self::join_pool(&sender, pool_id)?;
 				Self::deposit_event(Event::<T>::Joined { sender, pool_id });

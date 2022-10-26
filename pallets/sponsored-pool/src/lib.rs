@@ -475,7 +475,7 @@ pub mod pallet {
 
 			if T::IWhitelist::is_whitelist(pool_id) {
 				T::IWhitelist::insert_whitelist(pool_id, sender)?;
-				return Err(<Error<T>>::WhitelistedPool.into());
+				return Err(<Error<T>>::WhitelistedPool.into())
 			}
 			Ok(())
 		}
@@ -505,9 +505,9 @@ pub mod pallet {
 
 		fn get_pool_owner(pool_id: ID) -> Option<T::AccountId> {
 			if let Some(pool) = Pools::<T>::get(pool_id) {
-				return Some(pool.owner);
+				return Some(pool.owner)
 			}
-			return None;
+			return None
 		}
 
 		/// Add new sponsored-pool with default values, return pool_id

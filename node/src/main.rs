@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 
 fn main() -> sc_cli::Result<()> {
 
