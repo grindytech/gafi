@@ -1,0 +1,17 @@
+version: "3.2"
+
+services:
+  gafi:
+    container_name: gafi-node-dev
+    image: grindytech/gafi-linux:v0.0.1
+    working_dir: /var/www/gafi-node
+    ports:
+      - "9933:9933"
+    environment:
+      - CARGO_HOME=/var/www/gafi-node/.cargo
+    volumes:
+      - .:/var/www/gafi-node
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release --features with-dev && ./target/release/gafi-node --tmp --rpc-port 9933 --ws-external --rpc-external"
