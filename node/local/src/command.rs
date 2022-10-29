@@ -14,6 +14,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#[cfg(feature = "runtime-benchmarks")]
+use std::sync::Arc;
+#[cfg(feature = "runtime-benchmarks")]
+use runtime::Block;
+
+#[cfg(feature = "runtime-benchmarks")]
+use crate::command_helper::{BenchmarkExtrinsicBuilder, inherent_benchmark_data};
+
+#[cfg(feature = "runtime-benchmarks")]
+use frame_benchmarking_cli::BenchmarkCmd;
 
 use clap::Parser;
 use fc_db::frontier_database_dir;

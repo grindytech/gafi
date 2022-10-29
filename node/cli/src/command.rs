@@ -2,8 +2,6 @@ use crate::cli::{Cli, RelayChainCli, Subcommand};
 use codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-#[cfg(feature = "runtime-benchmarks")]
-use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -19,8 +17,12 @@ use std::{io::Write, net::SocketAddr};
 
 use gafi_chain_spec::IdentifyVariant;
 use gafi_service::GafiRuntimeExecutor;
-
 use gafi_primitives::types::Block;
+
+#[cfg(feature = "runtime-benchmarks")]
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+#[cfg(feature = "runtime-benchmarks")]
+use gafi_service::new_partial;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
