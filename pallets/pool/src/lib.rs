@@ -224,7 +224,7 @@ pub mod pallet {
 				},
 			};
 
-			if let Err(err) = pool_match {
+			if let Err(_) = pool_match {
 				Ok(())
 			} else {
 				Self::join_pool(&sender, pool_id)?;
