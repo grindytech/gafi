@@ -20,8 +20,6 @@ hex-literal = {version = "0.3.4", optional = true}
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 
 # Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
 pallet-evm = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
 
 # Substrate
@@ -34,7 +32,6 @@ sp-runtime = {version = "6.0.0", default-features = false, git = "https://github
 sp-std = {version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 # Local
 gu-convertor = {default-features = false, version = "4.0.0-dev", path = "../../utils/convertor"}
@@ -48,6 +45,7 @@ parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
 
 gu-mock = { path = "../../utils/mock" }
 
@@ -62,12 +60,9 @@ std = [
   'scale-info/std',
   'frame-support/std',
   'frame-system/std',
-  'frame-benchmarking/std',
   'pallet-balances/std',
   'pallet-evm/std',
   'pallet-ethereum/std',
-  'fp-self-contained/std',
-  'pallet-transaction-payment/std',
   'gu-ethereum/std',
   'gu-convertor/std',
   'gu-currency/std',

@@ -3380,7 +3380,6 @@ name = "gafi-primitives"
 version = "4.0.0-dev"
 dependencies = [
  "frame-support",
- "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -3848,7 +3847,6 @@ name = "gu-convertor"
 version = "4.0.0-dev"
 dependencies = [
  "frame-support",
- "frame-system",
  "gafi-primitives",
  "hex-literal 0.2.2",
  "pallet-balances",
@@ -3870,7 +3868,6 @@ version = "4.0.0-dev"
 dependencies = [
  "frame-support",
  "frame-system",
- "gafi-primitives",
  "hex-literal 0.2.2",
  "pallet-balances",
  "parity-scale-codec",
@@ -8793,7 +8790,6 @@ dependencies = [
 name = "proof-address-mapping"
 version = "4.0.0-dev"
 dependencies = [
- "fp-self-contained",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -8807,7 +8803,6 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-timestamp",
- "pallet-transaction-payment",
  "parity-scale-codec",
  "parity-secp256k1",
  "scale-info",
