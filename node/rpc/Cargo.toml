@@ -9,12 +9,9 @@ repository = "https://github.com/grindytech/cumulus/"
 version = "0.1.0"
 
 [dependencies]
-clap = {version = "3.1", features = ["derive"]}
 codec = {package = "parity-scale-codec", version = "3.0.0"}
 derive_more = "0.99.2"
 futures = '0.3'
-hex-literal = "0.3.4"
-jsonrpc-core = "18.0.0"
 jsonrpsee = {version = "0.14.0", features = ["server"]}
 log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
@@ -44,8 +41,6 @@ sp-block-builder = {git = "https://github.com/paritytech/substrate", branch = "p
 sp-blockchain = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-runtime = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-
-pallet-player = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player" }
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
