@@ -22,17 +22,16 @@ serde = {version = "1.0.101", optional = true}
 frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
 frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-api = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 # Local
 gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
 
 [dev-dependencies]
+pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
@@ -49,9 +48,6 @@ std = [
   "scale-info/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
-  "pallet-balances/std",
-  'pallet-randomness-collective-flip/std',
   "pallet-timestamp/std",
   "upfront-pool/std",
   "gafi-membership/std"

@@ -34,7 +34,6 @@ sp-runtime = { version = "6.0.0", default-features = false, git = "https://githu
 
 # Local
 gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
-pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../pallet-cache" }
 
 [dev-dependencies]
 sp-core = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
@@ -57,18 +56,15 @@ std = [
   "serde/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
   "gafi-primitives/std",
   "sp-std/std",
   "sp-io/std",
   "pallet-timestamp/std",
-  "pallet-cache/std",
   "sp-core/std",
   "pallet-balances/std",
   "upfront-pool/std",
   "staking-pool/std",
   "sponsored-pool/std",
-  "pallet-cache/std",
   "pallet-randomness-collective-flip/std",
 ]
 
