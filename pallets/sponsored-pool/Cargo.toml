@@ -26,7 +26,6 @@ frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "h
 frame-support = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 frame-system = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 pallet-balances = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-core = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-io = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-runtime = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
@@ -43,6 +42,7 @@ sp-core = { default-features = false, version = "6.0.0", git = "https://github.c
 sp-io = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-runtime = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 pallet-pool-names = { default-features = false, version = "4.0.0-dev", path = "../pool-names" }
+pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
@@ -52,9 +52,8 @@ std = [
   "scale-info/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
   "gafi-primitives/std",
-  "pallet-randomness-collective-flip/std",
+  # "pallet-randomness-collective-flip/std",
   "sp-io/std",
   "sp-core/std",
   "pallet-balances/std",

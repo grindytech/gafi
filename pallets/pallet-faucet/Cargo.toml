@@ -21,15 +21,14 @@ frame-support = {default-features = false, version = "4.0.0-dev", git = "https:/
 frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-std = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 # Local
 gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
-pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallet-cache"}
 
 [dev-dependencies]
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallet-cache"}
 sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
@@ -42,7 +41,6 @@ std = [
   "scale-info/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
   "sp-runtime/std",
   "pallet-balances/std",
 ]
