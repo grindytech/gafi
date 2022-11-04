@@ -4,6 +4,8 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
+use sp_std::prelude::*;
+use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -45,14 +47,18 @@ impl<AccountIdLookup, AccountId> SystemPool<AccountIdLookup, AccountId> for () {
 	}
 }
 
-pub trait SystemDefaultServices {
-	fn get_default_services() -> [(ID, SystemService); 3];
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct SystemServicePack {
+	pub data: Vec<(ID, SystemService)>,
 }
 
-// pub struct Convertor;
+impl SystemServicePack {
+	pub fn new(data: Vec<(ID, SystemService)>) -> Self {
+		Self { data }
+	}
+}
 
-// impl Convertor {
-// 	pub fn into_id(ticket: SystemTicket) -> ID {
-// 		ticket.using_encoded(blake2_256)
-// 	}
-// }
+pub trait SystemDefaultServices {
+	fn get_default_services() -> SystemServicePack;
+}

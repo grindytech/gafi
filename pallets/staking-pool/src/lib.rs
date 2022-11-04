@@ -33,6 +33,8 @@ pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use sp_runtime::traits::StaticLookup;
 
+pub mod migration;
+
 #[cfg(test)]
 mod mock;
 
@@ -72,8 +74,10 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
-		type StakingServices: SystemDefaultServices;
+		/// Get service configuration detail
+		type StakingServices: SystemDefaultServices + Decode;
 
+		/// Player time for Gafi membership
 		type Players: PlayersTime<Self::AccountId>;
 	}
 
@@ -111,7 +115,8 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			for service in <T as Config>::StakingServices::get_default_services() {
+			let services = <T as Config>::StakingServices::get_default_services();
+			for service in services.data {
 				Services::<T>::insert(service.0, service.1);
 			}
 		}
