@@ -151,7 +151,9 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MaxPlayer<T>>::put(<T as Config>::MaxPlayerStorage::get());
-			for service in <T as Config>::UpfrontServices::get_default_services() {
+
+			let services = <T as Config>::UpfrontServices::get_default_services();
+			for service in services.data {
 				Services::<T>::insert(service.0, service.1);
 			}
 		}

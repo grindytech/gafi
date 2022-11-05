@@ -6,7 +6,7 @@ use frame_support::{
 	traits::{Get, OnRuntimeUpgrade, ReservableCurrency},
 	weights::Weight, Blake2_128Concat, Twox64Concat, migration::storage_key_iter,
 };
-use gafi_primitives::{system_services::{SystemDefaultServices, SystemService}, constant::ID};
+use gafi_primitives::{system_services::{SystemServicePack, SystemService}, constant::ID};
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::format;
 use sp_std::vec::Vec;
@@ -21,16 +21,16 @@ impl<T: Config> OnRuntimeUpgrade for StakingPoolFilter<T> {
 
 		// Read all the data into memory.
 		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
-		let stored_data: Vec<_> = storage_key_iter::<T::AccountId, [(ID, SystemService); 3], Twox64Concat>(
+		let stored_data: Vec<_> = storage_key_iter::<T::StakingServices, SystemServicePack, Twox64Concat>(
 			pallet_prefix,
 			storage_item_prefix,
 		)
 		.drain()
 		.collect();
 
-		// let migrated_count = stored_data.len() as u64;
+		let migrated_count = stored_data.len() as u64;
 
-		// log::info!(target: "UnitsWithForeignAssetType", "Migrating {:?} elements", migrated_count);
+		log::info!(target: "UnitsWithForeignAssetType", "Migrating {:?} elements", migrated_count);
 
 		// // Write to the new storage with removed and added fields
 		// for (asset_id, units) in stored_data {

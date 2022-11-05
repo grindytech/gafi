@@ -14,10 +14,6 @@ build-dev:
 build-fast-runtime:
 	cargo build --release --features with-dev,fast-runtime
 
-.PHONY: build-gaki
-build-gaki:
-	cargo build --release --features with-gaki
-
 .PHONY: build-gari
 build-gari:
 	cargo build --release --features with-gari
@@ -54,10 +50,6 @@ test:
 .PHONY: check-dev
 check-dev:
 	cargo check --release --features with-dev
-
-.PHONY: check-gaki
-check-gaki:
-	cargo check --release --features with-gaki
 
 .PHONY: check-gari
 check-gari:

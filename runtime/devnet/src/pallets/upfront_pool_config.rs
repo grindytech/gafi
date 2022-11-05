@@ -2,20 +2,24 @@ use frame_support::parameter_types;
 use gafi_primitives::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
-	system_services::{SystemDefaultServices, SystemService},
+	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 };
 use sp_runtime::Permill;
+use codec::{Encode, Decode};
+use sp_std::vec;
 
 use crate::{Balances, Event, Player, Pool, Runtime};
 
 const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
 const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
+#[derive(Eq, PartialEq, Clone, Encode, Decode)]
 pub struct UpfrontPoolDefaultServices {}
 
 impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services() -> [(ID, SystemService); 3] {
-		[
+	fn get_default_services() -> SystemServicePack {
+		SystemServicePack::new(vec![
 			(
 				UPFRONT_BASIC_ID,
 				SystemService::new(
@@ -43,7 +47,7 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 					25 * unit(GAKI),
 				),
 			),
-		]
+		])
 	}
 }
 

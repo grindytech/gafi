@@ -22,9 +22,7 @@ use sp_runtime::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
 		IdentifyAccount, PostDispatchInfoOf, Verify,
 	},
-	transaction_validity::{
-		TransactionSource, TransactionValidity, TransactionValidityError,
-	},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiSignature,
 };
 
@@ -50,7 +48,7 @@ use frame_system::{
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{H160, H256, U256};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use sp_std::{marker::PhantomData};
+use sp_std::marker::PhantomData;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 // Runtime common
 use sp_runtime::SaturatedConversion;
@@ -58,8 +56,8 @@ use sp_runtime::SaturatedConversion;
 // Frontier
 use pallet_ethereum;
 use pallet_evm::{
-	self, Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever,
-	EnsureAddressRoot, FeeCalculator, Runner,
+	self, Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressRoot,
+	FeeCalculator, Runner,
 };
 mod precompiles;
 use fp_rpc::TransactionStatus;
@@ -69,8 +67,8 @@ use precompiles::FrontierPrecompiles;
 // Local
 use gafi_primitives::{
 	constant::ID,
-	system_services::{SystemDefaultServices, SystemService},
-	ticket::{TicketInfo},
+	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
+	ticket::TicketInfo,
 };
 use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
@@ -614,11 +612,13 @@ pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
 pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
 pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
+
+#[derive(Eq, PartialEq, Clone, Encode, Decode)]
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services() -> [(ID, SystemService); 3] {
-		[
+	fn get_default_services() -> SystemServicePack {
+		SystemServicePack::new(vec![
 			(
 				STAKING_BASIC_ID,
 				SystemService::new(
@@ -646,15 +646,15 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 					2000 * unit(GAFI),
 				),
 			),
-		]
+		])
 	}
 }
 
 pub struct UpfrontPoolDefaultServices {}
 
 impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services() -> [(ID, SystemService); 3] {
-		[
+	fn get_default_services() -> SystemServicePack {
+		SystemServicePack::new(vec![
 			(
 				UPFRONT_BASIC_ID,
 				SystemService::new(
@@ -682,7 +682,7 @@ impl SystemDefaultServices for UpfrontPoolDefaultServices {
 					10 * unit(GAFI),
 				),
 			),
-		]
+		])
 	}
 }
 
@@ -787,7 +787,6 @@ impl sponsored_pool::Config for Runtime {
 	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
-
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
 	Call: From<LocalCall>,
@@ -797,7 +796,10 @@ where
 		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
 		index: Index,
-	) -> Option<(Call, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	) -> Option<(
+		Call,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
 		let period = BlockHashCount::get() as u64;
 		let current_block = System::block_number().saturated_into::<u64>().saturating_sub(1);
 		let tip = 0;
@@ -820,7 +822,14 @@ where
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let address = account;
 		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (sp_runtime::MultiAddress::Id(address), signature.into(), extra)))
+		Some((
+			call,
+			(
+				sp_runtime::MultiAddress::Id(address),
+				signature.into(),
+				extra,
+			),
+		))
 	}
 }
 

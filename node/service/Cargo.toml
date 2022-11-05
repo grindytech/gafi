@@ -90,7 +90,6 @@ cumulus-relay-chain-interface = {git = "https://github.com/grindytech/cumulus", 
 cumulus-relay-chain-rpc-interface = {git = "https://github.com/grindytech/cumulus", branch = "gafi-polkadot-v0.9.26"}
 
 # Runtime
-gaki-runtime = {path = "../../runtime/gaki", optional = true}
 gari-runtime = {path = "../../runtime/gari", optional = true}
 
 # Local
@@ -111,9 +110,6 @@ runtime-benchmarks = [
   "frame-benchmarking-cli",
 ]
 
-with-gaki = [
-  "gaki-runtime",
-]
 
 with-gari = [
   "gari-runtime",
@@ -125,6 +121,5 @@ rococo-native = [
 ]
 
 fast-runtime = [
-	"gaki-runtime/fast-runtime",
 	"gari-runtime/fast-runtime",
 ]

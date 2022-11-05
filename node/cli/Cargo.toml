@@ -88,17 +88,13 @@ gafi-service = {path = "../service", default-features = false, optional = true}
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 
 [features]
-default = ["with-gari", "with-gaki"]
+default = ["with-gari"]
 runtime-benchmarks = [
   "gafi-service/runtime-benchmarks",
 ]
 
 with-gari = [
   "gafi-service/with-gari",
-]
-
-with-gaki = [
-  "gafi-service/with-gaki",
 ]
 
 fast-runtime = [ "gafi-service/fast-runtime" ]
