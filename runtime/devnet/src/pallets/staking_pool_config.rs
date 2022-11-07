@@ -8,6 +8,7 @@ use sp_runtime::Permill;
 use crate::{Balances, Event, Player, Runtime};
 use codec::{Encode, Decode};
 use sp_std::vec;
+use scale_info::TypeInfo;
 
 const STAKING_BASIC_ID: ID = [0_u8; 32];
 const STAKING_MEDIUM_ID: ID = [1_u8; 32];
@@ -47,7 +48,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 	}
 }
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, Debug, TypeInfo, Default)]
 pub struct StakingPoolDefaultServices {}
 
 impl staking_pool::Config for Runtime {

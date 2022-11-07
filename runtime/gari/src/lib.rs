@@ -52,6 +52,7 @@ use sp_std::marker::PhantomData;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 // Runtime common
 use sp_runtime::SaturatedConversion;
+use scale_info::TypeInfo;
 
 // Frontier
 use pallet_ethereum;
@@ -613,7 +614,7 @@ pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
 pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, Debug, TypeInfo, Default)]
 pub struct StakingPoolDefaultServices {}
 
 impl SystemDefaultServices for StakingPoolDefaultServices {

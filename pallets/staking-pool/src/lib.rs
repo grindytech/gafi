@@ -75,7 +75,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Get service configuration detail
-		type StakingServices: SystemDefaultServices + Decode;
+		type StakingServices: SystemDefaultServices + Member + Parameter + Default;
 
 		/// Player time for Gafi membership
 		type Players: PlayersTime<Self::AccountId>;
@@ -100,7 +100,7 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, ID, SystemService>;
+	pub type Services<T: Config> = StorageMap<_, Blake2_128Concat, ID, SystemService>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}

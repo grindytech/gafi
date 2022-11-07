@@ -4,11 +4,12 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
-use sp_std::prelude::*;
-use sp_std::vec::Vec;
+use sp_std::{prelude::*, vec::Vec};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(
+	Default, Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
+)]
 pub struct SystemService {
 	pub id: ID,
 	pub service: Service,
@@ -21,6 +22,17 @@ impl SystemService {
 			id,
 			service: Service { tx_limit, discount },
 			value,
+		}
+	}
+
+	pub fn default() -> Self {
+		Self {
+			id: [0; 32],
+			service: Service {
+				tx_limit: 0,
+				discount: Permill::from_percent(0),
+			},
+			value: 0_u128,
 		}
 	}
 }
@@ -48,7 +60,7 @@ impl<AccountIdLookup, AccountId> SystemPool<AccountIdLookup, AccountId> for () {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
 pub struct SystemServicePack {
 	pub data: Vec<(ID, SystemService)>,
 }
@@ -56,6 +68,10 @@ pub struct SystemServicePack {
 impl SystemServicePack {
 	pub fn new(data: Vec<(ID, SystemService)>) -> Self {
 		Self { data }
+	}
+
+	pub fn default() -> Self {
+		Self { data: vec![] }
 	}
 }
 
