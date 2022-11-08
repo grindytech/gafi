@@ -39,6 +39,8 @@ pub use pallet::*;
 use pallet_timestamp::{self as timestamp};
 use sp_runtime::traits::StaticLookup;
 
+pub mod migration;
+
 #[cfg(test)]
 mod mock;
 
@@ -124,7 +126,7 @@ pub mod pallet {
 	/// Holding the services to serve to players, means service detail can change on runtime
 	#[pallet::storage]
 	#[pallet::getter(fn services)]
-	pub type Services<T: Config> = StorageMap<_, Twox64Concat, ID, SystemService>;
+	pub type Services<T: Config> = StorageMap<_, Blake2_128Concat, ID, SystemService>;
 
 	/// The new players join the pool before the TimeService, whose are without charge
 	#[pallet::storage]
