@@ -75,7 +75,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Get service configuration detail
-		type StakingServices: SystemDefaultServices + Member + Parameter + Default;
+		type StakingServices: SystemDefaultServices;
 
 		/// Player time for Gafi membership
 		type Players: PlayersTime<Self::AccountId>;
