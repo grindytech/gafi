@@ -1,19 +1,22 @@
 use gafi_primitives::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
-	system_services::{SystemDefaultServices, SystemService},
+	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 };
 use sp_runtime::Permill;
 
 use crate::{Balances, Event, Player, Runtime};
+use codec::{Encode, Decode};
+use sp_std::vec;
+use scale_info::TypeInfo;
 
 const STAKING_BASIC_ID: ID = [0_u8; 32];
 const STAKING_MEDIUM_ID: ID = [1_u8; 32];
 const STAKING_ADVANCE_ID: ID = [2_u8; 32];
 
 impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services() -> [(ID, SystemService); 3] {
-		[
+	fn get_default_services() -> SystemServicePack {
+		SystemServicePack::new(vec![
 			(
 				STAKING_BASIC_ID,
 				SystemService::new(
@@ -41,10 +44,11 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 					3000 * unit(GAKI),
 				),
 			),
-		]
+		])
 	}
 }
 
+#[derive(Eq, PartialEq, Clone, Encode, Decode, Debug, TypeInfo, Default)]
 pub struct StakingPoolDefaultServices {}
 
 impl staking_pool::Config for Runtime {
