@@ -85,7 +85,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(
-		spec: &Box<dyn gafi_chain_spec::ChainSpec>,
+		_spec: &Box<dyn gafi_chain_spec::ChainSpec>,
 	) -> &'static RuntimeVersion {
 		#[cfg(feature = "with-gari")]
 		{
