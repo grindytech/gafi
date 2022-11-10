@@ -96,7 +96,6 @@ cumulus-relay-chain-rpc-interface = {git = "https://github.com/grindytech/cumulu
 
 # Runtime
 gari-runtime = {path = "../../runtime/gari", default-features = false, features = ["std"]}
-gaki-runtime = {path = "../../runtime/gaki", default-features = false, features = ["std"]}
 
 # Local
 gafi-primitives = {path = "../../primitives"}

@@ -45,7 +45,6 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "sp-runtime/std",
-  "frame-benchmarking/std",
   "gafi-primitives/std",
   "pallet-timestamp/std",
   "pallet-balances/std",

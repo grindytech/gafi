@@ -803,7 +803,11 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
+	(
+		staking_pool::migration::StakingPoolFilter<Runtime>,
+		upfront_pool::migration::UpfrontPoolFilter<Runtime>,
+	),
 >;
 
 impl fp_self_contained::SelfContainedCall for Call {

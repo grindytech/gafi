@@ -8,7 +8,8 @@
     "test": "mocha --reporter spec js-tests/*",
     "scripts": "mocha --reporter spec scripts/*",
     "sponsored": "mocha --reporter spec js-tests/sponsored-fee.test.js",
-    "service": "mocha --reporter spec js-tests/service-fee.test.js",
+    "upfront": "mocha --reporter spec js-tests/upfront-pool.test.js",
+    "staking": "mocha --reporter spec js-tests/staking-pool.test.js",
     "game-creator": "mocha --reporter spec js-tests/game-creator.test.js",
     "whitelist": "mocha --reporter spec js-tests/whitelist.test.js"
   },

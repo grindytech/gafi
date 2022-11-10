@@ -115,17 +115,16 @@ describeWithFrontier("Whitelist", (context) => {
         assert.notEqual(whitelist.toHuman(), null);
     })
 
-    // step('join sponsored sponsored by approving works', async () => {
-    //     const api = await ApiPromise.create({ provider: context.wsProvider });
+    step('join sponsored sponsored by approving works', async () => {
+        const api = await ApiPromise.create({ provider: context.wsProvider });
 
-    //     const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-    //     const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-    //     await utils.approve_whitelist(context, NewPool, Alice, Bob.address);
+        const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+        const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+        await utils.approve_whitelist(context, NewPool, Alice, Bob.address);
 
-    //     let ticket = await api.query.pool.tickets(Bob.address, NewPool);
-    //     console.log("ticket: ", ticket.toHuman());
+        let ticket = await api.query.pool.tickets(Bob.address, NewPool);
 
-    // }).timeout(20000);
+    }).timeout(20000);
 
     step('discount on sponsored pool works', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });

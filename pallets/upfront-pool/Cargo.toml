@@ -56,7 +56,6 @@ std = [
   "scale-info/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
   "pallet-balances/std",
   "pallet-timestamp/std",
   "gafi-primitives/std",

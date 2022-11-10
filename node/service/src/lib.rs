@@ -6,9 +6,6 @@
 #[cfg(feature = "with-gari")]
 pub use gari_runtime;
 
-#[cfg(feature = "with-gaki")]
-pub use gaki_runtime;
-
 use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index as Nonce};
 
 // Cumulus Imports
@@ -55,23 +52,11 @@ impl sc_executor::NativeExecutionDispatch for GafiRuntimeExecutor {
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		#[cfg(feature = "with-gari")]
 		return gari_runtime::api::dispatch(method, data);
-
-		#[allow(unreachable_code)]
-		{
-			#[cfg(feature = "with-gaki")]
-			return gaki_runtime::api::dispatch(method, data);
-		}
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
 		#[cfg(feature = "with-gari")]
 		return gari_runtime::native_version();
-
-		#[allow(unreachable_code)]
-		{
-			#[cfg(feature = "with-gaki")]
-			return gaki_runtime::native_version();
-		}
 	}
 }
 
@@ -549,57 +534,6 @@ pub fn gari_build_import_queue(
 	.map_err(Into::into)
 }
 
-#[allow(clippy::type_complexity)]
-#[cfg(feature = "with-gaki")]
-pub fn gaki_build_import_queue(
-	client: Arc<TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
-	_block_import: FrontierBlockImport<
-		Block,
-		Arc<TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
-		TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>,
-	>,
-	config: &Configuration,
-	telemetry: Option<TelemetryHandle>,
-	task_manager: &TaskManager,
-) -> Result<
-	sc_consensus::DefaultImportQueue<
-		Block,
-		TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>,
-	>,
-	sc_service::Error,
-> {
-	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
-	cumulus_client_consensus_aura::import_queue::<
-		sp_consensus_aura::sr25519::AuthorityPair,
-		_,
-		_,
-		_,
-		_,
-		_,
-		_,
-	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import: client.clone(),
-		client: client.clone(),
-		create_inherent_data_providers: move |_, _| async move {
-			let time = sp_timestamp::InherentDataProvider::from_system_time();
-
-			let slot =
-				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-					*time,
-					slot_duration,
-				);
-
-			Ok((time, slot))
-		},
-		registry: config.prometheus_registry(),
-		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-		spawner: &task_manager.spawn_essential_handle(),
-		telemetry,
-	})
-	.map_err(Into::into)
-}
-
 /// Start a parachain node.
 #[cfg(feature = "with-gari")]
 pub async fn start_gari_node(
@@ -612,138 +546,6 @@ pub async fn start_gari_node(
 	Arc<TFullClient<Block, gari_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
 )> {
 	start_node_impl::<gari_runtime::RuntimeApi, GafiRuntimeExecutor, _, _>(
-        parachain_config,
-        polkadot_config,
-        collator_options,
-        id,
-        |client,
-         block_import,
-         config,
-         telemetry,
-         task_manager| {
-            let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-            let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
-
-            cumulus_client_consensus_aura::import_queue::<
-                sp_consensus_aura::sr25519::AuthorityPair,
-                _,
-                _,
-                _,
-                _,
-                _,
-                _,
-            >(cumulus_client_consensus_aura::ImportQueueParams {
-                block_import,
-                client,
-                create_inherent_data_providers: move |_, _| async move {
-                    let time = sp_timestamp::InherentDataProvider::from_system_time();
-
-                    let slot =
-                        sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                            *time,
-                            slot_duration,
-                        );
-
-                    Ok((time, slot))
-                },
-                registry: config.prometheus_registry().clone(),
-                can_author_with,
-                spawner: &task_manager.spawn_essential_handle(),
-                telemetry,
-            })
-            .map_err(Into::into)
-        },
-        |client,
-         prometheus_registry,
-         telemetry,
-         task_manager,
-         relay_chain_interface,
-         transaction_pool,
-         sync_oracle,
-         keystore,
-         force_authoring| {
-            let spawn_handle = task_manager.spawn_handle();
-
-            let slot_duration =
-                cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
-
-            let proposer_factory =
-                sc_basic_authorship::ProposerFactory::with_proof_recording(
-                    spawn_handle,
-                    client.clone(),
-                    transaction_pool,
-                    prometheus_registry,
-                    telemetry.clone(),
-                );
-
-            let relay_chain_for_aura = relay_chain_interface.clone();
-
-            Ok(AuraConsensus::build::<
-                sp_consensus_aura::sr25519::AuthorityPair,
-                _,
-                _,
-                _,
-                _,
-                _,
-                _,
-            >(BuildAuraConsensusParams {
-                proposer_factory,
-                create_inherent_data_providers:
-                    move |_, (relay_parent, validation_data)| {
-                        let relay_chain_for_aura = relay_chain_for_aura.clone();
-                        async move {
-                            let parachain_inherent =
-                                cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
-                                    relay_parent,
-                                    &relay_chain_for_aura,
-                                    &validation_data,
-                                    id,
-                                ).await;
-                            let time = sp_timestamp::InherentDataProvider::from_system_time();
-                            let slot =
-                                sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                                    *time,
-                                    slot_duration,
-                                );
-
-                            let parachain_inherent = parachain_inherent.ok_or_else(|| {
-                                Box::<dyn std::error::Error + Send + Sync>::from(
-                                    "Failed to create parachain inherent",
-                                )
-                            })?;
-                            Ok((time, slot, parachain_inherent))
-                        }
-                    },
-                block_import: client.clone(),
-                para_client: client.clone(),
-                backoff_authoring_blocks: Option::<()>::None,
-                sync_oracle,
-                keystore,
-                force_authoring,
-                slot_duration,
-                // We got around 500ms for proposing
-                block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
-                // And a maximum of 750ms if slots are skipped
-                max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
-                telemetry,
-            })
-        )
-    }).await
-}
-
-
-/// Start a parachain node.
-#[cfg(feature = "with-gaki")]
-pub async fn start_gaki_node(
-	parachain_config: Configuration,
-	polkadot_config: Configuration,
-	collator_options: CollatorOptions,
-	id: ParaId,
-) -> sc_service::error::Result<(
-	TaskManager,
-	Arc<TFullClient<Block, gaki_runtime::RuntimeApi, NativeElseWasmExecutor<GafiRuntimeExecutor>>>,
-)> {
-	start_node_impl::<gaki_runtime::RuntimeApi, GafiRuntimeExecutor, _, _>(
         parachain_config,
         polkadot_config,
         collator_options,
