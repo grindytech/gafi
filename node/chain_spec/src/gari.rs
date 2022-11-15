@@ -391,9 +391,7 @@ fn testnet_genesis(
 			},
 		},
 		ethereum: EthereumConfig {},
-		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(min_gas_price),
-		},
+		tx_handler: TxHandlerConfig {},
 		pool: Default::default(),
 		upfront_pool: Default::default()
 	}

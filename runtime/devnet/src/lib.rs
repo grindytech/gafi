@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("devnet"),
 	impl_name: create_runtime_str!("devnet"),
 	authoring_version: 1,
-	spec_version: 1,
+	spec_version: 2,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -283,6 +283,7 @@ impl proof_address_mapping::Config for Runtime {
 
 parameter_types! {
 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
+	pub GasPrice: u128 = 5_000_000_000_u128;
 }
 
 impl gafi_tx::Config for Runtime {
@@ -293,6 +294,7 @@ impl gafi_tx::Config for Runtime {
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
 	type GetGameCreator = GameCreator;
+	type GasPrice = GasPrice;
 }
 
 parameter_types! {
@@ -807,6 +809,7 @@ pub type Executive = frame_executive::Executive<
 	(
 		staking_pool::migration::StakingPoolFilter<Runtime>,
 		upfront_pool::migration::UpfrontPoolFilter<Runtime>,
+		gafi_tx::migration::GafiTransactionHandler<Runtime>,
 	),
 >;
 

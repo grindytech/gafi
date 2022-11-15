@@ -247,9 +247,7 @@ fn dev_genesis(
 			],
 			faucet_amount,
 		},
-		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(min_gas_price),
-		},
+		tx_handler: TxHandlerConfig {},
 		pool: Default::default(),
 		pallet_cache: PalletCacheConfig {
 			phantom: Default::default(),
