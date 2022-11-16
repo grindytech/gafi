@@ -78,6 +78,7 @@ impl pallet_cache::Config for Test {
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
+	pub FaucetAmount: u64 = FAUCET_BALANCE;
 }
 
 impl pallet_faucet::Config for Test {
@@ -86,6 +87,7 @@ impl pallet_faucet::Config for Test {
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = ();
 	type Cache = PalletCache;
+	type FaucetAmount = FaucetAmount;
 }
 
 parameter_types! {
@@ -168,7 +170,7 @@ impl ExtBuilder {
 		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut storage);
 
-		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts, faucet_amount: FAUCET_BALANCE }
+		let _ = pallet_faucet::GenesisConfig::<Test> { genesis_accounts: self.genesis_accounts }
 			.assimilate_storage(&mut storage);
 
 		let ext = sp_io::TestExternalities::from(storage);

@@ -735,6 +735,7 @@ impl upfront_pool::Config for Runtime {
 
 parameter_types! {
 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
+	pub GasPrice: u128 = 4_000_000_000_u128;
 }
 
 impl gafi_tx::Config for Runtime {
@@ -745,6 +746,7 @@ impl gafi_tx::Config for Runtime {
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
 	type GetGameCreator = ();
+	type GasPrice = GasPrice;
 }
 
 parameter_types! {

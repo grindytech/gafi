@@ -37,6 +37,8 @@ use sp_core::{H160, U256};
 use sp_runtime::Permill;
 use sp_std::vec::Vec;
 
+pub mod migration;
+
 #[cfg(test)]
 mod mock;
 
@@ -84,6 +86,9 @@ pub mod pallet {
 
 		/// get game's creator
 		type GetGameCreator: GetGameCreator<Self::AccountId>;
+
+		/// Gas price
+		type GasPrice: Get<u128>;
 	}
 
 	//** STORAGE **//
@@ -94,23 +99,20 @@ pub mod pallet {
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub gas_price: U256,
-	}
+	pub struct GenesisConfig { }
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				gas_price: U256::from(100_000_000_000u128),
-			}
+			Self {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			GasPrice::<T>::put(self.gas_price);
+			let gas_price = <T as Config>::GasPrice::get();
+			GasPrice::<T>::put(U256::from(gas_price));
 		}
 	}
 
