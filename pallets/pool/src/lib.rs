@@ -87,11 +87,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// /// Holding all the tickets in the network
-	// #[pallet::storage]
-	// #[pallet::getter(fn tickets)]
-	// pub type Tickets<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, TicketInfo>;
-
 	/// Holding all the tickets in the network
 	#[pallet::storage]
 	#[pallet::getter(fn tickets)]
@@ -108,17 +103,6 @@ pub mod pallet {
 	#[pallet::getter(fn mark_time)]
 	pub type MarkTime<T: Config> = StorageValue<_, u128, ValueQuery, DefaultMarkTime<T>>;
 
-	/// Honding the specific period of time to charge service fee
-	/// The default value is 1 hours
-	#[pallet::type_value]
-	pub fn DefaultTimeService() -> u128 {
-		// 1 hour
-		3_600_000u128
-	}
-	#[pallet::storage]
-	#[pallet::getter(fn time_service)]
-	pub type TimeService<T: Config> = StorageValue<_, u128, ValueQuery, DefaultTimeService>;
-
 	#[pallet::storage]
 	pub type Whitelist<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, ID>;
 
@@ -129,7 +113,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_block_number: BlockNumberFor<T>) {
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap();
-			if _now - Self::mark_time() >= Self::time_service() {
+			if _now - Self::mark_time() >= T::TimeServiceStorage::get() {
 				Self::renew_tickets();
 				MarkTime::<T>::put(_now);
 			}
@@ -150,7 +134,6 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<TimeService<T>>::put(<T as Config>::TimeServiceStorage::get());
 			let _now: u128 = <timestamp::Pallet<T>>::get().try_into().ok().unwrap_or_default();
 			<MarkTime<T>>::put(_now);
 		}
@@ -458,7 +441,7 @@ pub mod pallet {
 		}
 
 		fn get_timeservice() -> u128 {
-			TimeService::<T>::get()
+			T::TimeServiceStorage::get()
 		}
 
 		fn get_marktime() -> u128 {
