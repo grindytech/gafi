@@ -14,7 +14,6 @@ use sp_core::crypto::UncheckedInto;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::collections::BTreeMap;
-use sp_core::U256;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<gari_runtime::GenesisConfig, Extensions>;
@@ -340,8 +339,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<(AccountId, u128)>,
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
-
-	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
 
 	gari_runtime::GenesisConfig {
 		system: gari_runtime::SystemConfig {

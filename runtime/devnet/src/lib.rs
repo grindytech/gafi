@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("devnet"),
 	impl_name: create_runtime_str!("devnet"),
 	authoring_version: 1,
-	spec_version: 2,
+	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -283,7 +283,7 @@ impl proof_address_mapping::Config for Runtime {
 
 parameter_types! {
 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
-	pub GasPrice: u128 = 5_000_000_000_u128;
+	pub GasPrice: u128 = 4_000_000_000_u128;
 }
 
 impl gafi_tx::Config for Runtime {
@@ -325,12 +325,17 @@ impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 	type CleanTime = PoolCleanTime;
 }
 
+parameter_types! {
+	pub FaucetAmount: u128 = 1500 * unit(GAKI);
+}
+
 impl pallet_faucet::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 	type Cache = PalletCacheFaucet;
+	type FaucetAmount = FaucetAmount;
 }
 
 parameter_types! {

@@ -7,10 +7,6 @@ use frame_support::{
 	weights::Weight,
 	Blake2_128Concat,
 };
-use gafi_primitives::{
-	constant::ID,
-	system_services::{SystemDefaultServices, SystemService},
-};
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::format;
 use sp_core::U256;
