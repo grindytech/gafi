@@ -290,6 +290,7 @@ impl system::Config for Test {
 
 parameter_types! {
 	pub GameCreatorReward: Permill = Permill::from_percent(30);
+	pub GasPrice: u128 = 1_u128;
 }
 
 impl gafi_tx::Config for Test {
@@ -300,6 +301,7 @@ impl gafi_tx::Config for Test {
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
 	type GetGameCreator = GameCreator;
+	type GasPrice = GasPrice;
 }
 
 // Build genesis storage according to the mock runtime.

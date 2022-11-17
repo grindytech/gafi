@@ -161,11 +161,6 @@ fn dev_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 
-	let min_gas_price: U256 = U256::from(4_000_000_000_000u128);
-
-	// pallet-faucet
-	let faucet_amount: u128 = 1500 * unit(GAKI);
-
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -245,11 +240,8 @@ fn dev_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			],
-			faucet_amount,
 		},
-		tx_handler: TxHandlerConfig {
-			gas_price: U256::from(min_gas_price),
-		},
+		tx_handler: TxHandlerConfig {},
 		pool: Default::default(),
 		pallet_cache: PalletCacheConfig {
 			phantom: Default::default(),

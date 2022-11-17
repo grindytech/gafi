@@ -4,6 +4,7 @@ use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
 pub use crate::weights::WeightInfo;
 use gafi_primitives::cache::Cache;
+use sp_std::vec;
 
 #[cfg(test)]
 mod mock;
@@ -43,6 +44,9 @@ pub mod pallet {
 
 		/// Add Cache
 		type Cache: Cache<Self::AccountId, AccountOf<Self>, u128>;
+
+		/// Faucet Amount
+		type FaucetAmount: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -54,20 +58,16 @@ pub mod pallet {
 	pub(super) type GenesisAccounts<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxGenesisAccount>, ValueQuery>;
 
-	#[pallet::storage]
-	pub type FaucetAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub genesis_accounts: Vec<T::AccountId>,
-		pub faucet_amount: BalanceOf<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { genesis_accounts: vec![], faucet_amount: BalanceOf::<T>::default()}
+			Self { genesis_accounts: vec![]}
 		}
 	}
 
@@ -78,8 +78,6 @@ pub mod pallet {
 				<GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
 					.map_or((), |_| {});
 			}
-
-			FaucetAmount::<T>::put(self.faucet_amount);
 		}
 	}
 
@@ -112,7 +110,7 @@ pub mod pallet {
 		pub fn faucet(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
-			let faucet_amount = FaucetAmount::<T>::get();
+			let faucet_amount = T::FaucetAmount::get();
 			ensure!(Self::get_cache(&sender) == None, <Error<T>>::PleaseWait);
 
 			ensure!(
