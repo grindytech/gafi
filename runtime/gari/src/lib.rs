@@ -78,6 +78,12 @@ use pallet_pool_names;
 use sponsored_pool;
 use staking_pool;
 use upfront_pool;
+use pallet_evm::HashedAddressMapping;
+
+// import local pallets
+pub use proof_address_mapping;
+
+mod pallets;
 
 // Primitives
 use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
@@ -296,70 +302,6 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 42;
 }
 
-// Configure FRAME pallets to include in runtime.
-
-impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
-	type Hash = Hash;
-	/// The hashing algorithm used.
-	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// The ubiquitous event type.
-	type Event = Event;
-	/// The ubiquitous origin type.
-	type Origin = Origin;
-	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
-	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
-	type Version = Version;
-	/// Converts a module to an index of this module in the runtime.
-	type PalletInfo = PalletInfo;
-	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<Balance>;
-	/// What to do if a new account is created.
-	type OnNewAccount = ();
-	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
-	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
-	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = SS58Prefix;
-	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
-
-impl pallet_timestamp::Config for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
 parameter_types! {
 	pub const UncleGenerations: u32 = 0;
 }
@@ -369,26 +311,6 @@ impl pallet_authorship::Config for Runtime {
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	pub const MaxLocks: u32 = 50;
-	pub const MaxReserves: u32 = 50;
-}
-
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
 }
 
 frame_support::parameter_types! {
@@ -422,21 +344,6 @@ impl pallet_base_fee::Config for Runtime {
 	type Threshold = BaseFeeThreshold;
 	type IsActive = IsActive;
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
-}
-
-parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
-	pub const OperationalFeeMultiplier: u8 = 5;
-}
-
-impl pallet_transaction_payment::Config for Runtime {
-	type Event = Event;
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
 parameter_types! {
@@ -575,124 +482,9 @@ impl pallet_scheduler::Config for Runtime {
 	type NoPreimagePostponement = ();
 }
 
-// Frontier
-parameter_types! {
-	pub const ChainId: u64 = 1337;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
-}
-
-impl pallet_evm::Config for Runtime {
-	type FeeCalculator = TxHandler;
-	type GasWeightMapping = GafiGasWeightMapping;
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressRoot<AccountId>;
-	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = ProofAddressMapping;
-	type Currency = Balances;
-	type Event = Event;
-	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = FrontierPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
-	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
-	type FindAuthor = FindAuthorTruncated<Aura>;
-}
-
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-}
-
-// Local
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
-
-#[derive(Eq, PartialEq, Clone, Encode, Decode, Debug, TypeInfo, Default)]
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services() -> SystemServicePack {
-		SystemServicePack::new(vec![
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(
-					STAKING_BASIC_ID,
-					10_u32,
-					Permill::from_percent(30),
-					1000 * unit(GAFI),
-				),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(
-					STAKING_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					1500 * unit(GAFI),
-				),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(
-					STAKING_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					2000 * unit(GAFI),
-				),
-			),
-		])
-	}
-}
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services() -> SystemServicePack {
-		SystemServicePack::new(vec![
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(
-					UPFRONT_BASIC_ID,
-					10_u32,
-					Permill::from_percent(30),
-					5 * unit(GAFI),
-				),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(
-					UPFRONT_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					7 * unit(GAFI),
-				),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(
-					UPFRONT_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					10 * unit(GAFI),
-				),
-			),
-		])
-	}
-}
-
-impl staking_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
-	type StakingServices = StakingPoolDefaultServices;
-	type Players = Player;
 }
 
 parameter_types! {
@@ -707,33 +499,6 @@ impl pallet_cache::Config for Runtime {
 }
 
 parameter_types! {
-	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
-	pub Fee: u128 = 1 * unit(GAFI);
-}
-
-impl proof_address_mapping::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
-	type MessagePrefix = Prefix;
-	type ReservationFee = Fee;
-}
-
-parameter_types! {
-	pub const MaxPlayerStorage: u32 = 10000;
-}
-
-impl upfront_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
-	type MaxPlayerStorage = MaxPlayerStorage;
-	type MasterPool = Pool;
-	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = Player;
-}
-
-parameter_types! {
 	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
 	pub GasPrice: u128 = 4_000_000_000_u128;
 }
@@ -742,7 +507,8 @@ impl gafi_tx::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
-	type AddressMapping = ProofAddressMapping;
+	// type AddressMapping = ProofAddressMapping;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type PlayerTicket = Pool;
 	type GameCreatorReward = GameCreatorReward;
 	type GetGameCreator = ();
@@ -762,32 +528,6 @@ impl pallet_pool_names::Config for Runtime {
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
-}
-
-parameter_types! {
-	pub MinPoolBalance: u128 = 1000 * unit(GAFI);
-	pub MinDiscountPercent: Permill = Permill::from_percent(30);
-	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
-	pub MinTxLimit: u32 = 50;
-	pub MaxTxLimit: u32 = 100;
-	pub MaxPoolOwned: u32 =  10;
-	pub MaxPoolTarget: u32 =  10;
-}
-
-impl sponsored_pool::Config for Runtime {
-	type Event = Event;
-	type Randomness = RandomnessCollectiveFlip;
-	type PoolName = PoolName;
-	type Currency = Balances;
-	type MinPoolBalance = MinPoolBalance;
-	type MinDiscountPercent = MinDiscountPercent;
-	type MaxDiscountPercent = MaxDiscountPercent;
-	type MinTxLimit = MinTxLimit;
-	type MaxTxLimit = MaxTxLimit;
-	type MaxPoolOwned = MaxPoolOwned;
-	type MaxPoolTarget = MaxPoolTarget;
-	type IWhitelist = ();
-	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
