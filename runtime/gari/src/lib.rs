@@ -51,8 +51,8 @@ pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::marker::PhantomData;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 // Runtime common
-use sp_runtime::SaturatedConversion;
 use scale_info::TypeInfo;
+use sp_runtime::SaturatedConversion;
 
 // Frontier
 use pallet_ethereum;
@@ -73,12 +73,12 @@ use gafi_primitives::{
 };
 use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
+use pallet_evm::HashedAddressMapping;
 use pallet_pool;
 use pallet_pool_names;
 use sponsored_pool;
 use staking_pool;
 use upfront_pool;
-use pallet_evm::HashedAddressMapping;
 
 // import local pallets
 pub use proof_address_mapping;
@@ -647,9 +647,9 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 43,
 
 		// Local
-		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
 		Pool: pallet_pool::{Pallet, Call, Storage, Config, Event<T>} = 60,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Config, Event<T>} = 61,
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
 		TxHandler: gafi_tx::{Pallet, Call, Storage, Config, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,

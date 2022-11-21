@@ -240,9 +240,9 @@ pub fn local_testnet_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"Gari Testnet",
 		// ID
-		"local_testnet",
+		"gari_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -321,7 +321,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("template-local"),
+		Some("gari-testnet"),
 		// Fork ID
 		None,
 		// Properties
