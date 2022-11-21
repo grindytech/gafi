@@ -1,11 +1,11 @@
-use frame_support::{traits::{ConstU32, Everything}, weights::constants::RocksDbWeight};
+use frame_support::{traits::{Everything}, weights::constants::RocksDbWeight};
 use sp_runtime::{
 	generic,
 	traits::{AccountIdLookup, BlakeTwo256},
 };
 
 use crate::{
-	AccountId, Balance, BlockHashCount, BlockLength, BlockNumber, BlockWeights, Call, Event, Hash,
+	AccountId, Balance, BlockHashCount, BlockNumber, Call, Event, Hash,
 	Index, Origin, PalletInfo, Runtime, SS58Prefix, Version, RuntimeBlockWeights, RuntimeBlockLength
 };
 

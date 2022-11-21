@@ -25,5 +25,14 @@ pub use sponsored_pool_config::*;
 pub mod pallet_pam;
 pub use pallet_pam::*;
 
+pub mod pallet_pool_config;
+pub use pallet_pool_config::*;
+
+pub mod gafi_tx_config;
+pub use gafi_tx_config::*;
+
+pub mod cumulus_config;
+pub use cumulus_config::*;
+
 // pub mod elections_phragmen;
 // pub use elections_phragmen::*;

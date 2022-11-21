@@ -19,7 +19,7 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
+		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
 		IdentifyAccount, PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
@@ -34,7 +34,7 @@ use sp_version::RuntimeVersion;
 pub use frame_support::traits::EqualPrivilegeOnly;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, FindAuthor},
+	traits::{FindAuthor},
 	weights::{
 		constants::WEIGHT_PER_SECOND, ConstantMultiplier, DispatchClass, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -51,37 +51,25 @@ pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::marker::PhantomData;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 // Runtime common
-use scale_info::TypeInfo;
 use sp_runtime::SaturatedConversion;
 
 // Frontier
 use pallet_ethereum;
 use pallet_evm::{
-	self, Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressRoot,
+	self, Account as EVMAccount,
 	FeeCalculator, Runner,
 };
 mod precompiles;
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use precompiles::FrontierPrecompiles;
 
 // Local
 use gafi_primitives::{
 	constant::ID,
-	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 	ticket::TicketInfo,
 };
-use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
-use pallet_evm::HashedAddressMapping;
-use pallet_pool;
 use pallet_pool_names;
-use sponsored_pool;
-use staking_pool;
-use upfront_pool;
-
-// import local pallets
-pub use proof_address_mapping;
 
 mod pallets;
 
@@ -92,13 +80,12 @@ use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::{BlockHashCount};
 
-use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
+use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
-use xcm_executor::XcmExecutor;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -346,23 +333,6 @@ impl pallet_base_fee::Config for Runtime {
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
 }
 
-parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-}
-
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
-	type OnSystemEvent = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type DmpMessageHandler = DmpQueue;
-	type ReservedDmpWeight = ReservedDmpWeight;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-}
-
 impl parachain_info::Config for Runtime {}
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -374,25 +344,6 @@ impl pallet_player::Config for Runtime {
 	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
-}
-
-impl cumulus_pallet_aura_ext::Config for Runtime {}
-
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-	type WeightInfo = ();
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -499,23 +450,6 @@ impl pallet_cache::Config for Runtime {
 }
 
 parameter_types! {
-	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
-	pub GasPrice: u128 = 4_000_000_000_u128;
-}
-
-impl gafi_tx::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
-	// type AddressMapping = ProofAddressMapping;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
-	type PlayerTicket = Pool;
-	type GameCreatorReward = GameCreatorReward;
-	type GetGameCreator = ();
-	type GasPrice = GasPrice;
-}
-
-parameter_types! {
 	pub ReservationFee:u128 = 1 * unit(GAFI);
 	pub MinLength: u32 = 8;
 	pub MaxLength: u32 = 32;
@@ -587,23 +521,6 @@ where
 {
 	type OverarchingCall = Call;
 	type Extrinsic = UncheckedExtrinsic;
-}
-
-parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
-	pub TimeServiceStorage: u128 = 30 * 60_000u128;
-}
-
-impl pallet_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
-	type Cache = PalletCache;
-	type TimeServiceStorage = TimeServiceStorage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1101,33 +1018,4 @@ impl_runtime_apis! {
 			Ok(batches)
 		}
 	}
-}
-
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-
-		inherent_data.check_extrinsics(block)
-	}
-}
-
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
 }

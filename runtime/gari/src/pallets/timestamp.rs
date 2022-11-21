@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 
-use crate::{Aura, Runtime, SLOT_DURATION};
+use crate::{Runtime, SLOT_DURATION};
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
