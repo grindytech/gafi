@@ -2,7 +2,7 @@ use cumulus_primitives_core::ParaId;
 use gafi_primitives::currency::{GafiCurrency, NativeToken::GAFI, TokenInfo};
 use gari_runtime::{
 	types::{AccountId, Signature, EXISTENTIAL_DEPOSIT},
-	EVMConfig, FaucetConfig,
+	EVMConfig, FaucetConfig, SudoConfig,
 };
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
@@ -120,6 +120,7 @@ pub fn rococo_config() -> ChainSpec {
 						500_000_000_000_000_000_000_000_000_u128,
 					),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				id,
 			)
 		},
@@ -211,6 +212,7 @@ pub fn development_config() -> ChainSpec {
 						500_000_000_000_000_000_000_000_000_u128,
 					),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				1000.into(),
 			)
 		},
@@ -302,6 +304,7 @@ pub fn local_testnet_config() -> ChainSpec {
 						500_000_000_000_000_000_000_000_000_u128,
 					),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				2000.into(),
 			)
 		},
@@ -326,6 +329,7 @@ pub fn local_testnet_config() -> ChainSpec {
 fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<(AccountId, u128)>,
+	root_key: AccountId,
 	id: ParaId,
 ) -> gari_runtime::GenesisConfig {
 	gari_runtime::GenesisConfig {
@@ -336,6 +340,9 @@ fn testnet_genesis(
 		},
 		balances: gari_runtime::BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k| (k.0, k.1)).collect(),
+		},
+		sudo: SudoConfig {
+			key: Some(root_key),
 		},
 		parachain_info: gari_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: gari_runtime::CollatorSelectionConfig {
