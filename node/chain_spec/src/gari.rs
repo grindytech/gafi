@@ -2,7 +2,7 @@ use cumulus_primitives_core::ParaId;
 use gafi_primitives::currency::{GafiCurrency, NativeToken::GAFI, TokenInfo};
 use gari_runtime::{
 	types::{AccountId, Signature, EXISTENTIAL_DEPOSIT},
-	EVMConfig, EthereumConfig, TxHandlerConfig,
+	EVMConfig, FaucetConfig,
 };
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
@@ -363,17 +363,19 @@ fn testnet_genesis(
 		polkadot_xcm: gari_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
-		dynamic_fee: Default::default(),
-		base_fee: Default::default(),
 		evm: EVMConfig {
 			accounts: {
 				let map = BTreeMap::new();
 				map
 			},
 		},
-		ethereum: EthereumConfig {},
-		tx_handler: TxHandlerConfig {},
-		pool: Default::default(),
-		upfront_pool: Default::default(),
+		faucet: FaucetConfig {
+			genesis_accounts: vec![
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+				get_account_id_from_seed::<sr25519::Public>("Dave"),
+			],
+		},
 	}
 }
