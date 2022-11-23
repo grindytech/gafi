@@ -17,13 +17,13 @@ use sp_core::{
 	OpaqueMetadata,
 };
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	create_runtime_str, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
-		IdentifyAccount, PostDispatchInfoOf, Verify,
+		Block as BlockT, DispatchInfoOf, Dispatchable,
+		PostDispatchInfoOf,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 };
 
 use sp_std::prelude::*;
@@ -34,9 +34,9 @@ use sp_version::RuntimeVersion;
 pub use frame_support::traits::EqualPrivilegeOnly;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, FindAuthor},
+	traits::{FindAuthor},
 	weights::{
-		constants::WEIGHT_PER_SECOND, ConstantMultiplier, DispatchClass, Weight,
+		ConstantMultiplier, DispatchClass, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId,
@@ -50,34 +50,31 @@ use sp_core::{H160, H256, U256};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::marker::PhantomData;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-// Runtime common
-use sp_runtime::SaturatedConversion;
-use scale_info::TypeInfo;
 
 // Frontier
 use pallet_ethereum;
 use pallet_evm::{
-	self, Account as EVMAccount, EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressRoot,
+	self, Account as EVMAccount,
 	FeeCalculator, Runner,
 };
 mod precompiles;
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use precompiles::FrontierPrecompiles;
 
 // Local
 use gafi_primitives::{
 	constant::ID,
-	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 	ticket::TicketInfo,
 };
-use gafi_tx::{self, GafiEVMCurrencyAdapter, GafiGasWeightMapping};
 use pallet_cache;
-use pallet_pool;
 use pallet_pool_names;
-use sponsored_pool;
-use staking_pool;
-use upfront_pool;
+
+pub mod pallets;
+pub mod types;
+
+use types::types::{Block, AccountId, Balance, Index, Executive, UncheckedExtrinsic, BlockNumber};
+use types::config::{HOURS, AVERAGE_ON_INITIALIZE_RATIO, MAXIMUM_BLOCK_WEIGHT,
+	 NORMAL_DISPATCH_RATIO, MILLIUNIT, };
 
 // Primitives
 use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
@@ -86,78 +83,12 @@ use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::{BlockHashCount};
 
-use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
+use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
-use xcm_executor::XcmExecutor;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckNonZeroSender<Runtime>,
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-);
-
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
-
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllPalletsWithSystem,
->;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
@@ -221,41 +152,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-/// This determines the average expected block time that we are targeting.
-/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
-/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
-/// up by `pallet_aura` to implement `fn slot_duration()`.
-///
-/// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
-// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-//       Attempting to do so will brick block production.
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// Time is measured by number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-// Unit = the base number of indivisible units for balances
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLIUNIT: Balance = 1_000_000_000;
-pub const MICROUNIT: Balance = 1_000_000;
-
-/// The existential deposit. Set to 1/10 of the Connected Relay Chain.
-pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
-
-/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
-/// used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
-
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-/// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-
-/// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -296,70 +192,6 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 42;
 }
 
-// Configure FRAME pallets to include in runtime.
-
-impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
-	type Hash = Hash;
-	/// The hashing algorithm used.
-	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// The ubiquitous event type.
-	type Event = Event;
-	/// The ubiquitous origin type.
-	type Origin = Origin;
-	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
-	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
-	type Version = Version;
-	/// Converts a module to an index of this module in the runtime.
-	type PalletInfo = PalletInfo;
-	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<Balance>;
-	/// What to do if a new account is created.
-	type OnNewAccount = ();
-	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
-	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
-	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = SS58Prefix;
-	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
-
-impl pallet_timestamp::Config for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
 parameter_types! {
 	pub const UncleGenerations: u32 = 0;
 }
@@ -369,26 +201,6 @@ impl pallet_authorship::Config for Runtime {
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	pub const MaxLocks: u32 = 50;
-	pub const MaxReserves: u32 = 50;
-}
-
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
 }
 
 frame_support::parameter_types! {
@@ -424,38 +236,6 @@ impl pallet_base_fee::Config for Runtime {
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
 }
 
-parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
-	pub const OperationalFeeMultiplier: u8 = 5;
-}
-
-impl pallet_transaction_payment::Config for Runtime {
-	type Event = Event;
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-}
-
-parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-}
-
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
-	type OnSystemEvent = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type DmpMessageHandler = DmpQueue;
-	type ReservedDmpWeight = ReservedDmpWeight;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-}
-
 impl parachain_info::Config for Runtime {}
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -467,25 +247,6 @@ impl pallet_player::Config for Runtime {
 	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
-}
-
-impl cumulus_pallet_aura_ext::Config for Runtime {}
-
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-	type WeightInfo = ();
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -575,124 +336,9 @@ impl pallet_scheduler::Config for Runtime {
 	type NoPreimagePostponement = ();
 }
 
-// Frontier
-parameter_types! {
-	pub const ChainId: u64 = 1337;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
-}
-
-impl pallet_evm::Config for Runtime {
-	type FeeCalculator = TxHandler;
-	type GasWeightMapping = GafiGasWeightMapping;
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressRoot<AccountId>;
-	type WithdrawOrigin = EnsureAddressNever<AccountId>;
-	type AddressMapping = ProofAddressMapping;
-	type Currency = Balances;
-	type Event = Event;
-	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = FrontierPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
-	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
-	type FindAuthor = FindAuthorTruncated<Aura>;
-}
-
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-}
-
-// Local
-pub const STAKING_BASIC_ID: ID = [0_u8; 32];
-pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
-pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
-pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
-pub const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
-pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
-
-#[derive(Eq, PartialEq, Clone, Encode, Decode, Debug, TypeInfo, Default)]
-pub struct StakingPoolDefaultServices {}
-
-impl SystemDefaultServices for StakingPoolDefaultServices {
-	fn get_default_services() -> SystemServicePack {
-		SystemServicePack::new(vec![
-			(
-				STAKING_BASIC_ID,
-				SystemService::new(
-					STAKING_BASIC_ID,
-					10_u32,
-					Permill::from_percent(30),
-					1000 * unit(GAFI),
-				),
-			),
-			(
-				STAKING_MEDIUM_ID,
-				SystemService::new(
-					STAKING_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					1500 * unit(GAFI),
-				),
-			),
-			(
-				STAKING_ADVANCE_ID,
-				SystemService::new(
-					STAKING_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					2000 * unit(GAFI),
-				),
-			),
-		])
-	}
-}
-
-pub struct UpfrontPoolDefaultServices {}
-
-impl SystemDefaultServices for UpfrontPoolDefaultServices {
-	fn get_default_services() -> SystemServicePack {
-		SystemServicePack::new(vec![
-			(
-				UPFRONT_BASIC_ID,
-				SystemService::new(
-					UPFRONT_BASIC_ID,
-					10_u32,
-					Permill::from_percent(30),
-					5 * unit(GAFI),
-				),
-			),
-			(
-				UPFRONT_MEDIUM_ID,
-				SystemService::new(
-					UPFRONT_MEDIUM_ID,
-					10_u32,
-					Permill::from_percent(50),
-					7 * unit(GAFI),
-				),
-			),
-			(
-				UPFRONT_ADVANCE_ID,
-				SystemService::new(
-					UPFRONT_ADVANCE_ID,
-					10_u32,
-					Permill::from_percent(70),
-					10 * unit(GAFI),
-				),
-			),
-		])
-	}
-}
-
-impl staking_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
-	type StakingServices = StakingPoolDefaultServices;
-	type Players = Player;
 }
 
 parameter_types! {
@@ -704,49 +350,6 @@ impl pallet_cache::Config for Runtime {
 	type Data = TicketInfo;
 	type Action = ID;
 	type CleanTime = CleanTime;
-}
-
-parameter_types! {
-	pub Prefix: &'static [u8] =  b"Bond Gafi Network account:";
-	pub Fee: u128 = 1 * unit(GAFI);
-}
-
-impl proof_address_mapping::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
-	type MessagePrefix = Prefix;
-	type ReservationFee = Fee;
-}
-
-parameter_types! {
-	pub const MaxPlayerStorage: u32 = 10000;
-}
-
-impl upfront_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
-	type MaxPlayerStorage = MaxPlayerStorage;
-	type MasterPool = Pool;
-	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = Player;
-}
-
-parameter_types! {
-	pub GameCreatorReward: Permill = Permill::from_percent(30_u32);
-	pub GasPrice: u128 = 4_000_000_000_u128;
-}
-
-impl gafi_tx::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
-	type AddressMapping = ProofAddressMapping;
-	type PlayerTicket = Pool;
-	type GameCreatorReward = GameCreatorReward;
-	type GetGameCreator = ();
-	type GasPrice = GasPrice;
 }
 
 parameter_types! {
@@ -762,108 +365,6 @@ impl pallet_pool_names::Config for Runtime {
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type Event = Event;
-}
-
-parameter_types! {
-	pub MinPoolBalance: u128 = 1000 * unit(GAFI);
-	pub MinDiscountPercent: Permill = Permill::from_percent(30);
-	pub MaxDiscountPercent: Permill = Permill::from_percent(70);
-	pub MinTxLimit: u32 = 50;
-	pub MaxTxLimit: u32 = 100;
-	pub MaxPoolOwned: u32 =  10;
-	pub MaxPoolTarget: u32 =  10;
-}
-
-impl sponsored_pool::Config for Runtime {
-	type Event = Event;
-	type Randomness = RandomnessCollectiveFlip;
-	type PoolName = PoolName;
-	type Currency = Balances;
-	type MinPoolBalance = MinPoolBalance;
-	type MinDiscountPercent = MinDiscountPercent;
-	type MaxDiscountPercent = MaxDiscountPercent;
-	type MinTxLimit = MinTxLimit;
-	type MaxTxLimit = MaxTxLimit;
-	type MaxPoolOwned = MaxPoolOwned;
-	type MaxPoolTarget = MaxPoolTarget;
-	type IWhitelist = ();
-	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
-}
-
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-	Call: From<LocalCall>,
-{
-	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
-		public: <Signature as sp_runtime::traits::Verify>::Signer,
-		account: AccountId,
-		index: Index,
-	) -> Option<(
-		Call,
-		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-	)> {
-		let period = BlockHashCount::get() as u64;
-		let current_block = System::block_number().saturated_into::<u64>().saturating_sub(1);
-		let tip = 0;
-		let extra: SignedExtra = (
-			frame_system::CheckNonZeroSender::<Runtime>::new(),
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-			frame_system::CheckNonce::<Runtime>::from(index),
-			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-		);
-
-		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|_e| {
-				// log::warn!("Unable to create signed payload: {:?}", e);
-			})
-			.ok()?;
-		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-		let address = account;
-		let (call, extra, _) = raw_payload.deconstruct();
-		Some((
-			call,
-			(
-				sp_runtime::MultiAddress::Id(address),
-				signature.into(),
-				extra,
-			),
-		))
-	}
-}
-
-impl frame_system::offchain::SigningTypes for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	Call: From<C>,
-{
-	type OverarchingCall = Call;
-	type Extrinsic = UncheckedExtrinsic;
-}
-
-parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
-	pub TimeServiceStorage: u128 = 30 * 60_000u128;
-}
-
-impl pallet_pool::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type UpfrontPool = UpfrontPool;
-	type StakingPool = StakingPool;
-	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
-	type Cache = PalletCache;
-	type TimeServiceStorage = TimeServiceStorage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -907,9 +408,9 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 43,
 
 		// Local
-		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
 		Pool: pallet_pool::{Pallet, Call, Storage, Config, Event<T>} = 60,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Config, Event<T>} = 61,
+		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
 		TxHandler: gafi_tx::{Pallet, Call, Storage, Config, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
@@ -1361,33 +862,4 @@ impl_runtime_apis! {
 			Ok(batches)
 		}
 	}
-}
-
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-
-		inherent_data.check_extrinsics(block)
-	}
-}
-
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
 }

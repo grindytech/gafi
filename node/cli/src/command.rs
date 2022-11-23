@@ -32,13 +32,13 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		},
 
 		// testnet
-		"template-rococo" => {
+		"gari-testnet" => {
 			#[cfg(feature = "with-gari")]
 			return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::local_testnet_config()));
 		},
 
 		#[cfg(feature = "with-gari")]
-		"rococo" => Box::new(gafi_chain_spec::gari::rococo_config()),
+		"gari" => Box::new(gafi_chain_spec::gari::rococo_config()),
 
 		// custome chain
 		path => {
