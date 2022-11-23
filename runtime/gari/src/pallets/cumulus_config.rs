@@ -1,8 +1,9 @@
 use crate::{
 	AccountId, DmpQueue, Event, ParachainSystem, Runtime, Weight, XcmConfig,
-	XcmOriginToTransactDispatchOrigin, XcmpQueue, HOURS, MAXIMUM_BLOCK_WEIGHT, InherentDataExt,
+	XcmOriginToTransactDispatchOrigin, XcmpQueue, InherentDataExt,
 	Block
 };
+use crate::types::{HOURS, MAXIMUM_BLOCK_WEIGHT };
 // use codec::{Decode, Encode};
 use frame_support::parameter_types;
 

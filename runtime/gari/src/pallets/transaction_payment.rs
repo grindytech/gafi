@@ -1,7 +1,8 @@
 use frame_support::parameter_types;
 
-use crate::{Balance, Balances, Event, Runtime, ConstantMultiplier, WeightToFee, MICROUNIT};
+use crate::{Balance, Balances, Event, Runtime, ConstantMultiplier, WeightToFee};
 use polkadot_runtime_common::{SlowAdjustingFeeUpdate};
+use crate::types::MICROUNIT;
 
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
