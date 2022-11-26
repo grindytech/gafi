@@ -18,10 +18,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
-	traits::{
-		Block as BlockT, DispatchInfoOf, Dispatchable,
-		PostDispatchInfoOf,
-	},
+	traits::{Block as BlockT, DispatchInfoOf, Dispatchable, PostDispatchInfoOf},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult,
 };
@@ -34,10 +31,10 @@ use sp_version::RuntimeVersion;
 pub use frame_support::traits::EqualPrivilegeOnly;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{FindAuthor},
+	traits::FindAuthor,
 	weights::{
-		ConstantMultiplier, DispatchClass, Weight,
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		ConstantMultiplier, DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId,
 };
@@ -53,28 +50,25 @@ use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 // Frontier
 use pallet_ethereum;
-use pallet_evm::{
-	self, Account as EVMAccount,
-	FeeCalculator, Runner,
-};
+use pallet_evm::{self, Account as EVMAccount, FeeCalculator, Runner};
 mod precompiles;
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 
 // Local
-use gafi_primitives::{
-	constant::ID,
-	ticket::TicketInfo,
-};
 use pallet_cache;
+use pallet_faucet;
 use pallet_pool_names;
 
 pub mod pallets;
 pub mod types;
 
-use types::types::{Block, AccountId, Balance, Index, Executive, UncheckedExtrinsic, BlockNumber};
-use types::config::{HOURS, AVERAGE_ON_INITIALIZE_RATIO, MAXIMUM_BLOCK_WEIGHT,
-	 NORMAL_DISPATCH_RATIO, MILLIUNIT, };
+use types::{
+	config::{
+		AVERAGE_ON_INITIALIZE_RATIO, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLIUNIT, NORMAL_DISPATCH_RATIO,
+	},
+	types::{AccountId, Balance, Block, BlockNumber, Executive, Index, UncheckedExtrinsic},
+};
 
 // Primitives
 use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
@@ -83,7 +77,7 @@ use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount};
+use polkadot_runtime_common::BlockHashCount;
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
@@ -152,7 +146,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -170,7 +163,7 @@ parameter_types! {
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
 	// the lazy contract deletion.
 	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		BlockLength::max_with_normal_ratio(6 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -194,6 +187,11 @@ parameter_types! {
 
 parameter_types! {
 	pub const UncleGenerations: u32 = 0;
+}
+
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
 }
 
 impl pallet_authorship::Config for Runtime {
@@ -247,6 +245,32 @@ impl pallet_player::Config for Runtime {
 	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
+}
+
+parameter_types! {
+	pub FaucetCleanTime: u128 = 24 * 60 * 60_000u128; // 24 hours
+}
+
+// cache for pallet faucet
+impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
+	type Event = Event;
+	type Data = Balance;
+	type Action = AccountId;
+	type CleanTime = FaucetCleanTime;
+}
+
+parameter_types! {
+	pub MaxGenesisAccount: u32 = 5;
+	pub FaucetAmount: u128 = 1500 * unit(GAFI);
+}
+
+impl pallet_faucet::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type MaxGenesisAccount = MaxGenesisAccount;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
+	type Cache = PalletCacheFaucet;
+	type FaucetAmount = FaucetAmount;
 }
 
 parameter_types! {
@@ -342,17 +366,6 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 parameter_types! {
-	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;
-}
-
-impl pallet_cache::Config for Runtime {
-	type Event = Event;
-	type Data = TicketInfo;
-	type Action = ID;
-	type CleanTime = CleanTime;
-}
-
-parameter_types! {
 	pub ReservationFee:u128 = 1 * unit(GAFI);
 	pub MinLength: u32 = 8;
 	pub MaxLength: u32 = 32;
@@ -383,6 +396,7 @@ construct_runtime!(
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 4,
 		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>} = 5,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
@@ -402,21 +416,24 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
 		// Frontier
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 40,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin} = 40,
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 41,
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 42,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 43,
+		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Inherent} = 42,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Event} = 43,
 
 		// Local
-		Pool: pallet_pool::{Pallet, Call, Storage, Config, Event<T>} = 60,
-		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Config, Event<T>} = 61,
+		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>} = 60,
+		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>} = 61,
 		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
 		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
-		TxHandler: gafi_tx::{Pallet, Call, Storage, Config, Event<T>} = 64,
+		TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
-		PalletCache: pallet_cache::{Pallet, Call, Storage, Event<T>} = 66,
+		PalletCachePool: pallet_cache::<Instance1>::{Pallet, Call, Storage, Event<T>} = 66,
 		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
-		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68
+		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68,
+		Faucet: pallet_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
+		PalletCacheFaucet: pallet_cache::<Instance2>::{Pallet, Call, Storage, Event<T>} = 70,
+		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>} = 71,
 	}
 );
 
