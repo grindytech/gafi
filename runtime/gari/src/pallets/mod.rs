@@ -34,5 +34,5 @@ pub use gafi_tx_config::*;
 pub mod cumulus_config;
 pub use cumulus_config::*;
 
-// pub mod elections_phragmen;
-// pub use elections_phragmen::*;
+pub mod game_creator_config;
+pub use game_creator_config::*;

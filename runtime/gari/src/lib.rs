@@ -139,7 +139,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("gari-parachain"),
 	impl_name: create_runtime_str!("gari-parachain"),
 	authoring_version: 1,
-	spec_version: 2,
+	spec_version: 1,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -163,7 +163,7 @@ parameter_types! {
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
 	// the lazy contract deletion.
 	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		BlockLength::max_with_normal_ratio(6 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -433,6 +433,7 @@ construct_runtime!(
 		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68,
 		Faucet: pallet_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
 		PalletCacheFaucet: pallet_cache::<Instance2>::{Pallet, Call, Storage, Event<T>} = 70,
+		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>} = 71,
 	}
 );
 
