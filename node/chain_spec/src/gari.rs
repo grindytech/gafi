@@ -88,7 +88,7 @@ pub fn rococo_config() -> ChainSpec {
 		"gafi_rococo",
 		ChainType::Live,
 		move || {
-			testnet_genesis(
+			build_genesis(
 				// initial collators.
 				vec![
 					(
@@ -120,7 +120,7 @@ pub fn rococo_config() -> ChainSpec {
 						500_000_000_000_000_000_000_000_000_u128,
 					),
 				],
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				hex!("6e312c24b61893b64fbb04fd37b2cc6c1df62a4419f1327fbabad172182a395c").into(),
 				id,
 			)
 		},
@@ -128,7 +128,7 @@ pub fn rococo_config() -> ChainSpec {
 		None,
 		None,
 		None,
-		None,
+		Some(props),
 		Extensions {
 			relay_chain: "rococo".into(), // You MUST set this to the correct network!
 			para_id: id.into(),
@@ -150,7 +150,7 @@ pub fn development_config() -> ChainSpec {
 		"dev",
 		ChainType::Development,
 		move || {
-			testnet_genesis(
+			build_genesis(
 				// initial collators.
 				vec![
 					(
@@ -218,9 +218,9 @@ pub fn development_config() -> ChainSpec {
 		},
 		Vec::new(),
 		None,
+		Some("gari-testnet"),
 		None,
-		None,
-		None,
+		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 1000,
@@ -242,7 +242,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		"gari_testnet",
 		ChainType::Local,
 		move || {
-			testnet_genesis(
+			build_genesis(
 				// initial collators.
 				vec![
 					(
@@ -313,7 +313,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("gari-testnet"),
+		Some("gari-local"),
 		// Fork ID
 		None,
 		// Properties
@@ -326,7 +326,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	)
 }
 
-fn testnet_genesis(
+fn build_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<(AccountId, u128)>,
 	root_key: AccountId,
@@ -377,12 +377,7 @@ fn testnet_genesis(
 			},
 		},
 		faucet: FaucetConfig {
-			genesis_accounts: vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				get_account_id_from_seed::<sr25519::Public>("Dave"),
-			],
+			genesis_accounts: endowed_accounts.into_iter().map(|(acc, _balance)| acc).collect(),
 		},
 	}
 }

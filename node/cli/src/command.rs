@@ -28,12 +28,6 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Local
 		"dev" => {
 			#[cfg(feature = "with-gari")]
-			return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::development_config()));
-		},
-
-		// testnet
-		"gari-testnet" => {
-			#[cfg(feature = "with-gari")]
 			return sc_service::Result::Ok(Box::new(gafi_chain_spec::gari::local_testnet_config()));
 		},
 
