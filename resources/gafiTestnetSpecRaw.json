@@ -3,7 +3,7 @@
   "id": "gafi_testnet",
   "chainType": "Live",
   "bootNodes": [
-    "/ip4/45.32.123.147/tcp/30336/p2p/12D3KooWDMHBjoGzq2U5yrFc9t8wTrNS7q56FdpYg1pGZYifgxxB"
+    "/ip4/45.32.123.147/tcp/30336/p2p/12D3KooWMCzZezv2XNiZ6iMXVmSG3hs14VzPHtP4v9qZfvjNzs7y"
   ],
   "telemetryEndpoints": null,
   "protocolId": null,
