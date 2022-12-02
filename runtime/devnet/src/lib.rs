@@ -299,9 +299,6 @@ impl gafi_tx::Config for Runtime {
 
 parameter_types! {
 	pub MaxGenesisAccount: u32 = 5;
-}
-
-parameter_types! {
 	pub FaucetCleanTime: u128 = 24 * 60 * 60_000u128; // 24 hours
 }
 

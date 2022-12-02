@@ -82,6 +82,7 @@ sp-transaction-pool = {git = "https://github.com/paritytech/substrate", default-
 sp-version = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26"}
 pallet-collective = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26"}
 pallet-scheduler = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+pallet-elections-phragmen = {git = "https://github.com/paritytech/substrate", default-features = false,  branch = "polkadot-v0.9.26"}
 
 # Polkadot
 pallet-xcm = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.26"}
@@ -177,6 +178,7 @@ std = [
   "gafi-primitives/std",
   "pallet-collective/std",
   "pallet-scheduler/std",
+  "pallet-elections-phragmen/std",
 ]
 
 runtime-benchmarks = [
