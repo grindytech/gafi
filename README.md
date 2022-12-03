@@ -1,3 +1,5 @@
+![3D_Blue_Vertical_Slogan](https://user-images.githubusercontent.com/67900234/205422369-4ee51a5a-1822-4da2-bd21-055cd0b40230.svg)
+
 # Gafi Network Node
 
 The decentralized blockchain platform that built for blockchain games and high-frequency applications. Applications running on top of Gafi Network will never bother about the security, transaction fee, malicious accounts, and many other bad factors. They can just focus on gameplay, game experience, or application logic. The Gafi Network supports EVM (Ethereum Virtual Machine) that projects deploy from Ethereum or Binance Smart Chain to Gafi Network with little or no change.
