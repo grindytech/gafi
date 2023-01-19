@@ -34,6 +34,7 @@ use scale_info::prelude::{format, string::String};
 use sp_std::{prelude::*, str};
 
 use frame_system::offchain::{CreateSignedTransaction, SubmitTransaction};
+use lite_json::json::JsonValue;
 use rustc_hex::ToHex;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::offchain::{http, Duration};
@@ -369,6 +370,24 @@ pub mod pallet {
 			false
 		}
 
+		fn parse_whitelist(result: &str) -> Option<bool> {
+			let val = lite_json::parse_json(result);
+
+			let is_wl = match val.ok()? {
+				JsonValue::Object(obj) => {
+					let (_, v) =
+						obj.into_iter().find(|(k, _)| k.iter().copied().eq("result".chars()))?;
+					match v {
+						JsonValue::Boolean(wl) => wl,
+						_ => return None,
+					}
+				},
+				_ => return None,
+			};
+
+			Some(is_wl)
+		}
+
 		pub fn fetch_whitelist(url: &str) -> Result<bool, http::Error> {
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
 
@@ -391,9 +410,12 @@ pub mod pallet {
 				http::Error::Unknown
 			})?;
 
-			let verify: bool = matches!(body_str, "true");
-
-			Ok(verify)
+			let is_wl = Self::parse_whitelist(body_str);
+			if let Some(wl) = is_wl {
+				return Ok(wl)
+			} else {
+				return Err(http::Error::Unknown)
+			}
 		}
 
 		pub fn get_api(link: &str, pool_id: ID, player: &T::AccountId) -> String {
@@ -402,7 +424,7 @@ pub mod pallet {
 			let address = player.encode();
 
 			let hex_address: String = address.to_hex();
-			let uri = format!("{link}?pool_id={pool_id_hex}&address={hex_address}");
+			let uri = format!("{link}?id={pool_id_hex}&address={hex_address}");
 			uri
 		}
 
@@ -447,7 +469,10 @@ pub mod pallet {
 			};
 
 			match call {
-				Call::approve_whitelist_unsigned { pool_id: _, player: _} => match source {
+				Call::approve_whitelist_unsigned {
+					pool_id: _,
+					player: _,
+				} => match source {
 					TransactionSource::Local | TransactionSource::InBlock =>
 						valid_tx(b"approve_whitelist_unsigned".to_vec()),
 					_ => InvalidTransaction::Call.into(),

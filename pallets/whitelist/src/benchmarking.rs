@@ -14,6 +14,7 @@ use scale_info::prelude::{format, string::String};
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
 const POOL_ID: ID = [0_u8; 32];
 const MAX: u32 = 100;
+const TEST_URL: string = b"http://whitelist.gafi.network/verify";
 
 fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
@@ -33,8 +34,7 @@ benchmarks! {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		let url = b"http://whitelist.gafi.network/whitelist/verify";
-	}: _(RawOrigin::Signed(caller), POOL_ID, url.to_vec())
+	}: _(RawOrigin::Signed(caller), POOL_ID, TEST_URL.to_vec())
 
 
 	apply_whitelist {
@@ -42,9 +42,7 @@ benchmarks! {
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let player = new_funded_account::<T>(s + MAX, s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		let url = b"http://whitelist.gafi.network/whitelist/verify";
-
-		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, TEST_URL.to_vec());
 
 	}: _(RawOrigin::Signed(player), POOL_ID)
 
@@ -54,9 +52,7 @@ benchmarks! {
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
 
-		let url = b"http://whitelist.gafi.network/whitelist/verify";
-
-		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, TEST_URL.to_vec());
 
 		let _ = Whitelist::<T>::apply_whitelist(RawOrigin::Signed(player.clone()).into(), POOL_ID);
 
@@ -68,9 +64,7 @@ benchmarks! {
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
 
-		let url = b"http://whitelist.gafi.network/whitelist/verify";
-
-		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, TEST_URL.to_vec());
 
 		let _ = Whitelist::<T>::apply_whitelist(RawOrigin::Signed(player.clone()).into(), POOL_ID);
 
@@ -80,9 +74,7 @@ benchmarks! {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
-		let url = b"http://whitelist.gafi.network/whitelist/verify";
-
-		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
+		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, TEST_URL.to_vec());
 
 	}: _(RawOrigin::Signed(caller), POOL_ID)
 
