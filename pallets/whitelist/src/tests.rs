@@ -14,6 +14,7 @@ use sp_runtime::{
 };
 use sponsored_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
+use sp_runtime::offchain::{http, Duration, Timestamp};
 
 #[cfg(feature = "runtime-benchmarks")]
 use sponsored_pool::CustomPool;
@@ -35,6 +36,12 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 fn test_pub() -> sp_core::sr25519::Public {
 	sp_core::sr25519::Public::from_raw([1u8; 32])
 }
+
+struct VerifyResult {
+	result: bool
+}
+
+const TEST_URL: &str = "http://whitelist.gafi.network/verify";
 
 fn create_pool(
 	account: sr25519::Public,
@@ -84,8 +91,8 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 	let pool_id_hex: String = pool_id.to_hex();
 
 	let uri = format!(
-		"http://whitelist.gafi.network/whitelist/verify?pool_id=${}&address=${}",
-		pool_id_hex, player
+		"${:?}?_id=${}&address=${}",
+		TEST_URL, pool_id_hex, player
 	);
 	whitelist_response_work(&mut offchain_state.write(), &uri);
 
@@ -167,26 +174,12 @@ fn should_make_http_call_and_parse_result() {
 	let mut t = sp_io::TestExternalities::default();
 	t.register_extension(OffchainWorkerExt::new(offchain));
 
-	let pool_id = "0x3a77d059474c1143d0d9cfc55f1d8601099a37c30c943f2807d6a7aa9eddd386";
-
-	let alice =
-		sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
-
-	let uri = format!(
-		"http://whitelist.gafi.network/whitelist/verify?pool_id={}&address={:#}",
-		pool_id, alice
-	);
-
-	whitelist_response_work(&mut state.write(), &uri);
-
-	// let id = match str::from_utf8(&pool_id) {
-	// 	Ok(v) => v,
-	// 	Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-	// };
+	// let url = format!("?id=d63de0e8c06ceacebd5bbb54500d82d061fb92f3a7ec1250dfefd99ec6de2456&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+	whitelist_response_work(&mut state.write(), &TEST_URL);
 
 	t.execute_with(|| {
 		// when
-		let verify = PalletWhitelist::fetch_whitelist(&uri).unwrap();
+		let verify = PalletWhitelist::fetch_whitelist(&TEST_URL).unwrap();
 		// then
 		assert_eq!(verify, true);
 	});
@@ -196,7 +189,7 @@ fn whitelist_response_work(state: &mut testing::OffchainState, uri: &str) {
 	state.expect_request(testing::PendingRequest {
 		method: "GET".into(),
 		uri: uri.into(),
-		response: Some(br#"true"#.to_vec()),
+		response: Some(br#"{"result": true}"#.to_vec()),
 		sent: true,
 		..Default::default()
 	});
@@ -208,20 +201,11 @@ fn make_http_call_and_parse_result_should_fail() {
 	let mut t = sp_io::TestExternalities::default();
 	t.register_extension(OffchainWorkerExt::new(offchain));
 
-	let pool_id = "0x3a77d059474c1143d0d9cfc55f1d8601099a37c30c943f2807d6a7aa9eddd386";
-
-	let dave =
-		sr25519::Public::from_str("5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy").unwrap();
-
-	let uri = format!(
-		"http://whitelist.gafi.network/whitelist/verify?pool_id={}&address={:#}",
-		pool_id, dave
-	);
-	whitelist_response_fail(&mut state.write(), &uri);
+	whitelist_response_fail(&mut state.write(), &TEST_URL);
 
 	t.execute_with(|| {
 		// when
-		let verify = PalletWhitelist::fetch_whitelist(&uri).unwrap();
+		let verify = PalletWhitelist::fetch_whitelist(&TEST_URL).unwrap();
 		// then
 		assert_eq!(verify, false);
 	});
@@ -231,7 +215,7 @@ fn whitelist_response_fail(state: &mut testing::OffchainState, uri: &str) {
 	state.expect_request(testing::PendingRequest {
 		method: "GET".into(),
 		uri: uri.into(),
-		response: Some(br#"false"#.to_vec()),
+		response: Some(br#"{"result": false}"#.to_vec()),
 		sent: true,
 		..Default::default()
 	});
@@ -247,11 +231,11 @@ fn get_uri_should_works() {
 	let player =
 		sr25519::Public::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 
-	let link = "http://whitelist.gafi.network/whitelist/verify";
+	let link = "http://whitelist.gafi.network/verify";
 
 	let uri = PalletWhitelist::get_api(link, pool_id, &player);
 
-	assert_eq!(uri, "http://whitelist.gafi.network/whitelist/verify?pool_id=cfe6ad53d9338c449973e9850eac29948c8045e1fcb3659fb1b51948ddde856f&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+	assert_eq!(uri, "http://whitelist.gafi.network/verify?id=cfe6ad53d9338c449973e9850eac29948c8045e1fcb3659fb1b51948ddde856f&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
 }
 
 #[test]
