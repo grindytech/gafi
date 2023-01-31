@@ -50,7 +50,7 @@ sp-std = {version = "4.0.0", default-features = false, git = "https://github.com
 # Local
 upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
 staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
-sponsored-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/sponsored-pool" }
+funding-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/funding-pool" }
 pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
 gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
 proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
@@ -79,7 +79,7 @@ std = [
   'proof-address-mapping/std',
   'upfront-pool/std',
   'pallet-pool/std',
-  'sponsored-pool/std',
+  'funding-pool/std',
   'staking-pool/std',
   'gafi-tx/std',
   'gu-ethereum/std',

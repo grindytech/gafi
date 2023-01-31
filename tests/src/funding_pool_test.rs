@@ -28,7 +28,7 @@ fn create_pool(
     discount: Permill,
 ) -> ID {
     let before_balance = Balances::free_balance(&account);
-    assert_ok!(SponsoredPool::create_pool(
+    assert_ok!(FundingPool::create_pool(
         Origin::signed(account.clone()),
         targets,
         pool_value,
@@ -40,7 +40,7 @@ fn create_pool(
         before_balance - pool_value
     );
 
-    let pool_id = SponsoredPool::pool_owned(&account);
+    let pool_id = FundingPool::pool_owned(&account);
 
     let id = pool_id.clone();
 
@@ -48,7 +48,7 @@ fn create_pool(
 }
 
 #[test]
-fn create_sponsored_pool_works() {
+fn create_funding_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(1);
         let account_balance = one_mil_gaki();
@@ -63,7 +63,7 @@ fn create_sponsored_pool_works() {
 }
 
 #[test]
-fn rejoin_sponsored_pool_works() {
+fn rejoin_funding_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(ADD_BLOCK);
         let account_balance = one_mil_gaki();
@@ -104,7 +104,7 @@ fn rejoin_sponsored_pool_works() {
 }
 
 #[test]
-fn limit_join_sponsored_pool_works() {
+fn limit_join_funding_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(ADD_BLOCK);
         let account_balance = one_mil_gaki();

@@ -51,13 +51,13 @@ benchmarks! {
 	join {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 	}: _(RawOrigin::Signed(caller), TICKETS[s as usize])
 
 	leave {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 		let pool_id = TICKETS[s as usize];
 		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), pool_id);
 	}: _(RawOrigin::Signed(caller), pool_id)
@@ -66,7 +66,7 @@ benchmarks! {
 	leave_all {
 		let s in 0 .. (MAX_TICKETS - 1) as u32;
 		let caller = new_funded_account::<T>(s, s, 100_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 		let pool_id = TICKETS[s as usize];
 		let _ = Pallet::<T>::join(RawOrigin::Signed(caller.clone()).into(), pool_id);
 	}: _(RawOrigin::Signed(caller))

@@ -14,7 +14,7 @@ parameter_types! {
 	pub MaxPoolTarget: u32 =  10;
 }
 
-impl sponsored_pool::Config for Runtime {
+impl funding_pool::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type PoolName = PoolName;
@@ -27,5 +27,5 @@ impl sponsored_pool::Config for Runtime {
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type IWhitelist = PalletWhitelist;
-	type WeightInfo = sponsored_pool::weights::SponsoredWeight<Runtime>;
+	type WeightInfo = funding_pool::weights::FundingWeight<Runtime>;
 }

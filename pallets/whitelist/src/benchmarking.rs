@@ -32,7 +32,7 @@ benchmarks! {
 	enable_whitelist {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 	}: _(RawOrigin::Signed(caller), POOL_ID, url.to_vec())
 
@@ -41,7 +41,7 @@ benchmarks! {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let player = new_funded_account::<T>(s + MAX, s + MAX, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());
@@ -52,7 +52,7 @@ benchmarks! {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
@@ -66,7 +66,7 @@ benchmarks! {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
 		let player = new_funded_account::<T>(s + MAX , s + MAX, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
@@ -79,7 +79,7 @@ benchmarks! {
 	withdraw_whitelist {
 		let s in 0 .. MAX;
 		let caller = new_funded_account::<T>(s, s, 1000_000_000u128 * UNIT);
-		T::SponsoredPool::add_default(caller.clone(), POOL_ID);
+		T::FundingPool::add_default(caller.clone(), POOL_ID);
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		Whitelist::<T>::enable_whitelist(RawOrigin::Signed(caller.clone()).into(), POOL_ID, url.to_vec());

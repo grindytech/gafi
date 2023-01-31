@@ -39,7 +39,7 @@ pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pa
 pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
 sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sponsored-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/sponsored-pool"}
+funding-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/funding-pool"}
 
 [features]
 default = ["std"]
@@ -56,7 +56,7 @@ std = [
   "sp-io/std",
   "pallet-balances/std",
   "sp-keystore/std",
-  "sponsored-pool/std",
+  "funding-pool/std",
   "pallet-randomness-collective-flip/std",
   "pallet-pool/std",
   "pallet-timestamp/std",
@@ -64,6 +64,6 @@ std = [
 
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
-  "sponsored-pool/runtime-benchmarks",
+  "funding-pool/runtime-benchmarks",
 ]
 try-runtime = ["frame-support/try-runtime"]

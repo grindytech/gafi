@@ -3,7 +3,7 @@
 * and not related with Currency e.g. Balances, Transaction Payment
 */
 
-use crate::{self as sponsored_pool};
+use crate::{self as funding_pool};
 use frame_support::{parameter_types, traits::{ConstU32}};
 use frame_system as system;
 
@@ -35,7 +35,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
+		Funding: funding_pool::{Pallet, Storage, Event<T>},
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
@@ -120,7 +120,7 @@ parameter_types! {
 	pub MaxPoolTarget: u32 =  10;
 }
 
-impl sponsored_pool::Config for Test {
+impl funding_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;

@@ -47,7 +47,7 @@ frame_support::construct_runtime!(
 		Pool: pallet_pool::{Pallet, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
-		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>},
+		FundingPool: funding_pool::{Pallet, Call, Storage, Event<T>},
 		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
@@ -113,7 +113,7 @@ parameter_types! {
 	pub MaxPoolTarget: u32 =  10;
 }
 
-impl sponsored_pool::Config for Test {
+impl funding_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
@@ -141,7 +141,7 @@ impl pallet_cache::Config for Test {
 }
 
 parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub MaxJoinedFundingPool: u32 = 5;
 	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
@@ -151,8 +151,8 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = ();
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
+	type MaxJoinedFundingPool = MaxJoinedFundingPool;
+	type FundingPool = FundingPool;
 	type Cache = PalletCache;
 	type TimeServiceStorage = TimeServiceStorage;
 }

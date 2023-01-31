@@ -1864,6 +1864,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "funding-pool",
  "gafi-membership",
  "gafi-primitives",
  "gafi-tx",
@@ -1915,7 +1916,6 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "sponsored-pool",
  "staking-pool",
  "static_assertions",
  "substrate-wasm-builder",
@@ -2974,6 +2974,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 
 [[package]]
+name = "funding-pool"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-primitives",
+ "gu-convertor",
+ "gu-currency",
+ "pallet-balances",
+ "pallet-pool-names",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3576,6 +3599,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "funding-pool",
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
@@ -3629,7 +3653,6 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "sponsored-pool",
  "staking-pool",
  "substrate-wasm-builder",
  "upfront-pool",
@@ -6707,6 +6730,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "funding-pool",
  "gafi-primitives",
  "gu-mock",
  "log",
@@ -6722,7 +6746,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
  "staking-pool",
  "upfront-pool",
 ]
@@ -7062,6 +7085,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "funding-pool",
  "gafi-primitives",
  "log",
  "pallet-balances",
@@ -7077,7 +7101,6 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
 ]
 
 [[package]]
@@ -11651,29 +11674,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
-name = "sponsored-pool"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "gu-convertor",
- "gu-currency",
- "pallet-balances",
- "pallet-pool-names",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "ss58-registry"
 version = "1.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11996,6 +11996,7 @@ dependencies = [
  "fp-self-contained",
  "frame-support",
  "frame-system",
+ "funding-pool",
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
@@ -12024,7 +12025,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sponsored-pool",
  "staking-pool",
  "upfront-pool",
 ]

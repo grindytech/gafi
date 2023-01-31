@@ -28,7 +28,7 @@ fn create_pool(
     tx_limit: u32,
     discount: Permill,
 ) -> ID {
-    assert_ok!(Sponsored::create_pool(
+    assert_ok!(Funding::create_pool(
         Origin::signed(account.clone()),
         targets,
         pool_value,
@@ -54,7 +54,7 @@ fn new_pool_works() {
     ExtBuilder::default().build_and_execute(|| {
         run_to_block(1);
 
-        let new_pool = Sponsored::new_pool();
+        let new_pool = Funding::new_pool();
         assert_eq!(new_pool.unwrap().id.len(), 32);
     })
 }
@@ -92,7 +92,7 @@ fn create_pool_fail() {
 
         let pool_value = 1000 * unit(GAKI);
         assert_noop!(
-            Sponsored::create_pool(
+            Funding::create_pool(
                 Origin::signed(account.clone()),
                 vec![H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap()],
                 pool_value,
@@ -120,7 +120,7 @@ fn withdraw_pool_works() {
             Permill::from_percent(70),
         );
 
-        assert_ok!(Sponsored::withdraw_pool(
+        assert_ok!(Funding::withdraw_pool(
             Origin::signed(account.clone()),
             pool_id
         ));
@@ -137,9 +137,9 @@ fn withdraw_pool_fail() {
         let pool_value = 1000 * unit(GAKI);
         // pool_id not exist
         {
-            let new_pool = Sponsored::new_pool();
+            let new_pool = Funding::new_pool();
             assert_err!(
-                Sponsored::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().id),
+                Funding::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().id),
                 Error::<Test>::PoolNotExist
             );
         }
@@ -156,7 +156,7 @@ fn withdraw_pool_fail() {
                 Permill::from_percent(10),
             );
             assert_noop!(
-                Sponsored::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
+                Funding::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
                 Error::<Test>::NotTheOwner
             );
         }
@@ -179,7 +179,7 @@ fn get_service_works() {
             Permill::from_percent(10),
         );
 
-        let service = Sponsored::get_service(pool_id).unwrap();
+        let service = Funding::get_service(pool_id).unwrap();
         assert_eq!(service.sponsor, account);
         assert_eq!(service.service.discount, Permill::from_percent(10));
         assert_eq!(service.service.tx_limit, 100);
@@ -210,7 +210,7 @@ fn new_targets_works() {
         let new_targets: Vec<H160> =
             vec![H160::from_str("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48").unwrap()];
 
-        assert_ok!(Sponsored::new_targets(
+        assert_ok!(Funding::new_targets(
             Origin::signed(account.clone()),
             pool_id,
             new_targets.clone()
@@ -231,9 +231,9 @@ fn new_targets_fail() {
         let pool_id;
         // pool_id not exist
         {
-            let new_pool = Sponsored::new_pool();
+            let new_pool = Funding::new_pool();
             assert_noop!(
-                Sponsored::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().id),
+                Funding::withdraw_pool(Origin::signed(account.clone()), new_pool.unwrap().id),
                 Error::<Test>::PoolNotExist
             );
         }
@@ -250,7 +250,7 @@ fn new_targets_fail() {
                 Permill::from_percent(70),
             );
             assert_noop!(
-                Sponsored::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
+                Funding::withdraw_pool(Origin::signed(account_1.clone()), pool_id),
                 Error::<Test>::NotTheOwner
             );
         }
@@ -271,7 +271,7 @@ fn new_targets_fail() {
                 H160::from_str("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48").unwrap(),
             ];
             assert_noop!(
-                Sponsored::new_targets(
+                Funding::new_targets(
                     Origin::signed(account.clone()),
                     pool_id,
                     new_targets.clone()
@@ -299,17 +299,17 @@ fn normal_operation_should_work() {
         );
 		let free_balance = account_balance - pool_value - RESERVATION_FEE * unit(GAKI);
 
-		assert_ok!(Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
+		assert_ok!(Funding::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
 		assert_eq!(Balances::reserved_balance(account.clone()), RESERVATION_FEE * unit(GAKI));
 		assert_eq!(Balances::free_balance(account.clone()), free_balance);
 		assert_eq!(PoolNames::name_of(pool_id).unwrap().0, b"Test pool".to_vec());
 
-		assert_ok!(Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool1".to_vec()));
+		assert_ok!(Funding::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool1".to_vec()));
 		assert_eq!(Balances::reserved_balance(account.clone()), RESERVATION_FEE * unit(GAKI));
 		assert_eq!(Balances::free_balance(account.clone()), free_balance);
 		assert_eq!(pallet_pool_names::Pallet::<Test>::name_of(pool_id).unwrap().0, b"Test pool1".to_vec());
 
-		assert_ok!(Sponsored::clear_pool_name(Origin::signed(account.clone()), pool_id));
+		assert_ok!(Funding::clear_pool_name(Origin::signed(account.clone()), pool_id));
 		assert_eq!(Balances::reserved_balance(account.clone()), 0);
 		assert_eq!(Balances::free_balance(account.clone()), account_balance - pool_value);
 	});
@@ -331,10 +331,10 @@ fn kill_name_should_work() {
 			Permill::from_percent(70),
 		);
 
-		assert_ok!(Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
+		assert_ok!(Funding::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool".to_vec()));
 		assert_eq!(Balances::total_balance(&account), account_balance - pool_value);
 		assert_eq!(Balances::reserved_balance(account.clone()), RESERVATION_FEE * unit(GAKI));
-		assert_ok!(Sponsored::kill_pool_name(Origin::root(), pool_id));
+		assert_ok!(Funding::kill_pool_name(Origin::root(), pool_id));
 		assert_eq!(Balances::total_balance(&account), account_balance - pool_value - RESERVATION_FEE * unit(GAKI));
 		assert_eq!(pallet_pool_names::Pallet::<Test>::name_of(pool_id), None);
 	});
@@ -367,19 +367,19 @@ fn error_catching_should_work() {
             Permill::from_percent(70),
         );
 
-		assert_noop!(Sponsored::clear_pool_name(Origin::signed(account.clone()), pool_id), pallet_pool_names::Error::<Test>::Unnamed);
+		assert_noop!(Funding::clear_pool_name(Origin::signed(account.clone()), pool_id), pallet_pool_names::Error::<Test>::Unnamed);
 
 		assert_noop!(
-			Sponsored::set_pool_name(Origin::signed(account1.clone()), pool_id1, b"Test pool".to_vec()),
+			Funding::set_pool_name(Origin::signed(account1.clone()), pool_id1, b"Test pool".to_vec()),
 			pallet_balances::Error::<Test, _>::InsufficientBalance
 		);
 
 		assert_noop!(
-			Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Te".to_vec()),
+			Funding::set_pool_name(Origin::signed(account.clone()), pool_id, b"Te".to_vec()),
 			pallet_pool_names::Error::<Test>::TooShort
 		);
 		assert_noop!(
-			Sponsored::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool name with 16 chars".to_vec()),
+			Funding::set_pool_name(Origin::signed(account.clone()), pool_id, b"Test pool name with 16 chars".to_vec()),
 			pallet_pool_names::Error::<Test>::TooLong
 		);
 
