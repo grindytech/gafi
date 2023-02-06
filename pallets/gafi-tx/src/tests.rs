@@ -20,7 +20,7 @@ fn _new_account(account: [u8; 32], balance: u128) -> AccountId32 {
 }
 
 #[test]
-fn correct_and_deposit_fee_sponsored_works() {
+fn correct_and_deposit_fee_funding_works() {
     ExtBuilder::default().build_and_execute(|| {
         let pool_id: ID = [0_u8; 32];
         let pool = AccountId32::from(pool_id);
@@ -32,7 +32,7 @@ fn correct_and_deposit_fee_sponsored_works() {
         let target: H160 = H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d1456").unwrap();
         let discount = Permill::from_percent(40);
 
-        let sponsored_fee = Pallet::<Test>::correct_and_deposit_fee_sponsored(
+        let funding_fee = Pallet::<Test>::correct_and_deposit_fee_funding(
             pool_id,
             targets,
             target,
@@ -41,13 +41,13 @@ fn correct_and_deposit_fee_sponsored_works() {
         )
         .unwrap();
 
-        assert_eq!(sponsored_fee, 6 * unit(GAKI));
+        assert_eq!(funding_fee, 6 * unit(GAKI));
         assert_eq!(Balances::free_balance(&pool), 96 * unit(GAKI));
     })
 }
 
 #[test]
-fn correct_and_deposit_fee_sponsored_should_return_none() {
+fn correct_and_deposit_fee_funding_should_return_none() {
     ExtBuilder::default().build_and_execute(|| {
         let pool_id: ID = [0_u8; 32];
         let pool = AccountId32::from(pool_id);
@@ -59,7 +59,7 @@ fn correct_and_deposit_fee_sponsored_should_return_none() {
         let targets = vec![H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d1456").unwrap(), H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d1247").unwrap()];
         let target: H160 = H160::from_str("0x0A6617b82B594C83240092BDc86E2e16354d8482").unwrap();
 
-        let sponsored_fee = Pallet::<Test>::correct_and_deposit_fee_sponsored(
+        let funding_fee = Pallet::<Test>::correct_and_deposit_fee_funding(
             pool_id,
             targets,
             target,
@@ -67,7 +67,7 @@ fn correct_and_deposit_fee_sponsored_should_return_none() {
             discount,
         );
 
-        assert!(sponsored_fee.is_none());
+        assert!(funding_fee.is_none());
         assert_eq!(Balances::free_balance(&pool), pool_balance);
     })
 }

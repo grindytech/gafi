@@ -12,7 +12,7 @@ use crate::constant::ID;
 pub enum PoolType {
 	Upfront,
 	Staking,
-	Sponsored,
+	Funding,
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -40,24 +40,24 @@ impl<AccountId> MasterPool<AccountId> for () {
 	}
 }
 
-// sponsored pool external service
+// funding pool external service
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum SponsoredPoolJoinType {
+pub enum FundingPoolJoinType {
 	Default,
 	Whitelist,
 }
-pub trait SponsoredPoolJoinTypeHandle<AccountId> {
+pub trait FundingPoolJoinTypeHandle<AccountId> {
 	fn set_join_type(
 		pool_id: ID,
-		join_type: SponsoredPoolJoinType,
+		join_type: FundingPoolJoinType,
 		call_check_url: Vec<u8>,
 		account_id: AccountId,
 	) -> DispatchResult;
 	fn reset(pool_id: ID, account_id: AccountId) -> DispatchResult;
-	fn get_join_type(pool_id: ID) -> Option<(SponsoredPoolJoinType, Vec<u8>)>;
+	fn get_join_type(pool_id: ID) -> Option<(FundingPoolJoinType, Vec<u8>)>;
 }
-pub trait GetSponsoredPoolJoinType {
-	fn get_join_type(pool_id: ID) -> (SponsoredPoolJoinType, Vec<u8>);
+pub trait GetFundingPoolJoinType {
+	fn get_join_type(pool_id: ID) -> (FundingPoolJoinType, Vec<u8>);
 }

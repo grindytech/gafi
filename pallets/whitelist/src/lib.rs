@@ -93,7 +93,7 @@ pub mod pallet {
 		type WhitelistPool: WhitelistPool<Self::AccountId>;
 
 		/// Traits CustomPool
-		type SponsoredPool: CustomPool<Self::AccountId>;
+		type FundingPool: CustomPool<Self::AccountId>;
 
 		/// Maximum length of whitelist query api
 		type MaxWhitelistLength: Get<u32>;
@@ -305,7 +305,7 @@ pub mod pallet {
 		}
 
 		fn insert_whitelist(pool_id: ID, player: T::AccountId) -> Result<(), &'static str> {
-			ensure!(T::SponsoredPool::is_pool(pool_id), Error::<T>::PoolNotFound);
+			ensure!(T::FundingPool::is_pool(pool_id), Error::<T>::PoolNotFound);
 
 			ensure!(Self::is_whitelist(pool_id), <Error::<T>>::PoolNotWhitelist);
 
@@ -438,7 +438,7 @@ pub mod pallet {
 		}
 
 		fn is_pool_owner(pool_id: ID, sender: &T::AccountId) -> Result<(), Error<T>> {
-			if let Some(owner) = T::SponsoredPool::get_pool_owner(pool_id) {
+			if let Some(owner) = T::FundingPool::get_pool_owner(pool_id) {
 				if owner == *sender {
 					return Ok(())
 				} else {

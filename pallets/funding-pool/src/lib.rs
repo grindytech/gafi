@@ -46,7 +46,7 @@ use sp_std::vec::Vec;
 #[derive(
 	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
 )]
-pub struct SponsoredPool<AccountId> {
+pub struct FundingPool<AccountId> {
 	pub id: ID,
 	pub owner: AccountId,
 	pub value: u128,
@@ -134,7 +134,7 @@ pub mod pallet {
 
 	/// Holding the all the pool data
 	#[pallet::storage]
-	pub type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, SponsoredPool<T::AccountId>>;
+	pub type Pools<T: Config> = StorageMap<_, Twox64Concat, ID, FundingPool<T::AccountId>>;
 
 	/// Holding the pool owned
 	#[pallet::storage]
@@ -234,7 +234,7 @@ pub mod pallet {
 				<Error<T>>::ExceedPoolTarget
 			}
 
-			let new_pool = SponsoredPool {
+			let new_pool = FundingPool {
 				id: pool_config.id,
 				owner: sender.clone(),
 				value: balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(value)?,
@@ -510,12 +510,12 @@ pub mod pallet {
 			return None
 		}
 
-		/// Add new sponsored-pool with default values, return pool_id
+		/// Add new funding-pool with default values, return pool_id
 		///
 		/// ** Should be used for benchmarking only!!! **
 		#[cfg(feature = "runtime-benchmarks")]
 		fn add_default(owner: T::AccountId, pool_id: ID) {
-			let sponsored_pool = SponsoredPool {
+			let funding_pool = FundingPool {
 				id: pool_id,
 				owner: owner.clone(),
 				value: 0_u128,
@@ -523,7 +523,7 @@ pub mod pallet {
 				tx_limit: 0_u32,
 			};
 
-			Pools::<T>::insert(pool_id, sponsored_pool);
+			Pools::<T>::insert(pool_id, funding_pool);
 			let _ = PoolOwned::<T>::try_mutate(&owner, |pool_vec| pool_vec.try_push(pool_id))
 				.map_err(|_| <Error<T>>::ExceedMaxPoolOwned);
 		}

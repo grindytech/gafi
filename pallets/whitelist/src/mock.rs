@@ -52,7 +52,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		PalletWhitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>},
-		Sponsored: sponsored_pool::{Pallet, Storage, Event<T>},
+		Funding: funding_pool::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		PalletPool: pallet_pool::{Pallet, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
@@ -105,7 +105,7 @@ parameter_types! {
 	pub MaxPoolTarget: u32 =  10;
 }
 
-impl sponsored_pool::Config for Test {
+impl funding_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
@@ -122,7 +122,7 @@ impl sponsored_pool::Config for Test {
 }
 
 parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub MaxJoinedFundingPool: u32 = 5;
 	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
@@ -132,8 +132,8 @@ impl pallet_pool::Config for Test {
 	type UpfrontPool = ();
 	type StakingPool = ();
 	type WeightInfo = ();
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = Sponsored;
+	type MaxJoinedFundingPool = MaxJoinedFundingPool;
+	type FundingPool = Funding;
 	type Cache = PalletCache;
 	type TimeServiceStorage = TimeServiceStorage;
 }
@@ -161,7 +161,7 @@ impl  pallet_whitelist::Config for Test {
 	type WhitelistPool = PalletPool;
 	type Currency = Balances;
 	type WeightInfo = ();
-	type SponsoredPool = Sponsored;
+	type FundingPool = Funding;
 	type MaxWhitelistLength = MaxWhitelistLength;
 	type WhitelistFee = WhitelistFee;
 }

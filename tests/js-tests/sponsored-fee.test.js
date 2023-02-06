@@ -29,7 +29,7 @@ function percentage_of(oldNumber, newNumber) {
 
 /// Situation: Alice map with account_1, Bob map with account_2
 /// Alice is the pool owner, Bob is the player
-describeWithFrontier("Sponsored Pool Fee", (context) => {
+describeWithFrontier("Funding Pool Fee", (context) => {
 
     step('step should create new erc20 token', async () => {
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
@@ -88,22 +88,22 @@ describeWithFrontier("Sponsored Pool Fee", (context) => {
     step('step should get owned pools before create new pool', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        let pools = await api.query.sponsoredPool.poolOwned(Alice.publicKey);
+        let pools = await api.query.fundingPool.poolOwned(Alice.publicKey);
         NewPool = pools[pools.length - 1];
     })
 
-    step('leave any pool before join sponsored pool works', async () => {
+    step('leave any pool before join funding pool works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.leave_all_pool(context, Bob);
     }).timeout(20000);
 
 
-    step('join sponsored sponsored works', async () => {
+    step('join funding funding works', async () => {
         var Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.join_pool(context, Bob, NewPool);
     }).timeout(20000);
 
-    step('discount on sponsored pool works', async () => {
+    step('discount on funding pool works', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);

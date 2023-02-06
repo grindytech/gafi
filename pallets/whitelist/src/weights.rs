@@ -44,7 +44,7 @@ pub trait WeightInfo {
 pub struct WhitelistWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
-	// Storage: SponsoredPool Pools (r:1 w:0)
+	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: System Number (r:1 w:0)
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
@@ -56,7 +56,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
-	// Storage: SponsoredPool Pools (r:1 w:0)
+	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PalletWhitelist Whitelist (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
 	fn apply_whitelist(_s: u32, ) -> Weight {
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: SponsoredPool Pools (r:1 w:0)
+	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PalletWhitelist Whitelist (r:1 w:1)
 	// Storage: UpfrontPool Services (r:1 w:0)
 	// Storage: StakingPool Services (r:1 w:0)
@@ -102,7 +102,7 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
-	// Storage: SponsoredPool Pools (r:1 w:0)
+	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: System Number (r:1 w:0)
 	// Storage: System ExecutionPhase (r:1 w:0)

@@ -42,7 +42,7 @@ pallet-balances = { default-features = false, version = "4.0.0-dev", git = "http
 pallet-randomness-collective-flip = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
-sponsored-pool = { version = "4.0.0-dev", default-features = false, path = "../sponsored-pool" }
+funding-pool = { version = "4.0.0-dev", default-features = false, path = "../funding-pool" }
 pallet-pool-names = { default-features = false, version = "4.0.0-dev", path = "../pool-names" }
 pallet-cache = { default-features = false, version = "4.0.0-dev", path = "../pallet-cache" }
 gu-mock = { default-features = false, version = "4.0.0-dev", path = "../../utils/mock" }
@@ -64,13 +64,13 @@ std = [
   "pallet-balances/std",
   "upfront-pool/std",
   "staking-pool/std",
-  "sponsored-pool/std",
+  "funding-pool/std",
   "pallet-randomness-collective-flip/std",
 ]
 
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "gafi-primitives/runtime-benchmarks",
-  "sponsored-pool/runtime-benchmarks",
+  "funding-pool/runtime-benchmarks",
 ]
 try-runtime = ["frame-support/try-runtime"]

@@ -13,4 +13,4 @@ mod staking_pool_test;
 mod pool_test;
 
 #[cfg(test)]
-mod sponsored_pool_test;
+mod funding_pool_test;

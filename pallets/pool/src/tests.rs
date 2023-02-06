@@ -6,11 +6,11 @@ use gafi_primitives::{
 };
 use sp_core::{H160};
 use sp_runtime::{AccountId32, Permill};
-use sponsored_pool::{PoolOwned, Pools};
+use funding_pool::{PoolOwned, Pools};
 use std::str::FromStr;
 
 #[cfg(feature = "runtime-benchmarks")]
-use sponsored_pool::CustomPool;
+use funding_pool::CustomPool;
 
 
 fn make_deposit(account: &AccountId32, balance: u128) {
@@ -81,7 +81,7 @@ fn create_pool(
     discount: Permill,
 ) -> ID {
     let account_balance: u128 = Balances::free_balance(&account);
-    assert_ok!(SponsoredPool::create_pool(
+    assert_ok!(FundingPool::create_pool(
         Origin::signed(account.clone()),
         targets,
         pool_value,
@@ -157,7 +157,7 @@ fn get_ticket_service_works() {
         let account = new_account([0_u8; 32], account_balance);
         let id = [1; 32];
 
-        SponsoredPool::add_default(account.clone(), id);
+        FundingPool::add_default(account.clone(), id);
         let service = Pool::get_ticket_service(id).unwrap();
 
         assert_eq!(service.tx_limit, 0);

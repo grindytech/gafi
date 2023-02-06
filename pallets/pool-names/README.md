@@ -1,6 +1,6 @@
 # Pallet Pool Names
 
-Allow sponsor to name their sponsored pools, make it easy for user to recognize.
+Allow sponsor to name their funding pools, make it easy for user to recognize.
 
 ## Overview
 

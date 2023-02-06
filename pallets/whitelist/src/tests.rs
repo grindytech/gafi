@@ -12,12 +12,12 @@ use sp_runtime::{
 	offchain::{testing, TransactionPoolExt},
 	Permill,
 };
-use sponsored_pool::{PoolOwned, Pools};
+use funding_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
 use sp_runtime::offchain::{http, Duration, Timestamp};
 
 #[cfg(feature = "runtime-benchmarks")]
-use sponsored_pool::CustomPool;
+use funding_pool::CustomPool;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -51,7 +51,7 @@ fn create_pool(
 	tx_limit: u32,
 	discount: Permill,
 ) -> ID {
-	assert_ok!(Sponsored::create_pool(
+	assert_ok!(Funding::create_pool(
 		Origin::signed(account.clone()),
 		targets,
 		pool_value,

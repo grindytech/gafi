@@ -100,16 +100,16 @@ benchmark_upfront_pool:
     --repeat 10 \
     --output ./benchmarking/upfront-pool/weights.rs
 
-.PHONY: benchmark_sponsored_pool
-benchmark_sponsored_pool:
+.PHONY: benchmark_funding_pool
+benchmark_funding_pool:
 	./target/release/gafi-node benchmark pallet \
     --chain dev \
     --wasm-execution compiled \
-    --pallet sponsored_pool \
+    --pallet funding_pool \
     --extrinsic '*' \
     --steps 20 \
     --repeat 10 \
-    --output ./benchmarking/sponsored-pool/weights.rs
+    --output ./benchmarking/funding-pool/weights.rs
 
 .PHONY: benchmark_faucet
 benchmark_faucet:

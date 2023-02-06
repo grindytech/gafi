@@ -16,6 +16,7 @@ var ERC20_ADDRESS;
 var NewPool;
 const DISCOUNT = 60;
 const TX_LIMIT = 50;
+const TEST_DISCOUNT_TX = 10;
 
 function delay(interval) {
     return step(`should delay ${interval}`, done => {
@@ -88,7 +89,7 @@ describeWithFrontier("Whitelist", (context) => {
     step('step should get owned pools before create new pool', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });
         const Alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-        let pools = await api.query.sponsoredPool.poolOwned(Alice.publicKey);
+        let pools = await api.query.fundingPool.poolOwned(Alice.publicKey);
         NewPool = pools[pools.length - 1];
     })
 
@@ -102,7 +103,7 @@ describeWithFrontier("Whitelist", (context) => {
         assert.notEqual(source.toHuman(), null);
     })
 
-    step('leave any pool before join sponsored pool works', async () => {
+    step('leave any pool before join funding pool works', async () => {
         const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
         await utils.leave_all_pool(context, Bob);
     }).timeout(20000);
@@ -115,7 +116,7 @@ describeWithFrontier("Whitelist", (context) => {
         assert.notEqual(whitelist.toHuman(), null);
     })
 
-    step('join sponsored sponsored by approving works', async () => {
+    step('join funding funding by approving works', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });
 
         const Bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
@@ -126,31 +127,34 @@ describeWithFrontier("Whitelist", (context) => {
 
     }).timeout(20000);
 
-    step('discount on sponsored pool works', async () => {
+    step('discount on funding pool works', async () => {
         const api = await ApiPromise.create({ provider: context.wsProvider });
         const account_1 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_1);
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
-        let before_balance = await context.web3.eth.getBalance(account_2.address);
 
-        let pool_account_before = await api.query.system.account(NewPool);
-        let pool_before_balance = BigNumber.from(pool_account_before.data.free.toString()).toString();
 
-        let token_balance = "10000000000";
-        await utils.transfer_erc20(context, ERC20_ADDRESS, account_2, account_1.address, token_balance);
+        for (let i = 0; i < TEST_DISCOUNT_TX; i++) {
+            let before_balance = await context.web3.eth.getBalance(account_2.address);
+            let pool_account_before = await api.query.system.account(NewPool);
 
-        let after_balance = await context.web3.eth.getBalance(account_2.address);
-        let pool_account_after = await api.query.system.account(NewPool);
-        let pool_after_balance = BigNumber.from(pool_account_after.data.free.toString()).toString();
+            let pool_before_balance = BigNumber.from(pool_account_before.data.free.toString()).toString();
 
-        let discount_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
-        let pool_fee = context.web3.utils.fromWei(BigNumber.from(pool_before_balance).sub(BigNumber.from(pool_after_balance)).toString(), "ether");
+            let token_balance = "10000000000";
+            await utils.transfer_erc20(context, ERC20_ADDRESS, account_2, account_1.address, token_balance);
 
-        let discount_rate = percentage_of(discount_fee, NormalFee);
-        assert.equal(Math.round(discount_rate), DISCOUNT);
+            let after_balance = await context.web3.eth.getBalance(account_2.address);
+            let pool_account_after = await api.query.system.account(NewPool);
+            let pool_after_balance = BigNumber.from(pool_account_after.data.free.toString()).toString();
 
-        let pool_fee_rate = percentage_of(pool_fee, NormalFee);
-        assert.equal(Math.round(pool_fee_rate), 100 - DISCOUNT);
+            let discount_fee = context.web3.utils.fromWei(BigNumber.from(before_balance).sub(BigNumber.from(after_balance)).toString(), "ether");
+            let pool_fee = context.web3.utils.fromWei(BigNumber.from(pool_before_balance).sub(BigNumber.from(pool_after_balance)).toString(), "ether");
 
+            let discount_rate = percentage_of(discount_fee, NormalFee);
+            assert.equal(Math.round(discount_rate), DISCOUNT);
+            let pool_fee_rate = percentage_of(pool_fee, NormalFee);
+            await createAndFinalizeBlock(context.web3);
+            assert.equal(Math.round(pool_fee_rate), 100 - DISCOUNT);
+        }
     }).timeout(20000);
 
     step('Discount with tx limit works', async () => {
@@ -158,7 +162,8 @@ describeWithFrontier("Whitelist", (context) => {
         const account_2 = context.web3.eth.accounts.privateKeyToAccount(process.env.PRI_KEY_2);
 
         let count = 0;
-        for (let i = 0; i < TX_LIMIT + 2; i++) {
+        let tx_limit = TX_LIMIT - TEST_DISCOUNT_TX;
+        for (let i = 0; i < tx_limit + 5; i++) {
             let before_balance = await context.web3.eth.getBalance(account_2.address);
             await utils.transfer_erc20(context, ERC20_ADDRESS, account_2,
                 account_1.address, "100");
@@ -167,10 +172,10 @@ describeWithFrontier("Whitelist", (context) => {
             let rate = percentage_of(transfer_fee, NormalFee);
 
             count++;
-            if (count <= TX_LIMIT - 1) {
-                assert.equal(Math.round(rate), DISCOUNT);
+            if (count <= tx_limit) {
+                assert.equal(Math.round(rate), DISCOUNT, `Not correct at ${i}`);
             } else {
-                assert.notEqual(Math.round(rate), DISCOUNT);
+                assert.notEqual(Math.round(rate), DISCOUNT, `Not correct at ${i}`);
             }
         }
     }).timeout(30000);

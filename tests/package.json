@@ -7,7 +7,7 @@
     "build": "truffle compile",
     "test": "mocha --reporter spec js-tests/*",
     "scripts": "mocha --reporter spec scripts/*",
-    "sponsored": "mocha --reporter spec js-tests/sponsored-fee.test.js",
+    "funding": "mocha --reporter spec js-tests/funding-fee.test.js",
     "upfront": "mocha --reporter spec js-tests/upfront-pool.test.js",
     "staking": "mocha --reporter spec js-tests/staking-pool.test.js",
     "game-creator": "mocha --reporter spec js-tests/game-creator.test.js",
