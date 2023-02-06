@@ -41,7 +41,7 @@ frame_support::construct_runtime!(
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
-		SponsoredPool: sponsored_pool::{Pallet, Storage, Event<T>},
+		FundingPool: funding_pool::{Pallet, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 		PalletTxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>},
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>},
@@ -134,7 +134,7 @@ impl pallet_cache::Config for Test {
 }
 
 parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5_u32;
+	pub MaxJoinedFundingPool: u32 = 5_u32;
 	pub TimeServiceStorage: u128 = TIME_SERVICE;
 }
 
@@ -144,8 +144,8 @@ impl pallet_pool::Config for Test {
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
-	type SponsoredPool = SponsoredPool;
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
+	type FundingPool = FundingPool;
+	type MaxJoinedFundingPool = MaxJoinedFundingPool;
 	type Cache = PalletCache;
 	type TimeServiceStorage = TimeServiceStorage;
 }
@@ -191,7 +191,7 @@ parameter_types! {
 	pub MaxTxLimit: u32 = 100;
 }
 
-impl sponsored_pool::Config for Test {
+impl funding_pool::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;

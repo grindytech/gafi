@@ -1,4 +1,4 @@
-use crate::{Balances, Event, PalletCachePool, Runtime, SponsoredPool, StakingPool, UpfrontPool};
+use crate::{Balances, Event, PalletCachePool, Runtime, FundingPool, StakingPool, UpfrontPool};
 use frame_support::parameter_types;
 use gafi_primitives::{constant::ID, ticket::TicketInfo};
 
@@ -15,7 +15,7 @@ impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
 }
 
 parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub MaxJoinedFundingPool: u32 = 5;
 	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
@@ -25,8 +25,8 @@ impl pallet_pool::Config for Runtime {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
+	type MaxJoinedFundingPool = MaxJoinedFundingPool;
+	type FundingPool = FundingPool;
 	type Cache = PalletCachePool;
 	type TimeServiceStorage = TimeServiceStorage;
 }

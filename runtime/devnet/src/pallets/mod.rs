@@ -22,8 +22,8 @@ pub use upfront_pool_config::*;
 pub mod staking_pool_config;
 pub use staking_pool_config::*;
 
-pub mod sponsored_pool_config;
-pub use sponsored_pool_config::*;
+pub mod funding_pool_config;
+pub use funding_pool_config::*;
 
 pub mod elections_phragmen;
 pub use elections_phragmen::*;

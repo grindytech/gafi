@@ -83,7 +83,7 @@ pub use pallet_player;
 pub use pallet_pool;
 pub use pallet_pool_names;
 pub use pallet_whitelist;
-pub use sponsored_pool;
+pub use funding_pool;
 pub use staking_pool;
 pub use upfront_pool;
 
@@ -417,7 +417,7 @@ parameter_types! {
 impl pallet_whitelist::Config for Runtime {
 	type Event = Event;
 	type WhitelistPool = Pool;
-	type SponsoredPool = SponsoredPool;
+	type FundingPool = FundingPool;
 	type Currency = Balances;
 	type WeightInfo = pallet_whitelist::weights::WhitelistWeight<Runtime>;
 	type MaxWhitelistLength = MaxWhitelistLength;
@@ -425,7 +425,7 @@ impl pallet_whitelist::Config for Runtime {
 }
 
 parameter_types! {
-	pub MaxJoinedSponsoredPool: u32 = 5;
+	pub MaxJoinedFundingPool: u32 = 5;
 	pub TimeServiceStorage: u128 = 30 * 60_000u128;
 }
 
@@ -435,8 +435,8 @@ impl pallet_pool::Config for Runtime {
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 	type WeightInfo = pallet_pool::weights::PoolWeight<Runtime>;
-	type MaxJoinedSponsoredPool = MaxJoinedSponsoredPool;
-	type SponsoredPool = SponsoredPool;
+	type MaxJoinedFundingPool = MaxJoinedFundingPool;
+	type FundingPool = FundingPool;
 	type Cache = PalletCache;
 	type TimeServiceStorage = TimeServiceStorage;
 }
@@ -725,7 +725,7 @@ construct_runtime!(
 		Pool: pallet_pool,
 		UpfrontPool: upfront_pool,
 		StakingPool: staking_pool,
-		SponsoredPool: sponsored_pool,
+		FundingPool: funding_pool,
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
 		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -1184,7 +1184,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
+			use funding_pool::Pallet as FundingBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
@@ -1196,7 +1196,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
-			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
+			list_benchmark!(list, extra, funding_pool, FundingBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
@@ -1220,7 +1220,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
+			use funding_pool::Pallet as FundingBench;
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
@@ -1239,7 +1239,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
-			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
+			add_benchmark!(params, batches, funding_pool, FundingBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_whitelist, WhitelistBench::<Runtime>);

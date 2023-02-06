@@ -113,7 +113,7 @@ async function leave_all_pool(context, sub_account) {
 async function create_pool(context, sub_account, arguments) {
     const api = await ApiPromise.create({ provider: context.wsProvider });
 
-    const txExecute = api.tx.sponsoredPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
+    const txExecute = api.tx.fundingPool.createPool(arguments.targets, arguments.value, arguments.discount, arguments.txLimit);
     const unsub = await txExecute
         .signAndSend(sub_account);
     await createAndFinalizeBlock(context.web3);

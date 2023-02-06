@@ -152,7 +152,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn correct_and_deposit_fee_sponsored(
+		pub fn correct_and_deposit_fee_funding(
 			pool_id: ID,
 			targets: Vec<H160>,
 			target: H160,
@@ -247,10 +247,10 @@ where
 							service.discount,
 						);
 					},
-					TicketType::Sponsored(_) => {
+					TicketType::Funding(_) => {
 						let targets = T::PlayerTicket::get_targets(pool_id);
 						if let Some(contract) = target {
-							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_sponsored(
+							if let Some(fee) = Pallet::<T>::correct_and_deposit_fee_funding(
 								pool_id,
 								targets,
 								contract,

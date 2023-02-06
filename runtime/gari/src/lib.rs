@@ -425,7 +425,7 @@ construct_runtime!(
 		Pool: pallet_pool::{Pallet, Call, Storage, Event<T>} = 60,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>} = 61,
 		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>} = 62,
-		SponsoredPool: sponsored_pool::{Pallet, Call, Storage, Event<T>} = 63,
+		FundingPool: funding_pool::{Pallet, Call, Storage, Event<T>} = 63,
 		TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCachePool: pallet_cache::<Instance1>::{Pallet, Call, Storage, Event<T>} = 66,
@@ -816,7 +816,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
+			use funding_pool::Pallet as FundingBench;
 			use pallet_pool::Pallet as PoolBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -824,7 +824,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_pool, PoolBench::<Runtime>);
 			list_benchmark!(list, extra, upfront_pool, UpfrontBench::<Runtime>);
-			list_benchmark!(list, extra, sponsored_pool, SponsoredBench::<Runtime>);
+			list_benchmark!(list, extra, funding_pool, FundingBench::<Runtime>);
 			list_benchmark!(list, extra, gafi_tx, AddressMappingBench::<Runtime>);
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 
@@ -848,7 +848,7 @@ impl_runtime_apis! {
 			use upfront_pool::Pallet as UpfrontBench;
 			use proof_address_mapping::Pallet as AddressMappingBench;
 			use staking_pool::Pallet as StakingPoolBench;
-			use sponsored_pool::Pallet as SponsoredBench;
+			use funding_pool::Pallet as FundingBench;
 			use pallet_pool::Pallet as PoolBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
@@ -872,7 +872,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_pool, PoolBench::<Runtime>);
 			add_benchmark!(params, batches, gafi_tx, AddressMappingBench::<Runtime>);
 			add_benchmark!(params, batches, staking_pool, StakingPoolBench::<Runtime>);
-			add_benchmark!(params, batches, sponsored_pool, SponsoredBench::<Runtime>);
+			add_benchmark!(params, batches, funding_pool, FundingBench::<Runtime>);
 
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

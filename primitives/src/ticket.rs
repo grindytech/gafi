@@ -20,7 +20,7 @@ pub struct Ticket<AccountId> {
 pub enum TicketType {
 	Upfront(ID),
 	Staking(ID),
-	Sponsored(ID),
+	Funding(ID),
 }
 
 /// Holding the number of tickets to restrict player transaction

@@ -70,11 +70,11 @@ pub mod pallet {
 		/// Add Staking Pool
 		type StakingPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 
-		/// Add Sponsored Pool
-		type SponsoredPool: CustomPool<Self::AccountId>;
+		/// Add Funding Pool
+		type FundingPool: CustomPool<Self::AccountId>;
 
 		#[pallet::constant]
-		type MaxJoinedSponsoredPool: Get<u32>;
+		type MaxJoinedFundingPool: Get<u32>;
 
 		#[pallet::constant]
 		type TimeServiceStorage: Get<u128>;
@@ -194,16 +194,16 @@ pub mod pallet {
 			let pool_match = match ticket_type {
 				TicketType::Upfront(_) => T::UpfrontPool::join(sender_lookup.clone(), pool_id),
 				TicketType::Staking(_) => T::StakingPool::join(sender_lookup, pool_id),
-				TicketType::Sponsored(_) => {
-					let joined_sponsored_pool = Tickets::<T>::iter_prefix_values(sender.clone());
-					let count_joined_pool = joined_sponsored_pool.count();
+				TicketType::Funding(_) => {
+					let joined_funding_pool = Tickets::<T>::iter_prefix_values(sender.clone());
+					let count_joined_pool = joined_funding_pool.count();
 
 					ensure!(
-						count_joined_pool <= T::MaxJoinedSponsoredPool::get() as usize,
+						count_joined_pool <= T::MaxJoinedFundingPool::get() as usize,
 						<Error<T>>::ExceedJoinedPool
 					);
 
-					T::SponsoredPool::join(sender.clone(), pool_id)
+					T::FundingPool::join(sender.clone(), pool_id)
 				},
 			};
 
@@ -231,7 +231,7 @@ pub mod pallet {
 				match ticket.ticket_type {
 					TicketType::Upfront(_) => T::UpfrontPool::leave(sender_lookup.clone())?,
 					TicketType::Staking(_) => T::StakingPool::leave(sender_lookup)?,
-					TicketType::Sponsored(_) => T::SponsoredPool::leave(sender.clone())?,
+					TicketType::Funding(_) => T::FundingPool::leave(sender.clone())?,
 				}
 				T::Cache::insert(&sender, pool_id, ticket);
 				Tickets::<T>::remove(sender.clone(), pool_id);
@@ -267,10 +267,10 @@ pub mod pallet {
 					sender: sender.clone(),
 					pool_type: PoolType::Staking,
 				});
-			} else if T::SponsoredPool::leave(sender.clone()).is_ok() {
+			} else if T::FundingPool::leave(sender.clone()).is_ok() {
 				Self::deposit_event(Event::LeavedAll {
 					sender: sender.clone(),
-					pool_type: PoolType::Sponsored,
+					pool_type: PoolType::Funding,
 				});
 			}
 			let _result = Tickets::<T>::clear_prefix(sender, 6u32, None);
@@ -323,8 +323,8 @@ pub mod pallet {
 				match joined_ticket.ticket_type {
 					TicketType::Upfront(_) => is_joined = true,
 					TicketType::Staking(_) => is_joined = true,
-					TicketType::Sponsored(joined_pool_id) => {
-						// We can join multiple sponsored pools so we must check equal id.
+					TicketType::Funding(joined_pool_id) => {
+						// We can join multiple funding pools so we must check equal id.
 						if joined_pool_id == pool_id {
 							is_joined = true;
 						}
@@ -346,8 +346,8 @@ pub mod pallet {
 						return Ok(service.service)
 					}
 				},
-				TicketType::Sponsored(pool_id) => {
-					if let Some(service) = T::SponsoredPool::get_service(pool_id) {
+				TicketType::Funding(pool_id) => {
+					if let Some(service) = T::FundingPool::get_service(pool_id) {
 						return Ok(service.service)
 					}
 				},
@@ -363,8 +363,8 @@ pub mod pallet {
 			if T::StakingPool::get_service(pool_id).is_some() {
 				return Ok(TicketType::Staking(pool_id))
 			}
-			if T::SponsoredPool::get_service(pool_id).is_some() {
-				return Ok(TicketType::Sponsored(pool_id))
+			if T::FundingPool::get_service(pool_id).is_some() {
+				return Ok(TicketType::Funding(pool_id))
 			}
 			Err(Error::<T>::PoolNotFound)
 		}
@@ -394,7 +394,7 @@ pub mod pallet {
 							return Some((new_ticket_info.ticket_type, pool_id))
 						}
 					},
-					TicketType::Sponsored(pool_id) =>
+					TicketType::Funding(pool_id) =>
 						if let Some(contract) = target {
 							let targets = Self::get_targets(pool_id);
 							if targets.contains(&contract) {
@@ -412,7 +412,7 @@ pub mod pallet {
 		fn get_service(pool_id: ID) -> Option<Service> {
 			let upfront_service = T::UpfrontPool::get_service(pool_id);
 			let staking_service = T::StakingPool::get_service(pool_id);
-			let sponsored_service = T::SponsoredPool::get_service(pool_id);
+			let funding_service = T::FundingPool::get_service(pool_id);
 
 			if upfront_service.is_some() {
 				return Some(upfront_service.unwrap().service)
@@ -420,15 +420,15 @@ pub mod pallet {
 			if staking_service.is_some() {
 				return Some(staking_service.unwrap().service)
 			}
-			if sponsored_service.is_some() {
-				return Some(sponsored_service.unwrap().service)
+			if funding_service.is_some() {
+				return Some(funding_service.unwrap().service)
 			}
 
 			None
 		}
 
 		fn get_targets(pool_id: ID) -> Vec<H160> {
-			match T::SponsoredPool::get_service(pool_id) {
+			match T::FundingPool::get_service(pool_id) {
 				Some(service) => service.targets,
 				None => [].to_vec(),
 			}

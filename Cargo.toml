@@ -19,7 +19,7 @@ members = [
   'pallets/gafi-tx',
   'pallets/address-mapping',
   'pallets/pallet-faucet',
-  'pallets/sponsored-pool',
+  'pallets/funding-pool',
   'pallets/pallet-cache',
   'pallets/game-creator',
   'pallets/gafi-membership',
