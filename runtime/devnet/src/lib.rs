@@ -25,7 +25,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify, 
+		PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiSignature,
@@ -40,8 +40,8 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU8, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, Randomness, EitherOfDiverse,
+		ConstU32, ConstU8, EitherOfDiverse, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
+		PrivilegeCmp, Randomness,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -498,6 +498,7 @@ impl MembershipLevelPoints<TotalMembershipLevel> for MembershipLevels {
 
 impl gafi_membership::Config for Runtime {
 	type Currency = Balances;
+	type WeightInfo = gafi_membership::weights::SubstrateWeight<Runtime>;
 	type Event = Event;
 	type ApproveOrigin = ApproveOrigin;
 	type MinJoinTime = MinJoinTime;
