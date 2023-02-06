@@ -132,6 +132,7 @@ parameter_types! {
 }
 impl gafi_membership::Config for Test {
 	type Currency = Balances;
+	type WeightInfo = ();
 	type Event = Event;
 	type ApproveOrigin = system::EnsureRoot<AccountId32>;
 	type MaxMembers = MaxMembers;
