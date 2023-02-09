@@ -1,7 +1,26 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2023 Grindy Technologies.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
 
+use crate::weights::WeightInfo;
 use frame_support::{pallet_prelude::*, traits::Get, transactional, BoundedVec};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
@@ -9,6 +28,7 @@ use gafi_primitives::{
 	membership::{Achievement, Achievements, Membership, MembershipLevelPoints},
 	players::PlayerJoinedPoolStatistic,
 };
+
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +40,9 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
 
 pub struct UpfrontPoolTimeAchievement<T, P> {
 	pub phantom: PhantomData<(T, P)>,
@@ -57,21 +80,29 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
 
+		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		/// Origin from which approvals must come.
 		type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
 		type Players: PlayerJoinedPoolStatistic<Self::AccountId>;
 
+		/// Max members that allow to join membership program
 		#[pallet::constant]
 		type MaxMembers: Get<u32>;
 
+		/// Max level that user can reach
 		#[pallet::constant]
 		type TotalMembershipLevel: Get<u32>;
 
+		/// Max achievement that membership program will have
 		#[pallet::constant]
 		type MaxAchievement: Get<u32>;
 
@@ -88,14 +119,17 @@ pub mod pallet {
 		type MinJoinTime: Get<u128>;
 	}
 
+	//** STORAGE  **//
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 
+	/// Number of current members in membership program
 	#[pallet::storage]
 	#[pallet::getter(fn member_count)]
 	pub type MemberCount<T, I = ()> = StorageValue<_, u32, ValueQuery>;
 
+	/// Holding the members info
 	#[pallet::storage]
 	#[pallet::getter(fn members)]
 	pub(super) type Members<T: Config<I>, I: 'static = ()> =
@@ -111,8 +145,13 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
+		/// User already in membership program
 		AlreadyRegistered,
+
+		/// Reach max members of the program
 		ExceedMaxMembers,
+
+		/// Member not exist in the list member of program
 		MemberNotExist,
 	}
 
@@ -153,7 +192,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		#[pallet::weight(50_000_000)]
+		/// User register to the membership program
+		///
+		/// The origin must be Signed
+		///
+		/// Emits `NewMember` event when successful.
+		///
+		/// Weight: `O(1)`
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::registration(50u32))]
 		#[transactional]
 		pub fn registration(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -184,7 +230,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(50_000_000)]
+		/// Remove member out of the membership program
+		///
+		/// The origin must be Signed
+		///
+		/// /// Parameters:
+		/// - `account_id`: Account Id
+		///
+		/// Emits `NewMember` event when successful.
+		///
+		/// Weight: `O(1)`
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_member(50u32))]
 		#[transactional]
 		pub fn remove_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
 			let _sender = T::ApproveOrigin::ensure_origin(origin)?;
