@@ -14728,13 +14728,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "ethereum"
-version = "0.12.0"
-source = "git+https://github.com/grindytech/ethereum?branch=master#a9f735271098f9de949dca8a6ac9282592468d21"
-
-[[patch.unused]]
-name = "evm-core"
-version = "0.33.0"
-source = "git+https://github.com/grindytech/evm?branch=master#07ae4451bb1d8d1cc81e5e07685691e68220a7d2"
