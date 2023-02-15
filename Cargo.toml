@@ -12,6 +12,7 @@ members = [
   'utils/dummy',
   'runtime/devnet',
   'runtime/gari',
+  'pallets/template',
   'pallets/player',
   'pallets/upfront-pool',
   'pallets/pool',

@@ -58,7 +58,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
 		/// Weight information for extrinsics in this pallet.
@@ -179,7 +179,7 @@ pub mod pallet {
 		/// - `ticket`: ticket type
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u64))]
 		#[transactional]
 		pub fn join(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -221,7 +221,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u64))]
 		#[transactional]
 		pub fn leave(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -252,7 +252,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_all(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_all(50u64))]
 		#[transactional]
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

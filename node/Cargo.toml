@@ -48,7 +48,7 @@ manual-seal = [
   "sc-consensus-manual-seal",
   "gafi-local/manual-seal",
 ]
-rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
+# rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
 # runtime-benchmarks = [
 #   "gafi-cli/runtime-benchmarks",
 #   "with-gari",

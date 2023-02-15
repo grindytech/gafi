@@ -48,9 +48,9 @@ impl<T: frame_system::Config> WeightInfo for FaucetWeight<T> {
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
 	fn faucet(_b: u32, ) -> Weight {
-		(39_500_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(39_500_000u64)
+			.saturating_add(T::DbWeight::get().reads(7u64))
+			.saturating_add(T::DbWeight::get().writes(3u64))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Faucet GenesisAccounts (r:1 w:0)
@@ -59,22 +59,22 @@ impl<T: frame_system::Config> WeightInfo for FaucetWeight<T> {
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
 	fn donate(_b: u32, ) -> Weight {
-		(31_411_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(31_411_000u64)
+			.saturating_add(T::DbWeight::get().reads(7u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 }
 
 impl WeightInfo for () {
 	fn faucet(_b: u32, ) -> Weight {
-		(39_500_000 as Weight)
-		.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-		.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(39_500_000u64)
+		.saturating_add(RocksDbWeight::get().reads(7u64))
+		.saturating_add(RocksDbWeight::get().writes(3u64))
 	}
 
 	fn donate(_b: u32,) -> Weight {
-		(31_411_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(31_411_000u64)
+			.saturating_add(RocksDbWeight::get().reads(7u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 }

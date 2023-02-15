@@ -81,7 +81,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
@@ -90,7 +90,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Origin from which approvals must come.
-		type ApproveOrigin: EnsureOrigin<Self::Origin>;
+		type ApproveOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		type Players: PlayerJoinedPoolStatistic<Self::AccountId>;
 
@@ -199,7 +199,7 @@ pub mod pallet {
 		/// Emits `NewMember` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::registration(50u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::registration(50u64))]
 		#[transactional]
 		pub fn registration(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -240,7 +240,7 @@ pub mod pallet {
 		/// Emits `NewMember` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_member(50u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_member(50u64))]
 		#[transactional]
 		pub fn remove_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
 			let _sender = T::ApproveOrigin::ensure_origin(origin)?;
