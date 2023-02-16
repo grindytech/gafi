@@ -55,6 +55,7 @@ mod precompiles;
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 
+use pallet_preimage;
 // Local
 use pallet_cache;
 use pallet_faucet;
@@ -71,7 +72,7 @@ use types::{
 };
 
 // Primitives
-use gafi_primitives::currency::{centi, unit, NativeToken::GAFI};
+use gafi_primitives::currency::{centi, unit, NativeToken::GAFI, deposit};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -101,7 +102,7 @@ impl WeightToFeePolynomial for WeightToFee {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in our template, we map to 1/10 of that, or 1/10 MILLIUNIT
 		let p = MILLIUNIT / 10;
-		let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
+		let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -212,6 +213,7 @@ impl pallet_dynamic_fee::Config for Runtime {
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
 	pub DefaultBaseFeePerGas: U256 = centi(GAFI).into(); //0.01 GAFI
+	pub DefaultElasticity: Permill = Permill::from_parts(125_000);
 }
 
 pub struct BaseFeeThreshold;
@@ -226,12 +228,12 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 		Permill::from_parts(10_000_000)
 	}
 }
-
 impl pallet_base_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Threshold = BaseFeeThreshold;
-	type IsActive = IsActive;
+	// type IsActive = IsActive;
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
+	type DefaultElasticity = DefaultElasticity;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -342,7 +344,23 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 }
 
 parameter_types! {
-	pub MaximumSchedulerWeight: Weight = 10_000_000;
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = deposit(2, 64, GAFI);
+	pub PreimageByteDeposit: Balance = deposit(0, 1, GAFI);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+}
+
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Weight::from_ref_time(10_000_000_u64);
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
@@ -356,8 +374,9 @@ impl pallet_scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
-	type PreimageProvider = ();
-	type NoPreimagePostponement = ();
+	// type PreimageProvider = ();
+	// type NoPreimagePostponement = ();
+	type Preimages = crate::Preimage;
 }
 
 impl pallet_ethereum::Config for Runtime {
@@ -434,6 +453,9 @@ construct_runtime!(
 		Faucet: pallet_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
 		PalletCacheFaucet: pallet_cache::<Instance2>::{Pallet, Call, Storage, Event<T>} = 70,
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>} = 71,
+
+		// Preimage registrar.
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -477,19 +499,19 @@ mod benches {
 	);
 }
 
-impl fp_self_contained::SelfContainedCall for Call {
+impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	type SignedInfo = H160;
 
 	fn is_self_contained(&self) -> bool {
 		match self {
-			Call::Ethereum(call) => call.is_self_contained(),
+			RuntimeCall::Ethereum(call) => call.is_self_contained(),
 			_ => false,
 		}
 	}
 
 	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
 		match self {
-			Call::Ethereum(call) => call.check_self_contained(),
+			RuntimeCall::Ethereum(call) => call.check_self_contained(),
 			_ => None,
 		}
 	}
@@ -497,11 +519,11 @@ impl fp_self_contained::SelfContainedCall for Call {
 	fn validate_self_contained(
 		&self,
 		info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<Call>,
+		dispatch_info: &DispatchInfoOf<RuntimeCall>,
 		len: usize,
 	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -509,11 +531,11 @@ impl fp_self_contained::SelfContainedCall for Call {
 	fn pre_dispatch_self_contained(
 		&self,
 		info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<Call>,
+		dispatch_info: &DispatchInfoOf<RuntimeCall>,
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -523,8 +545,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				RuntimeOrigin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
 			)),
 			_ => None,
 		}
@@ -771,7 +793,7 @@ impl_runtime_apis! {
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<EthereumTransaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(transact { transaction }) => Some(transaction),
+				RuntimeCall::Ethereum(transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect::<Vec<EthereumTransaction>>()
 		}
@@ -779,6 +801,8 @@ impl_runtime_apis! {
 		fn elasticity() -> Option<Permill> {
 			Some(BaseFee::elasticity())
 		}
+
+		fn gas_limit_multiplier_support() {}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

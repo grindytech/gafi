@@ -5,7 +5,7 @@ members = [
   # 'node/rpc',
   # 'node/cli',
   # 'node/service',
-  # 'runtime/gari',
+  'runtime/gari',
   
   'node/local',
   'utils/ethereum',

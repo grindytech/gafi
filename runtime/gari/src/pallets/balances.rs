@@ -1,4 +1,4 @@
-use crate::{Balance, Event, Runtime, System};
+use crate::{Balance, Runtime, System, RuntimeEvent};
 use frame_support::parameter_types;
 use gafi_primitives::currency::{unit, NativeToken::GAFI};
 

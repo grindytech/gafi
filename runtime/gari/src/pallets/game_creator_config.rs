@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 
-use crate::{Balances, Event, ProofAddressMapping, Runtime, EVM};
+use crate::{Balances, ProofAddressMapping, Runtime, EVM, RuntimeEvent};
 use gafi_primitives::currency::{unit, NativeToken::GAFI};
 
 parameter_types! {

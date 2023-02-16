@@ -482,7 +482,7 @@ where
 	Ok((task_manager, client))
 }
 
-/ Build the import queue for the parachain runtime.
+// Build the import queue for the parachain runtime.
 #[allow(clippy::type_complexity)]
 #[cfg(feature = "with-gari")]
 pub fn gari_build_import_queue(

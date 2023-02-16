@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 
-use crate::{Balance, Balances, Event, Runtime, ConstantMultiplier, WeightToFee};
+use crate::{Balance, Balances, Runtime, ConstantMultiplier, WeightToFee, RuntimeEvent};
 use polkadot_runtime_common::{SlowAdjustingFeeUpdate};
 use crate::types::MICROUNIT;
 

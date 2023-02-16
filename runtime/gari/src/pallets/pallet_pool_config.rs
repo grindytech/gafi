@@ -1,4 +1,4 @@
-use crate::{Balances, Event, PalletCachePool, Runtime, FundingPool, StakingPool, UpfrontPool};
+use crate::{Balances, PalletCachePool, Runtime, FundingPool, StakingPool, UpfrontPool, RuntimeEvent};
 use frame_support::parameter_types;
 use gafi_primitives::{constant::ID, ticket::TicketInfo};
 
