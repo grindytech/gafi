@@ -90,7 +90,7 @@ cumulus-relay-chain-interface = {git = "https://github.com/paritytech/cumulus", 
 cumulus-relay-chain-rpc-interface = {git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37"}
 
 # Runtime
-gari-runtime = {path = "../../runtime/gari", optional = true}
+# gari-runtime = {path = "../../runtime/gari", optional = true}
 
 # Local
 gafi-primitives = {path = "../../primitives", default-features = false}
@@ -100,20 +100,22 @@ gafi-rpc = {path = "../rpc", default-features = false}
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 
 [features]
-default = ["with-gari", "rococo-native"]
+default = [
+  # "with-gari",
+  "rococo-native",
+]
 std = []
 
 runtime-benchmarks = [
   "polkadot-cli/runtime-benchmarks",
-  "gari-runtime/runtime-benchmarks",
+  # "gari-runtime/runtime-benchmarks",
   "pallet-ethereum/runtime-benchmarks",
   "frame-benchmarking-cli",
 ]
 
-
-with-gari = [
-  "gari-runtime",
-]
+# with-gari = [
+#   "gari-runtime",
+# ]
 
 rococo-native = [
   "polkadot-cli/rococo-native",
@@ -121,5 +123,5 @@ rococo-native = [
 ]
 
 fast-runtime = [
-	"gari-runtime/fast-runtime",
+  # "gari-runtime/fast-runtime",
 ]

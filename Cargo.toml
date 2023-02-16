@@ -1,17 +1,18 @@
 [workspace]
 members = [
   'node',
-  'node/service',
-  'node/cli',
-  'node/rpc',
-  'node/chain_spec',
+  # 'node/chain_spec',
+  # 'node/rpc',
+  # 'node/cli',
+  # 'node/service',
+  # 'runtime/gari',
+  
   'node/local',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
   'utils/dummy',
   'runtime/devnet',
-  # 'runtime/gari',
   'pallets/template',
   'pallets/player',
   'pallets/upfront-pool',

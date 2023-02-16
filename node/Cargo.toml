@@ -28,9 +28,9 @@ sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "
 sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", optional = true}
 
 # Local
-gafi-cli = {path = "cli", default-features = false, optional = true}
+# gafi-cli = {path = "cli", default-features = false, optional = true}
 gafi-local = {path = "local", default-features = false, optional = true}
-gafi-service = {path = "service", default-features = false, optional = true}
+# gafi-service = {path = "service", default-features = false, optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
@@ -64,11 +64,11 @@ with-dev = [
   "gafi-local/aura",
 ]
 
-with-gari = [
-  "gafi-cli/with-gari",
-  "gafi-service/with-gari",
-]
+# with-gari = [
+#   "gafi-cli/with-gari",
+#   "gafi-service/with-gari",
+# ]
 
 rococo-native = [
-	"gafi-service/rococo-native"
+	# "gafi-service/rococo-native"
 ]

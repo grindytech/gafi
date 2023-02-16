@@ -88,8 +88,7 @@ pub use pallet_whitelist;
 pub use funding_pool;
 pub use staking_pool;
 pub use upfront_pool;
-
-mod pallets;
+pub mod pallets;
 
 mod precompiles;
 
@@ -760,6 +759,7 @@ construct_runtime!(
 	}
 );
 
+#[derive(Clone)]
 pub struct TransactionConverter;
 
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
