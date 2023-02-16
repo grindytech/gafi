@@ -1,12 +1,17 @@
 [package]
-authors = ["Anonymous"]
 description = "A new Cumulus FRAME-based Substrate Node, ready for hacking together a parachain."
-edition = "2021"
 homepage = "https://substrate.io"
 license = "Unlicense"
 name = "gafi-rpc"
-repository = "https://github.com/grindytech/cumulus/"
 version = "0.1.0"
+
+publish = false
+authors = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 codec = {package = "parity-scale-codec", version = "3.0.0"}
@@ -20,30 +25,32 @@ serde = {version = "1.0.132", features = ["derive"]}
 gafi-primitives = {path = "../../primitives"}
 
 # Frontier
-fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fc-rpc-core = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fp-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fp-storage = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+fc-db = {workspace = true}
+fc-rpc = {workspace = true}
+fc-rpc-core = {workspace = true}
+fp-rpc = {workspace = true}
+fp-storage = {workspace = true}
 
 # Substrate
-pallet-transaction-payment-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", optional = true}
-sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", optional = true}
-sc-network = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-rpc-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-service = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sc-transaction-pool = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-block-builder = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-blockchain = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-runtime = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+pallet-transaction-payment-rpc = {workspace = true}
+sc-client-api = {workspace = true}
+sc-consensus-aura = {workspace = true, optional = true}
+sc-consensus-manual-seal = {workspace = true}
+sc-network = {workspace = true}
+sc-rpc = {workspace = true}
+sc-rpc-api = {workspace = true}
+sc-service = {workspace = true}
+sc-transaction-pool = {workspace = true}
+sc-transaction-pool-api = {workspace = true}
+sp-api = {workspace = true}
+sp-block-builder = {workspace = true}
+sp-blockchain = {workspace = true}
+sp-core = {workspace = true}
+sp-runtime = {workspace = true}
+substrate-frame-rpc-system = {workspace = true}
 
 [build-dependencies]
-substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+substrate-build-script-utils = {workspace = true}
 
 [features]
 default = ["std"]
