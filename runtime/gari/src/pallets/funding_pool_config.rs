@@ -15,7 +15,7 @@ parameter_types! {
 }
 
 impl funding_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type PoolName = PoolName;
 	type Currency = Balances;

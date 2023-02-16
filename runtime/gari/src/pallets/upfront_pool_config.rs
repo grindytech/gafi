@@ -56,7 +56,7 @@ parameter_types! {
 }
 
 impl upfront_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = upfront_pool::weights::SubstrateWeight<Runtime>;
 	type MaxPlayerStorage = MaxPlayerStorage;

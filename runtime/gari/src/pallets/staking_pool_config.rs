@@ -52,7 +52,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 pub struct StakingPoolDefaultServices {}
 
 impl staking_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;

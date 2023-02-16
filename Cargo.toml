@@ -11,7 +11,7 @@ members = [
   'utils/currency',
   'utils/dummy',
   'runtime/devnet',
-  'runtime/gari',
+  # 'runtime/gari',
   'pallets/template',
   'pallets/player',
   'pallets/upfront-pool',

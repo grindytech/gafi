@@ -4,7 +4,7 @@ use runtime_common::prod_or_fast;
 use static_assertions::const_assert;
 
 use crate::{
-	Balance, Balances, BlockNumber, Council, CouncilMaxMembers, Event, Runtime, Treasury, HOURS,
+	Balance, Balances, BlockNumber, Council, CouncilMaxMembers, RuntimeEvent, Runtime, Treasury, HOURS,
 	MINUTES,
 };
 
@@ -19,13 +19,15 @@ parameter_types! {
 	pub const DesiredMembers: u32 = 19;
 	pub const DesiredRunnersUp: u32 = 19;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
+	pub const MaxCandidates: u32 = 10;
+	pub const MaxVoters: u32 = 100;
 }
 
 // Make sure that there are no more than MaxMembers members elected via phragmen.
 const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 
 impl pallet_elections_phragmen::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ChangeMembers = Council;
 	type InitializeMembers = Council;
@@ -40,4 +42,6 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type TermDuration = TermDuration;
 	type PalletId = PhragmenElectionPalletId;
 	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+	type MaxCandidates = MaxCandidates;
+	type MaxVoters = MaxVoters;
 }

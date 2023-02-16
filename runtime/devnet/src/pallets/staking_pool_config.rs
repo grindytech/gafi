@@ -5,7 +5,7 @@ use gafi_primitives::{
 };
 use sp_runtime::Permill;
 
-use crate::{Balances, Event, Player, Runtime};
+use crate::{Balances, RuntimeEvent, Player, Runtime};
 use codec::{Encode, Decode};
 use sp_std::vec;
 use scale_info::TypeInfo;
@@ -52,7 +52,7 @@ impl SystemDefaultServices for StakingPoolDefaultServices {
 pub struct StakingPoolDefaultServices {}
 
 impl staking_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = crate::RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;

@@ -9,7 +9,7 @@ parameter_types! {
 }
 
 impl gafi_tx::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
 	type AddressMapping = ProofAddressMapping;

@@ -2,12 +2,10 @@ use frame_support::traits::{ConstU32, KeyOwnerProofSystem};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::KeyTypeId;
 
-use crate::{Call, Event, Runtime};
+use crate::{RuntimeCall, RuntimeEvent, Runtime};
 
 impl pallet_grandpa::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-
+	type RuntimeEvent = RuntimeEvent;
 	type KeyOwnerProofSystem = ();
 
 	type KeyOwnerProof =

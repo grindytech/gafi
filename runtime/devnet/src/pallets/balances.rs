@@ -1,4 +1,4 @@
-use crate::{Balance, Event, Runtime, System};
+use crate::{Balance, RuntimeEvent, Runtime, System};
 use frame_support::parameter_types;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 
@@ -16,7 +16,7 @@ impl pallet_balances::Config for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = crate::RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = NativeTokenExistentialDeposit;
 	type AccountStore = System;

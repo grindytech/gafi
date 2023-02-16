@@ -495,7 +495,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	}
 
 	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
+		self.base.base.transaction_pool(false)
 	}
 
 	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {

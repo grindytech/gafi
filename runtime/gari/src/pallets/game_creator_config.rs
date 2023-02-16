@@ -9,7 +9,7 @@ parameter_types! {
 }
 
 impl game_creator::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;

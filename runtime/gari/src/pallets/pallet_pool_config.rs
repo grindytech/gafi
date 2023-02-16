@@ -8,7 +8,7 @@ parameter_types! {
 
 // cache for pallet pool
 impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Data = TicketInfo;
 	type Action = ID;
 	type CleanTime = CleanTime;
@@ -20,7 +20,7 @@ parameter_types! {
 }
 
 impl pallet_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
