@@ -120,6 +120,7 @@ pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", git = "http
 pallet-treasury = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-utility = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-preimage = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-authorship = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 
 # Substrate Utility
 frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
@@ -154,4 +155,4 @@ pallet-evm-precompile-sha3fips = {version = "2.0.0-dev", git = "https://github.c
 pallet-evm-precompile-simple = {version = "2.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
 pallet-evm-test-vector-support = {version = "1.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 pallet-hotfix-sufficients = {version = "1.0.0", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
-# Local
+
