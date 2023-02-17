@@ -305,6 +305,7 @@ pub mod pallet {
 		/// - `max_player`: new value of MaxPlayer
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
@@ -317,6 +318,7 @@ pub mod pallet {
 
 		// Should validate max, min for input
 		#[pallet::weight(0)]
+		#[pallet::call_index(1)]
 		pub fn set_services_tx_limit(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -336,6 +338,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(0)]
 		pub fn set_services_discount(
 			origin: OriginFor<T>,

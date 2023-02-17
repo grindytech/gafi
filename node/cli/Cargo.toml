@@ -19,7 +19,7 @@ serde = {version = "1.0.132", features = ["derive"]}
 
 # Frontier
 fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+fc-rpc = { workspace = true}
 
 # Substrate
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}

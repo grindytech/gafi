@@ -23,7 +23,7 @@ fn join_pool(account: AccountId32, pool_id: ID) {
 		);
 	}
 
-	assert_ok!(Pool::join(Origin::signed(account.clone()), pool_id));
+	assert_ok!(Pool::join(RuntimeOrigin::signed(account.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(account.clone()),
 		base_balance - staking_amount
@@ -34,7 +34,7 @@ fn leave_pool(account: AccountId32, pool_id: ID) {
 	let before_balance = <Test as Config>::Currency::free_balance(account.clone());
 	let staking_amount = StakingPool::get_service(pool_id).unwrap().value;
 
-	assert_ok!(Pool::leave(Origin::signed(account.clone()), pool_id));
+	assert_ok!(Pool::leave(RuntimeOrigin::signed(account.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(account.clone()),
 		before_balance + staking_amount

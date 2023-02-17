@@ -123,6 +123,7 @@ pub mod pallet {
 		/// Emits `Claimed` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim_contract(100u64))]
 		#[transactional]
 		pub fn claim_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
@@ -155,6 +156,7 @@ pub mod pallet {
 		/// Emits `Changed` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::change_ownership(100u64))]
 		#[transactional]
 		pub fn change_ownership(
@@ -195,6 +197,7 @@ pub mod pallet {
 		/// Emits `Withdrew` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_contract(100u64))]
 		#[transactional]
 		pub fn withdraw_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {

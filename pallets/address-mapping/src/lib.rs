@@ -63,7 +63,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
 		/// The overarching event type.
-				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -129,6 +129,7 @@ pub mod pallet {
 		/// Emits `Bonded` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::bond(100u32))]
 		#[transactional]
 		pub fn bond(
@@ -172,6 +173,7 @@ pub mod pallet {
 		/// Emits `Unbonded` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::unbond(100u32))]
 		#[transactional]
 		pub fn unbond(origin: OriginFor<T>) -> DispatchResult {

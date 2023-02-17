@@ -104,28 +104,26 @@ pub mod pallet {
 		/// # </weight>
 
 		fn set_name(account_id: AccountIdOf<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
-			// let bounded_name: BoundedVec<_, _> =
-			// 	name.try_into().map_err(|()| Error::<T>::TooLong)?;
-
-			let bounded_name: BoundedVec<_, _> = name.try_into().unwrap();
-
-			ensure!(
-				bounded_name.len() >= T::MinLength::get() as usize,
-				Error::<T>::TooShort
-			);
-
-			let deposit = if let Some((_, deposit)) = <NameOf<T>>::get(&pool_id) {
-				Self::deposit_event(Event::<T>::NameChanged { pool: pool_id });
-				deposit
+			if let Ok(bounded_name) = TryInto::<BoundedVec<_, _>>::try_into(name) {
+				ensure!(
+					bounded_name.len() >= T::MinLength::get() as usize,
+					Error::<T>::TooShort
+				);
+				
+				let deposit = if let Some((_, deposit)) = <NameOf<T>>::get(&pool_id) {
+					Self::deposit_event(Event::<T>::NameChanged { pool: pool_id });
+					deposit
+				} else {
+					let deposit = T::ReservationFee::get();
+					T::Currency::reserve(&account_id, deposit)?;
+					Self::deposit_event(Event::<T>::NameSet { pool: pool_id });
+					deposit
+				};
+				<NameOf<T>>::insert(&pool_id, (bounded_name, deposit));
+				Ok(())
 			} else {
-				let deposit = T::ReservationFee::get();
-				T::Currency::reserve(&account_id, deposit)?;
-				Self::deposit_event(Event::<T>::NameSet { pool: pool_id });
-				deposit
-			};
-
-			<NameOf<T>>::insert(&pool_id, (bounded_name, deposit));
-			Ok(())
+				return Err(Error::<T>::TooLong.into());
+			}
 		}
 
 		/// Clear a pool's name and return the deposit. Fails if the asset was not named.

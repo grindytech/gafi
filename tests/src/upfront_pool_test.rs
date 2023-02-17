@@ -29,7 +29,7 @@ fn init_join_pool(pool_id: ID) {
 	}
 
 	let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
-	assert_ok!(Pool::join(Origin::signed(sender.clone()), pool_id));
+	assert_ok!(Pool::join(RuntimeOrigin::signed(sender.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
 		before_balance - (pool_fee * 2)
@@ -73,7 +73,7 @@ fn init_leave_pool(index: i32, pool_id: ID, start_block: u64, leave_block: u64) 
 	let original_balance = <Test as Config>::Currency::free_balance(sender.clone());
 
 	run_to_block(start_block);
-	assert_ok!(Pool::join(Origin::signed(sender.clone()), pool_id));
+	assert_ok!(Pool::join(RuntimeOrigin::signed(sender.clone()), pool_id));
 	assert_eq!(
 		<Test as Config>::Currency::free_balance(sender.clone()),
 		original_balance - (pool_fee * 2)
@@ -83,7 +83,7 @@ fn init_leave_pool(index: i32, pool_id: ID, start_block: u64, leave_block: u64) 
 	{
 		let before_balance = <Test as Config>::Currency::free_balance(sender.clone());
 
-		assert_ok!(Pool::leave(Origin::signed(sender.clone()), pool_id));
+		assert_ok!(Pool::leave(RuntimeOrigin::signed(sender.clone()), pool_id));
 
 		let after_balance = <Test as Config>::Currency::free_balance(sender.clone());
 

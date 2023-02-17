@@ -12,7 +12,7 @@ fn membership_registration_should_work() {
 		run_to_block(10);
 
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		assert_ok!(GafiMembership::registration(Origin::signed(ALICE)));
+		assert_ok!(GafiMembership::registration(RuntimeOrigin::signed(ALICE)));
 
 		run_to_block(20);
 
@@ -25,7 +25,7 @@ fn membership_hook_add_point_for_user_should_work() {
 	new_test_ext().execute_with(|| {
 		run_to_block(10);
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		assert_ok!(GafiMembership::registration(Origin::signed(ALICE)));
+		assert_ok!(GafiMembership::registration(RuntimeOrigin::signed(ALICE)));
 		run_to_block(20);
 		let _result = upfront_pool::Pallet::<Test>::join(ALICE, UPFRONT_BASIC_ID);
 		run_to_block(2000);
@@ -43,12 +43,12 @@ fn membership_registration_should_dispatch_error_when_already_registered() {
 		run_to_block(10);
 
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		assert_ok!(GafiMembership::registration(Origin::signed(ALICE)));
+		assert_ok!(GafiMembership::registration(RuntimeOrigin::signed(ALICE)));
 
 		run_to_block(20);
 
 		assert_err!(
-			GafiMembership::registration(Origin::signed(ALICE)),
+			GafiMembership::registration(RuntimeOrigin::signed(ALICE)),
 			<Error<Test>>::AlreadyRegistered
 		);
 	});
@@ -68,11 +68,11 @@ fn membership_registration_should_dispatch_error_when_exceed_max_members() {
 			);
 			if account == [5; 32] {
 				assert_err!(
-					GafiMembership::registration(Origin::signed(AccountId32::new(account))),
+					GafiMembership::registration(RuntimeOrigin::signed(AccountId32::new(account))),
 					<Error<Test>>::ExceedMaxMembers
 				);
 			} else {
-				assert_ok!(GafiMembership::registration(Origin::signed(
+				assert_ok!(GafiMembership::registration(RuntimeOrigin::signed(
 					AccountId32::new(account)
 				)));
 			}

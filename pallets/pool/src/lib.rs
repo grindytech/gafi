@@ -179,6 +179,7 @@ pub mod pallet {
 		/// - `ticket`: ticket type
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join(50u64))]
 		#[transactional]
 		pub fn join(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
@@ -221,6 +222,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave(50u64))]
 		#[transactional]
 		pub fn leave(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
@@ -252,6 +254,7 @@ pub mod pallet {
 		/// The origin must be Signed
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_all(50u64))]
 		#[transactional]
 		pub fn leave_all(origin: OriginFor<T>) -> DispatchResult {

@@ -199,6 +199,7 @@ pub mod pallet {
 		/// Emits `NewMember` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::registration(50u64))]
 		#[transactional]
 		pub fn registration(origin: OriginFor<T>) -> DispatchResult {
@@ -240,6 +241,7 @@ pub mod pallet {
 		/// Emits `NewMember` event when successful.
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_member(50u64))]
 		#[transactional]
 		pub fn remove_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {

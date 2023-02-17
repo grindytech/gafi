@@ -2,7 +2,7 @@ use frame_support::{
 	dispatch::Vec,
 	parameter_types,
 	traits::{ConstU32, ConstU8, GenesisBuild, OnFinalize, OnInitialize},
-	weights::IdentityFee,
+	weights::{IdentityFee, Weight},
 };
 use frame_system as system;
 use gafi_primitives::{
@@ -13,7 +13,7 @@ use gafi_primitives::{
 use gafi_tx::GafiEVMCurrencyAdapter;
 pub use gu_mock::{pool::*, one_mil_gaki};
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, EnsureAddressTruncated, EVMCurrencyAdapter, GasWeightMapping};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::{H256, U256};
@@ -94,16 +94,27 @@ impl pallet_transaction_payment::Config for Test {
 	type FeeMultiplierUpdate = ();
 }
 
+pub struct TestGasWeightMapping;
+impl GasWeightMapping for TestGasWeightMapping {
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas)
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.ref_time()
+	}
+}
+
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub WeightPerGas: Weight = Weight::from_ref_time(0_u64);
 }
 
 impl pallet_evm::Config for Test {
 	type FeeCalculator = ();
-	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressRoot<AccountId32>;
+	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
 	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
@@ -113,8 +124,11 @@ impl pallet_evm::Config for Test {
 	type PrecompilesValue = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = GafiEVMCurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
+	type WeightPerGas = WeightPerGas;
+	type OnCreate = ();
+	type GasWeightMapping = TestGasWeightMapping;
 }
 
 impl pallet_ethereum::Config for Test {

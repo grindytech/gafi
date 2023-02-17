@@ -28,7 +28,7 @@ fn use_tickets(pool_id: ID, account: AccountId32) {
         <Test as Config>::Currency::free_balance(account.clone()),
         base_balance
     );
-    assert_ok!(Pool::join(Origin::signed(account.clone()), pool_id));
+    assert_ok!(Pool::join(RuntimeOrigin::signed(account.clone()), pool_id));
 
     let service = Pool::get_service(pool_id).unwrap();
 

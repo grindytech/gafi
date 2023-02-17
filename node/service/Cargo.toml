@@ -23,7 +23,7 @@ serde = {version = "1.0.132", features = ["derive"]}
 fc-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 fc-mapping-sync = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+fc-rpc = { workspace = true}
 fc-rpc-core = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 fp-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 fp-evm = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
