@@ -22,23 +22,23 @@ scale-info = {version = "2.0.1", default-features = false, features = ["derive"]
 lite-json = { version = "0.2.0", default-features = false }
 
 # Substrate
-frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", optional = true}
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-core = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-io = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-std = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+frame-benchmarking = {workspace = true, optional = true}
+frame-support = {workspace = true}
+frame-system = {workspace = true}
+sp-core = {workspace = true}
+sp-io = { workspace = true}
+sp-runtime = {workspace = true}
+sp-std = {workspace = true}
 
 # Local
 gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
 
 [dev-dependencies]
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+pallet-balances = {workspace = true}
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
-pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+pallet-randomness-collective-flip = {workspace = true}
+pallet-timestamp = {workspace = true}
 sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 funding-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/funding-pool"}
 
