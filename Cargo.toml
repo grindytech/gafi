@@ -1,12 +1,9 @@
 [workspace]
 members = [
-  'node',
-  # 'node/chain_spec',
+  'node', # 'node/chain_spec',
   'node/rpc',
-  'node/cli',
-  # 'node/service',
+  'node/cli', # 'node/service',
   'runtime/gari',
-  
   'node/local',
   'utils/ethereum',
   'utils/convertor',
@@ -109,14 +106,20 @@ frame-system-benchmarking = {version = "4.0.0-dev", git = "https://github.com/pa
 frame-system-rpc-runtime-api = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-aura = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-balances = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-collective = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-democracy = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-elections-phragmen = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-grandpa = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-randomness-collective-flip = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-scheduler = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-sudo = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-timestamp = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-transaction-payment = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-transaction-payment-rpc = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-treasury = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-utility = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
-pallet-randomness-collective-flip = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-preimage = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 
 # Substrate Utility
 frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
@@ -150,5 +153,5 @@ pallet-evm-precompile-modexp = {version = "2.0.0-dev", git = "https://github.com
 pallet-evm-precompile-sha3fips = {version = "2.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
 pallet-evm-precompile-simple = {version = "2.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
 pallet-evm-test-vector-support = {version = "1.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-pallet-hotfix-sufficients = {version = "1.0.0", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+pallet-hotfix-sufficients = {version = "1.0.0", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37", default-features = false}
 # Local
