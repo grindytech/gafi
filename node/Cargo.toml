@@ -19,7 +19,7 @@ name = "gafi-node"
 [dependencies]
 
 # Frontier
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+fc-rpc = { workspace = true}
 pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
 
 # Substrate

@@ -374,8 +374,6 @@ impl pallet_scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
-	// type PreimageProvider = ();
-	// type NoPreimagePostponement = ();
 	type Preimages = crate::Preimage;
 }
 
