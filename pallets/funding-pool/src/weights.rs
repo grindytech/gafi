@@ -34,10 +34,10 @@ use sp_std::marker::PhantomData;
 use frame_support::weights::constants::RocksDbWeight;
 
 pub trait WeightInfo {
-	fn create_pool(s: u32, ) -> Weight;
-	fn withdraw_pool(s: u32, ) -> Weight;
-	fn new_targets(s: u32, ) -> Weight;
-	fn set_pool_name(s: u32, ) -> Weight;
+	fn create_pool(s: u64, ) -> Weight;
+	fn withdraw_pool(s: u64, ) -> Weight;
+	fn new_targets(s: u64, ) -> Weight;
+	fn set_pool_name(s: u64, ) -> Weight;
 	fn clear_pool_name(_s: u32, ) -> Weight;
 	fn kill_pool_name(_s: u32, ) -> Weight;
 }
@@ -57,10 +57,10 @@ impl<T: frame_system::Config> WeightInfo for FundingWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: FundingPool PoolOwned (r:1 w:1)
 	// Storage: FundingPool Targets (r:1 w:1)
-	fn create_pool(s: u32, ) -> Weight {
-		(31_348_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(T::DbWeight::get().reads(10 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	fn create_pool(s: u64, ) -> Weight {
+		Weight::from_ref_time(31_348_000u64).saturating_mul(s)
+			.saturating_add(T::DbWeight::get().reads(10u64))
+			.saturating_add(T::DbWeight::get().writes(7u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
@@ -70,17 +70,17 @@ impl<T: frame_system::Config> WeightInfo for FundingWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: FundingPool PoolOwned (r:1 w:1)
 	// Storage: FundingPool Targets (r:0 w:1)
-	fn withdraw_pool(s: u32, ) -> Weight {
-		(28_250_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	fn withdraw_pool(s: u64, ) -> Weight {
+		Weight::from_ref_time(28_250_000u64).saturating_mul(s)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(7u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: FundingPool Targets (r:0 w:1)
-	fn new_targets(s: u32, ) -> Weight {
-		(5_000_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	fn new_targets(s: u64, ) -> Weight {
+		Weight::from_ref_time(5_000_000u64).saturating_mul(s)
+			.saturating_add(T::DbWeight::get().reads(1u64))
+			.saturating_add(T::DbWeight::get().writes(1u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PoolName NameOf (r:1 w:1)
@@ -89,12 +89,12 @@ impl<T: frame_system::Config> WeightInfo for FundingWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn set_pool_name(s: u32, ) -> Weight {
-		(14_932_000 as Weight)
+	fn set_pool_name(s: u64, ) -> Weight {
+		Weight::from_ref_time(14_932_000u64)
 			// Standard Error: 13_000
-			.saturating_add((2_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(2_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(7u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PoolName NameOf (r:1 w:1)
@@ -104,9 +104,9 @@ impl<T: frame_system::Config> WeightInfo for FundingWeight<T> {
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
 	fn clear_pool_name(_s: u32, ) -> Weight {
-		(15_076_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(15_076_000u64)
+			.saturating_add(T::DbWeight::get().reads(7u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PoolName NameOf (r:1 w:1)
@@ -117,48 +117,48 @@ impl<T: frame_system::Config> WeightInfo for FundingWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: Balances TotalIssuance (r:1 w:1)
 	fn kill_pool_name(_s: u32, ) -> Weight {
-		(16_659_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(16_659_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 }
 
 impl WeightInfo for () {
-	fn create_pool(s: u32, ) -> Weight {
-		(31_348_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	fn create_pool(s: u64, ) -> Weight {
+		Weight::from_ref_time(31_348_000u64).saturating_mul(s)
+			.saturating_add(RocksDbWeight::get().reads(10u64))
+			.saturating_add(RocksDbWeight::get().writes(7u64))
 	}
 
-	fn withdraw_pool(s: u32, ) -> Weight {
-		(28_250_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	fn withdraw_pool(s: u64, ) -> Weight {
+		Weight::from_ref_time(28_250_000u64).saturating_mul(s)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(7u64))
 	}
 
-	fn new_targets(s: u32, ) -> Weight {
-		(5_000_000 as Weight).saturating_mul(s as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	fn new_targets(s: u64, ) -> Weight {
+		Weight::from_ref_time(5_000_000u64).saturating_mul(s)
+			.saturating_add(RocksDbWeight::get().reads(1u64))
+			.saturating_add(RocksDbWeight::get().writes(1u64))
 	}
 
-	fn set_pool_name(s: u32, ) -> Weight {
-		(14_932_000 as Weight)
+	fn set_pool_name(s: u64, ) -> Weight {
+		Weight::from_ref_time(14_932_000u64)
 			// Standard Error: 13_000
-			.saturating_add((2_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(2_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(7u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 
 	fn clear_pool_name(_s: u32, ) -> Weight {
-		(15_076_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(15_076_000u64)
+			.saturating_add(RocksDbWeight::get().reads(7u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 
 	fn kill_pool_name(_s: u32, ) -> Weight {
-		(16_659_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(16_659_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 }

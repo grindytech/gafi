@@ -2,13 +2,10 @@
 
 use frame_support::traits::{Currency, OnUnbalanced, ReservableCurrency};
 
+pub use gafi_primitives::{constant::ID, name::Name};
 pub use pallet::*;
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
-pub use gafi_primitives::{
-	constant::ID,
-	name::Name
-};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
@@ -29,7 +26,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency trait.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -106,11 +103,16 @@ pub mod pallet {
 		/// - One event.
 		/// # </weight>
 
-		fn set_name(account_id: AccountIdOf<T>,pool_id: ID, name: Vec<u8>) -> DispatchResult{
+		fn set_name(account_id: AccountIdOf<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
+			// let bounded_name: BoundedVec<_, _> =
+			// 	name.try_into().map_err(|()| Error::<T>::TooLong)?;
 
-			let bounded_name: BoundedVec<_, _> =
-				name.try_into().map_err(|()| Error::<T>::TooLong)?;
-			ensure!(bounded_name.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);
+			let bounded_name: BoundedVec<_, _> = name.try_into().unwrap();
+
+			ensure!(
+				bounded_name.len() >= T::MinLength::get() as usize,
+				Error::<T>::TooShort
+			);
 
 			let deposit = if let Some((_, deposit)) = <NameOf<T>>::get(&pool_id) {
 				Self::deposit_event(Event::<T>::NameChanged { pool: pool_id });
@@ -140,7 +142,10 @@ pub mod pallet {
 			let err_amount = T::Currency::unreserve(&account_id, deposit);
 			debug_assert!(err_amount.is_zero());
 
-			Self::deposit_event(Event::<T>::NameCleared { pool: pool_id, deposit });
+			Self::deposit_event(Event::<T>::NameCleared {
+				pool: pool_id,
+				deposit,
+			});
 			Ok(())
 		}
 
@@ -155,10 +160,7 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		fn kill_name(
-			account_id: AccountIdOf<T>,
-			target: ID,
-		) -> DispatchResult {
+		fn kill_name(account_id: AccountIdOf<T>, target: ID) -> DispatchResult {
 			// Grab their deposit (and check that they have one).
 			let deposit = <NameOf<T>>::take(&target).ok_or(Error::<T>::Unnamed)?.1;
 			// Slash their deposit from them.
@@ -169,5 +171,3 @@ pub mod pallet {
 		}
 	}
 }
-
-

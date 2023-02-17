@@ -34,9 +34,9 @@ use frame_support::weights::constants::RocksDbWeight;
 
 
 pub trait WeightInfo {
-    fn claim_contract(s: u32) -> Weight;
-    fn change_ownership(s: u32) -> Weight;
-    fn withdraw_contract(s: u32) -> Weight;
+    fn claim_contract(s: u64) -> Weight;
+    fn change_ownership(s: u64) -> Weight;
+    fn withdraw_contract(s: u64) -> Weight;
 }
 
 /// Weight functions for `game_creator`.
@@ -52,10 +52,10 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn claim_contract(_s: u32, ) -> Weight {
-		(20_833_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	fn claim_contract(_s: u64, ) -> Weight {
+		Weight::from_ref_time(20_833_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 	// Storage: GameCreator ContractOwner (r:1 w:1)
 	// Storage: EVM Creators (r:1 w:0)
@@ -65,12 +65,12 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn change_ownership(s: u32, ) -> Weight {
-		(22_833_000 as Weight)
+	fn change_ownership(s: u64, ) -> Weight {
+		Weight::from_ref_time(22_833_000u64)
 			// Standard Error: 166_000
-			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+			.saturating_add(Weight::from_ref_time(167_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(9u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 	// Storage: GameCreator ContractOwner (r:1 w:1)
 	// Storage: EVM Creators (r:1 w:0)
@@ -80,30 +80,30 @@ impl<T: frame_system::Config> WeightInfo for GameCreatorWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn withdraw_contract(_s: u32, ) -> Weight {
-		(20_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	fn withdraw_contract(_s: u64, ) -> Weight {
+		Weight::from_ref_time(20_000_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 }
 
 impl WeightInfo for () {
-	fn claim_contract(_s: u32, ) -> Weight {
-		(20_833_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	fn claim_contract(_s: u64, ) -> Weight {
+		Weight::from_ref_time(20_833_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 	
-	fn change_ownership(s: u32, ) -> Weight {
-		(22_833_000 as Weight)
-			.saturating_add((167_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	fn change_ownership(s: u64, ) -> Weight {
+		Weight::from_ref_time(22_833_000u64)
+			.saturating_add(Weight::from_ref_time(167_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(9u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 	
-	fn withdraw_contract(_s: u32, ) -> Weight {
-		(20_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	fn withdraw_contract(_s: u64, ) -> Weight {
+		Weight::from_ref_time(20_000_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 }

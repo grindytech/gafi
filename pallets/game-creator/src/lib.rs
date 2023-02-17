@@ -50,7 +50,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Substrate <-> Ethereum address mapping
 		type AddressMapping: AddressMapping<Self::AccountId>;
@@ -123,7 +123,7 @@ pub mod pallet {
 		/// Emits `Claimed` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim_contract(100u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim_contract(100u64))]
 		#[transactional]
 		pub fn claim_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -155,7 +155,7 @@ pub mod pallet {
 		/// Emits `Changed` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::change_ownership(100u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::change_ownership(100u64))]
 		#[transactional]
 		pub fn change_ownership(
 			origin: OriginFor<T>,
@@ -195,7 +195,7 @@ pub mod pallet {
 		/// Emits `Withdrew` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_contract(100u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_contract(100u64))]
 		#[transactional]
 		pub fn withdraw_contract(origin: OriginFor<T>, contract: H160) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

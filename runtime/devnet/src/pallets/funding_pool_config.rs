@@ -2,7 +2,7 @@ use frame_support::parameter_types;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use sp_runtime::Permill;
 
-use crate::{Balances, Event, PalletWhitelist, PoolName, RandomnessCollectiveFlip, Runtime};
+use crate::{Balances, RuntimeEvent, PalletWhitelist, PoolName, RandomnessCollectiveFlip, Runtime};
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
@@ -15,7 +15,7 @@ parameter_types! {
 }
 
 impl funding_pool::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type PoolName = PoolName;
 	type Currency = Balances;

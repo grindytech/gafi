@@ -13,100 +13,87 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 async-trait = "0.1"
-clap = {version = "3.1", features = ["derive"]}
-codec = {package = "parity-scale-codec", version = "3.1", features = ["derive"]}
-futures = '0.3'
+clap = {version = "4.1", features = ["derive", "deprecated"]}
+futures = "0.3.25"
+jsonrpsee = {workspace = true, features = ["server", "macros"]}
+log = "0.4.17"
+scale-codec = {package = "parity-scale-codec", workspace = true}
+serde = {workspace = true}
+serde_json = {workspace = true}
 hex-literal = '0.3'
 jsonrpc-core = "18.0.0"
 jsonrpc-pubsub = "18.0.0"
-jsonrpsee = {version = "0.14.0", features = ["server", "macros"]}
-log = "0.4.8"
-serde_json = "1.0.59"
-
-# Frontier
-fc-cli = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fc-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fc-db = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fc-mapping-sync = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fc-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fc-rpc-core = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fp-consensus = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fp-dynamic-fee = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fp-evm = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fp-rpc = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-fp-storage = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-pallet-base-fee = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-pallet-dynamic-fee = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-pallet-ethereum = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
-pallet-evm = {git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
+memmap2 = "0.5.8"
 
 # Substrate
-frame-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-transaction-payment = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", features = ["wasmtime"]}
-sc-client-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
-sc-consensus-manual-seal = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
-sc-executor = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", features = ["wasmtime"]}
-sc-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-network = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-service = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", features = ["wasmtime"]}
-sc-telemetry = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-transaction-pool = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-transaction-pool-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-consensus = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-consensus-aura = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-core = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-finality-grandpa = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-inherents = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-keyring = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-runtime = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-io = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-timestamp = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-
-# These dependencies are used for the node template's RPCs
-pallet-transaction-payment-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-basic-authorship = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-rpc = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sc-rpc-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-block-builder = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-blockchain = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-substrate-frame-rpc-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-
+prometheus-endpoint = {package = "substrate-prometheus-endpoint", workspace = true}
+sc-basic-authorship = {workspace = true}
+sc-cli = {workspace = true}
+sc-client-api = {workspace = true}
+sc-consensus = {workspace = true}
+sc-consensus-aura = {workspace = true}
+sc-consensus-manual-seal = {workspace = true}
+sc-executor = {workspace = true}
+sc-finality-grandpa = {workspace = true}
+sc-network = {workspace = true}
+sc-rpc = {workspace = true}
+sc-rpc-api = {workspace = true}
+sc-service = {workspace = true}
+sc-telemetry = {workspace = true}
+sc-transaction-pool = {workspace = true}
+sc-transaction-pool-api = {workspace = true}
+sp-api = {workspace = true, features = ["std"]}
+sp-block-builder = {workspace = true}
+sp-blockchain = {workspace = true}
+sp-consensus-aura = {workspace = true, features = ["std"]}
+sp-core = {workspace = true, features = ["std"]}
+sp-finality-grandpa = {workspace = true, features = ["std"]}
+sp-inherents = {workspace = true, features = ["std"]}
+sp-keyring = {workspace = true}
+sp-offchain = {workspace = true, features = ["std"]}
+sp-runtime = {workspace = true, features = ["std"]}
+sp-session = {workspace = true, features = ["std"]}
+sp-state-machine = {workspace = true, features = ["std"]}
+sp-std = {workspace = true, features = ["std"]}
+sp-timestamp = {workspace = true, features = ["std"]}
+sp-transaction-pool = {workspace = true, features = ["std"]}
+sp-trie = {workspace = true, features = ["std"]}
+# These dependencies are used for RPC
+frame-system-rpc-runtime-api = {workspace = true}
+pallet-transaction-payment-rpc = {workspace = true}
+pallet-transaction-payment-rpc-runtime-api = {workspace = true}
+substrate-frame-rpc-system = {workspace = true}
 # These dependencies are used for runtime benchmarking
-frame-benchmarking = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+frame-benchmarking = {workspace = true, optional = true}
+frame-benchmarking-cli = {workspace = true, optional = true}
+frame-system = {workspace = true}
+pallet-transaction-payment = {workspace = true}
 
-pallet-player = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player" }
-pallet-player-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api" }
+# Frontier
+fc-cli = {workspace = true}
+fc-consensus = {workspace = true}
+fc-db = {workspace = true}
+fc-mapping-sync = {workspace = true}
+fc-rpc = {workspace = true}
+fc-rpc-core = {workspace = true}
+fp-dynamic-fee = {workspace = true, features = ["std"]}
+fp-evm = {workspace = true, features = ["std"]}
+fp-rpc = {workspace = true, features = ["std"]}
+fp-storage = {workspace = true, features = ["std"]}
 
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
 gafi-primitives = {path = "../../primitives", default-features = false}
 
 [build-dependencies]
-substrate-build-script-utils = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+substrate-build-script-utils = {workspace = true}
 
 [features]
-aura = [
-  "sc-consensus-aura",
-  "devnet/aura",
-]
+aura = ["devnet/aura"]
 default = ["aura"]
-manual-seal = [
-  "sc-consensus-manual-seal",
-  "devnet/manual-seal",
-]
+manual-seal = ["devnet/manual-seal"]
 
-with-dev = [
-  "devnet/with-dev"
-]
+with-dev = ["devnet/with-dev"]
 
-rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
-runtime-benchmarks = [
-  "devnet/runtime-benchmarks",
-]
+# rpc_binary_search_estimate = ["fc-rpc/rpc_binary_search_estimate"]
+runtime-benchmarks = ["devnet/runtime-benchmarks"]

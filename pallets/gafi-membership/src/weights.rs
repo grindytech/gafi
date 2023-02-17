@@ -32,8 +32,8 @@ use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn registration(s: u32,) -> Weight;
-	fn remove_member(s: u32,) -> Weight;
+	fn registration(s: u64,) -> Weight;
+	fn remove_member(s: u64,) -> Weight;
 }
 
 
@@ -46,10 +46,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn registration(s: u32, ) -> Weight {
-		(14_722_000_u64)
+	fn registration(s: u64, ) -> Weight {
+		Weight::from_ref_time(14_722_000_u64)
 			// Standard Error: 1_000
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s))
 			.saturating_add(T::DbWeight::get().reads(6_u64))
 			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
@@ -59,8 +59,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System ExecutionPhase (r:1 w:0)
 	// Storage: System EventCount (r:1 w:1)
 	// Storage: System Events (r:1 w:1)
-	fn remove_member(_s: u32, ) -> Weight {
-		(15_436_000_u64)
+	fn remove_member(_s: u64, ) -> Weight {
+		Weight::from_ref_time(15_436_000_u64)
 			.saturating_add(T::DbWeight::get().reads(6_u64))
 			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
@@ -68,16 +68,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 impl WeightInfo for () {
 
-	fn registration(s: u32, ) -> Weight {
-		(14_722_000_u64)
+	fn registration(s: u64, ) -> Weight {
+		Weight::from_ref_time(14_722_000_u64)
 			// Standard Error: 1_000
-			.saturating_add((1_000 as Weight).saturating_mul(s.into()))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(6_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 
-	fn remove_member(_s: u32, ) -> Weight {
-		(15_436_000 as Weight)
+	fn remove_member(_s: u64, ) -> Weight {
+		Weight::from_ref_time(15_436_000u64)
 			.saturating_add(RocksDbWeight::get().reads(6_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}

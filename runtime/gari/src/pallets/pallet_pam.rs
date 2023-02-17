@@ -1,4 +1,4 @@
-use crate::{Balances, Event, Runtime};
+use crate::{Balances, Runtime, RuntimeEvent};
 use frame_support::parameter_types;
 use gafi_primitives::currency::{unit, NativeToken::GAFI};
 
@@ -10,7 +10,7 @@ parameter_types! {
 }
 
 impl proof_address_mapping::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = proof_address_mapping::weights::SubstrateWeight<Runtime>;
 	type MessagePrefix = Prefix;
