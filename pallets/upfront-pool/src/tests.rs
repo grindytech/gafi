@@ -63,21 +63,21 @@ fn set_max_player_should_works() {
 		{
 			run_to_block(1);
 			let max_player = 10;
-			assert_ok!(UpfrontPool::set_max_player(Origin::root(), max_player));
+			assert_ok!(UpfrontPool::set_max_player(RuntimeOrigin::root(), max_player));
 			assert_eq!(UpfrontPool::max_player(), max_player, "max_player after set not correct");
 		}
 
 		{
 			run_to_block(10);
 			let max_player = MAX_PLAYER;
-			assert_ok!(UpfrontPool::set_max_player(Origin::root(), max_player));
+			assert_ok!(UpfrontPool::set_max_player(RuntimeOrigin::root(), max_player));
 			assert_eq!(UpfrontPool::max_player(), max_player, "max_player after set not correct");
 		}
 
 		{
 			run_to_block(20);
 			let max_player = MAX_PLAYER;
-			assert_ok!(UpfrontPool::set_max_player(Origin::root(), max_player));
+			assert_ok!(UpfrontPool::set_max_player(RuntimeOrigin::root(), max_player));
 			assert_eq!(UpfrontPool::max_player(), max_player, "max_player after set not correct");
 		}
 	})
@@ -91,7 +91,7 @@ fn set_max_player_should_fail() {
 			run_to_block(10);
 			let max_player = MAX_PLAYER + 1;
 			assert_err!(
-				UpfrontPool::set_max_player(Origin::signed(AccountId32::new([0; 32])), max_player),
+				UpfrontPool::set_max_player(RuntimeOrigin::signed(AccountId32::new([0; 32])), max_player),
 				frame_support::error::BadOrigin
 			);
 		}
@@ -103,7 +103,7 @@ fn should_restrict_max_player() {
 	ExtBuilder::default().build_and_execute(|| {
 		run_to_block(10);
 		let max_player = 1000u32;
-		assert_ok!(UpfrontPool::set_max_player(Origin::root(), max_player));
+		assert_ok!(UpfrontPool::set_max_player(RuntimeOrigin::root(), max_player));
 		let mut count = 0;
 		let accounts = new_accounts(max_player, 1_000_000 * unit(GAKI));
 		for account in accounts {

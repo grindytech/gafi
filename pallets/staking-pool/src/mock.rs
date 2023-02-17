@@ -4,7 +4,6 @@
 */
 
 use crate::{self as staking_pool};
-use codec::Encode;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
@@ -18,7 +17,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
-use sp_io::hashing::blake2_256;
 pub use pallet_balances::Call as BalancesCall;
 pub use gu_mock::{pool::*, MILLISECS_PER_BLOCK, INIT_TIMESTAMP, SLOT_DURATION};
 

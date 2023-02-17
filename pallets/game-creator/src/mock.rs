@@ -2,13 +2,13 @@ pub use crate::{self as game_creator};
 use frame_support::{
 	dispatch::Vec,
 	parameter_types,
-	traits::{OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize}, weights::Weight,
 };
 use frame_system as system;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gu_mock::{AN_HOUR, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated, GasWeightMapping};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -31,19 +31,30 @@ frame_support::construct_runtime!(
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		GameCreator: game_creator::{Pallet, Storage, Event<T>},
 		ProofAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
 
+pub struct TestGasWeightMapping;
+impl GasWeightMapping for TestGasWeightMapping {
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas)
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.ref_time()
+	}
+}
+
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub WeightPerGas: Weight = Weight::from_ref_time(0_u64);
 }
 
 impl pallet_evm::Config for Test {
 	type FeeCalculator = ();
-	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
@@ -57,6 +68,9 @@ impl pallet_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
+	type WeightPerGas = WeightPerGas;
+	type OnCreate = ();
+	type GasWeightMapping = TestGasWeightMapping;
 }
 
 impl pallet_ethereum::Config for Test {

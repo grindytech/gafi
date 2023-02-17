@@ -140,6 +140,7 @@ pub mod pallet {
 		/// - `new_gas_price`: new gas_price value
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
 			ensure_root(origin)?;

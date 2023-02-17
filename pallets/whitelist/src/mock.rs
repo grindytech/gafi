@@ -21,20 +21,18 @@ use gafi_primitives::{
 };
 pub use pallet_balances::Call as BalancesCall;
 
-use frame_system::{mocking};
+use frame_system::mocking;
 use sp_core::{
 	sr25519::{self, Signature},
 	H256,
 };
 use sp_runtime::{
 	testing::{Header, TestXt},
-	traits::{
-		BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
-		Verify,
-	}, Permill,
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	Permill,
 };
 
-pub type Extrinsic = TestXt<Call, ()>;
+pub type Extrinsic = TestXt<RuntimeCall, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -93,7 +91,6 @@ impl pallet_timestamp::Config for Test {
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
-
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
@@ -156,7 +153,7 @@ parameter_types! {
 	pub const WhitelistFee: u128 = WHITELIST_FEE;
 }
 
-impl  pallet_whitelist::Config for Test {
+impl pallet_whitelist::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WhitelistPool = PalletPool;
 	type Currency = Balances;
@@ -209,22 +206,22 @@ impl frame_system::offchain::SigningTypes for Test {
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
 where
-	Call: From<C>,
+	RuntimeCall: From<C>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		_public: <Signature as Verify>::Signer,
 		_account: AccountId,
 		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, ())))
 	}
 }

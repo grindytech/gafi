@@ -45,7 +45,7 @@ fn bond_should_works() {
 
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 		let origin_address: AccountId32 = ProofAddressMapping::into_account_id(address);
-		assert_ok!(ProofAddressMapping::bond(Origin::signed(sender.clone()), signature, address, false));
+		assert_ok!(ProofAddressMapping::bond(RuntimeOrigin::signed(sender.clone()), signature, address, false));
 
 		assert_eq!(H160Mapping::<Test>::get(address), Some(sender.clone()));
 		assert_eq!(Id32Mapping::<Test>::get(sender), Some((address, RESERVATION_FEE)));
@@ -68,7 +68,7 @@ fn bond_should_fail() {
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84c").unwrap(); //incorrect address
 
 			assert_err!(
-				ProofAddressMapping::bond(Origin::signed(alice), signature, address, true),
+				ProofAddressMapping::bond(RuntimeOrigin::signed(alice), signature, address, true),
 				<Error<Test>>::SignatureOrAddressNotCorrect
 			);
 		}
@@ -81,7 +81,7 @@ fn bond_should_fail() {
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 
 		assert_err!(
-			ProofAddressMapping::bond(Origin::signed(bob), signature, address, true),
+			ProofAddressMapping::bond(RuntimeOrigin::signed(bob), signature, address, true),
 			<Error<Test>>::SignatureOrAddressNotCorrect
 		);
 		}
@@ -94,7 +94,7 @@ fn bond_should_fail() {
 		let signature: [u8; 65] = hex!("2cda6694b9b24c4dfd0bd6ae39e82cb20ce9c4726e5b84e677a460bfb402ae5f0a3cfb1fa0967aa6cbc02cbc3140442075be0152473d845ee5316df56127be1c1b");
 		let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 		assert_err!(
-			ProofAddressMapping::bond(Origin::signed(alice), signature, address, true),
+			ProofAddressMapping::bond(RuntimeOrigin::signed(alice), signature, address, true),
 			<Error<Test>>::SignatureOrAddressNotCorrect
 		);
 		}
@@ -108,7 +108,7 @@ fn bond_should_fail() {
 			let address: H160 = H160::from_str("b28049C6EE4F90AE804C70F860e55459E837E84b").unwrap();
 
 			assert_err!(ProofAddressMapping::bond(
-				Origin::signed(alice.clone()),
+				RuntimeOrigin::signed(alice.clone()),
 				signature,
 				address,
 				false
@@ -132,19 +132,19 @@ fn bond_should_fail() {
 			let bob_signature: [u8; 65] = hex!("e655cffe4ca3861c14dd36fe17fe2aaa37d4c2ea518dc27c788cfab1dfcb00c3065769c45d075218c881d1d39eaf72754c68dde05d2a5d80f271a8c67079d8a61c");
 
 			assert_ok!(ProofAddressMapping::bond(
-				Origin::signed(alice.clone()),
+				RuntimeOrigin::signed(alice.clone()),
 				alice_signature,
 				address,
 				false
 			));
 
 			assert_err!(
-				ProofAddressMapping::bond(Origin::signed(alice.clone()), alice_signature, address, true),
+				ProofAddressMapping::bond(RuntimeOrigin::signed(alice.clone()), alice_signature, address, true),
 				<Error<Test>>::AlreadyBond
 			);
 
 			assert_err!(
-				ProofAddressMapping::bond(Origin::signed(bob.clone()), bob_signature, address, true),
+				ProofAddressMapping::bond(RuntimeOrigin::signed(bob.clone()), bob_signature, address, true),
 				<Error<Test>>::AlreadyBond
 			);
 		}
@@ -175,7 +175,7 @@ fn bond_account_balances() {
 		}
 
 
-		assert_ok!(ProofAddressMapping::bond(Origin::signed(alice.clone()), signature, evm_address, true));
+		assert_ok!(ProofAddressMapping::bond(RuntimeOrigin::signed(alice.clone()), signature, evm_address, true));
 
 		// evm_address balance should  equal to alice
 		{
@@ -211,10 +211,10 @@ fn unbond_works() {
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 
-			assert_ok!(ProofAddressMapping::bond(Origin::signed(alice.clone()), signature, evm_address, true));
+			assert_ok!(ProofAddressMapping::bond(RuntimeOrigin::signed(alice.clone()), signature, evm_address, true));
 
 			let before_balance = Balances::free_balance(&alice);
-			assert_ok!(ProofAddressMapping::unbond(Origin::signed(alice.clone())));
+			assert_ok!(ProofAddressMapping::unbond(RuntimeOrigin::signed(alice.clone())));
 			let after_balance = Balances::free_balance(&alice);
 			assert_eq!(before_balance, after_balance - RESERVATION_FEE);
 		}
@@ -257,7 +257,7 @@ fn proof_address_mapping_when_bond_works() {
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 
-			assert_ok!(ProofAddressMapping::bond(Origin::signed(alice.clone()), signature, evm_address, true));
+			assert_ok!(ProofAddressMapping::bond(RuntimeOrigin::signed(alice.clone()), signature, evm_address, true));
 		}
 
 		let origin_id: AccountId32 = OriginAddressMapping::into_account_id(evm_address);
@@ -296,8 +296,8 @@ fn proof_address_mapping_when_unbond_works() {
 				assert_eq!(mapping_address_balance, (EVM_BALANCE - EXISTENTIAL_DEPOSIT).into());
 			}
 
-			assert_ok!(ProofAddressMapping::bond(Origin::signed(alice.clone()), signature, evm_address, true));
-			assert_ok!(ProofAddressMapping::unbond(Origin::signed(alice.clone())));
+			assert_ok!(ProofAddressMapping::bond(RuntimeOrigin::signed(alice.clone()), signature, evm_address, true));
+			assert_ok!(ProofAddressMapping::unbond(RuntimeOrigin::signed(alice.clone())));
 		}
 
 		let origin_id: AccountId32 = OriginAddressMapping::into_account_id(evm_address);
@@ -319,7 +319,7 @@ fn unbond_fail() {
 		let alice =
 			AccountId32::from_str("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY").unwrap();
 		assert_err!(
-			ProofAddressMapping::unbond(Origin::signed(alice.clone())),
+			ProofAddressMapping::unbond(RuntimeOrigin::signed(alice.clone())),
 			<Error<Test>>::NonbondAccount
 		);
 	});

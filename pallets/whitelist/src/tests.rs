@@ -52,7 +52,7 @@ fn create_pool(
 	discount: Permill,
 ) -> ID {
 	assert_ok!(Funding::create_pool(
-		Origin::signed(account.clone()),
+		RuntimeOrigin::signed(account.clone()),
 		targets,
 		pool_value,
 		discount,
@@ -106,7 +106,7 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 		assert_eq!(tx.signature, None);
 		assert_eq!(
 			tx.call,
-			Call::PalletWhitelist(crate::Call::approve_whitelist_unsigned { player, pool_id })
+			RuntimeCall::PalletWhitelist(crate::Call::approve_whitelist_unsigned { player, pool_id })
 		);
 	});
 }
@@ -122,7 +122,7 @@ fn query_whitelist_should_fails() {
 		let player = new_account(2, account_balance);
 
 		assert_err!(
-			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::apply_whitelist(RuntimeOrigin::signed(player.clone()), pool_id),
 			Error::<Test>::PoolNotFound.as_str(),
 		);
 
@@ -137,32 +137,32 @@ fn query_whitelist_should_fails() {
 
 		let pool_id: ID = *PoolOwned::<Test>::get(account.clone()).last().unwrap();
 		assert_err!(
-			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::apply_whitelist(RuntimeOrigin::signed(player.clone()), pool_id),
 			Error::<Test>::PoolNotWhitelist.as_str()
 		);
 
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
-			Origin::signed(account.clone()),
+			RuntimeOrigin::signed(account.clone()),
 			pool_id,
 			url.to_vec()
 		));
 
 		assert_ok!(PalletWhitelist::apply_whitelist(
-			Origin::signed(player.clone()),
+			RuntimeOrigin::signed(player.clone()),
 			pool_id
 		));
 
 		assert_err!(
-			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::apply_whitelist(RuntimeOrigin::signed(player.clone()), pool_id),
 			Error::<Test>::AlreadyWhitelist.as_str()
 		);
 
-		assert_ok!(PalletWhitelist::approve_whitelist(Origin::signed(account.clone()), player.clone(), pool_id));
+		assert_ok!(PalletWhitelist::approve_whitelist(RuntimeOrigin::signed(account.clone()), player.clone(), pool_id));
 
 		assert_err!(
-			PalletWhitelist::apply_whitelist(Origin::signed(player.clone()), pool_id),
+			PalletWhitelist::apply_whitelist(RuntimeOrigin::signed(player.clone()), pool_id),
 			Error::<Test>::AlreadyJoined.as_str()
 		);
 	})
@@ -259,7 +259,7 @@ fn enable_whitelist_works() {
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
-			Origin::signed(account.clone()),
+			RuntimeOrigin::signed(account.clone()),
 			pool_id,
 			url.to_vec()
 		));
@@ -269,7 +269,7 @@ fn enable_whitelist_works() {
 		assert_eq!(WhitelistSource::<Test>::get(pool_id).unwrap().0, url.to_vec());
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
-			Origin::signed(account),
+			RuntimeOrigin::signed(account),
 			pool_id,
 			b"".to_vec(),
 		));
@@ -304,9 +304,9 @@ fn enable_whitelist_fails() {
 
         let url = b"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-        assert_err!(PalletWhitelist::enable_whitelist(Origin::signed(account.clone()), pool_id, url.to_vec()), Error::<Test>::URLTooLong);
-        assert_err!(PalletWhitelist::enable_whitelist(Origin::signed(account.clone()), [0_u8; 32], b"".to_vec()), Error::<Test>::PoolNotFound);
-        assert_err!(PalletWhitelist::enable_whitelist(Origin::signed(account2.clone()), pool_id, b"".to_vec()), Error::<Test>::NotPoolOwner);
+        assert_err!(PalletWhitelist::enable_whitelist(RuntimeOrigin::signed(account.clone()), pool_id, url.to_vec()), Error::<Test>::URLTooLong);
+        assert_err!(PalletWhitelist::enable_whitelist(RuntimeOrigin::signed(account.clone()), [0_u8; 32], b"".to_vec()), Error::<Test>::PoolNotFound);
+        assert_err!(PalletWhitelist::enable_whitelist(RuntimeOrigin::signed(account2.clone()), pool_id, b"".to_vec()), Error::<Test>::NotPoolOwner);
     })
 }
 
@@ -331,7 +331,7 @@ fn get_url_work() {
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
-			Origin::signed(account.clone()),
+			RuntimeOrigin::signed(account.clone()),
 			pool_id,
 			url.to_vec()
 		));
@@ -365,7 +365,7 @@ fn withdraw_whitelist_works() {
 		let url = b"http://whitelist.gafi.network/whitelist/verify";
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
-			Origin::signed(account.clone()),
+			RuntimeOrigin::signed(account.clone()),
 			pool_id,
 			url.to_vec()
 		));
@@ -373,7 +373,7 @@ fn withdraw_whitelist_works() {
 		assert_eq!(Balances::reserved_balance(account.clone()), WHITELIST_FEE);
 
 		assert_ok!(PalletWhitelist::withdraw_whitelist(
-			Origin::signed(account.clone()),
+			RuntimeOrigin::signed(account.clone()),
 			pool_id
 		));
 

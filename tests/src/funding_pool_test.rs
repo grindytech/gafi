@@ -29,7 +29,7 @@ fn create_pool(
 ) -> ID {
     let before_balance = Balances::free_balance(&account);
     assert_ok!(FundingPool::create_pool(
-        Origin::signed(account.clone()),
+        RuntimeOrigin::signed(account.clone()),
         targets,
         pool_value,
         discount,
@@ -77,7 +77,7 @@ fn rejoin_funding_pool_works() {
 
         let account_1 = new_account([1_u8; 32], account_balance);
         assert_ok!(Pool::join(
-            Origin::signed(account_1.clone()),
+            RuntimeOrigin::signed(account_1.clone()),
             pool_id
         ));
 
@@ -86,17 +86,17 @@ fn rejoin_funding_pool_works() {
         assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(10);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
+        assert_ok!(Pool::leave(RuntimeOrigin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
-            Origin::signed(account_1.clone()),
+            RuntimeOrigin::signed(account_1.clone()),
             pool_id
         ));
         assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 98_u32);
 
         run_to_block(CIRCLE_BLOCK + ADD_BLOCK);
-        assert_ok!(Pool::leave(Origin::signed(account_1.clone()), pool_id));
+        assert_ok!(Pool::leave(RuntimeOrigin::signed(account_1.clone()), pool_id));
         assert_ok!(Pool::join(
-            Origin::signed(account_1.clone()),
+            RuntimeOrigin::signed(account_1.clone()),
             pool_id
         ));
         assert_eq!(Pool::tickets(account_1.clone(), pool_id).unwrap().tickets, 100_u32);
@@ -119,14 +119,14 @@ fn limit_join_funding_pool_works() {
 			run_to_block(i + 1);
 			let pool_id = create_pool(account.clone(), targets.clone(), pool_value, tx_limit, discount);
 			assert_ok!(Pool::join(
-				Origin::signed(account_1.clone()),
+				RuntimeOrigin::signed(account_1.clone()),
 				pool_id
 			));
 		}
 		run_to_block(10);
 		let pool_id1 = create_pool(account.clone(), targets, pool_value, tx_limit, discount);
 		assert_noop!(Pool::join(
-			Origin::signed(account_1.clone()),
+			RuntimeOrigin::signed(account_1.clone()),
 			pool_id1
 		), pallet_pool::Error::<Test>::ExceedJoinedPool);
     })
