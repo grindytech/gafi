@@ -4,6 +4,7 @@
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use cumulus_client_cli::CollatorOptions;
+use eth::{new_frontier_partial, FrontierPartialComponents};
 use fc_consensus::FrontierBlockImport;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 // Local Runtime Types
@@ -232,23 +233,68 @@ async fn start_node_impl(
 		);
 	}
 
-	let rpc_builder = {
+	// RPC Frontier extenstion builder
+	let FrontierPartialComponents {
+		filter_pool,
+		fee_history_cache,
+		fee_history_cache_limit,
+	} = new_frontier_partial(&eth_config)?;
+	let overrides = gafi_rpc::eth::overrides_handle(client.clone());
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		eth_config.eth_log_block_cache,
+		eth_config.eth_statuses_cache,
+		prometheus_registry.clone(),
+	));
+	let eth_rpc_params = gafi_rpc::eth::EthDeps {
+		client: client.clone(),
+		pool: transaction_pool.clone(),
+		graph: transaction_pool.pool().clone(),
+		converter: Some(TransactionConverter),
+		is_authority: validator,
+		enable_dev_signer: eth_config.enable_dev_signer,
+		network: network.clone(),
+		frontier_backend: frontier_backend.clone(),
+		overrides: overrides.clone(),
+		block_data_cache: block_data_cache.clone(),
+		filter_pool: filter_pool.clone(),
+		max_past_logs: eth_config.max_past_logs,
+		fee_history_cache: fee_history_cache.clone(),
+		fee_history_cache_limit,
+		execute_gas_limit_multiplier: eth_config.execute_gas_limit_multiplier,
+	};
+
+	let rpc_extensions_builder = {
 		let client = client.clone();
+		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
-			let deps = crate::rpc::FullDeps {
+		Box::new(move |deny_unsafe, subscription| {
+			let deps = gafi_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				deny_unsafe,
+				eth: eth_rpc_params.clone(),
 			};
 
-			crate::rpc::create_full(deps).map_err(Into::into)
+			gafi_rpc::create_full(deps, subscription).map_err(Into::into)
 		})
 	};
 
+	eth::spawn_frontier_tasks(
+		&task_manager,
+		client.clone(),
+		backend.clone(),
+		frontier_backend,
+		filter_pool,
+		overrides,
+		fee_history_cache,
+		fee_history_cache_limit,
+	);
+
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		rpc_builder,
+		rpc_builder: rpc_extensions_builder,
 		client: client.clone(),
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
@@ -466,6 +512,7 @@ fn build_consensus(
 pub async fn start_parachain_node(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	eth_config: eth::EthConfiguration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
@@ -473,6 +520,7 @@ pub async fn start_parachain_node(
 	start_node_impl(
 		parachain_config,
 		polkadot_config,
+		eth_config,
 		collator_options,
 		para_id,
 		hwbench,
