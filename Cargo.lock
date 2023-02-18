@@ -3717,6 +3717,7 @@ dependencies = [
  "fp-storage",
  "futures",
  "gafi-primitives",
+ "gari-runtime",
  "jsonrpsee 0.16.2",
  "log",
  "pallet-transaction-payment-rpc",
