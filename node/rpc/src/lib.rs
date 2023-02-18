@@ -28,7 +28,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
 
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
-mod eth;
+pub mod eth;
 
 /// open frontier backend
 pub fn open_frontier_backend<C>(
