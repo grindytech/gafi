@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 
-use crate::{Balances, Event, ProofAddressMapping, Runtime, EVM};
+use crate::{Balances, ProofAddressMapping, Runtime, EVM, RuntimeEvent};
 use gafi_primitives::currency::{unit, NativeToken::GAFI};
 
 parameter_types! {
@@ -9,7 +9,7 @@ parameter_types! {
 }
 
 impl game_creator::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;

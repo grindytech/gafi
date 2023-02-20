@@ -33,11 +33,11 @@ use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn enable_whitelist(s: u32, ) -> Weight;
-	fn apply_whitelist(s: u32, ) -> Weight;
-	fn approve_whitelist(s: u32, ) -> Weight;
-	fn approve_whitelist_unsigned(s: u32, ) -> Weight;
-	fn withdraw_whitelist(s: u32, ) -> Weight;
+	fn enable_whitelist(s: u64, ) -> Weight;
+	fn apply_whitelist(s: u64, ) -> Weight;
+	fn approve_whitelist(s: u64, ) -> Weight;
+	fn approve_whitelist_unsigned(s: u64, ) -> Weight;
+	fn withdraw_whitelist(s: u64, ) -> Weight;
 }
 
 /// Weight functions for `pallet_whitelist`.
@@ -51,18 +51,18 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: PalletWhitelist WhitelistSource (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn enable_whitelist(_s: u32, ) -> Weight {
-		(14_527_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	fn enable_whitelist(_s: u64, ) -> Weight {
+		Weight::from_ref_time(14_527_000u64)
+			.saturating_add(T::DbWeight::get().reads(5u64))
+			.saturating_add(T::DbWeight::get().writes(3u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PalletWhitelist Whitelist (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn apply_whitelist(_s: u32, ) -> Weight {
-		(5_943_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	fn apply_whitelist(_s: u64, ) -> Weight {
+		Weight::from_ref_time(5_943_000u64)
+			.saturating_add(T::DbWeight::get().reads(1u64))
+			.saturating_add(T::DbWeight::get().writes(1u64))
 	}
 	// Storage: FundingPool Pools (r:1 w:0)
 	// Storage: PalletWhitelist Whitelist (r:1 w:1)
@@ -76,12 +76,12 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: Pool Tickets (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn approve_whitelist(s: u32, ) -> Weight {
-		(26_281_000 as Weight)
+	fn approve_whitelist(s: u64, ) -> Weight {
+		Weight::from_ref_time(26_281_000u64)
 			// Standard Error: 2_000
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(10 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(10u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 	// Storage: PalletWhitelist Whitelist (r:1 w:1)
 	// Storage: UpfrontPool Services (r:1 w:0)
@@ -94,12 +94,12 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: Pool Tickets (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn approve_whitelist_unsigned(s: u32, ) -> Weight {
-		(23_199_000 as Weight)
+	fn approve_whitelist_unsigned(s: u64, ) -> Weight {
+		Weight::from_ref_time(23_199_000u64)
 			// Standard Error: 1_000
-			.saturating_add((2_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(2_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(9u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 
 	// Storage: FundingPool Pools (r:1 w:0)
@@ -110,49 +110,49 @@ impl<T: frame_system::Config> WeightInfo for WhitelistWeight<T> {
 	// Storage: System Events (r:1 w:1)
 	// Storage: PalletWhitelist WhitelistSource (r:0 w:1)
 	/// The range of component `s` is `[0, 100]`.
-	fn withdraw_whitelist(s: u32, ) -> Weight {
-		(21_120_000 as Weight)
+	fn withdraw_whitelist(s: u64, ) -> Weight {
+		Weight::from_ref_time(21_120_000u64)
 			// Standard Error: 1_000
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(6u64))
+			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
 }
 
 impl WeightInfo for () {
-	fn enable_whitelist(_s: u32, ) -> Weight {
-		(14_527_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	fn enable_whitelist(_s: u64, ) -> Weight {
+		Weight::from_ref_time(14_527_000u64)
+			.saturating_add(RocksDbWeight::get().reads(5u64))
+			.saturating_add(RocksDbWeight::get().writes(3u64))
 	}
 	
-	fn apply_whitelist(_s: u32, ) -> Weight {
-		(5_943_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	fn apply_whitelist(_s: u64, ) -> Weight {
+		Weight::from_ref_time(5_943_000u64)
+			.saturating_add(RocksDbWeight::get().reads(1u64))
+			.saturating_add(RocksDbWeight::get().writes(1u64))
 	}
 	
-	fn approve_whitelist(s: u32, ) -> Weight {
-		(26_281_000 as Weight)
+	fn approve_whitelist(s: u64, ) -> Weight {
+		Weight::from_ref_time(26_281_000u64)
 			// Standard Error: 2_000
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(10u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 	
-	fn approve_whitelist_unsigned(s: u32, ) -> Weight {
-		(23_199_000 as Weight)
+	fn approve_whitelist_unsigned(s: u64, ) -> Weight {
+		Weight::from_ref_time(23_199_000u64)
 			// Standard Error: 1_000
-			.saturating_add((2_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(2_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(9u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 
-	fn withdraw_whitelist(s: u32, ) -> Weight {
-		(21_120_000 as Weight)
+	fn withdraw_whitelist(s: u64, ) -> Weight {
+		Weight::from_ref_time(21_120_000u64)
 			// Standard Error: 1_000
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(6u64))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
 }

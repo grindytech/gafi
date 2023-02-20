@@ -34,9 +34,9 @@ use sp_std::marker::PhantomData;
 use gafi_primitives::constant::ID;
 
 pub trait WeightInfo {
-	fn join(s: u32, ) -> Weight;
-	fn leave(s: u32, ) -> Weight;
-	fn leave_all(s: u32, ) -> Weight;
+	fn join(s: u64, ) -> Weight;
+	fn leave(s: u64, ) -> Weight;
+	fn leave_all(s: u64, ) -> Weight;
 }
 
 /// Weight functions for `pallet_pool`.
@@ -60,12 +60,12 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: UpfrontPool NewPlayers (r:1 w:1)
 	// Storage: Balances TotalIssuance (r:1 w:1)
 	// Storage: UpfrontPool Tickets (r:0 w:1)
-	fn join(s: u32, ) -> Weight {
-		(42_018_000 as Weight)
+	fn join(s: u64, ) -> Weight {
+		Weight::from_ref_time(42_018_000u64)
 			// Standard Error: 323_000
-			.saturating_add((756_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+			.saturating_add(Weight::from_ref_time(756_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(12u64))
+			.saturating_add(T::DbWeight::get().writes(6u64))
 	}
 	// Storage: Pool Tickets (r:1 w:1)
 	// Storage: StakingPool Tickets (r:1 w:1)
@@ -87,12 +87,12 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: UpfrontPool PlayerCount (r:1 w:1)
 	// Storage: UpfrontPool IngamePlayers (r:1 w:1)
 	// Storage: UpfrontPool NewPlayers (r:1 w:1)
-	fn leave(s: u32, ) -> Weight {
-		(40_714_000 as Weight)
+	fn leave(s: u64, ) -> Weight {
+		Weight::from_ref_time(40_714_000u64)
 		// Standard Error: 507_000
-		.saturating_add((1_214_000 as Weight).saturating_mul(s as Weight))
-		.saturating_add(T::DbWeight::get().reads(12 as Weight))
-		.saturating_add(T::DbWeight::get().writes(8 as Weight))
+		.saturating_add(Weight::from_ref_time(1_214_000u64).saturating_mul(s))
+		.saturating_add(T::DbWeight::get().reads(12u64))
+		.saturating_add(T::DbWeight::get().writes(8u64))
 	}
 
 	// Storage: UpfrontPool Tickets (r:1 w:0)
@@ -113,38 +113,38 @@ impl<T: frame_system::Config> WeightInfo for PoolWeight<T> {
 	// Storage: UpfrontPool PlayerCount (r:1 w:1)
 	// Storage: UpfrontPool IngamePlayers (r:1 w:1)
 	// Storage: UpfrontPool NewPlayers (r:1 w:1)
-	fn leave_all(s: u32, ) -> Weight {
-		(41_476_000 as Weight)
+	fn leave_all(s: u64, ) -> Weight {
+		Weight::from_ref_time(41_476_000u64)
 			// Standard Error: 368_000
-			.saturating_add((905_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(11 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+			.saturating_add(Weight::from_ref_time(905_000u64).saturating_mul(s))
+			.saturating_add(T::DbWeight::get().reads(11u64))
+			.saturating_add(T::DbWeight::get().writes(7u64))
 	}
 }
 
 impl WeightInfo for () {
-	fn join(s: u32, ) -> Weight {
+	fn join(s: u64, ) -> Weight {
 
-		(42_018_000 as Weight)
+		Weight::from_ref_time(42_018_000u64)
 			// Standard Error: 323_000
-			.saturating_add((756_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+			.saturating_add(Weight::from_ref_time(756_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(12u64))
+			.saturating_add(RocksDbWeight::get().writes(6u64))
 	}
 
-	fn leave(s: u32,) -> Weight {
-		(40_714_000 as Weight)
+	fn leave(s: u64,) -> Weight {
+		Weight::from_ref_time(40_714_000u64)
 		// Standard Error: 507_000
-		.saturating_add((1_214_000 as Weight).saturating_mul(s as Weight))
-		.saturating_add(RocksDbWeight::get().reads(12 as Weight))
-		.saturating_add(RocksDbWeight::get().writes(8 as Weight))
+		.saturating_add(Weight::from_ref_time(1_214_000u64).saturating_mul(s))
+		.saturating_add(RocksDbWeight::get().reads(12u64))
+		.saturating_add(RocksDbWeight::get().writes(8u64))
 	}
 
-	fn leave_all(s: u32, ) -> Weight {
-		(41_476_000 as Weight)
+	fn leave_all(s: u64, ) -> Weight {
+		Weight::from_ref_time(41_476_000u64)
 			// Standard Error: 368_000
-			.saturating_add((905_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+			.saturating_add(Weight::from_ref_time(905_000u64).saturating_mul(s))
+			.saturating_add(RocksDbWeight::get().reads(11u64))
+			.saturating_add(RocksDbWeight::get().writes(7u64))
 	}
 }

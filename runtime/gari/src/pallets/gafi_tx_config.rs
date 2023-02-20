@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 use sp_runtime::Permill;
-use crate::{Balances, Event, Runtime, ProofAddressMapping, Pool};
+use crate::{Balances, Runtime, ProofAddressMapping, Pool, RuntimeEvent};
 use pallet_evm::EVMCurrencyAdapter;
 
 parameter_types! {
@@ -9,7 +9,7 @@ parameter_types! {
 }
 
 impl gafi_tx::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type OnChargeEVMTxHandler = EVMCurrencyAdapter<Balances, ()>;
 	type AddressMapping = ProofAddressMapping;

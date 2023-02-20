@@ -2,13 +2,13 @@ pub use crate::{self as game_creator};
 use frame_support::{
 	dispatch::Vec,
 	parameter_types,
-	traits::{OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize}, weights::Weight,
 };
 use frame_system as system;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use gu_mock::{AN_HOUR, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated};
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated, GasWeightMapping};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -31,25 +31,36 @@ frame_support::construct_runtime!(
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		GameCreator: game_creator::{Pallet, Storage, Event<T>},
 		ProofAddressMapping: proof_address_mapping::{Pallet, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
 
+pub struct TestGasWeightMapping;
+impl GasWeightMapping for TestGasWeightMapping {
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas)
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.ref_time()
+	}
+}
+
 parameter_types! {
 	pub const ChainId: u64 = 1337;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub WeightPerGas: Weight = Weight::from_ref_time(0_u64);
 }
 
 impl pallet_evm::Config for Test {
 	type FeeCalculator = ();
-	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressNever<AccountId32>;
 	type AddressMapping = ProofAddressMapping;
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
@@ -57,10 +68,13 @@ impl pallet_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = EVMCurrencyAdapter<Balances, ()>;
 	type FindAuthor = ();
+	type WeightPerGas = WeightPerGas;
+	type OnCreate = ();
+	type GasWeightMapping = TestGasWeightMapping;
 }
 
 impl pallet_ethereum::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
@@ -70,7 +84,7 @@ parameter_types! {
 }
 
 impl proof_address_mapping::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = ();
 	type MessagePrefix = Prefix;
@@ -88,7 +102,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = u128;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -114,7 +128,7 @@ parameter_types! {
 }
 
 impl game_creator::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type AddressMapping = ProofAddressMapping;
 	type MaxContractOwned = MaxContractOwned;
@@ -133,8 +147,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -143,7 +157,7 @@ impl system::Config for Test {
 	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;

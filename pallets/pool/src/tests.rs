@@ -32,7 +32,7 @@ fn join_staking_pool_works() {
         let account = new_account([0_u8; 32], account_balance);
 
         assert_ok!(Pool::join(
-            Origin::signed(account.clone()),
+            RuntimeOrigin::signed(account.clone()),
             STAKING_BASIC_ID,
         ));
 
@@ -50,10 +50,10 @@ fn leave_all_system_pool_works() {
         let account_balance = 1_000_000 * unit(GAKI);
         let account = new_account([0_u8; 32], account_balance);
         assert_ok!(Pool::join(
-            Origin::signed(account.clone()),
+            RuntimeOrigin::signed(account.clone()),
             STAKING_BASIC_ID,
         ));
-        assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
+        assert_ok!(Pool::leave_all(RuntimeOrigin::signed(account.clone())));
 
         assert_eq!(
             Tickets::<Test>::iter_prefix_values(account.clone()).count(),
@@ -61,10 +61,10 @@ fn leave_all_system_pool_works() {
         );
 
         assert_ok!(Pool::join(
-            Origin::signed(account.clone()),
+            RuntimeOrigin::signed(account.clone()),
             UPFRONT_BASIC_ID,
         ));
-        assert_ok!(Pool::leave_all(Origin::signed(account.clone())));
+        assert_ok!(Pool::leave_all(RuntimeOrigin::signed(account.clone())));
 
         assert_eq!(
             Tickets::<Test>::iter_prefix_values(account.clone()).count(),
@@ -82,7 +82,7 @@ fn create_pool(
 ) -> ID {
     let account_balance: u128 = Balances::free_balance(&account);
     assert_ok!(FundingPool::create_pool(
-        Origin::signed(account.clone()),
+        RuntimeOrigin::signed(account.clone()),
         targets,
         pool_value,
         discount,
@@ -119,7 +119,7 @@ fn leave_all_custom_pool_works() {
                 Permill::from_percent(70),
             );
             assert_ok!(Pool::join(
-                Origin::signed(account2.clone()),
+                RuntimeOrigin::signed(account2.clone()),
                 pool_id
             ));
         }
@@ -135,12 +135,12 @@ fn leave_all_custom_pool_works() {
                 Permill::from_percent(70),
             );
             assert_ok!(Pool::join(
-                Origin::signed(account2.clone()),
+                RuntimeOrigin::signed(account2.clone()),
                 pool_id
             ));
         }
 
-        assert_ok!(Pool::leave_all(Origin::signed(account2.clone())));
+        assert_ok!(Pool::leave_all(RuntimeOrigin::signed(account2.clone())));
         assert_eq!(PoolOwned::<Test>::get(account2.clone()), [].to_vec());
         assert_eq!(
             Tickets::<Test>::iter_prefix_values(account2.clone()).count(),

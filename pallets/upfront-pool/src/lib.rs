@@ -71,7 +71,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + timestamp::Config + pallet_balances::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -305,6 +305,7 @@ pub mod pallet {
 		/// - `max_player`: new value of MaxPlayer
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn set_max_player(origin: OriginFor<T>, max_player: u32) -> DispatchResult {
 			ensure_root(origin)?;
@@ -317,6 +318,7 @@ pub mod pallet {
 
 		// Should validate max, min for input
 		#[pallet::weight(0)]
+		#[pallet::call_index(1)]
 		pub fn set_services_tx_limit(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -336,6 +338,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(0)]
 		pub fn set_services_discount(
 			origin: OriginFor<T>,

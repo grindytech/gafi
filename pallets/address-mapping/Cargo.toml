@@ -20,18 +20,18 @@ hex-literal = {version = "0.3.4", optional = true}
 scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
 
 # Frontier
-pallet-evm = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
+pallet-evm = {workspace = true}
 
 # Substrate
-frame-benchmarking = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true}
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-runtime = {version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-std = {version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+frame-benchmarking = {workspace = true, optional = true}
+frame-support = {workspace = true}
+frame-system = {workspace = true}
+sp-core = {workspace = true}
+sp-io = {workspace = true}
+sp-runtime = {workspace = true}
+sp-std = {workspace = true}
 
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-balances = {workspace = true}
 
 # Local
 gu-convertor = {default-features = false, version = "4.0.0-dev", path = "../../utils/convertor"}
@@ -40,12 +40,12 @@ gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../../ut
 
 [dev-dependencies]
 hex-literal = "0.2.1"
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
+pallet-timestamp = {workspace = true}
 parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
-sp-core = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-io = {default-features = false, version = "6.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-sp-runtime = {default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26"}
-pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.26"}
+sp-core = {workspace = true}
+sp-io = {workspace = true}
+sp-runtime = {workspace = true}
+pallet-ethereum = {workspace = true}
 
 gu-mock = { path = "../../utils/mock" }
 

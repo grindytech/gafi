@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 
-use crate::{Balance, Balances, Event, Runtime, ConstantMultiplier, WeightToFee};
+use crate::{Balance, Balances, Runtime, ConstantMultiplier, WeightToFee, RuntimeEvent};
 use polkadot_runtime_common::{SlowAdjustingFeeUpdate};
 use crate::types::MICROUNIT;
 
@@ -11,7 +11,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;

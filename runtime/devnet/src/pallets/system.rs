@@ -5,8 +5,8 @@ use sp_runtime::{
 };
 
 use crate::{
-	AccountId, Balance, BlockHashCount, BlockLength, BlockNumber, BlockWeights, Call, Event, Hash,
-	Index, Origin, PalletInfo, Runtime, SS58Prefix, Version,
+	AccountId, Balance, BlockHashCount, BlockLength, BlockNumber, BlockWeights, Hash, Index,
+	RuntimeOrigin, PalletInfo, Runtime, RuntimeCall, RuntimeEvent, SS58Prefix, Version,
 };
 
 impl frame_system::Config for Runtime {
@@ -19,7 +19,7 @@ impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = crate::RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -33,9 +33,9 @@ impl frame_system::Config for Runtime {
 	/// The header type.
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = crate::RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = crate::RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.

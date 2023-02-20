@@ -21,20 +21,18 @@ use gafi_primitives::{
 };
 pub use pallet_balances::Call as BalancesCall;
 
-use frame_system::{mocking};
+use frame_system::mocking;
 use sp_core::{
 	sr25519::{self, Signature},
 	H256,
 };
 use sp_runtime::{
 	testing::{Header, TestXt},
-	traits::{
-		BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
-		Verify,
-	}, Permill,
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	Permill,
 };
 
-pub type Extrinsic = TestXt<Call, ()>;
+pub type Extrinsic = TestXt<RuntimeCall, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -72,7 +70,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = u128;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -94,7 +92,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
 	pub MinDiscountPercent: Permill = Permill::from_percent(10);
@@ -106,7 +103,7 @@ parameter_types! {
 }
 
 impl funding_pool::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type PoolName = ();
@@ -127,7 +124,7 @@ parameter_types! {
 }
 
 impl pallet_pool::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpfrontPool = ();
 	type StakingPool = ();
@@ -143,7 +140,7 @@ parameter_types! {
 }
 
 impl pallet_cache::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Data = TicketInfo;
 	type Action = ID;
 	type CleanTime = CleanTime;
@@ -156,8 +153,8 @@ parameter_types! {
 	pub const WhitelistFee: u128 = WHITELIST_FEE;
 }
 
-impl  pallet_whitelist::Config for Test {
-	type Event = Event;
+impl pallet_whitelist::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
 	type WhitelistPool = PalletPool;
 	type Currency = Balances;
 	type WeightInfo = ();
@@ -176,8 +173,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -186,7 +183,7 @@ impl system::Config for Test {
 	type AccountData = pallet_balances::AccountData<u128>;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -209,22 +206,22 @@ impl frame_system::offchain::SigningTypes for Test {
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
 where
-	Call: From<C>,
+	RuntimeCall: From<C>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		_public: <Signature as Verify>::Signer,
 		_account: AccountId,
 		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, ())))
 	}
 }

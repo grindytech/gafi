@@ -82,7 +82,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -188,7 +188,8 @@ pub mod pallet {
 		/// - `tx_limit`: the number of discounted transaction per period of time
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u32))]
+		#[pallet::call_index(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::create_pool(50u64))]
 		#[transactional]
 		pub fn create_pool(
 			origin: OriginFor<T>,
@@ -276,7 +277,8 @@ pub mod pallet {
 		/// - `pool_id`: the id of the pool
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_pool(50u64))]
+		#[pallet::call_index(1)]
 		#[transactional]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -316,7 +318,8 @@ pub mod pallet {
 		/// - `targets`: new smart-contract addresses
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::new_targets(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::new_targets(50u64))]
+		#[pallet::call_index(2)]
 		pub fn new_targets(
 			origin: OriginFor<T>,
 			pool_id: ID,
@@ -365,7 +368,8 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u32))]
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_pool_name(50u64))]
 		pub fn set_pool_name(origin: OriginFor<T>, pool_id: ID, name: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -391,6 +395,7 @@ pub mod pallet {
 		/// - One storage read/write.
 		/// - One event.
 		/// # </weight>
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::clear_pool_name(50u32))]
 		pub fn clear_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -420,6 +425,7 @@ pub mod pallet {
 		/// - One event.
 		/// # </weight>
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
+		#[pallet::call_index(5)]
 		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			ensure_root(origin)?;
 

@@ -57,7 +57,7 @@ fn claim_contract_works() {
 
         make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
         assert_eq!(
@@ -77,12 +77,12 @@ fn claim_contract_already_claim_fail() {
         make_deposit(&sub_acc, 1_000 * unit(GAKI));
         let contract_address = deploy_contract(evm_acc);
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
 
         assert_err!(
-            Pallet::<Test>::claim_contract(Origin::signed(sub_acc.clone()), contract_address),
+            Pallet::<Test>::claim_contract(RuntimeOrigin::signed(sub_acc.clone()), contract_address),
             Error::<Test>::ContractClaimed
         );
     })
@@ -97,7 +97,7 @@ fn claim_contract_not_owner_fail() {
         let contract_address = deploy_contract(evm_acc);
         assert_err!(
             Pallet::<Test>::claim_contract(
-                Origin::signed(AccountId32::from([0u8; 32])),
+                RuntimeOrigin::signed(AccountId32::from([0u8; 32])),
                 contract_address
             ),
             Error::<Test>::NotContractOwner
@@ -115,7 +115,7 @@ fn change_ownership_works() {
 
         make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
 
@@ -123,7 +123,7 @@ fn change_ownership_works() {
         make_deposit(&new_owner, 1_000 * unit(GAKI));
 
         assert_ok!(Pallet::<Test>::change_ownership(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address,
             new_owner.clone()
         ));
@@ -147,7 +147,7 @@ fn change_ownership_not_owner_fail() {
 
         make_deposit(&sub_acc, 1_000 * unit(GAKI));
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
 
@@ -156,7 +156,7 @@ fn change_ownership_not_owner_fail() {
 
         assert_err!(
             Pallet::<Test>::change_ownership(
-                Origin::signed(AccountId32::from([1u8; 32])),
+                RuntimeOrigin::signed(AccountId32::from([1u8; 32])),
                 contract_address,
                 new_owner.clone()
             ),
@@ -175,11 +175,11 @@ fn withdraw_contract_works() {
 
         make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
 
-        assert_ok!(Pallet::<Test>::withdraw_contract(Origin::signed(sub_acc.clone()), contract_address));
+        assert_ok!(Pallet::<Test>::withdraw_contract(RuntimeOrigin::signed(sub_acc.clone()), contract_address));
 
         assert_eq!(ContractOwner::<Test>::get(contract_address), None);
         assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance);
@@ -196,7 +196,7 @@ fn withdraw_afer_change_ownership_works() {
 
         make_deposit(&sub_acc, sub_acc_balance);
         assert_ok!(Pallet::<Test>::claim_contract(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address
         ));
 
@@ -205,12 +205,12 @@ fn withdraw_afer_change_ownership_works() {
         make_deposit(&new_owner, new_owner_balance);
 
         assert_ok!(Pallet::<Test>::change_ownership(
-            Origin::signed(sub_acc.clone()),
+            RuntimeOrigin::signed(sub_acc.clone()),
             contract_address,
             new_owner.clone()
         ));
 
-        assert_ok!(Pallet::<Test>::withdraw_contract(Origin::signed(new_owner.clone()), contract_address));
+        assert_ok!(Pallet::<Test>::withdraw_contract(RuntimeOrigin::signed(new_owner.clone()), contract_address));
 
         assert_eq!(Balances::free_balance(sub_acc.clone()), sub_acc_balance - GAME_CREATE_FEE);
         assert_eq!(Balances::free_balance(new_owner.clone()), new_owner_balance + GAME_CREATE_FEE);

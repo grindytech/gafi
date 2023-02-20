@@ -4,7 +4,7 @@ build:
 
 .PHONY: build-test
 build-test:
-	cargo build --release --features manual-seal,rpc_binary_search_estimate
+	cargo build --release --features manual-seal,rpc-binary-search-estimate
 
 .PHONY: build-dev
 build-dev:

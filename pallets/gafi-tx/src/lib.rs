@@ -68,7 +68,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
 		/// Customize OnChargeEVMTransaction
@@ -140,6 +140,7 @@ pub mod pallet {
 		/// - `new_gas_price`: new gas_price value
 		///
 		/// Weight: `O(1)`
+		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn set_gas_price(origin: OriginFor<T>, new_gas_price: U256) -> DispatchResult {
 			ensure_root(origin)?;
@@ -196,7 +197,7 @@ pub mod pallet {
 
 	impl<T: Config> FeeCalculator for Pallet<T> {
 		fn min_gas_price() -> (sp_core::U256, Weight) {
-			(GasPrice::<T>::get(), 0_u64)
+			(GasPrice::<T>::get(), Weight::from_ref_time(0_u64))
 		}
 	}
 }
@@ -294,11 +295,11 @@ where
 pub struct GafiGasWeightMapping;
 
 impl GasWeightMapping for GafiGasWeightMapping {
-	fn gas_to_weight(gas: u64) -> Weight {
-		gas as Weight
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas)
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight as u64
+		weight.ref_time()
 	}
 }

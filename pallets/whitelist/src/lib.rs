@@ -81,7 +81,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + CreateSignedTransaction<Call<Self>> {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -159,7 +159,8 @@ pub mod pallet {
 		/// - `pool_id`: pool id
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist(50u32))]
+		#[pallet::call_index(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist(50u64))]
 		pub fn approve_whitelist(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -195,7 +196,8 @@ pub mod pallet {
 		/// - `pool_id`: pool id
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist_unsigned(50u32))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_whitelist_unsigned(50u64))]
+		#[pallet::call_index(1)]
 		pub fn approve_whitelist_unsigned(
 			origin: OriginFor<T>,
 			player: T::AccountId,
@@ -228,7 +230,8 @@ pub mod pallet {
 		/// - `pool_id`: pool id
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::apply_whitelist(50u32))]
+		#[pallet::call_index(2)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::apply_whitelist(50u64))]
 		pub fn apply_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -248,24 +251,32 @@ pub mod pallet {
 		/// - `url`: verify api
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::enable_whitelist(50u32))]
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::enable_whitelist(50u64))]
 		pub fn enable_whitelist(origin: OriginFor<T>, pool_id: ID, url: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			Self::is_pool_owner(pool_id, &sender)?;
 
-			let bounded_url: BoundedVec<_, _> =
-				url.clone().try_into().map_err(|()| Error::<T>::URLTooLong)?;
-
-			let deposit = T::WhitelistFee::get();
-			if <WhitelistSource<T>>::get(pool_id) == None {
-				T::Currency::reserve(&sender, deposit)?;
-				Self::deposit_event(Event::<T>::WhitelistEnabled { pool_id, url });
+			if let Ok(bounded_url) = TryInto::<BoundedVec<_, _>>::try_into(url.clone()) {
+				let deposit = T::WhitelistFee::get();
+				if <WhitelistSource<T>>::get(pool_id) == None {
+					T::Currency::reserve(&sender, deposit)?;
+					Self::deposit_event(Event::<T>::WhitelistEnabled {
+						pool_id,
+						url: url.clone(),
+					});
+				} else {
+					Self::deposit_event(Event::<T>::WhitelistChanged {
+						pool_id,
+						url: url.clone(),
+					});
+				}
+				<WhitelistSource<T>>::insert(pool_id, (bounded_url, deposit));
+				Ok(())
 			} else {
-				Self::deposit_event(Event::<T>::WhitelistChanged { pool_id, url });
+				return Err(Error::<T>::URLTooLong.into())
 			}
-			<WhitelistSource<T>>::insert(pool_id, (bounded_url, deposit));
-			Ok(())
 		}
 
 		/// Withdraw whitelist
@@ -278,7 +289,8 @@ pub mod pallet {
 		/// - `pool_id`: pool id
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_whitelist(50u32))]
+		#[pallet::call_index(4)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::withdraw_whitelist(50u64))]
 		pub fn withdraw_whitelist(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
