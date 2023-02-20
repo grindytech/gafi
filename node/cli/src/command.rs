@@ -4,9 +4,9 @@ use codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use gafi_service::{ParachainNativeExecutor, new_partial};
-use log::{info, warn};
 use gafi_primitives::types::Block;
+use gafi_service::{eth::EthConfiguration, new_partial, ParachainNativeExecutor};
+use log::{info, warn};
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
@@ -15,9 +15,7 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 
-use crate::{
-	cli::{Cli, RelayChainCli, Subcommand},
-};
+use crate::cli::{Cli, RelayChainCli, Subcommand};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
@@ -304,9 +302,16 @@ pub fn run() -> Result<()> {
 					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
 
+
+				// Frontier config
+				let evm_config = EthConfiguration { max_past_logs: 10_000_u32, fee_history_limit: 2048_u64,
+					 enable_dev_signer: true, target_gas_price: 1_u64, execute_gas_limit_multiplier: 10_u64,
+					  eth_log_block_cache: 50_usize, eth_statuses_cache: 50_usize };
+
 				gafi_service::start_parachain_node(
 					config,
 					polkadot_config,
+					evm_config,
 					collator_options,
 					id,
 					hwbench,
