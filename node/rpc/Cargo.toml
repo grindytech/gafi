@@ -23,6 +23,7 @@ serde = {version = "1.0.132", features = ["derive"]}
 
 # Local
 gafi-primitives = {path = "../../primitives"}
+gari-runtime = {path = "../../runtime/gari"}
 
 # Frontier
 fc-db = {workspace = true}

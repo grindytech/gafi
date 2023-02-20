@@ -3717,6 +3717,7 @@ dependencies = [
  "fp-storage",
  "futures",
  "gafi-primitives",
+ "gari-runtime",
  "jsonrpsee 0.16.2",
  "log",
  "pallet-transaction-payment-rpc",
@@ -3744,7 +3745,7 @@ dependencies = [
 name = "gafi-service"
 version = "0.1.0"
 dependencies = [
- "clap 3.2.23",
+ "clap 4.1.4",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",

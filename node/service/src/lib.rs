@@ -1,19 +1,20 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 // std
-use std::{sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use cumulus_client_cli::CollatorOptions;
+use eth::{new_frontier_partial, FrontierPartialComponents};
+use fc_consensus::FrontierBlockImport;
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 // Local Runtime Types
 use gafi_primitives::types::{Block, Hash};
-use gari_runtime::{RuntimeApi, TransactionConverter};
 pub use gari_runtime;
+use gari_runtime::{RuntimeApi, TransactionConverter};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::{
-	ParachainBlockImport as TParachainBlockImport, ParachainConsensus,
-};
+use cumulus_client_consensus_common::{ParachainBlockImport, ParachainConsensus};
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_collator, start_full_node,
@@ -23,6 +24,8 @@ use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface};
 
 // Substrate Imports
+use futures::{channel::mpsc, prelude::*};
+use sc_client_api::BlockchainEvents;
 use sc_consensus::ImportQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
@@ -31,8 +34,8 @@ use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, Ta
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_keystore::SyncCryptoStorePtr;
 use substrate_prometheus_endpoint::Registry;
-
-use futures::{channel::mpsc, prelude::*};
+pub mod client;
+pub mod eth;
 
 /// Native executor type.
 pub struct ParachainNativeExecutor;
@@ -55,8 +58,6 @@ type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
 
 type ParachainBackend = TFullBackend<Block>;
 
-type ParachainBlockImport = TParachainBlockImport<Block, Arc<ParachainClient>, ParachainBackend>;
-
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -71,9 +72,24 @@ pub fn new_partial(
 		sc_consensus::DefaultImportQueue<Block, ParachainClient>,
 		sc_transaction_pool::FullPool<Block, ParachainClient>,
 		(
-			ParachainBlockImport,
+			ParachainBlockImport<
+				Block,
+				FrontierBlockImport<
+					Block,
+					Arc<
+						TFullClient<
+							Block,
+							RuntimeApi,
+							NativeElseWasmExecutor<ParachainNativeExecutor>,
+						>,
+					>,
+					TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ParachainNativeExecutor>>,
+				>,
+				TFullBackend<Block>,
+			>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
+			Arc<fc_db::Backend<Block>>,
 		),
 	>,
 	sc_service::Error,
@@ -119,7 +135,12 @@ pub fn new_partial(
 		client.clone(),
 	);
 
-	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+	// Frontier block import
+	let frontier_backend = gafi_rpc::open_frontier_backend(client.clone(), config)?;
+	let frontier_block_import =
+		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+
+	let block_import = ParachainBlockImport::new(frontier_block_import, backend.clone());
 
 	let import_queue = build_import_queue(
 		client.clone(),
@@ -137,7 +158,12 @@ pub fn new_partial(
 		task_manager,
 		transaction_pool,
 		select_chain: (),
-		other: (block_import, telemetry, telemetry_worker_handle),
+		other: (
+			block_import,
+			telemetry,
+			telemetry_worker_handle,
+			frontier_backend,
+		),
 	})
 }
 
@@ -148,6 +174,7 @@ pub fn new_partial(
 async fn start_node_impl(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	eth_config: eth::EthConfiguration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
@@ -155,7 +182,7 @@ async fn start_node_impl(
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial(&parachain_config)?;
-	let (block_import, mut telemetry, telemetry_worker_handle) = params.other;
+	let (block_import, mut telemetry, telemetry_worker_handle, frontier_backend) = params.other;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -206,23 +233,68 @@ async fn start_node_impl(
 		);
 	}
 
-	let rpc_builder = {
+	// RPC Frontier extenstion builder
+	let FrontierPartialComponents {
+		filter_pool,
+		fee_history_cache,
+		fee_history_cache_limit,
+	} = new_frontier_partial(&eth_config)?;
+	let overrides = gafi_rpc::eth::overrides_handle(client.clone());
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		eth_config.eth_log_block_cache,
+		eth_config.eth_statuses_cache,
+		prometheus_registry.clone(),
+	));
+	let eth_rpc_params = gafi_rpc::eth::EthDeps {
+		client: client.clone(),
+		pool: transaction_pool.clone(),
+		graph: transaction_pool.pool().clone(),
+		converter: Some(TransactionConverter),
+		is_authority: validator,
+		enable_dev_signer: eth_config.enable_dev_signer,
+		network: network.clone(),
+		frontier_backend: frontier_backend.clone(),
+		overrides: overrides.clone(),
+		block_data_cache: block_data_cache.clone(),
+		filter_pool: filter_pool.clone(),
+		max_past_logs: eth_config.max_past_logs,
+		fee_history_cache: fee_history_cache.clone(),
+		fee_history_cache_limit,
+		execute_gas_limit_multiplier: eth_config.execute_gas_limit_multiplier,
+	};
+
+	let rpc_extensions_builder = {
 		let client = client.clone();
+		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |deny_unsafe, subscription| {
 			let deps = gafi_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				deny_unsafe,
+				eth: eth_rpc_params.clone(),
 			};
 
-			gafi_rpc::create_full(deps).map_err(Into::into)
+			gafi_rpc::create_full(deps, subscription).map_err(Into::into)
 		})
 	};
 
+	eth::spawn_frontier_tasks(
+		&task_manager,
+		client.clone(),
+		backend.clone(),
+		frontier_backend,
+		filter_pool,
+		overrides,
+		fee_history_cache,
+		fee_history_cache_limit,
+	);
+
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		rpc_builder,
+		rpc_builder: rpc_extensions_builder,
 		client: client.clone(),
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
@@ -305,11 +377,18 @@ async fn start_node_impl(
 	Ok((task_manager, client))
 }
 
-
 /// Build the import queue for the parachain runtime.
 fn build_import_queue(
 	client: Arc<ParachainClient>,
-	block_import: ParachainBlockImport,
+	block_import: ParachainBlockImport<
+		Block,
+		FrontierBlockImport<
+			Block,
+			Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ParachainNativeExecutor>>>,
+			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ParachainNativeExecutor>>,
+		>,
+		TFullBackend<Block>,
+	>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
@@ -346,7 +425,15 @@ fn build_import_queue(
 
 fn build_consensus(
 	client: Arc<ParachainClient>,
-	block_import: ParachainBlockImport,
+	block_import: ParachainBlockImport<
+		Block,
+		FrontierBlockImport<
+			Block,
+			Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ParachainNativeExecutor>>>,
+			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ParachainNativeExecutor>>,
+		>,
+		TFullBackend<Block>,
+	>,
 	prometheus_registry: Option<&Registry>,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
@@ -425,6 +512,7 @@ fn build_consensus(
 pub async fn start_parachain_node(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	eth_config: eth::EthConfiguration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
@@ -432,6 +520,7 @@ pub async fn start_parachain_node(
 	start_node_impl(
 		parachain_config,
 		polkadot_config,
+		eth_config,
 		collator_options,
 		para_id,
 		hwbench,
