@@ -137,6 +137,7 @@ substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/par
 substrate-frame-rpc-system = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 substrate-test-runtime-client = {version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+substrate-prometheus-endpoint = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 
 # Frontier Client
 fc-cli = {version = "1.0.0-dev", git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}

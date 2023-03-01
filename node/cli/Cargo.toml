@@ -57,7 +57,7 @@ sp-timestamp = {workspace = true}
 sp-transaction-pool = {workspace = true}
 substrate-frame-rpc-system = {workspace = true}
 try-runtime-cli = {workspace = true}
-substrate-prometheus-endpoint = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+substrate-prometheus-endpoint = { workspace = true}
 
 # Polkadot
 polkadot-cli = {workspace = true}
