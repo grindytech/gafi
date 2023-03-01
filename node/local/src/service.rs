@@ -625,6 +625,7 @@ where
 	Ok(())
 }
 
+/// Build Network
 pub fn build_full(
 	config: Configuration,
 	eth_config: EthConfiguration,
@@ -635,6 +636,7 @@ pub fn build_full(
 	)
 }
 
+/// New Chain Options
 pub fn new_chain_ops(
 	mut config: &mut Configuration,
 	eth_config: &EthConfiguration,

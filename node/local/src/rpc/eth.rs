@@ -80,6 +80,8 @@ impl<C, P, A: ChainApi, CT: Clone, B: BlockT> Clone for EthDeps<C, P, A, CT, B> 
 	}
 }
 
+
+/// Overrides Handle
 pub fn overrides_handle<C, BE, B>(client: Arc<C>) -> Arc<OverrideHandle<B>>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
