@@ -65,7 +65,7 @@ pallet-balances = {workspace = true}
 pallet-collective = {workspace = true}
 pallet-elections-phragmen = {workspace = true}
 pallet-preimage = {workspace = true}
-pallet-randomness-collective-flip = {version = "4.0.0-dev", workspace = true}
+pallet-randomness-collective-flip = {workspace = true}
 pallet-scheduler = {workspace = true}
 pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.37" }
 pallet-sudo = {workspace = true}

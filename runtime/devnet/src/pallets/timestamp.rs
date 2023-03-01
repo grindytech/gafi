@@ -1,7 +1,7 @@
 use frame_support::parameter_types;
 use frame_support::traits::OnTimestampSet;
 
-use crate::{Aura, Runtime, SLOT_DURATION, PhantomData};
+use crate::{Runtime, SLOT_DURATION, PhantomData};
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;

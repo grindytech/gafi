@@ -26,6 +26,7 @@ use crate::client::{FullBackend, FullClient};
 /// Frontier DB backend type.
 pub type FrontierBackend = fc_db::Backend<Block>;
 
+/// Config frontier database
 pub fn db_config_dir(config: &Configuration) -> PathBuf {
 	let application = &config.impl_name;
 	config
@@ -48,6 +49,7 @@ pub struct EthConfiguration {
 	#[arg(long, default_value = "2048")]
 	pub fee_history_limit: u64,
 
+	/// Enable Dev Signer
 	#[arg(long)]
 	pub enable_dev_signer: bool,
 
@@ -69,12 +71,14 @@ pub struct EthConfiguration {
 	pub eth_statuses_cache: usize,
 }
 
+/// Frontier Partial Components
 pub struct FrontierPartialComponents {
 	pub filter_pool: Option<FilterPool>,
 	pub fee_history_cache: FeeHistoryCache,
 	pub fee_history_cache_limit: FeeHistoryCacheLimit,
 }
 
+/// Create new Frontier instance
 pub fn new_frontier_partial(
 	config: &EthConfiguration,
 ) -> Result<FrontierPartialComponents, ServiceError> {
@@ -104,6 +108,7 @@ where
 {
 }
 
+/// Spawn frontier instance
 pub fn spawn_frontier_tasks<RuntimeApi, Executor>(
 	task_manager: &TaskManager,
 	client: Arc<FullClient<RuntimeApi, Executor>>,

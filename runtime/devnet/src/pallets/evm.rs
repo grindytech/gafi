@@ -6,7 +6,7 @@ use sp_core::U256;
 use sp_runtime::Perbill;
 
 use crate::{
-	precompiles::FrontierPrecompiles, AccountId, Aura, Balances, RuntimeEvent, FindAuthorTruncated,
+	precompiles::FrontierPrecompiles, AccountId, Aura, Balances, FindAuthorTruncated,
 	ProofAddressMapping, Runtime, TxHandler, Weight, NORMAL_DISPATCH_RATIO,
 	WEIGHT_MILLISECS_PER_BLOCK,
 };

@@ -1,6 +1,6 @@
 //! Substrate Node Template CLI library.
 
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
 
 #[cfg(feature = "runtime-benchmarks")]
