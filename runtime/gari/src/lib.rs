@@ -33,10 +33,11 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::FindAuthor,
 	weights::{
-		ConstantMultiplier, DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		ConstantMultiplier, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId,
+	dispatch,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -167,13 +168,13 @@ parameter_types! {
 		BlockLength::max_with_normal_ratio(6 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
+		.for_class(dispatch::DispatchClass::all(), |weights| {
 			weights.base_extrinsic = ExtrinsicBaseWeight::get();
 		})
-		.for_class(DispatchClass::Normal, |weights| {
+		.for_class(dispatch::DispatchClass::Normal, |weights| {
 			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
 		})
-		.for_class(DispatchClass::Operational, |weights| {
+		.for_class(dispatch::DispatchClass::Operational, |weights| {
 			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
 			// Operational transactions have some extra reserved space, so that they
 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.

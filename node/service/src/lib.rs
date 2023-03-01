@@ -1,12 +1,11 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 // std
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use cumulus_client_cli::CollatorOptions;
 use eth::{new_frontier_partial, FrontierPartialComponents};
 use fc_consensus::FrontierBlockImport;
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 // Local Runtime Types
 use gafi_primitives::types::{Block, Hash};
 pub use gari_runtime;
@@ -24,8 +23,6 @@ use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface};
 
 // Substrate Imports
-use futures::{channel::mpsc, prelude::*};
-use sc_client_api::BlockchainEvents;
 use sc_consensus::ImportQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
@@ -267,7 +264,7 @@ async fn start_node_impl(
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
-		let network = network.clone();
+		let _network = network.clone();
 		let transaction_pool = transaction_pool.clone();
 
 		Box::new(move |deny_unsafe, subscription| {

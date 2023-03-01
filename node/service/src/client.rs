@@ -1,11 +1,7 @@
 // Substrate
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch, NativeVersion};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::traits::BlakeTwo256;
 // Local
-use gafi_primitives::types::{Block, AccountId, Balance, Index};
-
-use crate::eth::EthCompatRuntimeApiCollection;
+use gafi_primitives::types::{Block};
 
 /// Full backend.
 pub type FullBackend = sc_service::TFullBackend<Block>;

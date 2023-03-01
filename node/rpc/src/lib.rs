@@ -5,20 +5,17 @@
 
 #![warn(missing_docs)]
 
-use std::{path::PathBuf, sync::Arc};
+use std::{sync::Arc};
 
-use fc_db::DatabaseSettings;
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use gafi_primitives::types::{AccountId, Balance, Block, Hash, Index as Nonce};
+use gafi_primitives::types::{AccountId, Balance, Block};
 
 use gari_runtime::types::Index;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
-use sc_network::NetworkService;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
-use sc_transaction_pool::{ChainApi, Pool};
+use sc_transaction_pool::{ChainApi};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -28,6 +25,8 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
 
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+
+/// Export Ethereum RPC
 pub mod eth;
 
 /// open frontier backend
