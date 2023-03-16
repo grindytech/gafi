@@ -353,7 +353,7 @@ pub mod pallet {
 			}
 			Ok(())
 		}
-
+		// SBP Review : Comments on important & nested functions like this is very much recommended
 		pub fn verify_and_approve(
 			uri: &str,
 			player: T::AccountId,
@@ -486,6 +486,9 @@ pub mod pallet {
 					player: _,
 				} => match source {
 					TransactionSource::Local | TransactionSource::InBlock =>
+						// SBP Review : I recommend directly inlining `ValidTransaction` here
+						// I don't see the need for a separate closure declaration`valid_tx` 
+						// given it will be called with the same arguments
 						valid_tx(b"approve_whitelist_unsigned".to_vec()),
 					_ => InvalidTransaction::Call.into(),
 				},

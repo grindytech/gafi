@@ -29,8 +29,10 @@ members = [
 [profile.release]
 panic = 'unwind'
 
+# SBP REVIEW - Recommend to put dependencies under [dependencies] and not [profile.release]
 evm-core = {git = "https://github.com/grindytech/evm", branch = "master"}
 
+# SBP REVIEW - Recommend to put dependencies under [dependencies] and not [profile.release]
 ethereum = {git = "https://github.com/grindytech/ethereum", branch = "master"}
 
 resolver = "2"
