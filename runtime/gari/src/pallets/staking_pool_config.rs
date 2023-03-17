@@ -5,7 +5,7 @@ use gafi_primitives::{
 };
 use sp_runtime::Permill;
 
-use crate::{Balances, Player, Runtime, RuntimeEvent};
+use crate::{Balances, Runtime, RuntimeEvent};
 use codec::{Encode, Decode};
 use sp_std::vec;
 use scale_info::TypeInfo;

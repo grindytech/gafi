@@ -36,7 +36,6 @@ sp-core = {workspace = true}
 sp-io = { workspace = true}
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
-gafi-membership = { version = "4.0.0-dev", default-features = false, path = "../gafi-membership" }
 gu-mock = { version = "4.0.0-dev", default-features = false, path = "../../utils/mock" }
 
 [features]
@@ -50,7 +49,6 @@ std = [
   "frame-system/std",
   "pallet-timestamp/std",
   "upfront-pool/std",
-  "gafi-membership/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

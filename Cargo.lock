@@ -7144,7 +7144,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-membership",
  "gafi-primitives",
  "gu-mock",
  "pallet-balances",

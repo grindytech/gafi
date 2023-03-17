@@ -9,10 +9,10 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
-use frame_support::BoundedVec;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use pallets::balances;
 use runtime_common::{impls::DealWithFees, prod_or_fast};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -85,6 +85,7 @@ pub use funding_pool;
 pub use staking_pool;
 pub use upfront_pool;
 pub mod pallets;
+pub use balances::NativeTokenExistentialDeposit;
 
 mod precompiles;
 

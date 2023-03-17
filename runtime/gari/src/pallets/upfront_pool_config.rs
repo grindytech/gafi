@@ -8,7 +8,7 @@ use sp_runtime::Permill;
 use codec::{Encode, Decode};
 use sp_std::vec;
 
-use crate::{Balances, Player, Pool, Runtime, RuntimeEvent};
+use crate::{Balances, Pool, Runtime, RuntimeEvent};
 
 const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 const UPFRONT_MEDIUM_ID: ID = [11_u8; 32];
