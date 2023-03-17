@@ -162,7 +162,6 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
-	type Players = ();
 }
 
 parameter_types! {
@@ -176,7 +175,6 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
 	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = ();
 }
 
 parameter_types! {

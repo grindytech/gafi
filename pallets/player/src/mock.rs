@@ -32,7 +32,6 @@ frame_support::construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		StakingPool: staking_pool::{Pallet, Call, Storage, Event<T>},
-		GafiMembership: gafi_membership
 		// Event: Event,
 	}
 );
@@ -113,7 +112,6 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
 	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = PalletGame;
 }
 
 impl staking_pool::Config for Test {
@@ -121,34 +119,12 @@ impl staking_pool::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type StakingServices = StakingPoolDefaultServices;
-	type Players = PalletGame;
-}
-
-parameter_types! {
-	pub const MaxMembers: u32 = 100u32;
-	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
-	pub const MaxAchievement: u32 = 100;
-	pub const TotalMembershipLevel: u32 = 10;
-}
-impl gafi_membership::Config for Test {
-	type Currency = Balances;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
-	type ApproveOrigin = system::EnsureRoot<AccountId32>;
-	type MaxMembers = MaxMembers;
-	type MinJoinTime = MinJoinTime;
-	type Players = PalletGame;
-	type MaxAchievement = MaxAchievement;
-	type Achievements = ();
-	type TotalMembershipLevel = TotalMembershipLevel;
-	type MembershipLevelPoints = ();
 }
 
 impl pallet_player::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
-	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }

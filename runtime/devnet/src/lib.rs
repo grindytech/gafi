@@ -9,11 +9,10 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
-use frame_support::BoundedVec;
-use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use pallets::balances;
 use runtime_common::{impls::DealWithFees, prod_or_fast};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -73,10 +72,7 @@ pub use gafi_primitives::{
 	ticket::{TicketInfo, TicketType},
 };
 
-pub use gafi_membership::UpfrontPoolTimeAchievement;
-
 // import local pallets
-pub use gafi_membership;
 pub use gafi_tx;
 pub use game_creator;
 pub use pallet_cache;
@@ -89,6 +85,7 @@ pub use funding_pool;
 pub use staking_pool;
 pub use upfront_pool;
 pub mod pallets;
+pub use balances::NativeTokenExistentialDeposit;
 
 mod precompiles;
 
@@ -266,7 +263,6 @@ impl pallet_player::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
-	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }
@@ -453,60 +449,6 @@ impl pallet_pool_names::Config for Runtime {
 	type MinLength = MinLength;
 	type MaxLength = MaxLength;
 	type RuntimeEvent = RuntimeEvent;
-}
-
-parameter_types! {
-	pub const MembershipMaxMembers: u32 = 100u32;
-	pub const MinJoinTime: u128 = 60 * 60_000u128; // 60 minutes
-	pub const MaxAchievement: u32 = 100;
-	pub const TotalMembershipLevel: u32 = 10;
-
-}
-
-pub struct MembershipAchievements {}
-
-impl Achievements<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement>
-	for MembershipAchievements
-{
-	fn get_membership_achievements(
-	) -> BoundedVec<UpfrontPoolTimeAchievement<Runtime, Player>, MaxAchievement> {
-		vec![
-			UpfrontPoolTimeAchievement {
-				phantom: Default::default(),
-				id: [20; 32],
-				min_joined_time: MinJoinTime::get(),
-			},
-			UpfrontPoolTimeAchievement {
-				phantom: Default::default(),
-				id: [21; 32],
-				min_joined_time: MinJoinTime::get(),
-			},
-		]
-		.try_into()
-		.unwrap_or_default()
-	}
-}
-
-pub struct MembershipLevels {}
-
-impl MembershipLevelPoints<TotalMembershipLevel> for MembershipLevels {
-	fn get_membership_level_points() -> BoundedVec<u32, TotalMembershipLevel> {
-		vec![50, 100, 200, 400].try_into().unwrap_or_default()
-	}
-}
-
-impl gafi_membership::Config for Runtime {
-	type Currency = Balances;
-	type WeightInfo = gafi_membership::weights::SubstrateWeight<Runtime>;
-	type RuntimeEvent = RuntimeEvent;
-	type ApproveOrigin = ApproveOrigin;
-	type MinJoinTime = MinJoinTime;
-	type MaxMembers = MembershipMaxMembers;
-	type Players = Player;
-	type MaxAchievement = MaxAchievement;
-	type Achievements = MembershipAchievements;
-	type TotalMembershipLevel = TotalMembershipLevel;
-	type MembershipLevelPoints = MembershipLevels;
 }
 
 parameter_types! {
@@ -742,7 +684,6 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PoolName: pallet_pool_names,
-		GafiMembership: gafi_membership,
 		PalletWhitelist: pallet_whitelist,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -1201,7 +1142,6 @@ impl_runtime_apis! {
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
-			use gafi_membership::Pallet as GafiMembershipBench;
 			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -1214,7 +1154,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, staking_pool, StakingPoolBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, game_creator, GameCreatorBench::<Runtime>);
-			list_benchmark!(list, extra, gafi_membership, GafiMembershipBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_whitelist, WhitelistBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_hotfix_sufficients, PalletHotfixSufficients::<Runtime>);
 
@@ -1237,7 +1176,6 @@ impl_runtime_apis! {
 			use pallet_pool::Pallet as PoolBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_creator::Pallet as GameCreatorBench;
-			use gafi_membership::Pallet as GafiMembershipBench;
 			use pallet_whitelist::Pallet as WhitelistBench;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
@@ -1256,7 +1194,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, game_creator, GameCreatorBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_whitelist, WhitelistBench::<Runtime>);
-			add_benchmark!(params, batches, gafi_membership, GafiMembershipBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
