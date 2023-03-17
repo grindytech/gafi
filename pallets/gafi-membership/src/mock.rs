@@ -110,14 +110,12 @@ impl upfront_pool::Config for Test {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = ();
 	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = Player;
 }
 
 impl pallet_player::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
-	type Membership = GafiMembership;
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = ();
 }

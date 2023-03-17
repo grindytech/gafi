@@ -62,5 +62,4 @@ impl upfront_pool::Config for Runtime {
 	type MaxPlayerStorage = MaxPlayerStorage;
 	type MasterPool = Pool;
 	type UpfrontServices = UpfrontPoolDefaultServices;
-	type Players = Player;
 }
