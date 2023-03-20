@@ -7,9 +7,11 @@
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256};
 
-pub fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160>{
+pub fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160> {
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-	Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
+	Some(H160::from(H256::from_slice(
+		Keccak256::digest(&pubkey).as_slice(),
+	)))
 }
 
 use parity_scale_codec::{Decode, Encode};
@@ -17,10 +19,8 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
-use sp_runtime::{
-	RuntimeDebug,
-};
-use sp_std::{prelude::*};
+use sp_runtime::RuntimeDebug;
+use sp_std::prelude::*;
 
 #[cfg(test)]
 mod tests;
@@ -28,7 +28,7 @@ mod tests;
 /// An Ethereum address (i.e. 20 bytes, used to represent an Ethereum account).
 ///
 /// This gets serialized to the 0x-prefixed hex representation.
-#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug,  TypeInfo)]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 pub struct EthereumAddress(pub [u8; 20]);
 
 #[cfg(feature = "std")]
@@ -54,7 +54,7 @@ impl<'de> Deserialize<'de> for EthereumAddress {
 		if s.len() != 40 {
 			return Err(serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			));
+			))
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| serde::de::Error::custom(format!("{:?}", e)))?;
@@ -81,28 +81,34 @@ impl sp_std::fmt::Debug for EcdsaSignature {
 
 // Constructs the message that Ethereum RPC's `personal_sign` and `eth_sign` would sign.
 fn ethereum_signable_message(what: &[u8], extra: &[u8], prefix: &[u8]) -> Vec<u8> {
-    let mut l = prefix.len() + what.len() + extra.len();
-    let mut rev = Vec::new();
-    while l > 0 {
-        rev.push(b'0' + (l % 10) as u8);
-        l /= 10;
-    }
-    let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
-    v.extend(rev.into_iter().rev());
-    v.extend_from_slice(&prefix[..]);
-    v.extend_from_slice(what);
-    v.extend_from_slice(extra);
-    v
+	let mut l = prefix.len() + what.len() + extra.len();
+	let mut rev = Vec::new();
+	while l > 0 {
+		rev.push(b'0' + (l % 10) as u8);
+		l /= 10;
+	}
+	let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
+	v.extend(rev.into_iter().rev());
+	// SBP REVIEW - Redundant slicing : v.extend_from_slice(prefix);
+	v.extend_from_slice(&prefix[..]);
+	v.extend_from_slice(what);
+	v.extend_from_slice(extra);
+	v
 }
 
 // Attempts to recover the Ethereum address from a message signature signed by using
 // the Ethereum RPC's `personal_sign` and `eth_sign`.
-pub fn eth_recover(s: &EcdsaSignature, what: &[u8], extra: &[u8], prefix: &[u8]) -> Option<EthereumAddress> {
-    let msg = keccak_256(&ethereum_signable_message(what, extra, prefix));
-    let mut res = EthereumAddress::default();
-    res.0
-        .copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
-    Some(res)
+pub fn eth_recover(
+	s: &EcdsaSignature,
+	what: &[u8],
+	extra: &[u8],
+	prefix: &[u8],
+) -> Option<EthereumAddress> {
+	let msg = keccak_256(&ethereum_signable_message(what, extra, prefix));
+	let mut res = EthereumAddress::default();
+	res.0
+		.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
+	Some(res)
 }
 
 /// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
