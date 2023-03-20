@@ -10,7 +10,7 @@ use sp_core::{H160, H256};
 pub fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160> {
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
 	Some(H160::from(H256::from_slice(
-		Keccak256::digest(&pubkey).as_slice(),
+		Keccak256::digest(pubkey).as_slice(),
 	)))
 }
 
@@ -89,8 +89,7 @@ fn ethereum_signable_message(what: &[u8], extra: &[u8], prefix: &[u8]) -> Vec<u8
 	}
 	let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
 	v.extend(rev.into_iter().rev());
-	// SBP REVIEW - Redundant slicing : v.extend_from_slice(prefix);
-	v.extend_from_slice(&prefix[..]);
+	v.extend_from_slice(prefix);
 	v.extend_from_slice(what);
 	v.extend_from_slice(extra);
 	v
