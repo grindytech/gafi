@@ -353,7 +353,17 @@ pub mod pallet {
 			}
 			Ok(())
 		}
-		// SBP Review : Comments on important & nested functions like this is very much recommended
+
+		/// Verify Whitelist and Approve
+		///
+		/// Offchain-worker verifies player on the whitelist and approves joining the pool
+		///
+		/// Parameters:
+		/// - `uri`: the whitelist verifies URI
+		/// - `player`: the player
+		/// - `pool_id`: the pool_id
+		///
+		/// Weight: `O(1)`
 		pub fn verify_and_approve(
 			uri: &str,
 			player: T::AccountId,
@@ -471,25 +481,22 @@ pub mod pallet {
 		/// here we make sure that some particular calls (the ones produced by offchain worker)
 		/// are being whitelisted and marked as valid.
 		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			let valid_tx = |provide| {
-				ValidTransaction::with_tag_prefix("pallet-pool")
-					.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
-					.and_provides([&provide])
-					.longevity(3)
-					.propagate(true)
-					.build()
-			};
-
 			match call {
 				Call::approve_whitelist_unsigned {
 					pool_id: _,
 					player: _,
 				} => match source {
-					TransactionSource::Local | TransactionSource::InBlock =>
-						// SBP Review : I recommend directly inlining `ValidTransaction` here
-						// I don't see the need for a separate closure declaration`valid_tx` 
-						// given it will be called with the same arguments
-						valid_tx(b"approve_whitelist_unsigned".to_vec()),
+					TransactionSource::Local | TransactionSource::InBlock => {
+						let valid_tx = |provide| {
+							ValidTransaction::with_tag_prefix("pallet-pool")
+								.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+								.and_provides([&provide])
+								.longevity(3)
+								.propagate(true)
+								.build()
+						};
+						valid_tx(b"approve_whitelist_unsigned".to_vec())
+					},
 					_ => InvalidTransaction::Call.into(),
 				},
 				_ => InvalidTransaction::Call.into(),

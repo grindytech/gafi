@@ -282,9 +282,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn withdraw_pool(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			// SBP Review - Recommended to use idiomatic rust functions `is_some()`
-			// <Pools<T>>::get(pool_id).is_some()
-			ensure!(Pools::<T>::get(pool_id) != None, <Error<T>>::PoolNotExist);
+			ensure!(<Pools<T>>::get(pool_id).is_some(), <Error<T>>::PoolNotExist);
 			ensure!(
 				Self::is_pool_owner(&pool_id, &sender)?,
 				<Error<T>>::NotTheOwner

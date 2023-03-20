@@ -8,8 +8,15 @@ use sp_std::{prelude::*, vec, vec::Vec};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	// SBP REVIEW - Default implementation 
-	Default, Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo,
+	Eq,
+	PartialEq,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
 )]
 pub struct SystemService {
 	pub id: ID,
@@ -25,14 +32,10 @@ impl SystemService {
 			value,
 		}
 	}
-	// SBP REVIEW -
-	// We see that SystemService already has a derivation for Default, and then another method with the same name
-	// as Default::default(). This may lead to code ambiguity. 
+}
 
-	// Recommend to move this code to a manual implementation of default: 
-	// ```rust 
-	// impl Default for SystemService  { .. } 
-	pub fn default() -> Self {
+impl Default for SystemService {
+	fn default() -> Self {
 		Self {
 			id: [0; 32],
 			service: Service {
@@ -67,7 +70,7 @@ impl<AccountIdLookup, AccountId> SystemPool<AccountIdLookup, AccountId> for () {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct SystemServicePack {
 	pub data: Vec<(ID, SystemService)>,
 }
@@ -76,8 +79,10 @@ impl SystemServicePack {
 	pub fn new(data: Vec<(ID, SystemService)>) -> Self {
 		Self { data }
 	}
+}
 
-	pub fn default() -> Self {
+impl Default for SystemServicePack {
+	fn default() -> Self {
 		Self { data: vec![] }
 	}
 }
