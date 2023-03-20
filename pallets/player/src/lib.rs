@@ -9,8 +9,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
 	constant::ID,
-	membership::Membership,
-	players::{PlayerJoinedPoolStatistic, PlayersTime},
+	players::{PlayerJoinedPoolStatistic},
 	system_services::SystemPool,
 };
 use pallet_timestamp::{self as timestamp};
@@ -45,8 +44,6 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId>;
 
 		type GameRandomness: Randomness<Self::Hash, Self::BlockNumber>;
-
-		type Membership: Membership<Self::AccountId>;
 
 		type UpfrontPool: SystemPool<AccountIdLookupOf<Self>, Self::AccountId>;
 
@@ -152,34 +149,6 @@ pub mod pallet {
 			}
 
 			current_joined_time
-		}
-	}
-
-	impl<T: Config> PlayersTime<T::AccountId> for Pallet<T> {
-		fn add_time_joined_upfront(player: T::AccountId, time: u128) {
-			if T::Membership::is_registered(&player) {
-				let mut add_time = time;
-
-				if let Some(current_joined_time) = TotalTimeJoinedUpfront::<T>::get(player.clone())
-				{
-					add_time = current_joined_time.saturating_add(add_time);
-				}
-
-				TotalTimeJoinedUpfront::<T>::insert(player, add_time);
-			}
-		}
-
-		fn add_time_joined_staking(player: T::AccountId, time: u128) {
-			if T::Membership::is_registered(&player) {
-				let mut add_time = time;
-
-				if let Some(current_joined_time) = TotalTimeJoinedStaking::<T>::get(player.clone())
-				{
-					add_time = current_joined_time.saturating_add(add_time);
-				}
-
-				TotalTimeJoinedStaking::<T>::insert(player, add_time);
-			}
 		}
 	}
 }

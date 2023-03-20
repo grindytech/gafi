@@ -245,7 +245,6 @@ impl pallet_player::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type GameRandomness = RandomnessCollectiveFlip;
-	type Membership = ();
 	type UpfrontPool = UpfrontPool;
 	type StakingPool = StakingPool;
 }

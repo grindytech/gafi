@@ -51,7 +51,6 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::dispatch::DispatchResult;
-	use gafi_primitives::players::PlayersTime;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -76,9 +75,6 @@ pub mod pallet {
 
 		/// Get service configuration detail
 		type StakingServices: SystemDefaultServices;
-
-		/// Player time for Gafi membership
-		type Players: PlayersTime<Self::AccountId>;
 	}
 
 	//** Storage **//
@@ -182,15 +178,9 @@ pub mod pallet {
 		fn leave(sender: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = T::Lookup::lookup(sender)?;
 			if let Some(data) = Tickets::<T>::get(&sender) {
-				let ticket = data.0;
 				let staking_amount = data.1;
 				let new_player_count =
 					Self::player_count().checked_sub(1).ok_or(<Error<T>>::StakeCountOverflow)?;
-
-				let join_time = ticket.join_time;
-				let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-
-				T::Players::add_time_joined_staking(sender.clone(), _now.saturating_sub(join_time));
 
 				<T as pallet::Config>::Currency::unreserve(&sender, staking_amount);
 				Self::unstake_pool(sender, new_player_count);

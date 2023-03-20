@@ -5,7 +5,7 @@ use gafi_primitives::{
 };
 use sp_runtime::Permill;
 
-use crate::{Balances, Player, Runtime};
+use crate::{Balances, Runtime};
 use codec::{Encode, Decode};
 use sp_std::vec;
 use scale_info::TypeInfo;
@@ -56,5 +56,4 @@ impl staking_pool::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = staking_pool::weights::SubstrateWeight<Runtime>;
 	type StakingServices = StakingPoolDefaultServices;
-	type Players = Player;
 }

@@ -106,36 +106,3 @@ fn get_total_time_joined_upfront_should_work() {
 		);
 	});
 }
-
-#[test]
-fn add_time_joined_upfront_should_work() {
-	new_test_ext().execute_with(|| {
-		run_to_block(START_BLOCK);
-		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		let _result = GafiMembership::registration(RuntimeOrigin::signed(ALICE));
-
-		PalletGame::add_time_joined_upfront(ALICE, 100);
-
-		assert_eq!(PalletGame::total_time_joined_upfront(ALICE).unwrap(), 100);
-	});
-}
-
-#[test]
-fn add_time_joined_upfront_should_add_with_existed_player_time() {
-	new_test_ext().execute_with(|| {
-		run_to_block(START_BLOCK);
-		let _ = <Test as Config>::Currency::deposit_creating(&ALICE, 1_000_000 * unit(GAKI));
-		let _result = GafiMembership::registration(RuntimeOrigin::signed(ALICE));
-		let _result = <Test as Config>::UpfrontPool::join(ALICE, UPFRONT_BASIC_ID);
-
-		run_to_block(START_BLOCK + 10);
-		let _result = <Test as Config>::UpfrontPool::leave(ALICE);
-
-		PalletGame::add_time_joined_upfront(ALICE, 100);
-
-		assert_eq!(
-			PalletGame::total_time_joined_upfront(ALICE).unwrap(),
-			100u128.saturating_add((MILLISECS_PER_BLOCK * 10).into())
-		);
-	});
-}

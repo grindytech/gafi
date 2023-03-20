@@ -30,7 +30,7 @@ use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::{generic::Era, AccountId32, OpaqueExtrinsic, SaturatedConversion};
 // Frontier
-use frontier_template_runtime::{self as runtime, AccountId, Balance, BalancesCall, SystemCall};
+use devnet::{self as runtime, AccountId, Balance, BalancesCall, SystemCall};
 
 use crate::client::Client;
 

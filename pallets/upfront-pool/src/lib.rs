@@ -55,8 +55,6 @@ pub use weights::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use gafi_primitives::players::PlayersTime;
-
 	use super::*;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -87,8 +85,6 @@ pub mod pallet {
 		type MaxPlayerStorage: Get<u32>;
 
 		type UpfrontServices: SystemDefaultServices;
-
-		type Players: PlayersTime<Self::AccountId>;
 	}
 
 	/// on_finalize following by steps:
@@ -243,18 +239,13 @@ pub mod pallet {
 			if let Some(ticket) = Tickets::<T>::get(sender.clone()) {
 				if let TicketType::Upfront(pool_id) = ticket.ticket_type {
 					let join_time = ticket.join_time;
-					let _now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
-
-					T::Players::add_time_joined_upfront(
-						sender.clone(),
-						_now.saturating_sub(join_time),
-					);
+					let now = Self::moment_to_u128(<timestamp::Pallet<T>>::get());
 
 					let service_fee;
 					let charge_fee;
 					{
 						let service = Self::get_pool_by_id(pool_id)?;
-						let refund_fee = Self::get_refund_balance(_now, join_time, service.value);
+						let refund_fee = Self::get_refund_balance(now, join_time, service.value);
 						charge_fee = u128_try_to_balance::<
 							<T as pallet::Config>::Currency,
 							T::AccountId,
