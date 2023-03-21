@@ -6,7 +6,7 @@
 use crate::{self as pallet_whitelist};
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, GenesisBuild},
+	traits::{ConstU32, GenesisBuild}, ord_parameter_types,
 };
 use frame_system as system;
 
@@ -29,8 +29,9 @@ use sp_core::{
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	Permill,
+	Permill, AccountId32,
 };
+use system::EnsureRoot;
 
 pub type Extrinsic = TestXt<RuntimeCall, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
@@ -54,6 +55,7 @@ frame_support::construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		PalletPool: pallet_pool::{Pallet, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
+		PalletNicks: pallet_nicks,
 	}
 );
 
@@ -92,6 +94,23 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const RESERVATION_FEE: u128 = 2;
+
+ord_parameter_types! {
+	pub const ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+	pub const One: AccountId32 = AccountId32::from([1; 32]);
+}
+
+impl pallet_nicks::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type ForceOrigin = EnsureRoot<sr25519::Public>;
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
 	pub MinDiscountPercent: Permill = Permill::from_percent(10);
@@ -106,7 +125,6 @@ impl funding_pool::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type PoolName = ();
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type MinDiscountPercent = MinDiscountPercent;

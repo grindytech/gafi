@@ -60,7 +60,6 @@ use pallet_preimage;
 // Local
 use pallet_cache;
 use pallet_faucet;
-use pallet_pool_names;
 
 pub mod pallets;
 pub mod types;
@@ -382,21 +381,6 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
-parameter_types! {
-	pub ReservationFee:u128 = 1 * unit(GAFI);
-	pub MinLength: u32 = 8;
-	pub MaxLength: u32 = 32;
-}
-
-impl pallet_pool_names::Config for Runtime {
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = MinLength;
-	type MaxLength = MaxLength;
-	type RuntimeEvent = RuntimeEvent;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -414,6 +398,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 4,
 		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
+		Nicks: pallet_nicks,
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
@@ -446,7 +431,6 @@ construct_runtime!(
 		TxHandler: gafi_tx::{Pallet, Call, Storage, Event<T>} = 64,
 		ProofAddressMapping: proof_address_mapping::{Pallet, Call, Storage, Event<T>} = 65,
 		PalletCachePool: pallet_cache::<Instance1>::{Pallet, Call, Storage, Event<T>} = 66,
-		PoolName: pallet_pool_names::{Pallet, Call, Storage, Event<T>} = 67,
 		Player: pallet_player::{Pallet, Call, Storage, Event<T>} = 68,
 		Faucet: pallet_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
 		PalletCacheFaucet: pallet_cache::<Instance2>::{Pallet, Call, Storage, Event<T>} = 70,

@@ -19,46 +19,46 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
   "derive",
 ]}
 
-hex-literal = { version = "0.3.4" }
-more-asserts = { version = "0.2.2" }
-rand = { version = "0.8.5" }
-hex = { version = "0.4" }
+hex = {version = "0.4"}
+hex-literal = {version = "0.3.4"}
+more-asserts = {version = "0.2.2"}
+parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
+rand = {version = "0.8.5"}
 serde_json = "1.0.59"
 
 # Frontier
-fp-self-contained = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-pallet-ethereum = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
-pallet-evm = {default-features = false, git = "https://github.com/grindytech/frontier", branch = "gafi-polkadot-v0.9.37"}
+fp-self-contained = {workspace = true}
+pallet-ethereum = {workspace = true}
+pallet-evm = {workspace = true}
 
 # Substrate
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-pallet-transaction-payment = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../utils/ethereum" }
-gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../primitives" }
-sp-core = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-io = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-pallet-timestamp = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-parity-secp256k1 = {  default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1" }
-pallet-randomness-collective-flip = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+frame-support = {default-features = false, workspace = true}
+pallet-balances = {default-features = false, workspace = true}
+pallet-nicks = {workspace = true}
+pallet-randomness-collective-flip = {default-features = false, workspace = true}
+pallet-timestamp = {default-features = false, workspace = true}
+pallet-transaction-payment = {default-features = false, workspace = true}
+sp-core = {default-features = false, workspace = true}
+sp-io = {default-features = false, workspace = true}
+sp-runtime = {default-features = false, workspace = true}
 
-frame-system = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
-sp-std = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+frame-system = {default-features = false, workspace = true}
+scale-info = {default-features = false, features = ["derive"]}
+sp-std = {default-features = false, workspace = true}
 
 # Local
-upfront-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool" }
-staking-pool = { default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool" }
-funding-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/funding-pool" }
-pallet-pool =  { default-features = false, version = "4.0.0-dev", path = "../pallets/pool" }
-gafi-tx = { default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx" }
-proof-address-mapping = { default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping" }
-pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallets/pallet-cache"}
-pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../pallets/pool-names"}
+funding-pool = {default-features = false, version = "4.0.0-dev", path = "../pallets/funding-pool"}
+gafi-primitives = {default-fetures = false, version = "4.0.0-dev", path = "../primitives"}
+gafi-tx = {default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../pallets/game-creator"}
+gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../utils/ethereum"}
+gu-mock = {version = "4.0.0-dev", default-features = false, path = "../utils/mock"}
+pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../pallets/pallet-cache"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../pallets/player"}
-gu-mock = { version = "4.0.0-dev", default-features = false, path = "../utils/mock" }
+pallet-pool = {default-features = false, version = "4.0.0-dev", path = "../pallets/pool"}
+proof-address-mapping = {default-features = false, version = "4.0.0-dev", path = "../pallets/address-mapping"}
+staking-pool = {default-features = false, version = "4.0.0-dev", path = "../pallets/staking-pool"}
+upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../pallets/upfront-pool"}
 
 [features]
 default = ["std"]
@@ -86,5 +86,6 @@ std = [
   'gafi-primitives/std',
   'pallet-cache/std',
   'game-creator/std',
-  'pallet-player/std'
+  'pallet-player/std',
+  'pallet-nicks/std',
 ]
