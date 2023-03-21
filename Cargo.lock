@@ -2122,10 +2122,10 @@ dependencies = [
  "pallet-grandpa",
  "pallet-hotfix-sufficients",
  "pallet-nfts",
+ "pallet-nicks",
  "pallet-player",
  "pallet-player-rpc-runtime-api",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
@@ -3278,7 +3278,7 @@ dependencies = [
  "gu-convertor",
  "gu-currency",
  "pallet-balances",
- "pallet-pool-names",
+ "pallet-nicks",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -3913,9 +3913,9 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-faucet",
  "pallet-hotfix-sufficients",
+ "pallet-nicks",
  "pallet-player",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
@@ -7046,6 +7046,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-nicks"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-nis"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
@@ -7193,7 +7207,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
- "pallet-pool-names",
+ "pallet-nicks",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7205,23 +7219,6 @@ dependencies = [
  "sp-std",
  "staking-pool",
  "upfront-pool",
-]
-
-[[package]]
-name = "pallet-pool-names"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7620,6 +7617,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
+ "pallet-nicks",
  "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -12774,9 +12772,9 @@ dependencies = [
  "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-nicks",
  "pallet-player",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -13375,7 +13373,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

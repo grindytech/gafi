@@ -80,7 +80,6 @@ pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
 pub use pallet_pool;
-pub use pallet_pool_names;
 pub use pallet_whitelist;
 pub use staking_pool;
 pub use upfront_pool;
@@ -442,21 +441,6 @@ impl pallet_pool::Config for Runtime {
 }
 
 parameter_types! {
-	pub ReservationFee:u128 = 1 * unit(GAKI);
-	pub MinLength: u32= 8;
-	pub MaxLength: u32 = 32;
-}
-
-impl pallet_pool_names::Config for Runtime {
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = Treasury;
-	type MinLength = MinLength;
-	type MaxLength = MaxLength;
-	type RuntimeEvent = RuntimeEvent;
-}
-
-parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 		BlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
@@ -688,7 +672,6 @@ impl pallet_nfts::Config for Runtime {
 
 impl game_nfts::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type PalletNFTs = PalletNFTs;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -711,6 +694,7 @@ construct_runtime!(
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 		HotfixSufficients: pallet_hotfix_sufficients::{Pallet, Call},
+		PalletNicks: pallet_nicks,
 
 		Player: pallet_player,
 		Pool: pallet_pool,
@@ -723,7 +707,6 @@ construct_runtime!(
 		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
-		PoolName: pallet_pool_names,
 		PalletWhitelist: pallet_whitelist,
 		GameNFT: game_nfts,
 		PalletNFTs: pallet_nfts,

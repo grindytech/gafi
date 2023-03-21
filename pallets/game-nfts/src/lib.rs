@@ -34,7 +34,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_nfts::Config{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		type PalletNFTs: Mutate<Self::AccountId>;
 	}
 
 	// The pallet's runtime storage items.

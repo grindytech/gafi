@@ -124,6 +124,7 @@ pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", git = "http
 pallet-treasury = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-utility = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-nfts = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-nicks = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 
 # Substrate Utility
 frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}

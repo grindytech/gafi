@@ -6,7 +6,7 @@
 use crate::{self as pallet_pool};
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, GenesisBuild},
+	traits::{ConstU32, GenesisBuild}, ord_parameter_types,
 };
 use frame_system as system;
 
@@ -29,6 +29,7 @@ use sp_runtime::{
 };
 
 pub use staking_pool;
+use system::EnsureRoot;
 pub use upfront_pool;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -48,9 +49,9 @@ frame_support::construct_runtime!(
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		FundingPool: funding_pool::{Pallet, Call, Storage, Event<T>},
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		PalletCache: pallet_cache::{Pallet, Storage, Event<T>}
+		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
+		PalletNicks: pallet_nicks,
 	}
 );
 
@@ -91,14 +92,16 @@ impl pallet_timestamp::Config for Test {
 
 pub const RESERVATION_FEE: u128 = 2;
 
-parameter_types! {
-	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+ord_parameter_types! {
+	pub const ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
 }
-impl pallet_pool_names::Config for Test {
+
+impl pallet_nicks::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ReservationFee = ReservationFee;
 	type Slashed = ();
+	type ForceOrigin = EnsureRoot<AccountId32>;
 	type MinLength = ConstU32<3>;
 	type MaxLength = ConstU32<16>;
 }
@@ -117,7 +120,6 @@ impl funding_pool::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type MinDiscountPercent = MinDiscountPercent;

@@ -34,6 +34,8 @@ pub use gafi_primitives::{
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;
+use sp_runtime::traits::StaticLookup;
+
 pub use pallet::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -69,10 +71,13 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 
+	use frame_system::RawOrigin;
+
 	use super::*;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
 	pub struct NewPool<AccountId> {
 		pub id: ID,
@@ -80,9 +85,11 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_balances::Config {
+	pub trait Config:
+		frame_system::Config + pallet_balances::Config + pallet_nicks::Config
+	{
 		/// The overarching event type.
-				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -90,8 +97,8 @@ pub mod pallet {
 		/// To make the random pool id
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
-		/// Manage pool name
-		type PoolName: Name<Self::AccountId>;
+		// Manage pool name
+		// type PoolName: Name<Self::AccountId>;
 
 		/// The minimum balance owner have to deposit when creating the pool
 		#[pallet::constant]
@@ -172,6 +179,7 @@ pub mod pallet {
 		LessThanMinDiscountPercent,
 		GreaterThanMinDiscountPercent,
 		WhitelistedPool,
+		ErrorPoolID,
 	}
 
 	#[pallet::call]
@@ -206,7 +214,7 @@ pub mod pallet {
 				<Error<T>>::PoolIdExisted
 			);
 			ensure!(
-				T::Currency::free_balance(&sender) > value,
+				<T as pallet::Config>::Currency::free_balance(&sender) > value,
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
 			ensure!(
@@ -378,9 +386,10 @@ pub mod pallet {
 				<Error<T>>::NotTheOwner
 			);
 
-			T::PoolName::set_name(sender, pool_id, name)?;
-
-			Ok(())
+			match Self::to_account(pool_id) {
+				Ok(acc) => pallet_nicks::Pallet::<T>::set_name(RawOrigin::Signed(acc).into(), name),
+				Err(err) => Err(err.into()),
+			}
 		}
 
 		/// Clear a pool's name and return the deposit. Fails if the pool was not named, not exist
@@ -405,9 +414,10 @@ pub mod pallet {
 				<Error<T>>::NotTheOwner
 			);
 
-			T::PoolName::clear_name(sender, pool_id)?;
-
-			Ok(())
+			match Self::to_account(pool_id) {
+				Ok(acc) => pallet_nicks::Pallet::<T>::clear_name(RawOrigin::Signed(acc).into()),
+				Err(err) => Err(err.into()),
+			}
 		}
 
 		/// Remove a name and take charge of the deposit.
@@ -426,11 +436,15 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::kill_pool_name(50u32))]
 		#[pallet::call_index(5)]
 		pub fn kill_pool_name(origin: OriginFor<T>, pool_id: ID) -> DispatchResult {
-			ensure_root(origin)?;
+			ensure_root(origin.clone())?;
 
-			match Pools::<T>::get(pool_id) {
-				None => Err(<Error<T>>::PoolNotExist.into()),
-				Some(pool) => Ok(T::PoolName::kill_name(pool.owner, pool_id)?),
+			match Self::to_account(pool_id) {
+				Ok(acc) => pallet_nicks::Pallet::<T>::kill_name(
+					origin,
+					<T::Lookup as sp_runtime::traits::StaticLookup>::unlookup(acc),
+				)
+				.into(),
+				Err(err) => Err(err.into()),
 			}
 		}
 	}
@@ -444,11 +458,18 @@ pub mod pallet {
 			Ok(payload.using_encoded(blake2_256))
 		}
 
+		pub fn to_account(id: ID) -> Result<T::AccountId, Error<T>> {
+			match T::AccountId::decode(&mut &id[..]) {
+				Ok(account) => Ok(account),
+				Err(_) => Err(<Error<T>>::IntoAccountFail),
+			}
+		}
+
 		pub(super) fn new_pool() -> Result<NewPool<T::AccountId>, Error<T>> {
 			let id = Self::gen_id()?;
-			match T::AccountId::decode(&mut &id[..]) {
-				Ok(account) => Ok(NewPool::<T::AccountId> { id, account }),
-				Err(_) => Err(<Error<T>>::IntoAccountFail),
+			match Self::to_account(id) {
+				Ok(account) => Ok(NewPool { id, account }),
+				Err(err) => Err(err),
 			}
 		}
 
