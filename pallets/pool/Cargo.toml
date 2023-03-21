@@ -40,10 +40,10 @@ sp-core = { workspace = true }
 sp-io = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-randomness-collective-flip = { workspace = true }
+pallet-nicks = {workspace = true}
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
 funding-pool = { version = "4.0.0-dev", default-features = false, path = "../funding-pool" }
-pallet-pool-names = { default-features = false, version = "4.0.0-dev", path = "../pool-names" }
 pallet-cache = { default-features = false, version = "4.0.0-dev", path = "../pallet-cache" }
 gu-mock = { default-features = false, version = "4.0.0-dev", path = "../../utils/mock" }
 

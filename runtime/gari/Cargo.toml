@@ -34,7 +34,6 @@ pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../p
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
-pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool-names"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
 upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/upfront-pool"}
@@ -64,10 +63,11 @@ pallet-authorship = {workspace = true}
 pallet-balances = {workspace = true}
 pallet-collective = {workspace = true}
 pallet-elections-phragmen = {workspace = true}
+pallet-nicks = {workspace = true}
 pallet-preimage = {workspace = true}
 pallet-randomness-collective-flip = {workspace = true}
 pallet-scheduler = {workspace = true}
-pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.37" }
+pallet-session = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.37"}
 pallet-sudo = {workspace = true}
 pallet-timestamp = {workspace = true}
 pallet-transaction-payment = {workspace = true}
@@ -166,7 +166,6 @@ std = [
   "pallet-evm-precompile-simple/std",
   "runtime-common/std",
   "proof-address-mapping/std",
-  "pallet-pool-names/std",
   "gafi-tx/std",
   "game-creator/std",
   "pallet-cache/std",
@@ -180,6 +179,7 @@ std = [
   "pallet-collective/std",
   "pallet-scheduler/std",
   "pallet-elections-phragmen/std",
+  "pallet-nicks/std",
 ]
 
 runtime-benchmarks = [

@@ -1,10 +1,13 @@
 /*
-* This unittest should only test logic function e.g. Storage, Computation
-* and not related with Currency e.g. Balances, Transaction Payment
-*/
+ * This unittest should only test logic function e.g. Storage, Computation
+ * and not related with Currency e.g. Balances, Transaction Payment
+ */
 
 use crate::{self as funding_pool};
-use frame_support::{parameter_types, traits::{ConstU32}};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{ConstU32},
+};
 use frame_system as system;
 
 use frame_support::{
@@ -12,13 +15,14 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use sp_core::H256;
+pub use pallet_balances::Call as BalancesCall;
+use sp_core::{H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Permill,
 };
-pub use pallet_balances::Call as BalancesCall;
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -36,8 +40,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Funding: funding_pool::{Pallet, Storage, Event<T>},
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		PalletNick: pallet_nicks,
 	}
 );
 
@@ -76,7 +80,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
@@ -109,7 +112,6 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
 	pub MinDiscountPercent: Permill = Permill::from_percent(10);
@@ -120,11 +122,28 @@ parameter_types! {
 	pub MaxPoolTarget: u32 =  10;
 }
 
+
+pub const RESERVATION_FEE: u128 = 2;
+
+ord_parameter_types! {
+	pub const ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+	pub const One: AccountId32 = AccountId32::from([1; 32]);
+}
+
+impl pallet_nicks::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type ForceOrigin = EnsureRoot<AccountId32>;
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
 impl funding_pool::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type MinDiscountPercent = MinDiscountPercent;
@@ -134,20 +153,6 @@ impl funding_pool::Config for Test {
 	type MinPoolBalance = MinPoolBalance;
 	type IWhitelist = ();
 	type WeightInfo = ();
-}
-
-pub const RESERVATION_FEE: u128 = 2;
-
-parameter_types! {
-	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
-}
-impl pallet_pool_names::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = ConstU32<3>;
-	type MaxLength = ConstU32<16>;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -162,7 +167,9 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Timestamp::set_timestamp((System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP);
+		Timestamp::set_timestamp(
+			(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		);
 	}
 }
 
@@ -184,8 +191,10 @@ impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-		let _ = pallet_balances::GenesisConfig::<Test> { balances: self.balances }
-			.assimilate_storage(&mut storage);
+		let _ = pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}
+		.assimilate_storage(&mut storage);
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext

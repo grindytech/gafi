@@ -2,7 +2,7 @@ use frame_support::{
 	dispatch::Vec,
 	parameter_types,
 	traits::{ConstU32, ConstU8, GenesisBuild, OnFinalize, OnInitialize},
-	weights::{IdentityFee, Weight},
+	weights::{IdentityFee, Weight}, ord_parameter_types,
 };
 use frame_system as system;
 use gafi_primitives::{
@@ -22,6 +22,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Permill,
 };
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -49,9 +50,9 @@ frame_support::construct_runtime!(
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		PoolNames: pallet_pool_names::{Pallet, Storage, Event<T>},
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
 		Players: pallet_player::{Pallet, Call, Storage, Event<T>},
+		PalletNicks: pallet_nicks,
 	}
 );
 
@@ -192,6 +193,23 @@ impl staking_pool::Config for Test {
 	type StakingServices = StakingPoolDefaultServices;
 }
 
+pub const RESERVATION_FEE: u128 = 2;
+
+ord_parameter_types! {
+	pub const ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
+	pub const One: AccountId32 = AccountId32::from([1; 32]);
+}
+
+impl pallet_nicks::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = ();
+	type ForceOrigin = EnsureRoot<AccountId32>;
+	type MinLength = ConstU32<3>;
+	type MaxLength = ConstU32<16>;
+}
+
 parameter_types! {
 	pub MaxPoolOwned: u32 =  10;
 	pub MaxPoolTarget: u32 = 10;
@@ -206,7 +224,6 @@ impl funding_pool::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type PoolName = PoolNames;
 	type MaxPoolOwned = MaxPoolOwned;
 	type MaxPoolTarget = MaxPoolTarget;
 	type MinDiscountPercent = MinDiscountPercent;
@@ -251,20 +268,6 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-}
-
-pub const RESERVATION_FEE: u128 = 2;
-
-parameter_types! {
-	pub ReservationFee: u128 = RESERVATION_FEE * unit(GAKI);
-}
-impl pallet_pool_names::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = ();
-	type MinLength = ConstU32<3>;
-	type MaxLength = ConstU32<16>;
 }
 
 parameter_types! {

@@ -24,8 +24,8 @@ fn new_funded_account<T: Config>(index: u32, seed: u32, amount: u128) -> T::Acco
 	let balance_amount = amount.try_into().ok().unwrap();
 	let name: String = format!("{}{}", index, seed);
 	let user = account(string_to_static_str(name), index, seed);
-	T::Currency::make_free_balance_be(&user, balance_amount);
-	T::Currency::issue(balance_amount);
+	<T as pallet::Config>::Currency::make_free_balance_be(&user, balance_amount);
+	<T as pallet::Config>::Currency::issue(balance_amount);
 	return user;
 }
 
