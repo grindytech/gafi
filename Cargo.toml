@@ -26,8 +26,8 @@ members = [
   'pallets/funding-pool',
   'pallets/pallet-cache',
   'pallets/game-creator',
-  'pallets/gafi-membership',
   'pallets/whitelist',
+  'pallets/game-nfts',
   'tests',
   'primitives',
 ]
@@ -123,6 +123,7 @@ pallet-transaction-payment-rpc = {version = "4.0.0-dev", git = "https://github.c
 pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-treasury = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-utility = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-nfts = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 
 # Substrate Utility
 frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}

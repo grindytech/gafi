@@ -2102,6 +2102,7 @@ dependencies = [
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
+ "game-nfts",
  "hex-literal 0.3.4",
  "log",
  "pallet-aura",
@@ -2120,6 +2121,7 @@ dependencies = [
  "pallet-faucet",
  "pallet-grandpa",
  "pallet-hotfix-sufficients",
+ "pallet-nfts",
  "pallet-player",
  "pallet-player-rpc-runtime-api",
  "pallet-pool",
@@ -3653,29 +3655,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gafi-membership"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "gu-mock",
- "pallet-balances",
- "pallet-player",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "upfront-pool",
-]
-
-[[package]]
 name = "gafi-node"
 version = "4.0.0-dev"
 dependencies = [
@@ -3873,6 +3852,21 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "game-nfts"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-nfts",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7030,6 +7024,23 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nfts"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -13364,7 +13375,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
