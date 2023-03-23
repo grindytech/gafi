@@ -8,6 +8,9 @@ fn main() -> sc_cli::Result<()> {
 	#[cfg(feature = "with-dev")]
 	return gafi_local::command::run();
 
+	#[cfg(feature = "with-game3")]
+	return gafi_local::command::run();
+
 	#[cfg(feature = "manual-seal")]
 	return gafi_local::command::run();
 

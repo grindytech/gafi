@@ -84,6 +84,7 @@ fp-storage = {workspace = true, features = ["std"]}
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
 gafi-primitives = {path = "../../primitives", default-features = false}
+game3-runtime = {path = "../../runtime/game3", default-features = false, features = ["std"]}
 
 [build-dependencies]
 substrate-build-script-utils = {workspace = true}
@@ -94,6 +95,7 @@ default = ["aura"]
 manual-seal = ["devnet/manual-seal"]
 
 with-dev = ["devnet/with-dev"]
+with-game3 = ["game3-runtime/with-game3"]
 
 rpc-binary-search-estimate = ["fc-rpc/rpc-binary-search-estimate"]
 runtime-benchmarks = [

@@ -19,7 +19,7 @@ name = "gafi-node"
 [dependencies]
 
 # Frontier
-fc-rpc = { workspace = true}
+fc-rpc = {workspace = true}
 pallet-ethereum = {workspace = true}
 
 # Substrate
@@ -64,11 +64,16 @@ with-dev = [
   "gafi-local/aura",
 ]
 
+with-game3 = [
+  "gafi-local/with-game3",
+  "gafi-local/aura",
+]
+
 with-gari = [
   "gafi-cli/with-gari",
   "gafi-service/with-gari",
 ]
 
 rococo-native = [
-	"gafi-service/rococo-native"
+  "gafi-service/rococo-native",
 ]

@@ -9,6 +9,7 @@ members = [
   'node/rpc',
   'node/cli', # 'node/service',
   'runtime/gari',
+  'runtime/game3',
   'node/local',
   'utils/ethereum',
   'utils/convertor',

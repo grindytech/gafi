@@ -10,6 +10,11 @@ build-test:
 build-dev:
 	cargo build --release --features with-dev
 
+
+.PHONY: build-game3
+build-game3:
+	cargo build --release --features with-game3
+
 .PHONY: build-fast-runtime
 build-fast-runtime:
 	cargo build --release --features with-dev,fast-runtime
@@ -50,6 +55,10 @@ test:
 .PHONY: check-dev
 check-dev:
 	cargo check --release --features with-dev
+
+.PHONY: check-game3
+check-game3:
+	cargo check --release --features with-game3
 
 .PHONY: check-gari
 check-gari:

@@ -3,7 +3,7 @@ use frame_system::EnsureRoot;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
 use sp_runtime::{AccountId32, Permill};
 
-use crate::{Balances, PalletWhitelist, RandomnessCollectiveFlip, Runtime, RuntimeEvent, Treasury, Vec};
+use crate::{Balances, PalletWhitelist, RandomnessCollectiveFlip, Runtime, RuntimeEvent, Treasury};
 
 parameter_types! {
 	pub ReservationFee: u128 = 1 * unit(GAKI);
