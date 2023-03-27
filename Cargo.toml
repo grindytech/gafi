@@ -29,6 +29,7 @@ members = [
   'pallets/game-creator',
   'pallets/whitelist',
   'pallets/game-nfts',
+  'pallets/pallet-game',
   'tests',
   'primitives',
 ]
