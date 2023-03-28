@@ -1,7 +1,8 @@
 use crate as game_nfts;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
 use frame_system as system;
-use sp_core::H256;
+use pallet_nfts::PalletFeatures;
+use sp_core::{H256, ConstU128, ConstU32};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -18,8 +19,8 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		GameNFTs: game_nfts,
-		NFTs: pallet_nfts,
+		GameNfts: game_nfts,
+		Nfts: pallet_nfts,
 		Balances: pallet_balances,
 	}
 );
@@ -42,7 +43,7 @@ impl system::Config for Test {
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -81,11 +82,11 @@ impl pallet_nfts::Config for Test {
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
 	type Locker = ();
-	type CollectionDeposit = ConstU64<2>;
-	type ItemDeposit = ConstU64<1>;
-	type MetadataDepositBase = ConstU64<1>;
-	type AttributeDepositBase = ConstU64<1>;
-	type DepositPerByte = ConstU64<1>;
+	type CollectionDeposit = ConstU128<2>;
+	type ItemDeposit = ConstU128<1>;
+	type MetadataDepositBase = ConstU128<1>;
+	type AttributeDepositBase = ConstU128<1>;
+	type DepositPerByte = ConstU128<1>;
 	type StringLimit = ConstU32<50>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;
@@ -101,13 +102,9 @@ impl pallet_nfts::Config for Test {
 impl game_nfts::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 
-	type NFTs;
+	type Nfts = Nfts;
 
-	type DepositPerByte;
-
-	type Currency;
-
-	type StringLimit;
+	type Currency = Balances;
 }
 
 // Build genesis storage according to the mock runtime.
