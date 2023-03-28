@@ -670,9 +670,9 @@ impl pallet_nfts::Config for Runtime {
 	type Helper = ();
 }
 
-impl game_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
+// impl game_nfts::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -708,8 +708,8 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PalletWhitelist: pallet_whitelist,
-		GameNFT: game_nfts,
 		PalletNFTs: pallet_nfts,
+		// GameNFT: game_nfts,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
