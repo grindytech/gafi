@@ -12,6 +12,7 @@ pub trait UpgradeItem<CollectionId, ItemId, AccountId> {
 		item: ItemId,
 		new_item: ItemId,
 		amount: u32,
+		fee: u128,
 	) -> Result<(), ()>;
 
 	/// Approve Upgrade Item
@@ -29,6 +30,7 @@ pub trait UpgradeItem<CollectionId, ItemId, AccountId> {
 		item: ItemId,
 		new_item: ItemId,
 		amount: u32,
+		fee: u128,
 	) -> Result<(), ()>;
 }
 

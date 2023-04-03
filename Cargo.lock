@@ -3872,6 +3872,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-nfts-rpc-runtime-api"
+version = "4.0.0-dev"
+dependencies = [
+ "game-nfts",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-runtime",
+]
+
+[[package]]
 name = "game3-runtime"
 version = "4.0.0-dev"
 dependencies = [
@@ -3885,6 +3895,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "gafi-primitives",
  "game-nfts",
+ "game-nfts-rpc-runtime-api",
  "hex-literal 0.3.4",
  "log",
  "pallet-aura",

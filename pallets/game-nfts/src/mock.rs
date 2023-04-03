@@ -1,8 +1,11 @@
 use crate as game_nfts;
-use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
+use frame_support::{
+	parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64},
+};
 use frame_system as system;
 use pallet_nfts::PalletFeatures;
-use sp_core::{H256, ConstU128, ConstU32};
+use sp_core::{ConstU128, ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -98,13 +101,11 @@ impl pallet_nfts::Config for Test {
 	type WeightInfo = ();
 }
 
-
 impl game_nfts::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-
 	type Nfts = Nfts;
-
 	type Currency = Balances;
+	type CollectionId = u32;
 }
 
 // Build genesis storage according to the mock runtime.

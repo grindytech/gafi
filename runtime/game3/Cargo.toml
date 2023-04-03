@@ -84,6 +84,7 @@ game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../pall
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
+game-nfts-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-nfts/runtime-api"}
 
 # unit test
 [dev.dependencies]
