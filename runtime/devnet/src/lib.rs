@@ -24,10 +24,10 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify
+		PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiSignature, MultiAddress,
+	ApplyExtrinsicResult, MultiAddress, MultiSignature,
 };
 use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
@@ -39,12 +39,13 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU8, EitherOfDiverse, FindAuthor, Get, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, Randomness,
+		ConstU32, ConstU64, ConstU128,ConstU8, EitherOfDiverse, FindAuthor, Get, KeyOwnerProofSystem,
+		LockIdentifier, PrivilegeCmp, Randomness, AsEnsureOriginWithArg
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight,
-			WEIGHT_REF_TIME_PER_MILLIS},
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_MILLIS,
+		},
 		IdentityFee, Weight,
 	},
 	ConsensusEngineId, PalletId, StorageValue,
@@ -59,8 +60,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::SaturatedConversion;
-use sp_runtime::generic::Era;
+use sp_runtime::{generic::Era, SaturatedConversion};
 pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
@@ -73,19 +73,20 @@ pub use gafi_primitives::{
 };
 
 // import local pallets
+pub use funding_pool;
 pub use gafi_tx;
 pub use game_creator;
 pub use pallet_cache;
 pub use pallet_faucet;
 pub use pallet_player;
 pub use pallet_pool;
-pub use pallet_pool_names;
 pub use pallet_whitelist;
-pub use funding_pool;
 pub use staking_pool;
 pub use upfront_pool;
 pub mod pallets;
 pub use balances::NativeTokenExistentialDeposit;
+
+use pallet_nfts::PalletFeatures;
 
 mod precompiles;
 
@@ -358,7 +359,10 @@ where
 		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
 		nonce: Index,
-	) -> Option<(RuntimeCall, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	) -> Option<(
+		RuntimeCall,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
 		let tip = 0;
 		// take the biggest period possible.
 		let period =
@@ -434,21 +438,6 @@ impl pallet_pool::Config for Runtime {
 	type FundingPool = FundingPool;
 	type Cache = PalletCache;
 	type TimeServiceStorage = TimeServiceStorage;
-}
-
-parameter_types! {
-	pub ReservationFee:u128 = 1 * unit(GAKI);
-	pub MinLength: u32= 8;
-	pub MaxLength: u32 = 32;
-}
-
-impl pallet_pool_names::Config for Runtime {
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = Treasury;
-	type MinLength = MinLength;
-	type MaxLength = MaxLength;
-	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {
@@ -615,7 +604,8 @@ impl pallet_democracy::Config for Runtime {
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
 	type CooloffPeriod = CooloffPeriod;
 	// type PreimageByteDeposit = PreimageByteDeposit;
-	// type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
+	// type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId,
+	// CouncilCollective>;
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
@@ -625,7 +615,6 @@ impl pallet_democracy::Config for Runtime {
 	type MaxBlacklisted = MaxBlacklisted;
 	type MaxDeposits = MaxDeposits;
 	type Preimages = Preimage;
-
 }
 
 parameter_types! {
@@ -651,6 +640,40 @@ impl pallet_hotfix_sufficients::Config for Runtime {
 	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
+}
+
+impl pallet_nfts::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type Locker = ();
+	type CollectionDeposit = ConstU128<2>;
+	type ItemDeposit = ConstU128<1>;
+	type MetadataDepositBase = ConstU128<1>;
+	type AttributeDepositBase = ConstU128<1>;
+	type DepositPerByte = ConstU128<1>;
+	type StringLimit = ConstU32<50>;
+	type KeyLimit = ConstU32<50>;
+	type ValueLimit = ConstU32<50>;
+	type ApprovalsLimit = ConstU32<10>;
+	type ItemAttributesApprovalsLimit = ConstU32<2>;
+	type MaxTips = ConstU32<10>;
+	type MaxDeadlineDuration = ConstU32<10000>;
+	type Features = Features;
+	type WeightInfo = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = ();
+}
+
+// impl game_nfts::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// }
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -671,6 +694,7 @@ construct_runtime!(
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 		HotfixSufficients: pallet_hotfix_sufficients::{Pallet, Call},
+		PalletNicks: pallet_nicks,
 
 		Player: pallet_player,
 		Pool: pallet_pool,
@@ -683,8 +707,9 @@ construct_runtime!(
 		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
-		PoolName: pallet_pool_names,
 		PalletWhitelist: pallet_whitelist,
+		PalletNFTs: pallet_nfts,
+		// GameNFT: game_nfts,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
@@ -749,7 +774,8 @@ pub type SignedExtra = (
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
+pub type CheckedExtrinsic =
+	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -802,7 +828,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) =>
+				call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -812,9 +839,10 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				RuntimeOrigin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(RuntimeOrigin::from(
+					pallet_ethereum::RawOrigin::EthereumTransaction(info),
+				))),
 			_ => None,
 		}
 	}
@@ -1044,7 +1072,7 @@ impl_runtime_apis! {
 		fn elasticity() -> Option<Permill> {
 			Some(BaseFee::elasticity())
 		}
-		
+
 		fn gas_limit_multiplier_support() {}
 	}
 

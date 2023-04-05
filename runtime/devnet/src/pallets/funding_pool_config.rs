@@ -1,8 +1,25 @@
-use frame_support::parameter_types;
+use frame_support::{parameter_types};
+use frame_system::EnsureRoot;
 use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use sp_runtime::Permill;
+use sp_runtime::{AccountId32, Permill};
 
-use crate::{Balances, RuntimeEvent, PalletWhitelist, PoolName, RandomnessCollectiveFlip, Runtime};
+use crate::{Balances, PalletWhitelist, RandomnessCollectiveFlip, Runtime, RuntimeEvent, Treasury};
+
+parameter_types! {
+	pub ReservationFee: u128 = 1 * unit(GAKI);
+	pub MinLength: u32 = 8;
+	pub MaxLength: u32 = 32;
+}
+
+impl pallet_nicks::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRoot<AccountId32>;
+	type MinLength = MinLength;
+	type MaxLength = MaxLength;
+}
 
 parameter_types! {
 	pub MinPoolBalance: u128 = 1000 * unit(GAKI);
@@ -17,7 +34,6 @@ parameter_types! {
 impl funding_pool::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
-	type PoolName = PoolName;
 	type Currency = Balances;
 	type MinPoolBalance = MinPoolBalance;
 	type MinDiscountPercent = MinDiscountPercent;

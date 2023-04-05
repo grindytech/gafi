@@ -1,0 +1,116 @@
+[package]
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+description = "A fresh FRAME-based Substrate node, ready for hacking."
+edition = "2021"
+homepage = "https://substrate.io/"
+license = "Unlicense"
+name = "game3-runtime"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+version = "4.0.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
+
+frame-executive = {workspace = true}
+frame-support = {workspace = true}
+frame-system = {workspace = true}
+frame-try-runtime = {workspace = true, default-features = false, optional = true}
+pallet-aura = {workspace = true}
+pallet-balances = {workspace = true}
+pallet-grandpa = {workspace = true}
+pallet-nfts = {workspace = true, default-features = false}
+pallet-randomness-collective-flip = {workspace = true}
+pallet-sudo = {workspace = true}
+pallet-timestamp = {workspace = true}
+pallet-transaction-payment = {workspace = true}
+sp-api = {workspace = true}
+sp-block-builder = {workspace = true}
+sp-consensus-aura = {workspace = true, default-features = false}
+sp-core = {workspace = true, default-features = false}
+sp-inherents = {workspace = true}
+sp-offchain = {workspace = true}
+sp-runtime = {workspace = true, default-features = false}
+sp-session = {workspace = true}
+sp-std = {workspace = true, default-features = false}
+sp-transaction-pool = {workspace = true}
+sp-version = {workspace = true, default-features = false}
+
+# Used for the node template's RPCs
+frame-system-rpc-runtime-api = {workspace = true}
+pallet-transaction-payment-rpc-runtime-api = {workspace = true}
+
+# Used for runtime benchmarking
+frame-benchmarking = {workspace = true, default-features = false, optional = true}
+frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
+
+# Local Dependencies
+game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-nfts"}
+
+[build-dependencies]
+substrate-wasm-builder = {workspace = true, optional = true}
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-grandpa/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+]
+std = [
+  "frame-try-runtime?/std",
+  "frame-system-benchmarking?/std",
+  "frame-benchmarking?/std",
+  "codec/std",
+  "scale-info/std",
+  "frame-executive/std",
+  "frame-support/std",
+  "frame-system-rpc-runtime-api/std",
+  "frame-system/std",
+  "frame-try-runtime/std",
+  "pallet-aura/std",
+  "pallet-balances/std",
+  "pallet-grandpa/std",
+  "pallet-randomness-collective-flip/std",
+  "pallet-sudo/std",
+  "pallet-timestamp/std",
+  "pallet-transaction-payment-rpc-runtime-api/std",
+  "pallet-transaction-payment/std",
+  "sp-api/std",
+  "sp-block-builder/std",
+  "sp-consensus-aura/std",
+  "sp-core/std",
+  "sp-inherents/std",
+  "sp-offchain/std",
+  "sp-runtime/std",
+  "sp-session/std",
+  "sp-std/std",
+  "sp-transaction-pool/std",
+  "sp-version/std",
+  "substrate-wasm-builder",
+  "pallet-nfts/std",
+]
+try-runtime = [
+  "frame-try-runtime/try-runtime",
+  "frame-executive/try-runtime",
+  "frame-system/try-runtime",
+  "frame-support/try-runtime",
+  "pallet-aura/try-runtime",
+  "pallet-balances/try-runtime",
+  "pallet-grandpa/try-runtime",
+  "pallet-randomness-collective-flip/try-runtime",
+  "pallet-sudo/try-runtime",
+  "pallet-timestamp/try-runtime",
+  "pallet-transaction-payment/try-runtime",
+]
+
+with-game3 = []

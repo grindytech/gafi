@@ -2102,6 +2102,7 @@ dependencies = [
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
+ "game-nfts",
  "hex-literal 0.3.4",
  "log",
  "pallet-aura",
@@ -2120,10 +2121,11 @@ dependencies = [
  "pallet-faucet",
  "pallet-grandpa",
  "pallet-hotfix-sufficients",
+ "pallet-nfts",
+ "pallet-nicks",
  "pallet-player",
  "pallet-player-rpc-runtime-api",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
@@ -3276,7 +3278,7 @@ dependencies = [
  "gu-convertor",
  "gu-currency",
  "pallet-balances",
- "pallet-pool-names",
+ "pallet-nicks",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -3582,111 +3584,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "gafi-local"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "clap 4.1.4",
- "devnet",
- "fc-cli",
- "fc-consensus",
- "fc-db",
- "fc-mapping-sync",
- "fc-rpc",
- "fc-rpc-core",
- "fp-dynamic-fee",
- "fp-evm",
- "fp-rpc",
- "fp-storage",
- "frame-benchmarking",
- "frame-benchmarking-cli",
- "frame-system",
- "frame-system-rpc-runtime-api",
- "futures",
- "gafi-primitives",
- "hex-literal 0.3.4",
- "jsonrpc-core",
- "jsonrpc-pubsub",
- "jsonrpsee 0.16.2",
- "log",
- "memmap2",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc",
- "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec",
- "sc-basic-authorship",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-aura",
- "sc-consensus-manual-seal",
- "sc-executor",
- "sc-finality-grandpa",
- "sc-network",
- "sc-rpc",
- "sc-rpc-api",
- "sc-service",
- "sc-telemetry",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "serde",
- "serde_json",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus-aura",
- "sp-core",
- "sp-finality-grandpa",
- "sp-inherents",
- "sp-keyring",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-state-machine",
- "sp-std",
- "sp-timestamp",
- "sp-transaction-pool",
- "sp-trie",
- "substrate-build-script-utils",
- "substrate-frame-rpc-system",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
-name = "gafi-membership"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "gu-mock",
- "pallet-balances",
- "pallet-player",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "upfront-pool",
-]
-
-[[package]]
 name = "gafi-node"
 version = "4.0.0-dev"
 dependencies = [
  "fc-rpc",
  "gafi-cli",
- "gafi-local",
  "gafi-service",
+ "game3-node",
  "pallet-ethereum",
  "sc-cli",
  "sc-consensus-aura",
  "sc-consensus-manual-seal",
+ "solochain",
  "substrate-build-script-utils",
 ]
 
@@ -3876,6 +3785,103 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-nfts"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-nfts",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "game3-node"
+version = "4.0.0-dev"
+dependencies = [
+ "clap 4.1.4",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frame-system",
+ "futures",
+ "game3-runtime",
+ "jsonrpsee 0.16.2",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+ "try-runtime-cli",
+]
+
+[[package]]
+name = "game3-runtime"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "game-nfts",
+ "pallet-aura",
+ "pallet-balances",
+ "pallet-grandpa",
+ "pallet-nfts",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+]
+
+[[package]]
 name = "gari-runtime"
 version = "0.1.0"
 dependencies = [
@@ -3919,9 +3925,9 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-faucet",
  "pallet-hotfix-sufficients",
+ "pallet-nicks",
  "pallet-player",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
@@ -6140,6 +6146,85 @@ dependencies = [
 ]
 
 [[package]]
+name = "node-template"
+version = "4.0.0-dev"
+dependencies = [
+ "clap 4.1.4",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frame-system",
+ "futures",
+ "jsonrpsee 0.16.2",
+ "node-template-runtime",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+ "try-runtime-cli",
+]
+
+[[package]]
+name = "node-template-runtime"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "pallet-aura",
+ "pallet-balances",
+ "pallet-grandpa",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+]
+
+[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6893,6 +6978,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-game"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
@@ -7027,6 +7126,37 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nfts"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nicks"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
+dependencies = [
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "sp-io",
@@ -7182,7 +7312,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
- "pallet-pool-names",
+ "pallet-nicks",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7194,23 +7324,6 @@ dependencies = [
  "sp-std",
  "staking-pool",
  "upfront-pool",
-]
-
-[[package]]
-name = "pallet-pool-names"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-primitives",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7609,6 +7722,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-cache",
+ "pallet-nicks",
  "pallet-pool",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -11651,6 +11765,77 @@ dependencies = [
 ]
 
 [[package]]
+name = "solochain"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap 4.1.4",
+ "devnet",
+ "fc-cli",
+ "fc-consensus",
+ "fc-db",
+ "fc-mapping-sync",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-dynamic-fee",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "futures",
+ "gafi-primitives",
+ "hex-literal 0.3.4",
+ "jsonrpc-core",
+ "jsonrpc-pubsub",
+ "jsonrpsee 0.16.2",
+ "log",
+ "memmap2",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-state-machine",
+ "sp-std",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "sp-trie",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sp-api"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
@@ -12763,9 +12948,9 @@ dependencies = [
  "pallet-cache",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-nicks",
  "pallet-player",
  "pallet-pool",
- "pallet-pool-names",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -13310,6 +13495,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f3
 dependencies = [
  "clap 4.1.4",
  "frame-remote-externalities",
+ "frame-try-runtime",
  "hex",
  "log",
  "parity-scale-codec",

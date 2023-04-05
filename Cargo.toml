@@ -6,15 +6,19 @@ repository = "https://github.com/grindytech/gafi/"
 [workspace]
 members = [
   'node', # 'node/chain_spec',
-  'node/rpc',
-  'node/cli', # 'node/service',
+  'node/parachain/rpc',
+  'node/parachain/cli', # 'node/service',
+  'node/solochain',
+  'node/game3',
+  'node/template',
   'runtime/gari',
-  'node/local',
+  'runtime/game3',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
   'utils/dummy',
   'runtime/devnet',
+  'runtime/template',
   'pallets/template',
   'pallets/player',
   'pallets/upfront-pool',
@@ -26,8 +30,9 @@ members = [
   'pallets/funding-pool',
   'pallets/pallet-cache',
   'pallets/game-creator',
-  'pallets/gafi-membership',
   'pallets/whitelist',
+  'pallets/game-nfts',
+  'pallets/pallet-game',
   'tests',
   'primitives',
 ]
@@ -101,6 +106,7 @@ sp-version = {version = "5.0.0", git = "https://github.com/paritytech/substrate"
 
 # Substrate FRAME
 frame-benchmarking = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+frame-try-runtime = {version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 frame-executive = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 frame-support = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 frame-system = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
@@ -123,6 +129,8 @@ pallet-transaction-payment-rpc = {version = "4.0.0-dev", git = "https://github.c
 pallet-transaction-payment-rpc-runtime-api = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-treasury = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 pallet-utility = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-nfts = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
+pallet-nicks = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false}
 
 # Substrate Utility
 frame-benchmarking-cli = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}

@@ -1,0 +1,39 @@
+[package]
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+description = "FRAME pallet template for defining custom runtime logic."
+edition = "2021"
+homepage = "https://substrate.io"
+license = "Unlicense"
+name = "pallet-game"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+version = "4.0.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+  "derive",
+]}
+frame-benchmarking = {default-features = false, optional = true, workspace = true}
+frame-support = {default-features = false, workspace = true}
+frame-system = {default-features = false, workspace = true}
+scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
+
+[dev-dependencies]
+sp-core = {default-features = false, workspace = true}
+sp-io = {default-features = false, workspace = true}
+sp-runtime = {default-features = false, workspace = true}
+
+[features]
+default = ["std"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+std = [
+  "codec/std",
+  "frame-benchmarking?/std",
+  "frame-support/std",
+  "frame-system/std",
+  "scale-info/std",
+]
+try-runtime = ["frame-support/try-runtime"]

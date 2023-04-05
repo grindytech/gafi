@@ -44,6 +44,7 @@ pallet-collective = {workspace = true}
 pallet-democracy = {workspace = true}
 pallet-elections-phragmen = {workspace = true}
 pallet-grandpa = {workspace = true}
+pallet-nicks = {workspace = true}
 pallet-preimage = {workspace = true}
 pallet-randomness-collective-flip = {workspace = true}
 pallet-scheduler = {workspace = true}
@@ -63,6 +64,7 @@ sp-session = {workspace = true}
 sp-std = {workspace = true}
 sp-transaction-pool = {workspace = true}
 sp-version = {workspace = true}
+pallet-nfts = {workspace = true}
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = {workspace = true}
@@ -81,12 +83,12 @@ runtime-common = {package = "runtime-common", path = "../common", default-featur
 funding-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/funding-pool"}
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-creator"}
+game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-nfts"}
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
 pallet-player-rpc-runtime-api = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player/runtime-api"}
 pallet-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool"}
-pallet-pool-names = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pool-names"}
 pallet-whitelist = {version = "4.0.0-dev", default-features = false, path = "../../pallets/whitelist"}
 proof-address-mapping = {version = "4.0.0-dev", default-features = false, path = "../../pallets/address-mapping"}
 staking-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/staking-pool"}
@@ -176,11 +178,13 @@ std = [
   "pallet-cache/std",
   "funding-pool/std",
   "game-creator/std",
-  "pallet-pool-names/std",
+  "game-nfts/std",
   "runtime-common/std",
   "pallet-hotfix-sufficients/std",
   "pallet-whitelist/std",
   "log/std",
+  "pallet-nfts/std",
+  "pallet-nicks/std",
 ]
 with-dev = []
 with-rocksdb-weights = []
