@@ -4,7 +4,7 @@ description = "A fresh FRAME-based Substrate node, ready for hacking."
 edition = "2021"
 homepage = "https://substrate.io/"
 license = "Unlicense"
-name = "game3-runtime"
+name = "node-template-runtime"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
 version = "4.0.0-dev"
@@ -16,43 +16,41 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"]}
 scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
 
-frame-executive = {workspace = true}
-frame-support = {workspace = true}
-frame-system = {workspace = true}
+frame-executive = {workspace = true, default-features = false}
+frame-support = {workspace = true, default-features = false}
+frame-system = {workspace = true, default-features = false}
 frame-try-runtime = {workspace = true, default-features = false, optional = true}
-pallet-aura = {workspace = true}
-pallet-balances = {workspace = true}
-pallet-grandpa = {workspace = true}
-pallet-nfts = {workspace = true, default-features = false}
-pallet-randomness-collective-flip = {workspace = true}
-pallet-sudo = {workspace = true}
-pallet-timestamp = {workspace = true}
-pallet-transaction-payment = {workspace = true}
-sp-api = {workspace = true}
-sp-block-builder = {workspace = true}
+pallet-aura = {workspace = true, default-features = false}
+pallet-balances = {workspace = true, default-features = false}
+pallet-grandpa = {workspace = true, default-features = false}
+pallet-randomness-collective-flip = {workspace = true, default-features = false}
+pallet-sudo = {workspace = true, default-features = false}
+pallet-timestamp = {workspace = true, default-features = false}
+pallet-transaction-payment = {workspace = true, default-features = false}
+sp-api = {workspace = true, default-features = false}
+sp-block-builder = {workspace = true, default-features = false}
 sp-consensus-aura = {workspace = true, default-features = false}
 sp-core = {workspace = true, default-features = false}
-sp-inherents = {workspace = true}
-sp-offchain = {workspace = true}
+sp-inherents = {workspace = true, default-features = false}
+sp-offchain = {workspace = true, default-features = false}
 sp-runtime = {workspace = true, default-features = false}
-sp-session = {workspace = true}
+sp-session = {workspace = true, default-features = false}
 sp-std = {workspace = true, default-features = false}
-sp-transaction-pool = {workspace = true}
+sp-transaction-pool = {workspace = true, default-features = false}
 sp-version = {workspace = true, default-features = false}
 
 # Used for the node template's RPCs
-frame-system-rpc-runtime-api = {workspace = true}
-pallet-transaction-payment-rpc-runtime-api = {workspace = true}
+frame-system-rpc-runtime-api = {workspace = true, default-features = false}
+pallet-transaction-payment-rpc-runtime-api = {workspace = true, default-features = false}
 
 # Used for runtime benchmarking
-frame-benchmarking = {workspace = true, default-features = false, optional = true}
-frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
+frame-benchmarking = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", default-features = false, optional = true, branch = "polkadot-v0.9.37"}
+frame-system-benchmarking = {version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", default-features = false, optional = true, branch = "polkadot-v0.9.37"}
 
 # Local Dependencies
-game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-nfts"}
 
 [build-dependencies]
-substrate-wasm-builder = {workspace = true, optional = true}
+substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", optional = true, branch = "polkadot-v0.9.37"}
 
 [features]
 default = ["std"]
@@ -97,7 +95,6 @@ std = [
   "sp-transaction-pool/std",
   "sp-version/std",
   "substrate-wasm-builder",
-  "pallet-nfts/std",
 ]
 try-runtime = [
   "frame-try-runtime/try-runtime",
@@ -112,5 +109,3 @@ try-runtime = [
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
 ]
-
-with-game3 = []

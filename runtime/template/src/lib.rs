@@ -30,7 +30,6 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
-		AsEnsureOriginWithArg,
 	},
 	weights::{
 		constants::{
@@ -40,9 +39,6 @@ pub use frame_support::{
 	},
 	StorageValue,
 };
-
-use pallet_nfts::PalletFeatures;
-
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -50,6 +46,8 @@ use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+
+/// Import the template pallet.
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -276,43 +274,6 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-parameter_types! {
-	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
-}
-
-impl pallet_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type CollectionId = u32;
-	type ItemId = u32;
-	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type Locker = ();
-	type CollectionDeposit = ConstU128<2>;
-	type ItemDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<1>;
-	type AttributeDepositBase = ConstU128<1>;
-	type DepositPerByte = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
-	type KeyLimit = ConstU32<50>;
-	type ValueLimit = ConstU32<50>;
-	type ApprovalsLimit = ConstU32<10>;
-	type ItemAttributesApprovalsLimit = ConstU32<2>;
-	type MaxTips = ConstU32<10>;
-	type MaxDeadlineDuration = ConstU32<10000>;
-	type Features = Features;
-	type WeightInfo = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
-}
-
-impl game_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Nfts =  Nfts;
-	type Currency = Balances;
-	type CollectionId = u32;
-}
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -331,8 +292,6 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		Nfts: pallet_nfts,
-		GameNfts: game_nfts,
 	}
 );
 
@@ -379,6 +338,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
+		[pallet_template, TemplateModule]
 	);
 }
 

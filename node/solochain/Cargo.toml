@@ -4,7 +4,7 @@ description = "A new Cumulus FRAME-based Substrate Node, ready for hacking toget
 edition = "2021"
 homepage = "https://substrate.io"
 license = "Unlicense"
-name = "gafi-local"
+name = "solochain"
 repository = "https://github.com/grindytech/cumulus/"
 version = "0.1.0"
 
@@ -84,7 +84,6 @@ fp-storage = {workspace = true, features = ["std"]}
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
 gafi-primitives = {path = "../../primitives", default-features = false}
-game3-runtime = {path = "../../runtime/game3", default-features = false, features = ["std"]}
 
 [build-dependencies]
 substrate-build-script-utils = {workspace = true}
@@ -95,7 +94,6 @@ default = ["aura"]
 manual-seal = ["devnet/manual-seal"]
 
 with-dev = ["devnet/with-dev"]
-with-game3 = ["game3-runtime/with-game3"]
 
 rpc-binary-search-estimate = ["fc-rpc/rpc-binary-search-estimate"]
 runtime-benchmarks = [
