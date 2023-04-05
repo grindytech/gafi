@@ -1,0 +1,77 @@
+[package]
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+build = "build.rs"
+description = "A fresh FRAME-based Substrate node, ready for hacking."
+edition = "2021"
+homepage = "https://substrate.io/"
+license = "Unlicense"
+name = "game3-node"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+version = "4.0.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+clap = {version = "4.0.9", features = ["derive"]}
+futures = {version = "0.3.21", features = ["thread-pool"]}
+jsonrpsee = {version = "0.16.2", features = ["server"]}
+
+frame-system = {workspace = true}
+pallet-transaction-payment = {workspace = true, default-features = false}
+sc-cli = {workspace = true}
+sc-client-api = {workspace = true}
+sc-consensus = {workspace = true}
+sc-consensus-aura = {workspace = true}
+sc-executor = {workspace = true}
+sc-finality-grandpa = {workspace = true}
+sc-keystore = {workspace = true}
+sc-service = {workspace = true}
+sc-telemetry = {workspace = true}
+sc-transaction-pool = {workspace = true}
+sc-transaction-pool-api = {workspace = true}
+sp-consensus = {workspace = true}
+sp-consensus-aura = {workspace = true}
+sp-core = {workspace = true}
+sp-finality-grandpa = {workspace = true}
+sp-inherents = {workspace = true}
+sp-io = {workspace = true}
+sp-keyring = {workspace = true}
+sp-runtime = {workspace = true}
+sp-timestamp = {workspace = true}
+
+# These dependencies are used for the node template's RPCs
+pallet-transaction-payment-rpc = {workspace = true}
+sc-basic-authorship = {workspace = true}
+sc-rpc = {workspace = true}
+sc-rpc-api = {workspace = true}
+sp-api = {workspace = true}
+sp-block-builder = {workspace = true}
+sp-blockchain = {workspace = true}
+substrate-frame-rpc-system = {workspace = true}
+
+# These dependencies are used for runtime benchmarking
+frame-benchmarking = {workspace = true}
+frame-benchmarking-cli = {workspace = true}
+
+# Local Dependencies
+game3-runtime = {version = "4.0.0-dev", path = "../../runtime/game3"}
+
+# CLI-specific dependencies
+try-runtime-cli = {version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37"}
+
+[build-dependencies]
+substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37"}
+
+[features]
+default = []
+# Dependencies that are only required if runtime benchmarking should be build.
+runtime-benchmarks = [
+  "game3-runtime/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-benchmarking-cli/runtime-benchmarks",
+]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = ["game3-runtime/try-runtime", "try-runtime-cli/try-runtime"]

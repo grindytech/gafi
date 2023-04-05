@@ -4,7 +4,7 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-use pallet_nfts::{ItemConfig, ItemSettings};
+use pallet_nfts::{CollectionConfig, ItemConfig, ItemSettings};
 use sp_core::U256;
 
 #[cfg(test)]
@@ -23,9 +23,21 @@ use frame_support::traits::{
 	Currency,
 };
 use frame_system::Config as SystemConfig;
+use sp_runtime::traits::StaticLookup;
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
+type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
+
+pub type BalanceOf<T, I = ()> =
+	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
+pub type CollectionConfigFor<T, I = ()> = CollectionConfig<
+	BalanceOf<T, I>,
+	<T as SystemConfig>::BlockNumber,
+	<T as Config<I>>::CollectionId,
+>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -49,6 +61,9 @@ pub mod pallet {
 
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: frame_support::traits::ReservableCurrency<Self::AccountId>;
+
+		/// Identifier for the collection of item.
+		type CollectionId: Member + Parameter + MaxEncodedLen + Copy + pallet_nfts::Incrementable;
 	}
 
 	// The pallet's runtime storage items.
@@ -71,7 +86,30 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
+		#[pallet::call_index(1)]
+		#[pallet::weight(0)]
+		pub fn create(
+			origin: OriginFor<T>,
+			admin: AccountIdLookupOf<T>,
+			config: CollectionConfigFor<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
+			// pallet_nfts::Pallet::<T>::create(origin, sender, ),
 
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(0)]
+		pub fn mint(origin: OriginFor<T>) -> DispatchResult {
+			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn create_collection () -> u128 {
+			100
+		}
 	}
 }

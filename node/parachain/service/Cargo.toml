@@ -92,10 +92,10 @@ cumulus-relay-chain-interface = {workspace = true}
 cumulus-relay-chain-rpc-interface = {workspace = true}
 
 # Runtime
-gari-runtime = {path = "../../runtime/gari", optional = true}
+gari-runtime = {path = "../../../runtime/gari", optional = true}
 
 # Local
-gafi-primitives = {path = "../../primitives", default-features = false}
+gafi-primitives = {path = "../../../primitives", default-features = false}
 gafi-rpc = {path = "../rpc", default-features = false}
 
 [build-dependencies]
