@@ -9,6 +9,7 @@ members = [
   'node/parachain/rpc',
   'node/parachain/cli', # 'node/service',
   'node/solochain',
+  'node/game3',
   'node/template',
   'runtime/gari',
   'runtime/game3',

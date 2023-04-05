@@ -31,6 +31,7 @@ sc-consensus-manual-seal = {workspace = true, optional = true}
 gafi-cli = {path = "parachain/cli", default-features = false, optional = true}
 solochain = {path = "solochain", default-features = false, optional = true}
 gafi-service = {path = "parachain/service", default-features = false, optional = true}
+game3-node = {path = "game3", default-features = false, optional = true}
 
 [build-dependencies]
 substrate-build-script-utils = {workspace = true}
@@ -40,7 +41,7 @@ aura = [
   "sc-consensus-aura",
   "solochain/aura",
 ]
-default = ["aura", "with-dev"]
+default = []
 
 std = []
 
@@ -67,6 +68,10 @@ with-dev = [
 with-gari = [
   "gafi-cli/with-gari",
   "gafi-service/with-gari",
+]
+
+with-game3 = [
+  "game3-node",
 ]
 
 rococo-native = [

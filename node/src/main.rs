@@ -9,7 +9,7 @@ fn main() -> sc_cli::Result<()> {
 	return solochain::command::run();
 
 	#[cfg(feature = "with-game3")]
-	return solochain::command::run();
+	return game3_node::command::run();
 
 	#[cfg(feature = "manual-seal")]
 	return solochain::command::run();
