@@ -2102,7 +2102,6 @@ dependencies = [
  "gafi-primitives",
  "gafi-tx",
  "game-creator",
- "game-nfts",
  "hex-literal 0.3.4",
  "log",
  "pallet-aura",
