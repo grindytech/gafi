@@ -4,7 +4,7 @@ use devnet::{
 	PalletCacheFaucetConfig, Signature, StakingPoolConfig, SudoConfig, SystemConfig,
 	TxHandlerConfig, WASM_BINARY,
 };
-use gafi_primitives::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
+use gafi_primitives::common::currency::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
 use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use serde_json::json;

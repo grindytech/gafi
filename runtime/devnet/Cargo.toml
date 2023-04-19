@@ -83,7 +83,6 @@ runtime-common = {package = "runtime-common", path = "../common", default-featur
 funding-pool = {version = "4.0.0-dev", default-features = false, path = "../../pallets/funding-pool"}
 gafi-tx = {version = "4.0.0-dev", default-features = false, path = "../../pallets/gafi-tx"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-creator"}
-game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../pallets/game-nfts"}
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-player = {version = "4.0.0-dev", default-features = false, path = "../../pallets/player"}
@@ -178,7 +177,6 @@ std = [
   "pallet-cache/std",
   "funding-pool/std",
   "game-creator/std",
-  "game-nfts/std",
   "runtime-common/std",
   "pallet-hotfix-sufficients/std",
   "pallet-whitelist/std",

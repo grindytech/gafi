@@ -23,7 +23,6 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::game_creator::GetGameCreator;
 pub use pallet::*;
 use pallet_evm::{AddressMapping, ContractCreator};
 use sp_core::H160;
@@ -242,7 +241,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> GetGameCreator<T::AccountId> for Pallet<T> {
+	impl<T: Config> gafi_primitives::pool::game_creator::GetGameCreator<T::AccountId> for Pallet<T> {
 		fn get_game_creator(contract: &H160) -> Option<T::AccountId> {
 			match ContractOwner::<T>::get(contract) {
 				Some(contract) => Some(contract.0),

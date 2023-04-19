@@ -3,8 +3,8 @@
 use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
 pub use crate::weights::WeightInfo;
-use gafi_primitives::cache::Cache;
 use sp_std::vec;
+use gafi_primitives::pallet::cache::Cache;
 
 #[cfg(test)]
 mod mock;
@@ -43,7 +43,7 @@ pub mod pallet {
 		type MaxGenesisAccount: Get<u32>;
 
 		/// Add Cache
-		type Cache: Cache<Self::AccountId, AccountOf<Self>, u128>;
+		type Cache: Cache<Self::AccountId,AccountOf<Self> ,u128> ;
 
 		/// Faucet Amount
 		type FaucetAmount: Get<BalanceOf<Self>>;

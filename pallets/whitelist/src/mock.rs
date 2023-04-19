@@ -5,8 +5,8 @@
 
 use crate::{self as pallet_whitelist};
 use frame_support::{
-	parameter_types,
-	traits::{ConstU32, GenesisBuild}, ord_parameter_types,
+	ord_parameter_types, parameter_types,
+	traits::{ConstU32, GenesisBuild},
 };
 use frame_system as system;
 
@@ -15,9 +15,11 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAKI},
-	ticket::TicketInfo,
+	common::{
+		constant::ID,
+		currency::{unit, NativeToken::GAKI},
+	},
+	pool::ticket::TicketInfo,
 };
 pub use pallet_balances::Call as BalancesCall;
 
@@ -29,7 +31,7 @@ use sp_core::{
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	Permill, AccountId32,
+	AccountId32, Permill,
 };
 use system::EnsureRoot;
 

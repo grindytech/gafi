@@ -1,10 +1,13 @@
-use crate::{constant::ID, pool::Service, ticket::Ticket};
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
 use sp_std::{prelude::*, vec, vec::Vec};
+
+use crate::common::constant::ID;
+
+use super::{pool::Service, ticket::Ticket};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(

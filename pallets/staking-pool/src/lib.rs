@@ -24,9 +24,11 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
-	system_services::{SystemDefaultServices, SystemPool, SystemService},
-	ticket::{Ticket, TicketType},
+	common::constant::ID,
+	pool::{
+		system_services::{SystemDefaultServices, SystemPool, SystemService},
+		ticket::{Ticket, TicketType},
+	},
 };
 use gu_convertor::u128_try_to_balance;
 pub use pallet::*;
