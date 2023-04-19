@@ -22,7 +22,6 @@ use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use frame_system::pallet_prelude::*;
-use gafi_primitives::cache::Cache;
 use pallet_timestamp::{self as timestamp};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
@@ -182,7 +181,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config<I>,  I: 'static> Cache<T::AccountId, T::Action, T::Data> for Pallet<T, I> {
+	impl<T: Config<I>,  I: 'static> gafi_primitives::pallet::cache::Cache<T::AccountId,T::Action,T::Data> for Pallet<T, I> {
 
 		/// Store data to cache by AccountId and action name
 		///

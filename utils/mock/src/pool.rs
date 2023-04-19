@@ -1,9 +1,11 @@
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAKI},
-	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
+	common::{
+		constant::ID,
+		currency::{unit, NativeToken::GAKI},
+	},
+	pool::system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 };
-use parity_scale_codec::{Encode, Decode};
+use parity_scale_codec::{Decode, Encode};
 use sp_runtime::Permill;
 
 pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
@@ -13,7 +15,6 @@ pub const UPFRONT_ADVANCE_ID: ID = [12_u8; 32];
 pub const STAKING_BASIC_ID: ID = [0_u8; 32];
 pub const STAKING_MEDIUM_ID: ID = [1_u8; 32];
 pub const STAKING_ADVANCE_ID: ID = [2_u8; 32];
-
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode)]
 pub struct UpfrontPoolDefaultServices {}

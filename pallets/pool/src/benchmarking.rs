@@ -8,7 +8,7 @@ use frame_benchmarking::Box;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::ticket::{TicketType};
+use gafi_primitives::pool::ticket::{TicketType};
 use scale_info::prelude::format;
 use scale_info::prelude::string::String;
 const UNIT: u128 = 1_000_000_000_000_000_000u128;

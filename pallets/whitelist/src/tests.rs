@@ -1,20 +1,19 @@
 use crate::{mock::*, Error, Whitelist, WhitelistSource};
 use codec::{Decode, Encode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
+use funding_pool::{PoolOwned, Pools};
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAKI},
+	common::{constant::ID,
+	currency::{unit, NativeToken::GAKI}},
 };
 use rustc_hex::ToHex;
 use sp_core::{offchain::OffchainWorkerExt, sr25519, H160};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
-	offchain::{testing, TransactionPoolExt},
+	offchain::{http, testing, Duration, Timestamp, TransactionPoolExt},
 	Permill,
 };
-use funding_pool::{PoolOwned, Pools};
 use std::{str::FromStr, sync::Arc};
-use sp_runtime::offchain::{http, Duration, Timestamp};
 
 #[cfg(feature = "runtime-benchmarks")]
 use funding_pool::CustomPool;
@@ -38,7 +37,7 @@ fn test_pub() -> sp_core::sr25519::Public {
 }
 
 struct VerifyResult {
-	result: bool
+	result: bool,
 }
 
 const TEST_URL: &str = "http://whitelist.gafi.network/verify";
@@ -90,10 +89,7 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 
 	let pool_id_hex: String = pool_id.to_hex();
 
-	let uri = format!(
-		"${:?}?_id=${}&address=${}",
-		TEST_URL, pool_id_hex, player
-	);
+	let uri = format!("${:?}?_id=${}&address=${}", TEST_URL, pool_id_hex, player);
 	whitelist_response_work(&mut offchain_state.write(), &uri);
 
 	t.execute_with(|| {
@@ -106,7 +102,10 @@ fn should_submit_raw_unsigned_transaction_on_chain() {
 		assert_eq!(tx.signature, None);
 		assert_eq!(
 			tx.call,
-			RuntimeCall::PalletWhitelist(crate::Call::approve_whitelist_unsigned { player, pool_id })
+			RuntimeCall::PalletWhitelist(crate::Call::approve_whitelist_unsigned {
+				player,
+				pool_id
+			})
 		);
 	});
 }
@@ -159,7 +158,11 @@ fn query_whitelist_should_fails() {
 			Error::<Test>::AlreadyWhitelist.as_str()
 		);
 
-		assert_ok!(PalletWhitelist::approve_whitelist(RuntimeOrigin::signed(account.clone()), player.clone(), pool_id));
+		assert_ok!(PalletWhitelist::approve_whitelist(
+			RuntimeOrigin::signed(account.clone()),
+			player.clone(),
+			pool_id
+		));
 
 		assert_err!(
 			PalletWhitelist::apply_whitelist(RuntimeOrigin::signed(player.clone()), pool_id),
@@ -174,7 +177,8 @@ fn should_make_http_call_and_parse_result() {
 	let mut t = sp_io::TestExternalities::default();
 	t.register_extension(OffchainWorkerExt::new(offchain));
 
-	// let url = format!("?id=d63de0e8c06ceacebd5bbb54500d82d061fb92f3a7ec1250dfefd99ec6de2456&address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+	// let url = format!("?id=d63de0e8c06ceacebd5bbb54500d82d061fb92f3a7ec1250dfefd99ec6de2456&
+	// address=d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
 	whitelist_response_work(&mut state.write(), &TEST_URL);
 
 	t.execute_with(|| {
@@ -266,7 +270,10 @@ fn enable_whitelist_works() {
 
 		assert_eq!(Balances::reserved_balance(account.clone()), WHITELIST_FEE);
 
-		assert_eq!(WhitelistSource::<Test>::get(pool_id).unwrap().0, url.to_vec());
+		assert_eq!(
+			WhitelistSource::<Test>::get(pool_id).unwrap().0,
+			url.to_vec()
+		);
 
 		assert_ok!(PalletWhitelist::enable_whitelist(
 			RuntimeOrigin::signed(account),

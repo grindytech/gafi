@@ -19,7 +19,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // Runtime
-use gafi_primitives::types::{Block, AccountId, Balance, Hash, Index};
+use gafi_primitives::common::types::{Block, AccountId, Balance, Hash, Index};
 
 mod eth;
 pub use self::eth::{create_eth, overrides_handle, EthDeps};

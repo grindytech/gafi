@@ -1,5 +1,5 @@
 use frame_support::{parameter_types, traits::LockIdentifier};
-use gafi_primitives::currency::{centi, deposit, NativeToken::GAKI};
+use gafi_primitives::common::currency::{centi, deposit, NativeToken::GAKI};
 use runtime_common::prod_or_fast;
 use static_assertions::const_assert;
 

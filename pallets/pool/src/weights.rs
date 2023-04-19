@@ -29,9 +29,8 @@
 #![allow(unused_imports)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
-use gafi_primitives::ticket::{TicketType};
+use gafi_primitives::{pool::ticket::{TicketType}, common::constant::ID};
 use sp_std::marker::PhantomData;
-use gafi_primitives::constant::ID;
 
 pub trait WeightInfo {
 	fn join(s: u64, ) -> Weight;

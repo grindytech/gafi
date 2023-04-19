@@ -26,9 +26,11 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
-	game_creator::GetGameCreator,
-	ticket::{PlayerTicket, TicketType},
+	common::constant::ID,
+	pool::{
+		game_creator::GetGameCreator,
+		ticket::{PlayerTicket, TicketType},
+	},
 };
 use gu_convertor::{into_account, u128_to_balance};
 pub use pallet::*;
@@ -68,7 +70,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_balances::Config {
 		/// The overarching event type.
-				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
 		/// Customize OnChargeEVMTransaction
@@ -99,7 +101,7 @@ pub mod pallet {
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
-	pub struct GenesisConfig { }
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {

@@ -39,8 +39,8 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU64, ConstU128,ConstU8, EitherOfDiverse, FindAuthor, Get, KeyOwnerProofSystem,
-		LockIdentifier, PrivilegeCmp, Randomness, AsEnsureOriginWithArg
+		AsEnsureOriginWithArg, ConstU128, ConstU32, ConstU64, ConstU8, EitherOfDiverse, FindAuthor,
+		Get, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp, Randomness,
 	},
 	weights::{
 		constants::{
@@ -64,12 +64,15 @@ use sp_runtime::{generic::Era, SaturatedConversion};
 pub use sp_runtime::{Perbill, Permill};
 
 pub use gafi_primitives::{
-	cache::Cache,
-	constant::ID,
-	currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},
-	players::PlayerJoinedPoolStatistic,
-	system_services::{SystemDefaultServices, SystemService},
-	ticket::{TicketInfo, TicketType},
+	common::{
+		constant::ID,
+		currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},
+	},
+	pallet::{cache::Cache, players::PlayerJoinedPoolStatistic},
+	pool::{
+		system_services::{SystemDefaultServices, SystemService},
+		ticket::{TicketInfo, TicketType},
+	},
 };
 
 // import local pallets

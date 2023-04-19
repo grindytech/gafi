@@ -1,9 +1,8 @@
 use crate::{mock::*, Error, IngamePlayers, NewPlayers};
 use crate::{PlayerCount, Tickets};
-use codec::Encode;
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use gafi_primitives::currency::{unit, NativeToken::GAKI};
-use gafi_primitives::system_services::SystemPool;
+use gafi_primitives::common::currency::{unit, NativeToken::GAKI};
+use gafi_primitives::pool::system_services::SystemPool;
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;
 

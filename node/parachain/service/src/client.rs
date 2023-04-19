@@ -1,7 +1,7 @@
 // Substrate
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch, NativeVersion};
 // Local
-use gafi_primitives::types::{Block};
+use gafi_primitives::common::types::{Block};
 
 /// Full backend.
 pub type FullBackend = sc_service::TFullBackend<Block>;

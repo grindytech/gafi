@@ -24,9 +24,9 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
-	custom_services::CustomPool,
-	whitelist::{IWhitelist, WhitelistPool},
+	common::constant::ID,
+	pool::custom_services::CustomPool,
+	pool::whitelist::{IWhitelist, WhitelistPool},
 };
 
 pub use pallet::*;

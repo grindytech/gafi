@@ -1,7 +1,7 @@
 use frame_support::parameter_types;
 
 use crate::{Balances, ProofAddressMapping, Runtime, EVM, RuntimeEvent};
-use gafi_primitives::currency::{unit, NativeToken::GAFI};
+use gafi_primitives::common::currency::{unit, NativeToken::GAFI};
 
 parameter_types! {
 	pub MaxContractOwned: u32 = 1000;

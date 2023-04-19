@@ -1,5 +1,5 @@
 use cumulus_primitives_core::ParaId;
-use gafi_primitives::currency::{GafiCurrency, NativeToken::GAFI, TokenInfo};
+use gafi_primitives::common::currency::{GafiCurrency, NativeToken::GAFI, TokenInfo};
 use gari_runtime::{
 	types::{AccountId, Signature, EXISTENTIAL_DEPOSIT},
 	EVMConfig, FaucetConfig, SudoConfig,

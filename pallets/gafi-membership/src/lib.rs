@@ -24,7 +24,7 @@ use crate::weights::WeightInfo;
 use frame_support::{pallet_prelude::*, traits::Get, transactional, BoundedVec};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
+	common::constant::ID,
 	membership::{Achievement, Achievements, Membership, MembershipLevelPoints},
 	players::PlayerJoinedPoolStatistic,
 };

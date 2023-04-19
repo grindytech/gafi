@@ -1,9 +1,9 @@
 use crate::{mock::*, Config, Error, PlayerOwned, Players};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
-	currency::{unit, NativeToken::GAKI},
-	players::{PlayerJoinedPoolStatistic, PlayersTime},
-	system_services::SystemPool,
+	common::currency::{unit, NativeToken::GAKI},
+	pallet::players::{PlayerJoinedPoolStatistic, PlayersTime},
+	pool::system_services::SystemPool,
 };
 
 const START_BLOCK: u64 = 10;
@@ -65,7 +65,10 @@ fn is_player_check_should_works() {
 		assert_eq!(check, true, "player should available");
 
 		let user_name = [1u8; 16];
-		assert_ok!(PalletGame::create_player(RuntimeOrigin::signed(ALICE), user_name));
+		assert_ok!(PalletGame::create_player(
+			RuntimeOrigin::signed(ALICE),
+			user_name
+		));
 
 		let check = PlayerOwned::<Test>::get(&ALICE).is_none();
 		assert_eq!(check, false, "player should not available");

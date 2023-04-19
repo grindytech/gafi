@@ -1,4 +1,3 @@
-use crate::{constant::ID, pool::Service};
 use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
@@ -6,6 +5,10 @@ use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_runtime::RuntimeDebug;
 use sp_std::vec::Vec;
+
+use crate::common::constant::ID;
+
+use super::pool::Service;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]

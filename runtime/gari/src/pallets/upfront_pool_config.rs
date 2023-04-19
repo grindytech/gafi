@@ -1,11 +1,13 @@
+use codec::{Decode, Encode};
 use frame_support::parameter_types;
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAFI},
-	system_services::{SystemDefaultServices, SystemService, SystemServicePack},
+	common::{
+		constant::ID,
+		currency::{unit, NativeToken::GAFI},
+	},
+	pool::system_services::{SystemDefaultServices, SystemService, SystemServicePack},
 };
 use sp_runtime::Permill;
-use codec::{Encode, Decode};
 use sp_std::vec;
 
 use crate::{Balances, Pool, Runtime, RuntimeEvent};

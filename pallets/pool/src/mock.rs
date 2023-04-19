@@ -15,9 +15,9 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAKI},
-	ticket::TicketInfo,
+	common::{constant::ID,
+	currency::{unit, NativeToken::GAKI}},
+	pool::ticket::TicketInfo,
 };
 pub use gu_mock::{pool::*, AN_HOUR};
 pub use pallet_balances::Call as BalancesCall;

@@ -1,9 +1,9 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_primitives::{
-	currency::{unit, NativeToken::GAKI},
+	common::currency::{unit, NativeToken::GAKI},
 	membership::{Achievement, Achievements},
-	system_services::SystemPool,
+	pool::system_services::SystemPool,
 };
 
 #[test]
