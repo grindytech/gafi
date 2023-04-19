@@ -9,7 +9,7 @@ The pallet-game is the place that handles all in-game assets, where the game own
 
 ## Overview
 
-Pallet Game improves the functionality of NFT ERC1155 for gaming where the game owner can:
+Key functions on pallet-game:
 Create collections and items
 Allow NFTs can be transferred with/without transfer fees
 Allow swap NFT with/without swap fees
