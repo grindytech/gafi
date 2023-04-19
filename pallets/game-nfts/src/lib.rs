@@ -16,8 +16,6 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-mod mutable;
-
 use frame_support::traits::{
 	tokens::nonfungibles_v2::{Mutate, Transfer},
 	Currency,

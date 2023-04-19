@@ -20,17 +20,17 @@
 use frame_support::{pallet_prelude::*, traits::Currency, transactional};
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
-	custom_services::CustomPool,
-	pool::{MasterPool, PoolType, Service},
-	system_services::SystemPool,
-	ticket::{PlayerTicket, TicketInfo, TicketType},
-	whitelist::WhitelistPool,
+	common::constant::ID,
+	pool::custom_services::CustomPool,
+	pool::pool::{MasterPool, PoolType, Service},
+	pool::system_services::SystemPool,
+	pool::ticket::{PlayerTicket, TicketInfo, TicketType},
+	pool::whitelist::WhitelistPool,
+	pallet::cache::Cache,
 };
 use pallet_timestamp::{self as timestamp};
 
 use crate::weights::WeightInfo;
-use gafi_primitives::cache::Cache;
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::traits::StaticLookup;

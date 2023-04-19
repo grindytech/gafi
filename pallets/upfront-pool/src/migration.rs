@@ -8,8 +8,8 @@ use frame_support::{
 	Blake2_128Concat,
 };
 use gafi_primitives::{
-	constant::ID,
-	system_services::{SystemDefaultServices, SystemService},
+	common::constant::ID,
+	pool::system_services::{SystemDefaultServices, SystemService},
 };
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::format;

@@ -3,7 +3,7 @@ use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch, NativeVersion
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::traits::BlakeTwo256;
 // Local
-use gafi_primitives::types::{Block, AccountId, Balance, Index};
+use gafi_primitives::common::types::{Block, AccountId, Balance, Index};
 
 use crate::eth::EthCompatRuntimeApiCollection;
 

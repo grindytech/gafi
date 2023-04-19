@@ -29,10 +29,12 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_primitives::{
-	constant::ID,
-	pool::MasterPool,
-	system_services::{SystemDefaultServices, SystemPool, SystemService},
-	ticket::{Ticket, TicketType},
+	common::constant::ID,
+	pool::{
+		pool::MasterPool,
+		system_services::{SystemDefaultServices, SystemPool, SystemService},
+		ticket::{Ticket, TicketType},
+	},
 };
 use gu_convertor::{u128_to_balance, u128_try_to_balance};
 pub use pallet::*;
@@ -69,7 +71,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + timestamp::Config + pallet_balances::Config {
 		/// The overarching event type.
-				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;

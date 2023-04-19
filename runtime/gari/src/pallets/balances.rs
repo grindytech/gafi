@@ -1,6 +1,6 @@
 use crate::{Balance, Runtime, System, RuntimeEvent};
 use frame_support::parameter_types;
-use gafi_primitives::currency::{unit, NativeToken::GAFI};
+use gafi_primitives::common::currency::{unit, NativeToken::GAFI};
 
 parameter_types! {
 	pub  NativeTokenExistentialDeposit: Balance = 1 * unit(GAFI); // 1 GAFI

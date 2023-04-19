@@ -26,11 +26,13 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use gafi_primitives::{
-	constant::ID,
-	custom_services::{CustomPool, CustomService},
-	name::Name,
-	pool::Service,
-	whitelist::IWhitelist,
+	common::constant::ID,
+	pallet::name::Name,
+	pool::{
+		custom_services::{CustomPool, CustomService},
+		pool::Service,
+		whitelist::IWhitelist,
+	},
 };
 use gu_convertor::{balance_try_to_u128, into_account};
 use gu_currency::transfer_all;

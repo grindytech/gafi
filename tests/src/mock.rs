@@ -6,14 +6,13 @@ use frame_support::{
 };
 use frame_system as system;
 use gafi_primitives::{
-	constant::ID,
-	currency::{unit, NativeToken::GAKI},
-	ticket::TicketInfo,
+	common::{constant::ID,
+	currency::{unit, NativeToken::GAKI}},
+	pool::ticket::TicketInfo,
 };
-use gafi_tx::GafiEVMCurrencyAdapter;
 pub use gu_mock::{pool::*, one_mil_gaki};
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, EnsureAddressTruncated, EVMCurrencyAdapter, GasWeightMapping};
+use pallet_evm::{EnsureAddressNever, EnsureAddressTruncated, EVMCurrencyAdapter, GasWeightMapping};
 use pallet_timestamp;
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::{H256, U256};
