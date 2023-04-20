@@ -1,6 +1,6 @@
 use crate::{mock::*, Error, PoolOwned, Pools, Targets};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
-use gafi_primitives::{
+use gafi_support::{
 	common::{constant::ID,
 	currency::{unit, NativeToken::GAKI}},
 	pool::custom_services::CustomPool,

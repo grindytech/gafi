@@ -1,6 +1,6 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use gafi_primitives::{
+use gafi_support::{
 	common::currency::{unit, NativeToken::GAKI},
 	membership::{Achievement, Achievements},
 	pool::system_services::SystemPool,

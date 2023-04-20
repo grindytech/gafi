@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::traits::Currency;
-use gafi_primitives::common::constant::ID;
+use gafi_support::common::constant::ID;
 use sp_runtime::DispatchError;
 use codec::{Decode};
 

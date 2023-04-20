@@ -6,7 +6,7 @@ use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
 	weights::Weight, Blake2_128Concat, migration::storage_key_iter,
 };
-use gafi_primitives::{pool::system_services::{SystemDefaultServices, SystemService}, common::constant::ID};
+use gafi_support::{pool::system_services::{SystemDefaultServices, SystemService}, common::constant::ID};
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::format;
 use sp_std::vec::Vec;

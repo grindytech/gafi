@@ -1,7 +1,7 @@
 use crate::{mock::*, Tickets};
 use frame_support::{assert_ok, traits::Currency};
 use funding_pool::{PoolOwned, Pools};
-use gafi_primitives::common::{
+use gafi_support::common::{
 	constant::ID,
 	currency::{unit, NativeToken::GAKI},
 };

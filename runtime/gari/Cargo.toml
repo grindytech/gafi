@@ -23,7 +23,7 @@ serde = {version = "1.0.132", optional = true, features = ["derive"]}
 smallvec = "1.6.1"
 
 # Local Dependencies
-gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
 runtime-common = {package = "runtime-common", path = "../common", default-features = false}
 
 # Local Pallets
@@ -175,7 +175,7 @@ std = [
   "funding-pool/std",
   "staking-pool/std",
   "upfront-pool/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "pallet-collective/std",
   "pallet-scheduler/std",
   "pallet-elections-phragmen/std",

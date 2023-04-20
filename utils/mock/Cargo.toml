@@ -17,7 +17,7 @@ serde = {version = "1.0.119"}
 rustc-hex = { version = "2.1.0", default-features = false }
 sp-std = {version = "5.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
 
-gafi-primitives = { default-fetures = false, version = "4.0.0-dev", path = "../../primitives" }
+gafi-support = { default-fetures = false, version = "4.0.0-dev", path = "../../support" }
 
 
 

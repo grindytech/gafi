@@ -23,7 +23,7 @@ pub use pallet::*;
 use crate::weights::WeightInfo;
 use frame_support::{pallet_prelude::*, traits::Get, transactional, BoundedVec};
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID,
 	membership::{Achievement, Achievements, Membership, MembershipLevelPoints},
 	players::PlayerJoinedPoolStatistic,

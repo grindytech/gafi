@@ -28,7 +28,7 @@ sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 
 # Local
-gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
 
 [dev-dependencies]
 pallet-balances = {workspace = true}
@@ -45,7 +45,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "sp-runtime/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "pallet-timestamp/std",
   "pallet-balances/std",
 ]

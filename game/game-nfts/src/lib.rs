@@ -121,10 +121,4 @@ pub mod pallet {
 			}
 		}
 	}
-
-	impl<T: Config> Pallet<T> {
-		pub fn create_collection() -> u128 {
-			100
-		}
-	}
 }

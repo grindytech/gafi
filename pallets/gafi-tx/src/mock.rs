@@ -5,7 +5,7 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize}, weights::Weight,
 };
 use frame_system as system;
-use gafi_primitives::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::currency::{unit, NativeToken::GAKI};
 use gu_mock::{AN_HOUR, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_evm::{EVMCurrencyAdapter, EnsureAddressNever, EnsureAddressTruncated, GasWeightMapping};

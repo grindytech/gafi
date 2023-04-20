@@ -310,7 +310,6 @@ impl game_nfts::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Nfts =  Nfts;
 	type Currency = Balances;
-	type CollectionId = u32;
 }
 
 
