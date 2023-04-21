@@ -5,7 +5,7 @@ use frame_support::{
 	BoundedVec,
 };
 use frame_system as system;
-use gafi_primitives::membership::{Achievements, MembershipLevelPoints};
+use gafi_support::membership::{Achievements, MembershipLevelPoints};
 pub use gu_mock::{one_mil_gaki, pool::*, INIT_TIMESTAMP, MILLISECS_PER_BLOCK, SLOT_DURATION};
 use sp_core::H256;
 pub use sp_runtime::AccountId32;

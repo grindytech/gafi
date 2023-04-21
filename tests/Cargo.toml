@@ -48,7 +48,7 @@ sp-std = {default-features = false, workspace = true}
 
 # Local
 funding-pool = {default-features = false, version = "4.0.0-dev", path = "../pallets/funding-pool"}
-gafi-primitives = {default-fetures = false, version = "4.0.0-dev", path = "../primitives"}
+gafi-support = {default-fetures = false, version = "4.0.0-dev", path = "../support"}
 gafi-tx = {default-features = false, version = "4.0.0-dev", path = "../pallets/gafi-tx"}
 game-creator = {version = "4.0.0-dev", default-features = false, path = "../pallets/game-creator"}
 gu-ethereum = {default-features = false, version = "4.0.0-dev", path = "../utils/ethereum"}
@@ -83,7 +83,7 @@ std = [
   'staking-pool/std',
   'gafi-tx/std',
   'gu-ethereum/std',
-  'gafi-primitives/std',
+  'gafi-support/std',
   'pallet-cache/std',
   'game-creator/std',
   'pallet-player/std',

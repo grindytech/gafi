@@ -32,7 +32,7 @@ sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 
 # Local
-gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+gafi-support = {default-features = false, version = "4.0.0-dev", path = "../../support"}
 
 [dev-dependencies]
 pallet-ethereum = { workspace = true }
@@ -53,7 +53,7 @@ std = [
   "pallet-timestamp/std",
   "pallet-evm/std",
   "sp-std/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "pallet-ethereum/std",
   "sp-runtime/std",
   "sp-io/std",

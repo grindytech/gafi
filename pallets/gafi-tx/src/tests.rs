@@ -1,6 +1,6 @@
 use crate::{mock::*, Pallet};
 use frame_support::traits::Currency;
-use gafi_primitives::{
+use gafi_support::{
 	common::{constant::ID,
 	currency::{unit, NativeToken::GAKI}},
 };

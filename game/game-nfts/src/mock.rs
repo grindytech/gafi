@@ -105,7 +105,6 @@ impl game_nfts::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Nfts = Nfts;
 	type Currency = Balances;
-	type CollectionId = u32;
 }
 
 // Build genesis storage according to the mock runtime.

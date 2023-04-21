@@ -17,10 +17,12 @@ mod tests;
 mod benchmarking;
 
 use frame_support::traits::{
-	tokens::nonfungibles_v2::{Mutate, Transfer},
-	Currency,
+	tokens::nonfungibles_v2::{Create, Mutate, Transfer},
+	Currency, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
+use pallet_nfts::Config as NftsConfig;
+
 use sp_runtime::traits::StaticLookup;
 
 pub type DepositBalanceOf<T, I = ()> =
@@ -28,13 +30,10 @@ pub type DepositBalanceOf<T, I = ()> =
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
-pub type BalanceOf<T, I = ()> =
-	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
-
 pub type CollectionConfigFor<T, I = ()> = CollectionConfig<
 	BalanceOf<T, I>,
 	<T as SystemConfig>::BlockNumber,
-	<T as Config<I>>::CollectionId,
+	<T as NftsConfig>::CollectionId,
 >;
 
 #[frame_support::pallet]
@@ -47,21 +46,28 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(_);
 
+	pub type BalanceOf<T, I = ()> =
+		<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
+	pub trait Config<I: 'static = ()>:
+		frame_system::Config + pallet_nfts::Config + pallet_balances::Config
+	{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// pallet_nfts
-		type Nfts: Mutate<Self::AccountId, ItemConfig> + Transfer<Self::AccountId>;
+		type Nfts: Mutate<Self::AccountId, ItemConfig>
+			+ Transfer<Self::AccountId>
+			+ Create<
+				Self::AccountId,
+				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
+			>;
 
 		/// The currency mechanism, used for paying for reserves.
-		type Currency: frame_support::traits::ReservableCurrency<Self::AccountId>;
-
-		/// Identifier for the collection of item.
-		type CollectionId: Member + Parameter + MaxEncodedLen + Copy + pallet_nfts::Incrementable;
+		type Currency: ReservableCurrency<Self::AccountId>;
 	}
 
 	// The pallet's runtime storage items.
@@ -84,6 +90,21 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
+		/// Issue a new collection of non-fungible items from a public origin.
+		///
+		/// This new collection has no items initially and its owner is the origin.
+		///
+		/// The origin must be Signed and the sender must have sufficient funds free.
+		///
+		/// `ItemDeposit` funds of sender are reserved.
+		///
+		/// Parameters:
+		/// - `admin`: The admin of this collection. The admin is the initial address of each
+		/// member of the collection's admin team.
+		///
+		/// Emits `Created` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
 		pub fn create(
@@ -92,22 +113,12 @@ pub mod pallet {
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let owner = T::Lookup::lookup(admin)?;
 
-			// pallet_nfts::Pallet::<T>::create(origin, sender, ),
-
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
-		pub fn mint(origin: OriginFor<T>) -> DispatchResult {
-			Ok(())
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		pub fn create_collection () -> u128 {
-			100
+			match T::Nfts::create_collection(&sender, &owner, &config) {
+				Ok(_) => Ok(()),
+				Err(err) => Err(err),
+			}
 		}
 	}
 }

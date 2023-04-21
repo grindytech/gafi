@@ -7,7 +7,7 @@ use frame_support::{
 	traits::{Currency, Randomness},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID, pallet::players::PlayerJoinedPoolStatistic,
 	pool::system_services::SystemPool,
 };

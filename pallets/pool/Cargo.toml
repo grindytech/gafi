@@ -33,7 +33,7 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Local
-gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 [dev-dependencies]
 sp-core = { workspace = true }
@@ -56,7 +56,7 @@ std = [
   "serde/std",
   "frame-support/std",
   "frame-system/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "sp-std/std",
   "sp-io/std",
   "pallet-timestamp/std",
@@ -70,7 +70,7 @@ std = [
 
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
-  "gafi-primitives/runtime-benchmarks",
+  "gafi-support/runtime-benchmarks",
   "funding-pool/runtime-benchmarks",
 ]
 try-runtime = ["frame-support/try-runtime"]

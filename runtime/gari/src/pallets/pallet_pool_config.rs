@@ -1,6 +1,6 @@
 use crate::{Balances, PalletCachePool, Runtime, FundingPool, StakingPool, UpfrontPool, RuntimeEvent};
 use frame_support::parameter_types;
-use gafi_primitives::{common::constant::ID, pool::ticket::TicketInfo};
+use gafi_support::{common::constant::ID, pool::ticket::TicketInfo};
 
 parameter_types! {
 	pub CleanTime: u128 = 30 * 60_000u128; // 30 minutes;

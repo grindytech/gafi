@@ -19,7 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{pallet_prelude::*, traits::Currency, transactional};
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID,
 	pool::custom_services::CustomPool,
 	pool::pool::{MasterPool, PoolType, Service},
