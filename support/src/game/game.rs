@@ -1,17 +1,13 @@
 use sp_std::vec::Vec;
-use crate::common::types::BlockNumber;
+use crate::common::types::{BlockNumber};
 
 pub trait GameSetting< E, AccountId, GameId> {
 	fn create_game(id: GameId, owner: AccountId, name: Vec<u8>) -> Result<GameId, E>;
 	fn set_swapping_fee(id: GameId, fee: u8, start_block: BlockNumber) -> Result<(), E>;
-	fn freeze_collection_transfer();
-	fn freeze_collection_swap();
-	fn freeze_item_transfer();
-	fn freeze_item_swap();
 }
 
 pub trait GameProvider<E, AccountId, GameId> {
-	fn get_swap_fee() -> Result<u8, E>;
+	fn get_swap_fee(id: GameId) -> Option<(u8, BlockNumber)>;
 	fn is_game_owner(id: GameId, owner: AccountId) -> Result<(), E>;
 }
 
