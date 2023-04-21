@@ -6983,6 +6983,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-support",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

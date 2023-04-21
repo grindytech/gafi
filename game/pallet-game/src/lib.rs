@@ -4,6 +4,7 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
+use sp_core::U256;
 
 #[cfg(test)]
 mod mock;
@@ -14,92 +15,141 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use frame_support::traits::{
+	tokens::nonfungibles_v2::{Create, Mutate, Transfer},
+	Currency, Randomness, ReservableCurrency,
+};
+use frame_system::Config as SystemConfig;
+use gafi_support::{common::constant::ID, game::GameSetting};
+use sp_core::blake2_256;
+use sp_runtime::traits::StaticLookup;
+
+pub type DepositBalanceOf<T, I = ()> =
+	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
+type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
+
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use gafi_support::{game::GameProvider, common::types::BlockNumber};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	pub struct Pallet<T>(_);
+	pub struct Pallet<T, I = ()>(_);
+
+	pub type BalanceOf<T, I = ()> =
+		<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self, I>>
+			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// The currency mechanism, used for paying for reserves.
+		type Currency: ReservableCurrency<Self::AccountId>;
+
+		/// generate random ID
+		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+
+		/// The type used to identify a unique game
+		type GameId: Member + Parameter + MaxEncodedLen + Copy;
+
+		/// Max name length
+		type MaxNameLength: Get<u32>;
+
+		/// Min name length
+		type MinNameLength: Get<u32>;
+
+		/// Max Swapping Fee
+		type MaxSwapFee: Get<u8>;
 	}
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/main-docs/build/runtime-storage/
+	/// Store basic game info
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/main-docs/build/runtime-storage/#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
+	pub(super) type Games<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, (T::AccountId, BoundedVec<u8, T::MaxNameLength>)>;
 
-	// Pallets use events to inform users when important changes are made.
-	// https://docs.substrate.io/main-docs/build/events-errors/
+	#[pallet::storage]
+	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, (u8, BlockNumber)>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored { something: u32, who: T::AccountId },
-	}
+	pub enum Event<T: Config<I>, I: 'static = ()> {}
 
-	// Errors inform users that something went wrong.
 	#[pallet::error]
-	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+	pub enum Error<T, I = ()> {
+		NotGameOwner,
+		GameIdNotFound,
+		NameTooLong,
+		NameTooShort,
+		SwapFeeTooHigh,
 	}
 
-	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::call_index(0)]
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/main-docs/build/origins/
-			let who = ensure_signed(origin)?;
+	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
 
-			// Update storage.
-			<Something<T>>::put(something);
+	impl<T: Config<T>, I: 'static> Pallet<T, I> {
+		pub fn gen_id() -> Result<ID, Error<T>> {
+			let payload = (
+				T::Randomness::random(&b""[..]).0,
+				<frame_system::Pallet<T>>::block_number(),
+			);
+			Ok(payload.using_encoded(blake2_256))
+		}
+	}
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
-			// Return a successful DispatchResultWithPostInfo
+	impl<T: Config<I>, I: 'static> GameSetting<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
+		fn create_game(id: T::GameId, owner: T::AccountId, name: Vec<u8>) -> Result<T::GameId, Error<T>> {
+
+			let bounded_name: BoundedVec<_, _> =
+				name.try_into().map_err(|_| Error::<T>::NameTooLong)?;
+			ensure!(bounded_name.len() >= T::MinNameLength::get() as usize, Error::<T>::NameTooShort);
+
+			Games::<T, I>::insert(id, (owner, bounded_name));
+			Ok(id)
+		}
+
+		fn set_swapping_fee(id: T::GameId, fee: u8, start_block: BlockNumber) -> Result<(), Error<T>> {
+			ensure!(fee <= T::MaxSwapFee::get(), Error::SwapFeeTooHigh);
+			SwapFee::<T, I>::insert(id, (fee, start_block));
 			Ok(())
 		}
 
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::call_index(1)]
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => return Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
+		fn freeze_collection_transfer() {
+			todo!()
+		}
+		fn freeze_collection_swap() {
+			todo!()
+		}
+		fn freeze_item_transfer() {
+			todo!()
+		}
+		fn freeze_item_swap() {
+			todo!()
 		}
 	}
 
+	impl<T: Config<I>, I: 'static> GameProvider<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
+		fn get_swap_fee() -> Result<u8, Error<T>> {
+			todo!()
+		}
+
+		fn is_game_owner(id: T::GameId, owner: T::AccountId) -> Result<(), Error<T>> {
+			if let Some(game) = Games::<T, I>::get(id) {
+				if game.0 == owner {
+					Ok(())
+				} else {
+					Err(Error::<T>::NotGameOwner)
+				}
+			} else {
+				Err(Error::<T>::GameIdNotFound)
+			}
+		}
+	}
 }
