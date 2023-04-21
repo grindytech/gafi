@@ -7,7 +7,7 @@ use frame_support::{
 	weights::Weight,
 	Blake2_128Concat,
 };
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID,
 	pool::system_services::{SystemDefaultServices, SystemService},
 };

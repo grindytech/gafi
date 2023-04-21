@@ -76,7 +76,7 @@ frame-system-benchmarking = {workspace = true, optional = true}
 hex-literal = {version = "0.3.4", optional = true}
 
 # Local Dependencies
-gafi-primitives = {version = "4.0.0-dev", default-features = false, path = "../../primitives"}
+gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
 runtime-common = {package = "runtime-common", path = "../common", default-features = false}
 
 # Local pallets
@@ -170,7 +170,7 @@ std = [
   "upfront-pool/std",
   "staking-pool/std",
   "gafi-tx/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "proof-address-mapping/std",
   "pallet-faucet/std",
   "pallet-pool/std",

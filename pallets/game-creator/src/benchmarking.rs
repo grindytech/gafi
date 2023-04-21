@@ -5,7 +5,7 @@ use crate::{Call, Config};
 use frame_benchmarking::{benchmarks};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::currency::{unit, NativeToken::GAKI};
 use pallet_evm::AddressMapping;
 
 use sp_core::{H160};

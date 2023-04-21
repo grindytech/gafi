@@ -23,7 +23,7 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID,
 	pool::{
 		system_services::{SystemDefaultServices, SystemPool, SystemService},

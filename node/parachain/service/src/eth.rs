@@ -19,7 +19,7 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
 pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 // Local
-use gafi_primitives::common::types::Block;
+use gafi_support::common::types::Block;
 
 use crate::client::{FullBackend, FullClient};
 

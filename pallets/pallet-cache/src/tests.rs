@@ -1,6 +1,6 @@
 use crate::{mock::*, DataFlag, DataLeft, Flag, Pallet};
 use frame_support::{traits::Currency};
-use gafi_primitives::{
+use gafi_support::{
     common::currency::{unit, NativeToken::GAKI},
     pool::ticket::{TicketInfo, TicketType},
     pallet::cache::Cache,

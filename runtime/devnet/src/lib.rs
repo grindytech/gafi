@@ -63,7 +63,7 @@ pub use sp_runtime::BuildStorage;
 use sp_runtime::{generic::Era, SaturatedConversion};
 pub use sp_runtime::{Perbill, Permill};
 
-pub use gafi_primitives::{
+pub use gafi_support::{
 	common::{
 		constant::ID,
 		currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},

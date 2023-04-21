@@ -1,6 +1,6 @@
 use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
-use gafi_primitives::{
+use gafi_support::{
 	common::constant::ID,
 	pool::system_services::SystemPool,
 };

@@ -1,8 +1,8 @@
 use crate::mock::*;
 use frame_support::{assert_ok, assert_noop, assert_err, traits::Currency};
-use gafi_primitives::common::constant::ID;
-use gafi_primitives::pool::ticket::PlayerTicket;
-use gafi_primitives::{
+use gafi_support::common::constant::ID;
+use gafi_support::pool::ticket::PlayerTicket;
+use gafi_support::{
     common::currency::{unit, NativeToken::GAKI},
 };
 use sp_core::H160;

@@ -310,7 +310,6 @@ impl game_nfts::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Nfts =  Nfts;
 	type Currency = Balances;
-	type CollectionId = u32;
 }
 
 
@@ -331,7 +330,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		Nfts: pallet_nfts,
+		Nfts: pallet_nfts::{Pallet, Event<T>},
 		GameNfts: game_nfts,
 	}
 );

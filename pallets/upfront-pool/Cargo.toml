@@ -33,7 +33,7 @@ pallet-balances = {workspace = true}
 pallet-timestamp = {workspace = true}
 
 # Local
-gafi-primitives = {default-features = false, version = "4.0.0-dev", path = "../../primitives"}
+gafi-support = {default-features = false, version = "4.0.0-dev", path = "../../support"}
 gu-convertor = {default-features = false, version = "4.0.0-dev", path = "../../utils/convertor"}
 
 [dev-dependencies]
@@ -58,7 +58,7 @@ std = [
   "frame-system/std",
   "pallet-balances/std",
   "pallet-timestamp/std",
-  "gafi-primitives/std",
+  "gafi-support/std",
   "gu-convertor/std",
   "pallet-player/std"
 ]

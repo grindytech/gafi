@@ -22,7 +22,7 @@ log = "0.4.16"
 serde = {version = "1.0.132", features = ["derive"]}
 
 # Local
-gafi-primitives = {path = "../../../primitives"}
+gafi-support = {path = "../../../support"}
 gari-runtime = {path = "../../../runtime/gari"}
 
 # Frontier

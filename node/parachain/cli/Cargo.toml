@@ -81,7 +81,7 @@ cumulus-relay-chain-rpc-interface = {workspace = true}
 
 # Local
 gafi-chain-spec = {path = "../chain_spec", default-features = false}
-gafi-primitives = {path = "../../../primitives", default-features = false}
+gafi-support = {path = "../../../support", default-features = false}
 gafi-rpc = {path = "../rpc", default-features = false}
 gafi-service = {path = "../service", default-features = false, optional = true}
 

@@ -25,7 +25,7 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-pub use gafi_primitives::{
+pub use gafi_support::{
 	common::constant::ID,
 	pallet::name::Name,
 	pool::{
