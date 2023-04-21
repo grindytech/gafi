@@ -23,6 +23,7 @@ use frame_support::traits::{
 use frame_system::Config as SystemConfig;
 use pallet_nfts::Config as NftsConfig;
 
+use gafi_support::game::GameNfts;
 use sp_runtime::traits::StaticLookup;
 
 pub type DepositBalanceOf<T, I = ()> =
@@ -90,21 +91,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		/// Issue a new collection of non-fungible items from a public origin.
-		///
-		/// This new collection has no items initially and its owner is the origin.
-		///
-		/// The origin must be Signed and the sender must have sufficient funds free.
-		///
-		/// `ItemDeposit` funds of sender are reserved.
-		///
-		/// Parameters:
-		/// - `admin`: The admin of this collection. The admin is the initial address of each
-		/// member of the collection's admin team.
-		///
-		/// Emits `Created` event when successful.
-		///
-		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
 		pub fn create(
@@ -121,4 +107,5 @@ pub mod pallet {
 			}
 		}
 	}
+	
 }

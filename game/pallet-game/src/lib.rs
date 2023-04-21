@@ -12,6 +12,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod features;
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -34,7 +36,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use gafi_support::{common::types::BlockNumber, game::GameProvider};
+	use gafi_support::{common::types::BlockNumber};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -95,59 +97,6 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
 
-	impl<T: Config<T>, I: 'static> Pallet<T, I> {
-		pub fn gen_id() -> Result<ID, Error<T>> {
-			let payload = (
-				T::Randomness::random(&b""[..]).0,
-				<frame_system::Pallet<T>>::block_number(),
-			);
-			Ok(payload.using_encoded(blake2_256))
-		}
-	}
-
-	impl<T: Config<I>, I: 'static> GameSetting<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
-		fn create_game(
-			id: T::GameId,
-			owner: T::AccountId,
-			name: Vec<u8>,
-		) -> Result<T::GameId, Error<T>> {
-			let bounded_name: BoundedVec<_, _> =
-				name.try_into().map_err(|_| Error::<T>::NameTooLong)?;
-			ensure!(
-				bounded_name.len() >= T::MinNameLength::get() as usize,
-				Error::<T>::NameTooShort
-			);
-
-			Games::<T, I>::insert(id, (owner, bounded_name));
-			Ok(id)
-		}
-
-		fn set_swapping_fee(
-			id: T::GameId,
-			fee: u8,
-			start_block: BlockNumber,
-		) -> Result<(), Error<T>> {
-			ensure!(fee <= T::MaxSwapFee::get(), Error::SwapFeeTooHigh);
-			SwapFee::<T, I>::insert(id, (fee, start_block));
-			Ok(())
-		}
-	}
-
-	impl<T: Config<I>, I: 'static> GameProvider<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
-		fn get_swap_fee(id: T::GameId) -> Option<(u8, BlockNumber)> {
-			SwapFee::<T, I>::get(id)
-		}
-
-		fn is_game_owner(id: T::GameId, owner: T::AccountId) -> Result<(), Error<T>> {
-			if let Some(game) = Games::<T, I>::get(id) {
-				if game.0 == owner {
-					Ok(())
-				} else {
-					Err(Error::<T>::NotGameOwner)
-				}
-			} else {
-				Err(Error::<T>::GameIdNotFound)
-			}
-		}
-	}
+	
+	
 }
