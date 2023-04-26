@@ -1,10 +1,11 @@
-use crate as pallet_template;
-use frame_support::traits::{ConstU16, ConstU64};
+use crate as pallet_game;
+use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
 use frame_system as system;
-use sp_core::H256;
+use pallet_nfts::PalletFeatures;
+use sp_core::{H256, ConstU128, ConstU32};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup}, Percent,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -18,9 +19,13 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		TemplateModule: pallet_template,
+		PalletGame: pallet_game,
+		Balances: pallet_balances,
+		Nfts: pallet_nfts,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
+
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -40,7 +45,7 @@ impl system::Config for Test {
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -49,8 +54,76 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_template::Config for Test {
+pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
+
+parameter_types! {
+	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
+}
+
+impl pallet_balances::Config for Test {
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type Balance = u128;
 	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+}
+
+impl pallet_randomness_collective_flip::Config for Test {}
+
+parameter_types! {
+	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
+}
+
+impl pallet_nfts::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
+	type ForceOrigin = frame_system::EnsureRoot<u64>;
+	type Locker = ();
+	type CollectionDeposit = ConstU128<2>;
+	type ItemDeposit = ConstU128<1>;
+	type MetadataDepositBase = ConstU128<1>;
+	type AttributeDepositBase = ConstU128<1>;
+	type DepositPerByte = ConstU128<1>;
+	type StringLimit = ConstU32<50>;
+	type KeyLimit = ConstU32<50>;
+	type ValueLimit = ConstU32<50>;
+	type ApprovalsLimit = ConstU32<10>;
+	type ItemAttributesApprovalsLimit = ConstU32<2>;
+	type MaxTips = ConstU32<10>;
+	type MaxDeadlineDuration = ConstU64<10000>;
+	type Features = Features;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub MaxNameLength: u32 = 64;
+	pub MinNameLength: u32 = 12;
+	pub MaxSwapFee: Percent = Percent::from_percent(30);
+}
+
+impl pallet_game::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+
+	type Currency = Balances;
+
+	type Nfts = Nfts;
+
+	type Randomness = RandomnessCollectiveFlip;
+
+	type GameId = u32;
+
+	type MaxNameLength = MaxNameLength;
+
+	type MinNameLength =  MinNameLength;
+
+	type MaxSwapFee = MaxSwapFee;
 }
 
 // Build genesis storage according to the mock runtime.

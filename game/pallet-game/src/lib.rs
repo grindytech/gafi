@@ -6,11 +6,11 @@
 pub use pallet::*;
 use sp_core::U256;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 mod features;
 pub use pallet::*;
@@ -24,9 +24,9 @@ use frame_support::traits::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::{common::constant::ID, game::GameSetting};
+use pallet_nfts::{CollectionConfig, ItemConfig};
 use sp_core::blake2_256;
-use sp_runtime::traits::StaticLookup;
-use pallet_nfts::{ItemConfig, CollectionConfig};
+use sp_runtime::{traits::StaticLookup, Percent};
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -38,7 +38,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::*;
-	use gafi_support::{common::types::BlockNumber};
+	use gafi_support::common::types::BlockNumber;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -78,7 +78,7 @@ pub mod pallet {
 		type MinNameLength: Get<u32>;
 
 		/// Max Swapping Fee
-		type MaxSwapFee: Get<u8>;
+		type MaxSwapFee: Get<Percent>;
 	}
 
 	/// Store basic game info
@@ -93,7 +93,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
-
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -111,7 +110,4 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
-
-	
-	
 }
