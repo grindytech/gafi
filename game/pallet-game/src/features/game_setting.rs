@@ -12,6 +12,8 @@ impl<T: Config<I>, I: 'static> GameSetting<T::GameId> for Pallet<T, I> {
         name: Vec<u8>,
     ) -> DispatchResult {
 
+        
+
         Ok(())
     }
 

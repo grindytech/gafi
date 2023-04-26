@@ -39,6 +39,7 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::*;
 	use gafi_support::common::types::BlockNumber;
+use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -93,6 +94,17 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
+
+	#[pallet::storage]
+	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::GameId,
+		Blake2_128Concat,
+		T::AccountId,
+		CollectionRoles,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]

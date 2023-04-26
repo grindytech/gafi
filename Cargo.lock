@@ -6963,6 +6963,7 @@ dependencies = [
 name = "pallet-game"
 version = "4.0.0-dev"
 dependencies = [
+ "enumflags2",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

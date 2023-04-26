@@ -1,6 +1,7 @@
 use crate as pallet_game;
 use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
 use frame_system as system;
+use gafi_support::common::types::AccountId;
 use pallet_nfts::PalletFeatures;
 use sp_core::{H256, ConstU128, ConstU32};
 use sp_runtime::{
@@ -38,7 +39,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
@@ -83,8 +84,8 @@ impl pallet_nfts::Config for Test {
 	type CollectionId = u32;
 	type ItemId = u32;
 	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
-	type ForceOrigin = frame_system::EnsureRoot<u64>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ConstU128<2>;
 	type ItemDeposit = ConstU128<1>;
