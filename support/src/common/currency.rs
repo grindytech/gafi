@@ -4,6 +4,8 @@ use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_std::prelude::*;
 
+use super::types::Balance;
+
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Clone, Default, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
 pub struct Token {
@@ -22,8 +24,6 @@ pub enum NativeToken {
 	GAFI,
 	GAKI,
 }
-
-pub type Balance = u128;
 
 pub struct GafiCurrency {}
 

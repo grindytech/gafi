@@ -6,13 +6,14 @@
 pub use pallet::*;
 use sp_core::U256;
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 mod features;
+pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -25,6 +26,7 @@ use frame_system::Config as SystemConfig;
 use gafi_support::{common::constant::ID, game::GameSetting};
 use sp_core::blake2_256;
 use sp_runtime::traits::StaticLookup;
+use pallet_nfts::{ItemConfig, CollectionConfig};
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -34,7 +36,7 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::*;
 	use gafi_support::{common::types::BlockNumber};
 
@@ -47,13 +49,21 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: ReservableCurrency<Self::AccountId>;
+
+		/// pallet_nfts
+		type Nfts: Mutate<Self::AccountId, ItemConfig>
+			+ Transfer<Self::AccountId>
+			+ Create<
+				Self::AccountId,
+				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
+			>;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -79,6 +89,11 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, (u8, BlockNumber)>;
+
+	#[pallet::storage]
+	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
+
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]

@@ -49,7 +49,6 @@ frame-benchmarking = {workspace = true, default-features = false, optional = tru
 frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
 
 # Local Dependencies
-game-nfts = {version = "4.0.0-dev", default-features = false, path = "../../game/game-nfts"}
 
 [build-dependencies]
 substrate-wasm-builder = {workspace = true, optional = true}

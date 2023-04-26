@@ -1,21 +1,182 @@
+use crate::common::types::{AccountId, Balance, BlockNumber};
+use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
+use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
-use crate::common::types::{BlockNumber};
 
-pub trait GameSetting< E, AccountId, GameId> {
-	fn create_game(id: GameId, owner: AccountId, admin: Option<AccountId>, name: Vec<u8>) -> Result<GameId, E>;
-	fn set_swapping_fee(id: GameId, fee: u8, start_block: BlockNumber) -> Result<(), E>;
+pub type Amount = u32;
+pub type Level = u8;
+pub type Metadata<S> = BoundedVec<u8, S>;
+
+pub trait GameSetting<GameId> {
+	/// Create a new game
+	///
+	/// game control collection in the game
+	///
+	/// Parameters:
+	/// - `id`: new game id
+	/// - `owner`: owner
+	/// - `admin`: admin
+	/// - `name`: name
+	///
+	/// Weight: `O(1)`
+	fn create_game(
+		game_id: GameId,
+		owner: AccountId,
+		admin: Option<AccountId>,
+		name: Vec<u8>,
+	) -> DispatchResult;
+
+	/// Set swap fee
+	///
+	/// Set swap fee in whole game
+	///
+	/// Parameters:
+	/// - `id`: game id
+	/// - `owner`: owner
+	/// - `fee`: percent of swapping volume
+	/// - `start_block`: block apply swap fee
+	fn set_swap_fee(
+		game_id: GameId,
+		owner: AccountId,
+		fee: Percent,
+		start_block: BlockNumber,
+	) -> DispatchResult;
 }
 
-pub trait GameNfts<E, AccountId, GameId, CollectionId, ItemId, Attribute, Balance> {
-	fn create_game_collection(game_id: GameId, collection_id: CollectionId) -> Result<CollectionId, E>;
-	fn create_collection(collection_id: CollectionId, admin: AccountId) -> Result<CollectionId, E>;
-	fn create_item(collection_id: CollectionId, item_id: ItemId)-> Result<ItemId, E>;
-	fn add_item(collection_id: CollectionId, item_id: ItemId, amount: u32) -> Result<ItemId, E>;
-	fn mint(collection_id: CollectionId) -> Result<ItemId, E>;
-	fn set_upgrade(item_id: ItemId,  attribute: Attribute, level: u8, fee: Balance) -> Result<(), E>;
-	fn upgrade(item_id: ItemId)-> Result<(), E>;
-	
-	fn transfer(target: AccountId, item_id: ItemId, amount: u32) -> Result<(), E>;
-	fn burn();
-	fn swap();
+pub trait Create<GameId, CollectionId, ItemId> {
+	/// Create game collection
+	///
+	/// Create collection for specific game
+	///
+	/// Parameters:
+	/// - `game_id`: game id
+	/// - `collection_id`: collection id
+	/// - `owner`: owner
+	/// - `admin`: admin
+	fn create_game_collection(
+		game_id: GameId,
+		collection_id: CollectionId,
+		owner: AccountId,
+		admin: AccountId,
+	) -> DispatchResult;
+
+	/// Create collection
+	///
+	/// Create a pure collection
+	///
+	/// Parameters:
+	/// - `collection_id`: collection id
+	/// - `owner`: owner
+	/// - `admin`: admin
+	fn create_collection(
+		collection_id: CollectionId,
+		owner: AccountId,
+		admin: AccountId,
+	) -> DispatchResult;
+
+	/// Create item
+	///
+	/// Create items for collection
+	///
+	/// Parameters:
+	/// - `collection_id`: collection id
+	/// - `item_id`: item id
+	/// - `amount`: amount
+	fn create_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+
+	/// Add item
+	///
+	/// Add number amount of item in collection
+	///
+	/// Parameters:
+	/// - `collection_id`: collection id
+	/// - `item_id`: item id
+	/// - `amount`: amount
+	fn add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+}
+
+pub trait Mutable<GameId, CollectionId, ItemId> {
+	/// Mint
+	///
+	/// Random mint item in the collection
+	///
+	/// Parameters:
+	/// - `_who`: sender
+	/// - `_collection_id`: collection id
+	/// - `_maybe_target`: recipient account, default `minter`
+	/// - `_maybe_amount`: amount of items to mint, default `1`
+	///
+	/// By default, this is not a supported operation.
+	fn mint(
+		_who: AccountId,
+		_collection_id: CollectionId,
+		_maybe_target: Option<AccountId>,
+		_maybe_amount: Option<Amount>,
+	) -> DispatchResult {
+		Err(TokenError::Unsupported.into())
+	}
+
+	/// Burn
+	///
+	/// Burn item
+	///
+	/// Parameters:
+	/// - `who`: item owner
+	/// - `collection_id`: collection id
+	/// - `item_id`: item id
+	/// - `maybe_amount`: amount of items to burn, default `1`
+	fn burn(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		maybe_amount: Option<Amount>,
+	) -> DispatchResult;
+}
+
+pub trait Upgrade<CollectionId, ItemId, StringLimit> {
+	/// Set Upgrade
+	///
+	/// Set upgrade item                          
+	///
+	/// Parameters:
+	/// - `who`: item owner
+	/// - `collection_id`: collection id
+	/// - `item_id`: item id
+	/// - `data`: metadata
+	/// - `level`: upgrade level
+	/// - `fee`: upgrade fee
+	fn set_upgrade(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		data: Metadata<StringLimit>,
+		level: Level,
+		fee: Balance,
+	) -> DispatchResult;
+
+	/// Upgrade
+	///
+	/// Upgrade item to the next level
+	///
+	/// Parameters:
+	/// - `who`: who
+	/// - `collection_id`: collection id
+	/// - `item_id`: item id
+	/// - `maybe_amount`: amount of items
+	fn upgrade(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		maybe_amount: Option<Amount>,
+	) -> DispatchResult;
+}
+
+pub trait Transfer {
+	fn transfer() -> DispatchResult;
+
+	fn swap() -> DispatchResult;
+}
+
+pub trait Destroy<E> {
+	fn destroy() -> Result<(), E>;
 }
