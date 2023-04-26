@@ -3,7 +3,7 @@ use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{constant::ID,
 	currency::{unit, NativeToken::GAKI}},
-	pool::custom_services::CustomPool,
+	pool::CustomPool,
 };
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};

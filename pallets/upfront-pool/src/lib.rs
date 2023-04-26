@@ -29,7 +29,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_support::{
-	common::constant::ID,
+	common::ID,
 	pool::{
 		pool::MasterPool,
 		system_services::{SystemDefaultServices, SystemPool, SystemService},

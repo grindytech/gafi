@@ -26,7 +26,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use gafi_support::{
-	common::constant::ID,
+	common::ID,
 	pallet::name::Name,
 	pool::{
 		custom_services::{CustomPool, CustomService},

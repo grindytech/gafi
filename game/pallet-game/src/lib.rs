@@ -23,7 +23,7 @@ use frame_support::traits::{
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::{common::constant::ID, game::GameSetting};
+use gafi_support::{common::ID, game::GameSetting};
 use pallet_nfts::{CollectionConfig, ItemConfig};
 use sp_core::blake2_256;
 use sp_runtime::{traits::StaticLookup, Percent};
@@ -38,7 +38,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::*;
-	use gafi_support::common::types::BlockNumber;
+	use gafi_support::common::BlockNumber;
 use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]

@@ -1,7 +1,7 @@
 use crate as pallet_game;
 use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
 use frame_system as system;
-use gafi_support::common::types::AccountId;
+use gafi_support::common::AccountId;
 use pallet_nfts::PalletFeatures;
 use sp_core::{H256, ConstU128, ConstU32};
 use sp_runtime::{

@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
-use gafi_support::{common::types::{BlockNumber, AccountId}, game::{Create, Amount}};
+use gafi_support::{common::{BlockNumber, AccountId}, game::{Create, Amount}};
 use pallet_nfts::CollectionConfig;
 
 impl<T: Config<I>, I: 'static> Create<T::GameId, T::CollectionId, T::ItemId>

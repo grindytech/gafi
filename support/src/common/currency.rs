@@ -54,7 +54,7 @@ impl TokenInfo for GafiCurrency {
 /// # Examples
 ///
 /// ```
-/// use gafi_support::common::currency::{NativeToken::GAKI, unit};
+/// use gafi_support::common::{NativeToken::GAKI, unit};
 ///
 /// let balance = 10 * unit(GAKI);
 /// assert_eq!(balance, 10_000_000_000_000_000_000);

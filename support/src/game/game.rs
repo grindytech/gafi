@@ -1,4 +1,4 @@
-use crate::common::types::{AccountId, Balance, BlockNumber};
+use crate::common::{AccountId, Balance, BlockNumber};
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;

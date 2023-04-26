@@ -1,9 +1,9 @@
 use crate::mock::*;
 use frame_support::{assert_ok, assert_noop, assert_err, traits::Currency};
-use gafi_support::common::constant::ID;
-use gafi_support::pool::ticket::PlayerTicket;
+use gafi_support::common::ID;
+use gafi_support::pool::PlayerTicket;
 use gafi_support::{
-    common::currency::{unit, NativeToken::GAKI},
+    common::{unit, NativeToken::GAKI},
 };
 use sp_core::H160;
 use sp_runtime::{AccountId32, Permill};

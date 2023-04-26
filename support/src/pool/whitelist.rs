@@ -1,4 +1,4 @@
-use crate::common::constant::ID;
+use crate::common::ID;
 
 
 pub trait WhitelistPool<AccountId> {

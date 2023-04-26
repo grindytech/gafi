@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
-use gafi_support::common::types::{BlockNumber, AccountId};
+use gafi_support::common::{BlockNumber, AccountId};
 use sp_runtime::Percent;
 
 

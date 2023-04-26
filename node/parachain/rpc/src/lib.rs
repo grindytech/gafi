@@ -7,7 +7,7 @@
 
 use std::{sync::Arc};
 
-use gafi_support::common::types::{AccountId, Balance, Block};
+use gafi_support::common::{AccountId, Balance, Block};
 
 use gari_runtime::types::Index;
 use sc_client_api::{
