@@ -5,7 +5,7 @@ use crate::Pallet as GafiMembership;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use gafi_primitives::{constant::ID, system_services::SystemPool};
+use gafi_support::{constant::ID, system_services::SystemPool};
 
 pub const UPFRONT_BASIC_ID: ID = [10_u8; 32];
 

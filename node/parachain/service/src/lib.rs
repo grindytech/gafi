@@ -7,7 +7,7 @@ use cumulus_client_cli::CollatorOptions;
 use eth::{new_frontier_partial, FrontierPartialComponents};
 use fc_consensus::FrontierBlockImport;
 // Local Runtime Types
-use gafi_primitives::common::types::{Block, Hash};
+use gafi_support::common::{Block, Hash};
 pub use gari_runtime;
 use gari_runtime::{RuntimeApi, TransactionConverter};
 

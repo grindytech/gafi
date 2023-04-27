@@ -4,9 +4,9 @@
  */
 use crate::{mock::*, PlayerCount, Tickets};
 use frame_support::{assert_ok, traits::Currency};
-use gafi_primitives::{
-	common::currency::{unit, NativeToken::GAKI},
-	pool::system_services::SystemPool,
+use gafi_support::{
+	common::{unit, NativeToken::GAKI},
+	pool::SystemPool,
 };
 use sp_runtime::AccountId32;
 use sp_std::str::FromStr;

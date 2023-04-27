@@ -19,13 +19,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{pallet_prelude::*, traits::Currency, transactional};
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
-	common::constant::ID,
-	pool::custom_services::CustomPool,
-	pool::pool::{MasterPool, PoolType, Service},
-	pool::system_services::SystemPool,
-	pool::ticket::{PlayerTicket, TicketInfo, TicketType},
-	pool::whitelist::WhitelistPool,
+use gafi_support::{
+	common::ID,
+	pool::CustomPool,
+	pool::{MasterPool, PoolType, Service},
+	pool::SystemPool,
+	pool::{PlayerTicket, TicketInfo, TicketType},
+	pool::WhitelistPool,
 	pallet::cache::Cache,
 };
 use pallet_timestamp::{self as timestamp};

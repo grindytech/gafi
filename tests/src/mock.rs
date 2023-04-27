@@ -5,10 +5,10 @@ use frame_support::{
 	weights::{IdentityFee, Weight}, ord_parameter_types,
 };
 use frame_system as system;
-use gafi_primitives::{
+use gafi_support::{
 	common::{constant::ID,
 	currency::{unit, NativeToken::GAKI}},
-	pool::ticket::TicketInfo,
+	pool::TicketInfo,
 };
 pub use gu_mock::{pool::*, one_mil_gaki};
 pub use pallet_balances::Call as BalancesCall;

@@ -95,7 +95,7 @@ cumulus-relay-chain-rpc-interface = {workspace = true}
 gari-runtime = {path = "../../../runtime/gari", optional = true}
 
 # Local
-gafi-primitives = {path = "../../../primitives", default-features = false}
+gafi-support = {path = "../../../support", default-features = false}
 gafi-rpc = {path = "../rpc", default-features = false}
 
 [build-dependencies]

@@ -1,6 +1,6 @@
 use codec::{Decode, Encode};
 use frame_support::parameter_types;
-pub use gafi_primitives::{
+pub use gafi_support::{
 	common::{
 		constant::ID,
 		currency::{centi, deposit, microcent, milli, unit, NativeToken::GAKI},

@@ -1,9 +1,9 @@
-use gafi_primitives::{
+use gafi_support::{
 	common::{
 		constant::ID,
 		currency::{unit, NativeToken::GAFI},
 	},
-	pool::system_services::{SystemDefaultServices, SystemService, SystemServicePack},
+	pool::{SystemDefaultServices, SystemService, SystemServicePack},
 };
 use sp_runtime::Permill;
 

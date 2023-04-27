@@ -7,9 +7,9 @@ use frame_support::{
 	weights::Weight,
 	Blake2_128Concat,
 };
-use gafi_primitives::{
-	common::constant::ID,
-	pool::system_services::{SystemDefaultServices, SystemService},
+use gafi_support::{
+	common::ID,
+	pool::{SystemDefaultServices, SystemService},
 };
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::format;

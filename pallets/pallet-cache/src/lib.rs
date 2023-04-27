@@ -181,7 +181,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config<I>,  I: 'static> gafi_primitives::pallet::cache::Cache<T::AccountId,T::Action,T::Data> for Pallet<T, I> {
+	impl<T: Config<I>,  I: 'static> gafi_support::pallet::cache::Cache<T::AccountId,T::Action,T::Data> for Pallet<T, I> {
 
 		/// Store data to cache by AccountId and action name
 		///

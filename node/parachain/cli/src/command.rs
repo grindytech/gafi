@@ -4,7 +4,7 @@ use codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use gafi_primitives::common::types::Block;
+use gafi_support::common::Block;
 use gafi_service::{eth::EthConfiguration, new_partial, ParachainNativeExecutor};
 use log::{info, warn};
 use sc_cli::{

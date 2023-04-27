@@ -14,12 +14,12 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
-use gafi_primitives::{
+use gafi_support::{
 	common::{
 		constant::ID,
 		currency::{unit, NativeToken::GAKI},
 	},
-	pool::ticket::TicketInfo,
+	pool::TicketInfo,
 };
 pub use pallet_balances::Call as BalancesCall;
 

@@ -1,6 +1,6 @@
 use frame_support::{parameter_types};
 use frame_system::EnsureRoot;
-use gafi_primitives::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::{unit, NativeToken::GAKI};
 use sp_runtime::{AccountId32, Permill};
 
 use crate::{Balances, PalletWhitelist, RandomnessCollectiveFlip, Runtime, RuntimeEvent, Treasury};

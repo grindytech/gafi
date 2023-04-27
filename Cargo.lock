@@ -2099,7 +2099,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "funding-pool",
- "gafi-primitives",
+ "gafi-support",
  "gafi-tx",
  "game-creator",
  "hex-literal 0.3.4",
@@ -3273,7 +3273,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "gu-convertor",
  "gu-currency",
  "pallet-balances",
@@ -3456,7 +3456,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures",
- "gafi-primitives",
+ "gafi-support",
  "gari-runtime",
  "hex-literal 0.3.4",
  "jsonrpc-core",
@@ -3532,9 +3532,9 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "gafi-chain-spec",
- "gafi-primitives",
  "gafi-rpc",
  "gafi-service",
+ "gafi-support",
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "log",
@@ -3599,20 +3599,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gafi-primitives"
-version = "4.0.0-dev"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "gafi-rpc"
 version = "0.1.0"
 dependencies = [
@@ -3623,7 +3609,7 @@ dependencies = [
  "fp-rpc",
  "fp-storage",
  "futures",
- "gafi-primitives",
+ "gafi-support",
  "gari-runtime",
  "jsonrpsee 0.16.2",
  "log",
@@ -3678,8 +3664,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures",
- "gafi-primitives",
  "gafi-rpc",
+ "gafi-support",
  "gari-runtime",
  "hex-literal 0.3.4",
  "jsonrpc-core",
@@ -3732,13 +3718,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "gafi-support"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "gafi-tx"
 version = "4.0.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "game-creator",
  "gu-convertor",
  "gu-mock",
@@ -3768,7 +3768,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "gu-mock",
  "pallet-balances",
  "pallet-ethereum",
@@ -3781,22 +3781,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "game-nfts"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-nfts",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -3854,7 +3838,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "game-nfts",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
@@ -3903,7 +3886,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "funding-pool",
- "gafi-primitives",
+ "gafi-support",
  "gafi-tx",
  "game-creator",
  "hex-literal 0.3.4",
@@ -4088,7 +4071,7 @@ name = "gu-convertor"
 version = "4.0.0-dev"
 dependencies = [
  "frame-support",
- "gafi-primitives",
+ "gafi-support",
  "hex-literal 0.2.2",
  "pallet-balances",
  "parity-scale-codec",
@@ -4161,7 +4144,7 @@ dependencies = [
 name = "gu-mock"
 version = "4.0.0-dev"
 dependencies = [
- "gafi-primitives",
+ "gafi-support",
  "hex-literal 0.2.2",
  "parity-scale-codec",
  "parity-secp256k1",
@@ -6688,7 +6671,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -6964,7 +6947,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "pallet-balances",
  "pallet-cache",
  "pallet-timestamp",
@@ -6980,9 +6963,14 @@ dependencies = [
 name = "pallet-game"
 version = "4.0.0-dev"
 dependencies = [
+ "enumflags2",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "gafi-support",
+ "pallet-balances",
+ "pallet-nfts",
+ "pallet-randomness-collective-flip",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -7273,7 +7261,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "gu-mock",
  "pallet-balances",
  "pallet-randomness-collective-flip",
@@ -7306,7 +7294,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "funding-pool",
- "gafi-primitives",
+ "gafi-support",
  "gu-mock",
  "log",
  "pallet-balances",
@@ -7716,7 +7704,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "funding-pool",
- "gafi-primitives",
+ "gafi-support",
  "lite-json",
  "log",
  "pallet-balances",
@@ -11785,7 +11773,7 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "futures",
- "gafi-primitives",
+ "gafi-support",
  "hex-literal 0.3.4",
  "jsonrpc-core",
  "jsonrpc-pubsub",
@@ -12591,7 +12579,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "gu-convertor",
  "gu-mock",
  "log",
@@ -12935,7 +12923,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "funding-pool",
- "gafi-primitives",
+ "gafi-support",
  "gafi-tx",
  "game-creator",
  "gu-ethereum",
@@ -13656,7 +13644,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "gafi-primitives",
+ "gafi-support",
  "gu-convertor",
  "gu-mock",
  "log",

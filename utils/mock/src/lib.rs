@@ -1,5 +1,5 @@
 pub mod pool;
-use gafi_primitives::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::{unit, NativeToken::GAKI};
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;

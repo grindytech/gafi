@@ -23,10 +23,10 @@ use frame_support::{
 	traits::{Currency, ReservableCurrency},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
-	common::constant::ID,
-	pool::custom_services::CustomPool,
-	pool::whitelist::{IWhitelist, WhitelistPool},
+use gafi_support::{
+	common::ID,
+	pool::CustomPool,
+	pool::{IWhitelist, WhitelistPool},
 };
 
 pub use pallet::*;

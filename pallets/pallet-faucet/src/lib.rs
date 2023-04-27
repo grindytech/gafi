@@ -4,7 +4,7 @@ use frame_support::traits::{Currency, ExistenceRequirement};
 pub use pallet::*;
 pub use crate::weights::WeightInfo;
 use sp_std::vec;
-use gafi_primitives::pallet::cache::Cache;
+use gafi_support::pallet::cache::Cache;
 
 #[cfg(test)]
 mod mock;

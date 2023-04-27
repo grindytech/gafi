@@ -1,8 +1,8 @@
 use crate::{mock::*, DataFlag, DataLeft, Flag, Pallet};
 use frame_support::{traits::Currency};
-use gafi_primitives::{
-    common::currency::{unit, NativeToken::GAKI},
-    pool::ticket::{TicketInfo, TicketType},
+use gafi_support::{
+    common::{unit, NativeToken::GAKI},
+    pool::{TicketInfo, TicketType},
     pallet::cache::Cache,
 };
 use sp_runtime::AccountId32;

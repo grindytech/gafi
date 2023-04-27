@@ -7,9 +7,9 @@ use frame_support::{
 	traits::{Currency, Randomness},
 };
 use frame_system::pallet_prelude::*;
-use gafi_primitives::{
-	common::constant::ID, pallet::players::PlayerJoinedPoolStatistic,
-	pool::system_services::SystemPool,
+use gafi_support::{
+	common::ID, pallet::players::PlayerJoinedPoolStatistic,
+	pool::SystemPool,
 };
 use pallet_timestamp::{self as timestamp};
 use sp_io::hashing::blake2_256;

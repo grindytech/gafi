@@ -27,7 +27,7 @@ pallet-timestamp = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Local
-gafi-primitives = { version = "4.0.0-dev", default-features = false, path = "../../primitives" }
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 [dev-dependencies]
 pallet-randomness-collective-flip = {workspace = true}

@@ -2,7 +2,7 @@ use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use frame_support::{pallet_prelude::*, RuntimeDebug};
-use gafi_primitives::common::constant::ID;
+use gafi_support::common::ID;
 use scale_info::TypeInfo;
 
 use crate::pallet::NAME;

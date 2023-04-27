@@ -1,11 +1,11 @@
 use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
-use gafi_primitives::{
-    pool::ticket::PlayerTicket,
+use gafi_support::{
+    pool::PlayerTicket,
 };
 use gafi_tx::Config;
 use sp_runtime::AccountId32;
-use gafi_primitives::common::constant::ID;
+use gafi_support::common::ID;
 
 const TICKETS: [ID; 6] = [
     UPFRONT_BASIC_ID,

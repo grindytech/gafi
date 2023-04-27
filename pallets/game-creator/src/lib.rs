@@ -241,7 +241,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> gafi_primitives::pool::game_creator::GetGameCreator<T::AccountId> for Pallet<T> {
+	impl<T: Config> gafi_support::pool::game_creator::GetGameCreator<T::AccountId> for Pallet<T> {
 		fn get_game_creator(contract: &H160) -> Option<T::AccountId> {
 			match ContractOwner::<T>::get(contract) {
 				Some(contract) => Some(contract.0),

@@ -83,7 +83,7 @@ fp-storage = {workspace = true, features = ["std"]}
 
 # Local Dependencies
 devnet = {path = "../../runtime/devnet", default-features = false, features = ["std"]}
-gafi-primitives = {path = "../../primitives", default-features = false}
+gafi-support = {path = "../../support", default-features = false}
 
 [build-dependencies]
 substrate-build-script-utils = {workspace = true}

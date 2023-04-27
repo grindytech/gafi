@@ -72,7 +72,7 @@ use types::{
 };
 
 // Primitives
-use gafi_primitives::common::currency::{centi, unit, NativeToken::GAFI, deposit};
+use gafi_support::common::{centi, unit, NativeToken::GAFI, deposit};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
