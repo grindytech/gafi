@@ -1,6 +1,6 @@
 use crate::{mock::*, types::GameDetails, Error, Event, *};
 use features::id;
-use frame_support::{assert_noop, assert_ok, traits::Currency};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
 	game::Support,
@@ -50,4 +50,60 @@ fn create_first_game_should_works() {
 			)
 		);
 	});
+}
+
+#[test]
+fn set_swap_fee_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let before_balance = 3 * unit(GAKI);
+		let fee = Percent::from_parts(30);
+		let start_block = 100;
+
+		let owner = new_account([0; 32], before_balance);
+		let admin = new_account([1; 32], 3 * unit(GAKI));
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone())
+		));
+
+		assert_ok!(PalletGame::set_swap_fee(
+			RuntimeOrigin::signed(admin),
+			0,
+			fee,
+			start_block
+		));
+		assert_eq!(SwapFee::<Test>::get(0).unwrap(), (fee, start_block));
+	})
+}
+
+#[test]
+fn set_swap_fee_should_fails() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let before_balance = 3 * unit(GAKI);
+		let fee = Percent::from_parts(30);
+		let start_block = 100;
+
+		let owner = new_account([0; 32], before_balance);
+		let admin = new_account([1; 32], 3 * unit(GAKI));
+		let not_admin = new_account([2; 32], 3 * unit(GAKI));
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone())
+		));
+
+		assert_err!(
+			PalletGame::set_swap_fee(RuntimeOrigin::signed(not_admin), 0, fee, start_block),
+			<Error<Test>>::NoPermission
+		);
+
+		let invalid_fee = Percent::from_parts(31);
+		assert_err!(
+			PalletGame::set_swap_fee(RuntimeOrigin::signed(admin), 0, invalid_fee, start_block),
+			<Error<Test>>::SwapFeeTooHigh
+		);
+
+	})
 }

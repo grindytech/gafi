@@ -34,17 +34,14 @@ pub type DepositBalanceOf<T, I = ()> =
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
-pub type GameDetailsFor<T, I> = GameDetails<
-	<T as SystemConfig>::AccountId,
-	DepositBalanceOf<T, I>,
->;
+pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::common::BlockNumber;
+	use gafi_support::{common::BlockNumber, game};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -97,12 +94,8 @@ pub mod pallet {
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::GameId,
-		GameDetailsFor<T, I>,
-	>;
+	pub(super) type Games<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
@@ -110,7 +103,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (u8, BlockNumber)>;
+		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber)>;
 
 	#[pallet::storage]
 	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
@@ -130,7 +123,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		GameCreated {id: T::GameId},
+		GameCreated { id: T::GameId },
+		SwapFeeSetted { id: T::GameId, fee: Percent }
 	}
 
 	#[pallet::error]
@@ -141,20 +135,31 @@ pub mod pallet {
 		NameTooShort,
 		SwapFeeTooHigh,
 		SwapFeeNotFound,
+		NoPermission,
 	}
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn create_game(
-			origin: OriginFor<T>,
-			admin: Option<T::AccountId>,
-		) -> DispatchResult {
+		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(game_id, sender, admin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(0)]
+		pub fn set_swap_fee(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			fee: Percent,
+			start_block: BlockNumber,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_set_swap_fee(game_id, sender, fee, start_block)?;
 			Ok(())
 		}
 	}
