@@ -13,6 +13,7 @@ mod mock;
 mod tests;
 
 mod features;
+mod types;
 pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -24,8 +25,7 @@ use frame_support::traits::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::{common::ID, game::GameSetting};
-use pallet_nfts::{CollectionConfig, ItemConfig};
-use sp_core::blake2_256;
+use pallet_nfts::{CollectionConfig, ItemConfig, Incrementable};
 use sp_runtime::{traits::StaticLookup, Percent};
 
 pub type DepositBalanceOf<T, I = ()> =
@@ -37,9 +37,10 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
-	use frame_system::pallet_prelude::*;
+	use frame_system::pallet_prelude::{*, OriginFor};
 	use gafi_support::common::BlockNumber;
-use pallet_nfts::CollectionRoles;
+	use pallet_nfts::CollectionRoles;
+use types::GameDetails;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -70,7 +71,7 @@ use pallet_nfts::CollectionRoles;
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
 		/// The type used to identify a unique game
-		type GameId: Member + Parameter + MaxEncodedLen + Copy;
+		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// Max name length
 		type MaxNameLength: Get<u32>;
@@ -85,7 +86,11 @@ use pallet_nfts::CollectionRoles;
 	/// Store basic game info
 	#[pallet::storage]
 	pub(super) type Games<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (T::AccountId, BoundedVec<u8, T::MaxNameLength>)>;
+		StorageMap<_, Twox64Concat, T::GameId, GameDetails<T::AccountId, DepositBalanceOf<T, I>, T::MaxNameLength>>;
+
+	#[pallet::storage]
+	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::GameId, OptionQuery>;
 
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
@@ -121,5 +126,16 @@ use pallet_nfts::CollectionRoles;
 	}
 
 	#[pallet::call]
-	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
+	impl<T: Config<I>, I: 'static> Pallet<T, I> {
+		
+		#[pallet::call_index(1)]
+		#[pallet::weight(0)]
+		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>, name: Option<Vec<u8>>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+			Self::do_create_game(game_id, sender, admin, name)?;
+			Ok(())
+		}
+	}
 }

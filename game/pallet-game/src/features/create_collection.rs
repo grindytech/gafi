@@ -1,24 +1,23 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
-use gafi_support::{common::{BlockNumber, AccountId}, game::{Create, Amount}};
-use pallet_nfts::CollectionConfig;
+use gafi_support::{game::{Create, Amount}};
 
-impl<T: Config<I>, I: 'static> Create<T::GameId, T::CollectionId, T::ItemId>
+impl<T: Config<I>, I: 'static> Create<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
 	for Pallet<T, I>
 {
 	fn create_game_collection(
 		game_id: T::GameId,
 		collection_id: T::CollectionId,
-		owner: AccountId,
-		admin: AccountId,
+		owner: T::AccountId,
+		admin: T::AccountId,
 	) -> DispatchResult {
 		Ok(())
 	}
 
 	fn create_collection(
 		collection_id: T::CollectionId,
-		owner: AccountId,
-		admin: AccountId,
+		owner: T::AccountId,
+		admin: T::AccountId,
 	) -> DispatchResult {
 		Ok(())
 	}

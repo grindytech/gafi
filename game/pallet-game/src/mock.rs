@@ -8,6 +8,10 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup}, Percent,
 };
+use frame_support::{
+	dispatch::Vec,
+	traits::{OnFinalize, OnInitialize},
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -125,6 +129,19 @@ impl pallet_game::Config for Test {
 	type MinNameLength =  MinNameLength;
 
 	type MaxSwapFee = MaxSwapFee;
+}
+
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		if System::block_number() > 1 {
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		// Timestamp::set_timestamp(
+		// 	(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
+		// );
+	}
 }
 
 // Build genesis storage according to the mock runtime.

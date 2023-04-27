@@ -1,4 +1,4 @@
-use crate::common::{AccountId, Balance, BlockNumber};
+use crate::common::{BlockNumber, ID};
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
@@ -7,35 +7,35 @@ pub type Amount = u32;
 pub type Level = u8;
 pub type Metadata<S> = BoundedVec<u8, S>;
 
-pub trait GameSetting<GameId> {
-	/// Create a new game
+pub trait GameSetting<AccountId, GameId> {
+	/// Do create a new game
 	///
-	/// game control collection in the game
+	/// Implementing the function create game
 	///
 	/// Parameters:
 	/// - `id`: new game id
 	/// - `owner`: owner
-	/// - `admin`: admin
-	/// - `name`: name
+	/// - `maybe_admin`: admin
+	/// - `maybe_name`: name
 	///
 	/// Weight: `O(1)`
-	fn create_game(
+	fn do_create_game(
 		game_id: GameId,
 		owner: AccountId,
-		admin: Option<AccountId>,
-		name: Vec<u8>,
+		maybe_admin: Option<AccountId>,
+		maybe_name: Option<Vec<u8>>,
 	) -> DispatchResult;
 
-	/// Set swap fee
+	/// Do set swap fee
 	///
-	/// Set swap fee in whole game
+	///  Implementing the function set swap fee
 	///
 	/// Parameters:
 	/// - `id`: game id
 	/// - `owner`: owner
 	/// - `fee`: percent of swapping volume
 	/// - `start_block`: block apply swap fee
-	fn set_swap_fee(
+	fn do_set_swap_fee(
 		game_id: GameId,
 		owner: AccountId,
 		fee: Percent,
@@ -43,7 +43,7 @@ pub trait GameSetting<GameId> {
 	) -> DispatchResult;
 }
 
-pub trait Create<GameId, CollectionId, ItemId> {
+pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// Create game collection
 	///
 	/// Create collection for specific game
@@ -95,7 +95,7 @@ pub trait Create<GameId, CollectionId, ItemId> {
 	fn add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
 }
 
-pub trait Mutable<GameId, CollectionId, ItemId> {
+pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 	/// Mint
 	///
 	/// Random mint item in the collection
@@ -133,7 +133,7 @@ pub trait Mutable<GameId, CollectionId, ItemId> {
 	) -> DispatchResult;
 }
 
-pub trait Upgrade<CollectionId, ItemId, StringLimit> {
+pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	/// Set Upgrade
 	///
 	/// Set upgrade item                          
@@ -179,4 +179,8 @@ pub trait Transfer {
 
 pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
+}
+
+pub trait Support {
+	fn gen_id() -> Option<ID>;
 }
