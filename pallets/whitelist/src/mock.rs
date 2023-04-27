@@ -19,7 +19,7 @@ use gafi_support::{
 		constant::ID,
 		currency::{unit, NativeToken::GAKI},
 	},
-	pool::ticket::TicketInfo,
+	pool::TicketInfo,
 };
 pub use pallet_balances::Call as BalancesCall;
 

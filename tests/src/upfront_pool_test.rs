@@ -1,8 +1,8 @@
 use crate::mock::*;
 use frame_support::{assert_ok, traits::Currency};
 use gafi_support::{
-	common::constant::ID,
-	pool::system_services::SystemPool,
+	common::ID,
+	pool::SystemPool,
 };
 use gafi_tx::Config;
 use gu_mock::one_mil_gaki;

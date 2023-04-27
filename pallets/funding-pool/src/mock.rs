@@ -14,7 +14,7 @@ use frame_support::{
 	dispatch::Vec,
 	traits::{OnFinalize, OnInitialize},
 };
-use gafi_support::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::{unit, NativeToken::GAKI};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::{H256};
 use sp_runtime::{

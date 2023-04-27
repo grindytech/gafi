@@ -1,6 +1,6 @@
 use crate::{mock::*, ContractOwner, Error, Pallet};
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use gafi_support::common::currency::{unit, NativeToken::GAKI};
+use gafi_support::common::{unit, NativeToken::GAKI};
 use pallet_evm::AddressMapping;
 use pallet_evm::{ExitReason, ExitSucceed, Runner};
 use sp_core::{

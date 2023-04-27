@@ -12,6 +12,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod features;
+mod types;
+pub use pallet::*;
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -20,21 +24,28 @@ use frame_support::traits::{
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::{common::constant::ID, game::GameSetting};
-use sp_core::blake2_256;
-use sp_runtime::traits::StaticLookup;
+use gafi_support::{common::ID, game::GameSetting};
+use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
+use sp_runtime::{traits::StaticLookup, Percent};
+use types::GameDetails;
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
+pub type GameDetailsFor<T, I> = GameDetails<
+	<T as SystemConfig>::AccountId,
+	DepositBalanceOf<T, I>,
+>;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
-	use gafi_support::{common::types::BlockNumber, game::GameProvider};
+	use frame_support::{pallet_prelude::*, Twox64Concat};
+	use frame_system::pallet_prelude::{OriginFor, *};
+	use gafi_support::common::BlockNumber;
+	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -45,7 +56,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -53,34 +64,74 @@ pub mod pallet {
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
+		/// pallet_nfts
+		type Nfts: Mutate<Self::AccountId, ItemConfig>
+			+ Transfer<Self::AccountId>
+			+ Create<
+				Self::AccountId,
+				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
+			>;
+
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
 		/// The type used to identify a unique game
-		type GameId: Member + Parameter + MaxEncodedLen + Copy;
+		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+
+		/// The basic amount of funds that must be reserved for game.
+		#[pallet::constant]
+		type GameDeposit: Get<DepositBalanceOf<Self, I>>;
 
 		/// Max name length
+		#[pallet::constant]
 		type MaxNameLength: Get<u32>;
 
 		/// Min name length
+		#[pallet::constant]
 		type MinNameLength: Get<u32>;
 
 		/// Max Swapping Fee
-		type MaxSwapFee: Get<u8>;
+		#[pallet::constant]
+		type MaxSwapFee: Get<Percent>;
 	}
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (T::AccountId, BoundedVec<u8, T::MaxNameLength>)>;
+	pub(super) type Games<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::GameId,
+		GameDetailsFor<T, I>,
+	>;
+
+	#[pallet::storage]
+	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::GameId, OptionQuery>;
 
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, (u8, BlockNumber)>;
 
+	#[pallet::storage]
+	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
+
+	#[pallet::storage]
+	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::GameId,
+		Blake2_128Concat,
+		T::AccountId,
+		CollectionRoles,
+		OptionQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config<I>, I: 'static = ()> {}
+	pub enum Event<T: Config<I>, I: 'static = ()> {
+		GameCreated {id: T::GameId},
+	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
@@ -93,61 +144,18 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
+	impl<T: Config<I>, I: 'static> Pallet<T, I> {
+		#[pallet::call_index(1)]
+		#[pallet::weight(0)]
+		pub fn create_game(
+			origin: OriginFor<T>,
+			admin: Option<T::AccountId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
-	impl<T: Config<T>, I: 'static> Pallet<T, I> {
-		pub fn gen_id() -> Result<ID, Error<T>> {
-			let payload = (
-				T::Randomness::random(&b""[..]).0,
-				<frame_system::Pallet<T>>::block_number(),
-			);
-			Ok(payload.using_encoded(blake2_256))
-		}
-	}
-
-	impl<T: Config<I>, I: 'static> GameSetting<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
-		fn create_game(
-			id: T::GameId,
-			owner: T::AccountId,
-			name: Vec<u8>,
-		) -> Result<T::GameId, Error<T>> {
-			let bounded_name: BoundedVec<_, _> =
-				name.try_into().map_err(|_| Error::<T>::NameTooLong)?;
-			ensure!(
-				bounded_name.len() >= T::MinNameLength::get() as usize,
-				Error::<T>::NameTooShort
-			);
-
-			Games::<T, I>::insert(id, (owner, bounded_name));
-			Ok(id)
-		}
-
-		fn set_swapping_fee(
-			id: T::GameId,
-			fee: u8,
-			start_block: BlockNumber,
-		) -> Result<(), Error<T>> {
-			ensure!(fee <= T::MaxSwapFee::get(), Error::SwapFeeTooHigh);
-			SwapFee::<T, I>::insert(id, (fee, start_block));
+			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+			Self::do_create_game(game_id, sender, admin)?;
 			Ok(())
-		}
-	}
-
-	impl<T: Config<I>, I: 'static> GameProvider<Error<T>, T::AccountId, T::GameId> for Pallet<T, I> {
-		fn get_swap_fee(id: T::GameId) -> Option<(u8, BlockNumber)> {
-			SwapFee::<T, I>::get(id)
-		}
-
-		fn is_game_owner(id: T::GameId, owner: T::AccountId) -> Result<(), Error<T>> {
-			if let Some(game) = Games::<T, I>::get(id) {
-				if game.0 == owner {
-					Ok(())
-				} else {
-					Err(Error::<T>::NotGameOwner)
-				}
-			} else {
-				Err(Error::<T>::GameIdNotFound)
-			}
 		}
 	}
 }

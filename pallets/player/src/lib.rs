@@ -8,8 +8,8 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_support::{
-	common::constant::ID, pallet::players::PlayerJoinedPoolStatistic,
-	pool::system_services::SystemPool,
+	common::ID, pallet::players::PlayerJoinedPoolStatistic,
+	pool::SystemPool,
 };
 use pallet_timestamp::{self as timestamp};
 use sp_io::hashing::blake2_256;

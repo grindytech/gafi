@@ -3784,22 +3784,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "game-nfts"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-nfts",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "game3-node"
 version = "4.0.0-dev"
 dependencies = [
@@ -3854,7 +3838,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "game-nfts",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
@@ -6980,10 +6963,14 @@ dependencies = [
 name = "pallet-game"
 version = "4.0.0-dev"
 dependencies = [
+ "enumflags2",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "gafi-support",
+ "pallet-balances",
+ "pallet-nfts",
+ "pallet-randomness-collective-flip",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

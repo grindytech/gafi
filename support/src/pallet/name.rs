@@ -1,7 +1,7 @@
 use frame_support::dispatch::DispatchResult;
 use sp_std::vec::Vec;
 
-use crate::common::constant::ID;
+use crate::common::ID;
 
 pub trait Name<AccountId> {
 	fn set_name(origin: AccountId, asset_id: ID, name: Vec<u8>) -> DispatchResult;

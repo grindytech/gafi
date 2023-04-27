@@ -1,9 +1,9 @@
 use crate::{mock::*, Config, Error, PlayerOwned, Players};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
-	common::currency::{unit, NativeToken::GAKI},
+	common::{unit, NativeToken::GAKI},
 	pallet::players::{PlayerJoinedPoolStatistic, PlayersTime},
-	pool::system_services::SystemPool,
+	pool::SystemPool,
 };
 
 const START_BLOCK: u64 = 10;

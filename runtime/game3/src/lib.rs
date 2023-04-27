@@ -306,12 +306,6 @@ impl pallet_nfts::Config for Runtime {
 	type Helper = ();
 }
 
-impl game_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Nfts =  Nfts;
-	type Currency = Balances;
-}
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -331,7 +325,6 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		Nfts: pallet_nfts::{Pallet, Event<T>},
-		GameNfts: game_nfts,
 	}
 );
 

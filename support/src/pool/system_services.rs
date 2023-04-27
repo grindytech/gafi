@@ -5,7 +5,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
 use sp_std::{prelude::*, vec, vec::Vec};
 
-use crate::common::constant::ID;
+use crate::common::ID;
 
 use super::{pool::Service, ticket::Ticket};
 

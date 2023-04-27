@@ -26,7 +26,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use gafi_support::{
-	common::constant::ID,
+	common::ID,
 	pool::{
 		game_creator::GetGameCreator,
 		ticket::{PlayerTicket, TicketType},
