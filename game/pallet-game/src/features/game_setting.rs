@@ -38,11 +38,22 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId> for Pallet<T
 
     fn do_set_swap_fee(
         id: T::GameId,
-        owner: T::AccountId,
+        who: T::AccountId,
         fee: Percent,
         start_block: BlockNumber,
     ) -> DispatchResult {
+        ensure!(
+            Self::has_role(&id, &who, CollectionRole::Admin),
+            Error::<T, I>::NoPermission
+        );
 
+        ensure!(
+            fee <= T::MaxSwapFee::get(),
+            Error::<T, I>::SwapFeeTooHigh
+        );
+        
+        SwapFee::<T, I>::insert(id, (fee, start_block));
+        Self::deposit_event(Event::SwapFeeSetted { id, fee });
         Ok(())
     }
 }

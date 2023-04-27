@@ -112,7 +112,7 @@ pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 parameter_types! {
 	pub MaxNameLength: u32 = 64;
 	pub MinNameLength: u32 = 12;
-	pub MaxSwapFee: Percent = Percent::from_percent(30);
+	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 }
 
