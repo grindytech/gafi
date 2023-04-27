@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{*, types::GameDetails};
 use frame_support::pallet_prelude::*;
 use gafi_support::{game::{Create, Amount}};
 
@@ -11,6 +11,7 @@ impl<T: Config<I>, I: 'static> Create<T::AccountId, T::GameId, T::CollectionId, 
 		owner: T::AccountId,
 		admin: T::AccountId,
 	) -> DispatchResult {
+
 		Ok(())
 	}
 

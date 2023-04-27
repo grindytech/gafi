@@ -1,16 +1,17 @@
 use crate as pallet_game;
-use frame_support::{traits::{ConstU16, ConstU64, AsEnsureOriginWithArg}, parameter_types};
-use frame_system as system;
-use gafi_support::common::AccountId;
-use pallet_nfts::PalletFeatures;
-use sp_core::{H256, ConstU128, ConstU32};
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup}, Percent,
-};
 use frame_support::{
 	dispatch::Vec,
-	traits::{OnFinalize, OnInitialize},
+	parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize},
+};
+use frame_system as system;
+use gafi_support::common::{unit, AccountId, NativeToken::GAKI};
+use pallet_nfts::PalletFeatures;
+use sp_core::{ConstU128, ConstU32, H256};
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+	Percent,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -30,7 +31,6 @@ frame_support::construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
 );
-
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -107,10 +107,13 @@ impl pallet_nfts::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
+
 parameter_types! {
 	pub MaxNameLength: u32 = 64;
 	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_percent(30);
+	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 }
 
 impl pallet_game::Config for Test {
@@ -126,9 +129,11 @@ impl pallet_game::Config for Test {
 
 	type MaxNameLength = MaxNameLength;
 
-	type MinNameLength =  MinNameLength;
+	type MinNameLength = MinNameLength;
 
 	type MaxSwapFee = MaxSwapFee;
+
+	type GameDeposit = GameDeposit;
 }
 
 pub fn run_to_block(n: u64) {

@@ -1,7 +1,6 @@
 use crate::common::{BlockNumber, ID};
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
-use sp_std::vec::Vec;
 
 pub type Amount = u32;
 pub type Level = u8;
@@ -23,7 +22,6 @@ pub trait GameSetting<AccountId, GameId> {
 		game_id: GameId,
 		owner: AccountId,
 		maybe_admin: Option<AccountId>,
-		maybe_name: Option<Vec<u8>>,
 	) -> DispatchResult;
 
 	/// Do set swap fee

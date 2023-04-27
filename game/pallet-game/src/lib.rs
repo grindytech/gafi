@@ -25,22 +25,27 @@ use frame_support::traits::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::{common::ID, game::GameSetting};
-use pallet_nfts::{CollectionConfig, ItemConfig, Incrementable};
+use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
+use types::GameDetails;
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
+pub type GameDetailsFor<T, I> = GameDetails<
+	<T as SystemConfig>::AccountId,
+	DepositBalanceOf<T, I>,
+>;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
-	use frame_system::pallet_prelude::{*, OriginFor};
+	use frame_system::pallet_prelude::{OriginFor, *};
 	use gafi_support::common::BlockNumber;
 	use pallet_nfts::CollectionRoles;
-use types::GameDetails;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -73,20 +78,31 @@ use types::GameDetails;
 		/// The type used to identify a unique game
 		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
+		/// The basic amount of funds that must be reserved for game.
+		#[pallet::constant]
+		type GameDeposit: Get<DepositBalanceOf<Self, I>>;
+
 		/// Max name length
+		#[pallet::constant]
 		type MaxNameLength: Get<u32>;
 
 		/// Min name length
+		#[pallet::constant]
 		type MinNameLength: Get<u32>;
 
 		/// Max Swapping Fee
+		#[pallet::constant]
 		type MaxSwapFee: Get<Percent>;
 	}
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, GameDetails<T::AccountId, DepositBalanceOf<T, I>, T::MaxNameLength>>;
+	pub(super) type Games<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::GameId,
+		GameDetailsFor<T, I>,
+	>;
 
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
@@ -113,7 +129,9 @@ use types::GameDetails;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config<I>, I: 'static = ()> {}
+	pub enum Event<T: Config<I>, I: 'static = ()> {
+		GameCreated {id: T::GameId},
+	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
@@ -127,14 +145,16 @@ use types::GameDetails;
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>, name: Option<Vec<u8>>) -> DispatchResult {
+		pub fn create_game(
+			origin: OriginFor<T>,
+			admin: Option<T::AccountId>,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(game_id, sender, admin, name)?;
+			Self::do_create_game(game_id, sender, admin)?;
 			Ok(())
 		}
 	}
