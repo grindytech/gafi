@@ -1,12 +1,10 @@
-use crate::common::{BlockNumber, ID};
+use crate::common::{BlockNumber};
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
 
-pub type Amount = u32;
-pub type Level = u8;
-pub type Metadata<S> = BoundedVec<u8, S>;
+use super::{Amount, Metadata, Level, CollectionId};
 
-pub trait GameSetting<AccountId, GameId> {
+pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
 	///
 	/// Implementing the function create game
@@ -20,7 +18,7 @@ pub trait GameSetting<AccountId, GameId> {
 	/// Weight: `O(1)`
 	fn do_create_game(
 		game_id: GameId,
-		owner: AccountId,
+		who: AccountId,
 		maybe_admin: Option<AccountId>,
 	) -> DispatchResult;
 
@@ -35,30 +33,29 @@ pub trait GameSetting<AccountId, GameId> {
 	/// - `start_block`: block apply swap fee
 	fn do_set_swap_fee(
 		game_id: GameId,
-		owner: AccountId,
+		who: AccountId,
 		fee: Percent,
 		start_block: BlockNumber,
 	) -> DispatchResult;
 }
 
-pub trait Create<AccountId, GameId, CollectionId, ItemId> {
-	/// Create game collection
+pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
+	/// Do create game collection
 	///
 	/// Create collection for specific game
 	///
 	/// Parameters:
 	/// - `game_id`: game id
 	/// - `collection_id`: collection id
-	/// - `owner`: owner
-	/// - `admin`: admin
-	fn create_game_collection(
+	/// - `who`: signer
+	fn do_create_game_collection(
 		game_id: GameId,
-		collection_id: CollectionId,
-		owner: AccountId,
+		who: AccountId,
 		admin: AccountId,
+		config: CollectionConfig,
 	) -> DispatchResult;
 
-	/// Create collection
+	/// Do create collection
 	///
 	/// Create a pure collection
 	///
@@ -66,7 +63,7 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `owner`: owner
 	/// - `admin`: admin
-	fn create_collection(
+	fn do_create_collection(
 		collection_id: CollectionId,
 		owner: AccountId,
 		admin: AccountId,
@@ -80,9 +77,9 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn create_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_create_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
 
-	/// Add item
+	/// Do add item
 	///
 	/// Add number amount of item in collection
 	///
@@ -90,7 +87,7 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
 }
 
 pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
@@ -180,5 +177,5 @@ pub trait Destroy<E> {
 }
 
 pub trait Support {
-	fn gen_id() -> Option<ID>;
+	fn gen_id() -> CollectionId;
 }

@@ -23,7 +23,6 @@ fn new_account(account: [u8; 32], balance: u128) -> AccountId32 {
 fn create_first_game_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-
 		let before_balance = 3 * unit(GAKI);
 		let owner = new_account([0; 32], before_balance);
 
@@ -104,6 +103,23 @@ fn set_swap_fee_should_fails() {
 			PalletGame::set_swap_fee(RuntimeOrigin::signed(admin), 0, invalid_fee, start_block),
 			<Error<Test>>::SwapFeeTooHigh
 		);
+	})
+}
 
+#[test]
+fn create_game_collection_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let before_balance = 3 * unit(GAKI);
+		let owner = new_account([0; 32], before_balance);
+
+		let admin = new_account([1; 32], 3 * unit(GAKI));
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone())
+		));
+
+		PalletGame::create_game_colletion(origin, 0);
 	})
 }

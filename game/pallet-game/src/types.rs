@@ -1,7 +1,8 @@
 use codec::{Encode, Decode, MaxEncodedLen};
 use frame_support::{RuntimeDebug, BoundedVec};
 use scale_info::TypeInfo;
-use sp_core::Get;
+use sp_core::{Get, hashing::blake2_512};
+use core::primitive::u32;
 
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

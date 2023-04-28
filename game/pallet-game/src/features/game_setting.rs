@@ -1,20 +1,19 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
-use gafi_support::common::{BlockNumber};
 use pallet_nfts::{CollectionRoles, CollectionRole};
 use sp_runtime::Percent;
 
 
-impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId> for Pallet<T, I> {
+impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumber> for Pallet<T, I> {
     fn do_create_game(
         id: T::GameId,
-        owner: T::AccountId,
+        who: T::AccountId,
         maybe_admin: Option<T::AccountId>,
     ) -> DispatchResult {
-		<T as Config<I>>::Currency::reserve(&owner, T::GameDeposit::get())?;
+		<T as Config<I>>::Currency::reserve(&who, T::GameDeposit::get())?;
 
         let game= GameDetails {
-			owner: owner,
+			owner: who,
 			collections: 0,
 			owner_deposit: T::GameDeposit::get(),
 		};
@@ -40,7 +39,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId> for Pallet<T
         id: T::GameId,
         who: T::AccountId,
         fee: Percent,
-        start_block: BlockNumber,
+        start_block: BlockNumber<T>,
     ) -> DispatchResult {
         ensure!(
             Self::has_role(&id, &who, CollectionRole::Admin),

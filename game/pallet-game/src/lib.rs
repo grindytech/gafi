@@ -24,7 +24,10 @@ use frame_support::traits::{
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::{common::ID, game::GameSetting};
+use gafi_support::{
+	common::{ID},
+	game::{CollectionId, Create as GameCreate, GameSetting, Support},
+};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use types::GameDetails;
@@ -32,16 +35,20 @@ use types::GameDetails;
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
+pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
+
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
+
+pub type CollectionConfigFor<T, I> =
+	CollectionConfig<DepositBalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::{common::BlockNumber, game};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -90,6 +97,10 @@ pub mod pallet {
 		/// Max Swapping Fee
 		#[pallet::constant]
 		type MaxSwapFee: Get<Percent>;
+
+		/// Max number of collections in a game
+		#[pallet::constant]
+		type MaxGameCollection: Get<u32>;
 	}
 
 	/// Store basic game info
@@ -103,11 +114,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber)>;
+		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	#[pallet::storage]
 	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
+		StorageMap<_, Twox64Concat, T::GameId, BoundedVec<T::CollectionId, T::MaxGameCollection>>;
 
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -124,7 +135,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated { id: T::GameId },
-		SwapFeeSetted { id: T::GameId, fee: Percent }
+		SwapFeeSetted { id: T::GameId, fee: Percent },
 	}
 
 	#[pallet::error]
@@ -156,10 +167,19 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			game_id: T::GameId,
 			fee: Percent,
-			start_block: BlockNumber,
+			start_block: BlockNumber<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_set_swap_fee(game_id, sender, fee, start_block)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
+		pub fn create_game_colletion(origin: OriginFor<T>, game_id: T::GameId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			// Self::do_create_game_collection(game_id, collection_id.into(), sender)?;
 			Ok(())
 		}
 	}
