@@ -15,4 +15,6 @@ pub struct GameDetails<AccountId, DepositBalance> {
 	pub(super) owner_deposit: DepositBalance,
 	/// The total number of outstanding collections of this game.
 	pub(super) collections: u32,
+	/// Can thaw tokens, force transfers and burn tokens from any account.
+	pub(super) admin: AccountId,
 }

@@ -25,7 +25,7 @@ use frame_support::traits::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::{
-	common::{ID},
+	common::ID,
 	game::{CollectionId, Create as GameCreate, GameSetting, Support},
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -41,8 +41,11 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
 
-pub type CollectionConfigFor<T, I> =
-	CollectionConfig<DepositBalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+pub type CollectionConfigFor<T, I> = CollectionConfig<
+	DepositBalanceOf<T, I>,
+	BlockNumber<T>,
+	<T as pallet_nfts::Config>::CollectionId,
+>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -74,7 +77,8 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			>;
+			>
+			+ frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId> ;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -147,6 +151,7 @@ pub mod pallet {
 		SwapFeeTooHigh,
 		SwapFeeNotFound,
 		NoPermission,
+		ExceedMaxCollection,
 	}
 
 	#[pallet::call]
@@ -176,10 +181,14 @@ pub mod pallet {
 
 		#[pallet::call_index(3)]
 		#[pallet::weight(0)]
-		pub fn create_game_colletion(origin: OriginFor<T>, game_id: T::GameId) -> DispatchResult {
+		pub fn create_game_colletion(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			maybe_admin: Option<T::AccountId>,
+			config: CollectionConfigFor<T, I>,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			// Self::do_create_game_collection(game_id, collection_id.into(), sender)?;
+			Self::do_create_game_collection(sender, game_id, maybe_admin, config)?;
 			Ok(())
 		}
 	}

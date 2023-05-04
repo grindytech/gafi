@@ -5,7 +5,7 @@ use gafi_support::{
 	common::{unit, NativeToken::GAKI},
 	game::Support,
 };
-use pallet_nfts::{CollectionRole, CollectionRoles};
+use pallet_nfts::{CollectionRole, CollectionRoles, CollectionSettings, MintSettings};
 use sp_runtime::AccountId32;
 
 fn make_deposit(account: &AccountId32, balance: u128) {
@@ -120,6 +120,27 @@ fn create_game_collection_should_works() {
 			Some(admin.clone())
 		));
 
-		PalletGame::create_game_colletion(origin, 0);
+		let config = CollectionConfig {
+			settings: CollectionSettings::all_enabled(),
+			max_supply: None,
+			mint_settings: MintSettings::default(),
+		};
+
+		assert_ok!(PalletGame::create_game_colletion(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			Some(admin.clone()),
+			config
+		));
+
+		assert_eq!(GameCollections::<Test>::get(0).unwrap()[0], 0);
+
+		assert_ok!(PalletGame::create_game_colletion(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			Some(admin),
+			config
+		));
+		assert_eq!(GameCollections::<Test>::get(0).unwrap()[1], 1);
 	})
 }

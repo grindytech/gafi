@@ -49,9 +49,9 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
 	/// - `collection_id`: collection id
 	/// - `who`: signer
 	fn do_create_game_collection(
-		game_id: GameId,
 		who: AccountId,
-		admin: AccountId,
+		game_id: GameId,
+		maybe_admin: Option<AccountId>,
 		config: CollectionConfig,
 	) -> DispatchResult;
 
