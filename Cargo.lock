@@ -3841,6 +3841,7 @@ dependencies = [
  "frame-try-runtime",
  "pallet-aura",
  "pallet-balances",
+ "pallet-game",
  "pallet-grandpa",
  "pallet-nfts",
  "pallet-randomness-collective-flip",

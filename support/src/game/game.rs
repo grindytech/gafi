@@ -2,7 +2,7 @@ use crate::common::{BlockNumber};
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
 
-use super::{Amount, Metadata, Level, CollectionId};
+use super::{Amount, Metadata, Level};
 
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
@@ -176,6 +176,6 @@ pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
 }
 
-pub trait Support {
-	fn gen_id() -> CollectionId;
-}
+// pub trait Support {
+// 	fn gen_id() -> CollectionId;
+// }

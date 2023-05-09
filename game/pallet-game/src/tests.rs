@@ -133,7 +133,7 @@ fn create_game_collection_should_works() {
 			config
 		));
 
-		assert_eq!(GameCollections::<Test>::get(0).unwrap()[0], 0);
+		assert_eq!(GameCollections::<Test>::get(0)[0], 0);
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
@@ -141,6 +141,6 @@ fn create_game_collection_should_works() {
 			Some(admin),
 			config
 		));
-		assert_eq!(GameCollections::<Test>::get(0).unwrap()[1], 1);
+		assert_eq!(GameCollections::<Test>::get(0)[1], 1);
 	})
 }

@@ -26,7 +26,7 @@ use frame_support::traits::{
 use frame_system::Config as SystemConfig;
 use gafi_support::{
 	common::ID,
-	game::{CollectionId, Create as GameCreate, GameSetting, Support},
+	game::{Create as GameCreate, GameSetting},
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};

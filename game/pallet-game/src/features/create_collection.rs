@@ -5,7 +5,7 @@ use frame_support::{
 };
 use gafi_support::{
 	common::{BlockNumber, Hash},
-	game::{Amount, CollectionId, Create},
+	game::{Amount, Create},
 };
 use pallet_nfts::{CollectionConfig, CollectionRole, CollectionRoles};
 
@@ -36,12 +36,11 @@ impl<T: Config<I>, I: 'static>
 		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
 		
 		if let Ok(id) = collection_id {
-			GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
+			let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
 				collection_vec.try_push(id)
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
 		}
-
 		Ok(())
 	}
 
