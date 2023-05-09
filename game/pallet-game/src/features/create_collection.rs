@@ -34,9 +34,10 @@ impl<T: Config<I>, I: 'static>
 			None => who.clone(),
 		};
 		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
+		
 		if let Ok(id) = collection_id {
 			GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
-				collection_vec.unwrap().try_push(id)
+				collection_vec.try_push(id)
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
 		}

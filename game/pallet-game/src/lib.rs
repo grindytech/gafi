@@ -20,7 +20,7 @@ pub use pallet::*;
 mod benchmarking;
 
 use frame_support::traits::{
-	tokens::nonfungibles_v2::{Create, Mutate, Transfer},
+	tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
@@ -35,17 +35,20 @@ use types::GameDetails;
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
+pub type BalanceOf<T, I = ()> =
+	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
 pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
+// type InspectCollectionId<T, I = ()> = <pallet_nfts::pallet::Pallet<T, I> as Inspect<<T as
+// SystemConfig>::AccountId>>::CollectionId;
+
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
 
-pub type CollectionConfigFor<T, I> = CollectionConfig<
-	DepositBalanceOf<T, I>,
-	BlockNumber<T>,
-	<T as pallet_nfts::Config>::CollectionId,
->;
+pub type CollectionConfigFor<T, I> =
+	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -77,8 +80,8 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			>
-			+ frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId> ;
+			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
+			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -121,8 +124,13 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	#[pallet::storage]
-	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, BoundedVec<T::CollectionId, T::MaxGameCollection>>;
+	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::GameId,
+		BoundedVec<T::CollectionId, T::MaxGameCollection>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
