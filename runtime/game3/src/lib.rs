@@ -29,8 +29,8 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
-		AsEnsureOriginWithArg,
+		AsEnsureOriginWithArg, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem,
+		Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{
@@ -41,14 +41,14 @@ pub use frame_support::{
 	StorageValue,
 };
 
-use pallet_nfts::PalletFeatures;
-
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
+use pallet_nfts::PalletFeatures;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+use sp_runtime::Percent;
 pub use sp_runtime::{Perbill, Permill};
 
 /// An index to a block.
@@ -133,7 +133,10 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+	NativeVersion {
+		runtime_version: VERSION,
+		can_author_with: Default::default(),
+	}
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -306,6 +309,35 @@ impl pallet_nfts::Config for Runtime {
 	type Helper = ();
 }
 
+parameter_types! {
+	pub MaxNameLength: u32 = 64;
+	pub MinNameLength: u32 = 12;
+	pub MaxSwapFee: Percent = Percent::from_parts(30);
+	pub GameDeposit: u128 = 5_000_000_000;
+	pub MaxGameCollection: u32 = 5;
+}
+
+impl pallet_game::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+
+	type Currency = Balances;
+
+	type Nfts = Nfts;
+
+	type Randomness = RandomnessCollectiveFlip;
+
+	type GameId = u32;
+
+	type MaxNameLength = MaxNameLength;
+
+	type MinNameLength = MinNameLength;
+
+	type MaxSwapFee = MaxSwapFee;
+
+	type GameDeposit = GameDeposit;
+
+	type MaxGameCollection = MaxGameCollection;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -325,6 +357,7 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		Nfts: pallet_nfts::{Pallet, Event<T>},
+		Game: pallet_game,
 	}
 );
 

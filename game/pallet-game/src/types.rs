@@ -1,7 +1,7 @@
 use codec::{Encode, Decode, MaxEncodedLen};
 use frame_support::{RuntimeDebug, BoundedVec};
 use scale_info::TypeInfo;
-use sp_core::Get;
+use core::primitive::u32;
 
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -14,4 +14,6 @@ pub struct GameDetails<AccountId, DepositBalance> {
 	pub(super) owner_deposit: DepositBalance,
 	/// The total number of outstanding collections of this game.
 	pub(super) collections: u32,
+	/// Can thaw tokens, force transfers and burn tokens from any account.
+	pub(super) admin: AccountId,
 }

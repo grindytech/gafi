@@ -114,6 +114,7 @@ parameter_types! {
 	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
+	pub MaxGameCollection: u32 = 5;
 }
 
 impl pallet_game::Config for Test {
@@ -134,6 +135,8 @@ impl pallet_game::Config for Test {
 	type MaxSwapFee = MaxSwapFee;
 
 	type GameDeposit = GameDeposit;
+
+	type MaxGameCollection = MaxGameCollection;
 }
 
 pub fn run_to_block(n: u64) {

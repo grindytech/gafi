@@ -49,6 +49,7 @@ frame-benchmarking = {workspace = true, default-features = false, optional = tru
 frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
 
 # Local Dependencies
+pallet-game = {version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game"}
 
 [build-dependencies]
 substrate-wasm-builder = {workspace = true, optional = true}
@@ -97,6 +98,7 @@ std = [
   "sp-version/std",
   "substrate-wasm-builder",
   "pallet-nfts/std",
+  "pallet-game/std",
 ]
 try-runtime = [
   "frame-try-runtime/try-runtime",
