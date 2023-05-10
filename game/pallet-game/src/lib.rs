@@ -4,7 +4,6 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-use sp_core::U256;
 
 #[cfg(test)]
 mod mock;
@@ -24,10 +23,7 @@ use frame_support::traits::{
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::{
-	common::ID,
-	game::{CreateCollection, GameSetting},
-};
+use gafi_support::game::{CreateCollection, CreateItem, GameSetting};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
@@ -48,7 +44,7 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
 
-pub type CollectionConfigFor<T, I> =
+pub type CollectionConfigFor<T, I = ()> =
 	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 #[frame_support::pallet]
@@ -148,12 +144,41 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	#[pallet::storage]
+	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Twox64Concat, T::ItemId>,
+		),
+		u32,
+		ValueQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		GameCreated { id: T::GameId },
-		SwapFeeSetted { id: T::GameId, fee: Percent },
-		CollectionCreated { id: T::CollectionId },
+		GameCreated {
+			game_id: T::GameId,
+		},
+		SwapFeeSetted {
+			game_id: T::GameId,
+			fee: Percent,
+		},
+		CollectionCreated {
+			collection_id: T::CollectionId,
+		},
+		ItemCreated {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
+		ItemAdded {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -223,11 +248,42 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
-			game_id: T::GameId,
-			collection_id: Vec<T::CollectionId>,
+			game: T::GameId,
+			collection: Vec<T::CollectionId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_add_collection(sender, game_id, collection_id)?;
+			Self::do_add_collection(sender, game, collection)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(0)]
+		pub fn create_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			config: ItemConfig,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_create_item(sender, collection, item, config, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(0)]
+		pub fn add_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_add_item(sender, collection, item, amount)?;
+
 			Ok(())
 		}
 	}
