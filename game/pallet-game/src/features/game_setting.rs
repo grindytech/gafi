@@ -36,7 +36,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		);
 
 		Games::<T, I>::insert(id, game);
-		Self::deposit_event(Event::GameCreated { id });
+		Self::deposit_event(Event::GameCreated { game_id: id });
 		Ok(())
 	}
 
@@ -54,7 +54,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		ensure!(fee <= T::MaxSwapFee::get(), Error::<T, I>::SwapFeeTooHigh);
 
 		SwapFee::<T, I>::insert(id, (fee, start_block));
-		Self::deposit_event(Event::SwapFeeSetted { id, fee });
+		Self::deposit_event(Event::SwapFeeSetted { game_id: id, fee });
 		Ok(())
 	}
 }

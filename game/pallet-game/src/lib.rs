@@ -159,9 +159,26 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		GameCreated { id: T::GameId },
-		SwapFeeSetted { id: T::GameId, fee: Percent },
-		CollectionCreated { id: T::CollectionId },
+		GameCreated {
+			game_id: T::GameId,
+		},
+		SwapFeeSetted {
+			game_id: T::GameId,
+			fee: Percent,
+		},
+		CollectionCreated {
+			collection_id: T::CollectionId,
+		},
+		ItemCreated {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
+		ItemAdded {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -263,7 +280,6 @@ pub mod pallet {
 			item: T::ItemId,
 			amount: u32,
 		) -> DispatchResult {
-
 			let sender = ensure_signed(origin)?;
 
 			Self::do_add_item(sender, collection, item, amount)?;

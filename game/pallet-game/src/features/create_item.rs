@@ -29,11 +29,16 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			T::Nfts::mint_into(&collection_id, &item_id, &who, &config, false)?;
 
 			ItemBalances::<T, I>::insert((collection_id, &who, item_id), amount);
+
+			Self::deposit_event(Event::<T, I>::ItemCreated {
+				collection_id,
+				item_id,
+				amount,
+			});
+			Ok(())
 		} else {
 			return Err(Error::<T, I>::UnknownCollection.into())
 		}
-
-		Ok(())
 	}
 
 	fn do_add_item(
@@ -54,6 +59,12 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			let balance = ItemBalances::<T, I>::get((collection_id, &who, item_id));
 			ItemBalances::<T, I>::insert((collection_id, &who, item_id), balance + amount);
+
+			Self::deposit_event(Event::<T, I>::ItemCreated {
+				collection_id,
+				item_id,
+				amount: balance + amount,
+			});
 		} else {
 			return Err(Error::<T, I>::UnknownCollection.into())
 		}
