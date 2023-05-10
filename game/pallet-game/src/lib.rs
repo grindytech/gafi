@@ -26,10 +26,11 @@ use frame_support::traits::{
 use frame_system::Config as SystemConfig;
 use gafi_support::{
 	common::ID,
-	game::{Create as GameCreate, GameSetting},
+	game::{CreateCollection, GameSetting},
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
+use sp_std::vec::Vec;
 use types::GameDetails;
 
 pub type DepositBalanceOf<T, I = ()> =
@@ -133,6 +134,10 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	pub(super) type CollectionGame<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
+
+	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -148,19 +153,20 @@ pub mod pallet {
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated { id: T::GameId },
 		SwapFeeSetted { id: T::GameId, fee: Percent },
-		CollectionCreated {id: T::CollectionId },
+		CollectionCreated { id: T::CollectionId },
 	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
 		NotGameOwner,
-		GameIdNotFound,
+		UnknownGame,
 		NameTooLong,
 		NameTooShort,
 		SwapFeeTooHigh,
 		SwapFeeNotFound,
 		NoPermission,
 		ExceedMaxCollection,
+		UnknownCollection,
 	}
 
 	#[pallet::call]
@@ -203,13 +209,25 @@ pub mod pallet {
 
 		#[pallet::call_index(4)]
 		#[pallet::weight(0)]
-		pub fn create_colletion(
+		pub fn create_collection(
 			origin: OriginFor<T>,
 			maybe_admin: Option<T::AccountId>,
 			config: CollectionConfigFor<T, I>,
-		) -> DispatchResult{
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(sender, maybe_admin, config)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(0)]
+		pub fn add_game_collection(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			collection_id: Vec<T::CollectionId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_add_collection(sender, game_id, collection_id)?;
 			Ok(())
 		}
 	}
