@@ -13,8 +13,6 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// - `owner`: owner
 	/// - `maybe_admin`: admin
 	/// - `maybe_name`: name
-	///
-	/// Weight: `O(1)`
 	fn do_create_game(
 		game_id: GameId,
 		who: AccountId,
