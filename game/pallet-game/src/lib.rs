@@ -148,6 +148,7 @@ pub mod pallet {
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated { id: T::GameId },
 		SwapFeeSetted { id: T::GameId, fee: Percent },
+		CollectionCreated {id: T::CollectionId },
 	}
 
 	#[pallet::error]
@@ -197,6 +198,18 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_game_collection(sender, game_id, maybe_admin, config)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(0)]
+		pub fn create_colletion(
+			origin: OriginFor<T>,
+			maybe_admin: Option<T::AccountId>,
+			config: CollectionConfigFor<T, I>,
+		) -> DispatchResult{
+			let sender = ensure_signed(origin)?;
+			Self::do_create_collection(sender, maybe_admin, config)?;
 			Ok(())
 		}
 	}

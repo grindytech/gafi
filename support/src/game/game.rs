@@ -1,8 +1,8 @@
-use crate::common::{BlockNumber};
+use crate::common::BlockNumber;
 use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
 use sp_runtime::{Percent, TokenError};
 
-use super::{Amount, Metadata, Level};
+use super::{Amount, Level, Metadata};
 
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
@@ -39,15 +39,16 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	) -> DispatchResult;
 }
 
-pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
+pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig, ItemConfig> {
 	/// Do create game collection
 	///
 	/// Create collection for specific game
 	///
 	/// Parameters:
+	/// - `who`: signer and collection owner
 	/// - `game_id`: game id
-	/// - `collection_id`: collection id
-	/// - `who`: signer
+	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `config`: collection configuration
 	fn do_create_game_collection(
 		who: AccountId,
 		game_id: GameId,
@@ -60,13 +61,13 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
 	/// Create a pure collection
 	///
 	/// Parameters:
-	/// - `collection_id`: collection id
-	/// - `owner`: owner
-	/// - `admin`: admin
+	/// - `who`: signer and collection owner
+	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `config`: collection configuration
 	fn do_create_collection(
-		collection_id: CollectionId,
-		owner: AccountId,
-		admin: AccountId,
+		who: AccountId,
+		maybe_admin: Option<AccountId>,
+		config: CollectionConfig,
 	) -> DispatchResult;
 
 	/// Create item
@@ -77,7 +78,13 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn do_create_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_create_item(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		config: ItemConfig,
+		amount: Amount,
+	) -> DispatchResult;
 
 	/// Do add item
 	///
@@ -87,7 +94,12 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn do_add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_add_item(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		amount: Amount,
+	) -> DispatchResult;
 }
 
 pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {

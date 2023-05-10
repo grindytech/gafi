@@ -10,7 +10,7 @@ use gafi_support::{
 use pallet_nfts::{CollectionConfig, CollectionRole, CollectionRoles};
 
 impl<T: Config<I>, I: 'static>
-	Create<T::AccountId, T::GameId, T::CollectionId, T::ItemId, CollectionConfigFor<T, I>>
+	Create<T::AccountId, T::GameId, T::CollectionId, T::ItemId, CollectionConfigFor<T, I>, ItemConfig>
 	for Pallet<T, I>
 {
 	fn do_create_game_collection(
@@ -34,33 +34,45 @@ impl<T: Config<I>, I: 'static>
 			None => who.clone(),
 		};
 		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
-		
+
 		if let Ok(id) = collection_id {
 			let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
 				collection_vec.try_push(id)
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
+			Self::deposit_event(Event::<T, I>::CollectionCreated { id });
 		}
 		Ok(())
 	}
 
 	fn do_create_collection(
-		collection_id: T::CollectionId,
-		owner: T::AccountId,
-		admin: T::AccountId,
+		who: T::AccountId,
+		maybe_admin: Option<T::AccountId>,
+		config: CollectionConfigFor<T, I>,
 	) -> DispatchResult {
+		let admin = match maybe_admin {
+			Some(ad) => ad,
+			None => who.clone(),
+		};
+		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
+		if let Ok(id) = collection_id {
+			Self::deposit_event(Event::<T, I>::CollectionCreated { id });
+		}
 		Ok(())
 	}
 
 	fn do_create_item(
+		who: T::AccountId,
 		collection_id: T::CollectionId,
 		item_id: T::ItemId,
+		item_config: ItemConfig,
 		amount: Amount,
 	) -> DispatchResult {
 		Ok(())
 	}
 
 	fn do_add_item(
+		who: T::AccountId,
 		collection_id: T::CollectionId,
 		item_id: T::ItemId,
 		amount: Amount,
