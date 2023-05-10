@@ -1,8 +1,7 @@
-use crate::common::BlockNumber;
-use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
-use sp_runtime::{Percent, TokenError};
-
 use super::{Amount, Level, Metadata};
+use frame_support::pallet_prelude::DispatchResult;
+use sp_runtime::{Percent, TokenError};
+use sp_std::vec::Vec;
 
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
@@ -39,7 +38,7 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	) -> DispatchResult;
 }
 
-pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig, ItemConfig> {
+pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	/// Do create game collection
 	///
 	/// Create collection for specific game
@@ -70,6 +69,14 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId, CollectionConfig, Item
 		config: CollectionConfig,
 	) -> DispatchResult;
 
+	fn do_add_collection(
+		who: AccountId,
+		game_id: GameId,
+		collection_ids: Vec<CollectionId>,
+	) -> DispatchResult;
+}
+
+pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// Create item
 	///
 	/// Create items for collection

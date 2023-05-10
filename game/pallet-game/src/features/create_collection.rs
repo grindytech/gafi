@@ -1,16 +1,17 @@
 use crate::{types::GameDetails, *};
 use frame_support::{
 	pallet_prelude::*,
-	traits::tokens::nonfungibles_v2::{Create as NftsCreate, Inspect},
+	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
 use gafi_support::{
 	common::{BlockNumber, Hash},
-	game::{Amount, Create},
+	game::{Amount, CreateCollection},
 };
 use pallet_nfts::{CollectionConfig, CollectionRole, CollectionRoles};
+use sp_std::vec::Vec;
 
 impl<T: Config<I>, I: 'static>
-	Create<T::AccountId, T::GameId, T::CollectionId, T::ItemId, CollectionConfigFor<T, I>, ItemConfig>
+	CreateCollection<T::AccountId, T::GameId, T::CollectionId, CollectionConfigFor<T, I>>
 	for Pallet<T, I>
 {
 	fn do_create_game_collection(
@@ -36,10 +37,15 @@ impl<T: Config<I>, I: 'static>
 		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
 
 		if let Ok(id) = collection_id {
+			// insert game collections
 			let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
 				collection_vec.try_push(id)
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
+
+			// insert collection game
+			CollectionGame::<T, I>::insert(id, game_id);
+
 			Self::deposit_event(Event::<T, I>::CollectionCreated { id });
 		}
 		Ok(())
@@ -61,22 +67,36 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_create_item(
+	fn do_add_collection(
 		who: T::AccountId,
-		collection_id: T::CollectionId,
-		item_id: T::ItemId,
-		item_config: ItemConfig,
-		amount: Amount,
+		game_id: T::GameId,
+		collection_ids: Vec<T::CollectionId>,
 	) -> DispatchResult {
-		Ok(())
-	}
+		// make sure signer is game owner
+		if let Some(game) = Games::<T, I>::get(game_id) {
+			ensure!(game.owner == who.clone(), Error::<T, I>::NoPermission);
+		} else {
+			return Err(Error::<T, I>::UnknownGame.into())
+		}
 
-	fn do_add_item(
-		who: T::AccountId,
-		collection_id: T::CollectionId,
-		item_id: T::ItemId,
-		amount: Amount,
-	) -> DispatchResult {
+		// make sure signer is collection owner
+		for id in &collection_ids {
+			if let Some(owner) = T::Nfts::collection_owner(&id) {
+				ensure!(owner == who.clone(), Error::<T, I>::NoPermission);
+			} else {
+				return Err(Error::<T, I>::UnknownCollection.into())
+			}
+		}
+
+		let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
+			collection_vec.try_extend(collection_ids.clone().into_iter())
+		})
+		.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
+
+		for id in collection_ids {
+			CollectionGame::<T, I>::insert(id, game_id);
+		}
+
 		Ok(())
 	}
 }

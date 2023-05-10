@@ -131,6 +131,7 @@ fn create_game_collection_should_works() {
 		));
 
 		assert_eq!(GameCollections::<Test>::get(0)[0], 0);
+		assert_eq!(CollectionGame::<Test>::get(0), Some(0));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
@@ -206,10 +207,51 @@ fn create_collection_should_works() {
 			mint_settings: MintSettings::default(),
 		};
 
-		assert_ok!(PalletGame::create_colletion(
+		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			Some(admin.clone()),
 			config
 		));
+	})
+}
+
+#[test]
+fn add_game_collection_should_works() {
+	new_test_ext().execute_with(|| {
+
+		run_to_block(1);
+		let before_balance = 3 * unit(GAKI);
+		let owner = new_account([0; 32], before_balance);
+
+		let admin = new_account([1; 32], 3 * unit(GAKI));
+
+		let config = CollectionConfig {
+			settings: CollectionSettings::all_enabled(),
+			max_supply: None,
+			mint_settings: MintSettings::default(),
+		};
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone())
+		));
+
+		assert_ok!(PalletGame::create_collection(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone()),
+			config
+		));
+
+		assert_ok!(PalletGame::create_collection(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone()),
+			config
+		));
+
+		assert_ok!(PalletGame::add_game_collection(RuntimeOrigin::signed(owner.clone()), 0, [0, 1].to_vec()));
+
+		assert_eq!(GameCollections::<Test>::get(0), [0, 1].to_vec());
+		assert_eq!(CollectionGame::<Test>::get(0).unwrap(), 0);
+		assert_eq!(CollectionGame::<Test>::get(1).unwrap(), 0);
 	})
 }
