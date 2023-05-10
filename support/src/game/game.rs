@@ -1,12 +1,9 @@
-use crate::common::{BlockNumber, ID};
-use frame_support::{pallet_prelude::DispatchResult, BoundedVec};
+use super::{Amount, Level, Metadata};
+use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
+use sp_std::vec::Vec;
 
-pub type Amount = u32;
-pub type Level = u8;
-pub type Metadata<S> = BoundedVec<u8, S>;
-
-pub trait GameSetting<AccountId, GameId> {
+pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
 	///
 	/// Implementing the function create game
@@ -20,7 +17,7 @@ pub trait GameSetting<AccountId, GameId> {
 	/// Weight: `O(1)`
 	fn do_create_game(
 		game_id: GameId,
-		owner: AccountId,
+		who: AccountId,
 		maybe_admin: Option<AccountId>,
 	) -> DispatchResult;
 
@@ -35,43 +32,51 @@ pub trait GameSetting<AccountId, GameId> {
 	/// - `start_block`: block apply swap fee
 	fn do_set_swap_fee(
 		game_id: GameId,
-		owner: AccountId,
+		who: AccountId,
 		fee: Percent,
 		start_block: BlockNumber,
 	) -> DispatchResult;
 }
 
-pub trait Create<AccountId, GameId, CollectionId, ItemId> {
-	/// Create game collection
+pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
+	/// Do create game collection
 	///
 	/// Create collection for specific game
 	///
 	/// Parameters:
+	/// - `who`: signer and collection owner
 	/// - `game_id`: game id
-	/// - `collection_id`: collection id
-	/// - `owner`: owner
-	/// - `admin`: admin
-	fn create_game_collection(
+	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `config`: collection configuration
+	fn do_create_game_collection(
+		who: AccountId,
 		game_id: GameId,
-		collection_id: CollectionId,
-		owner: AccountId,
-		admin: AccountId,
+		maybe_admin: Option<AccountId>,
+		config: CollectionConfig,
 	) -> DispatchResult;
 
-	/// Create collection
+	/// Do create collection
 	///
 	/// Create a pure collection
 	///
 	/// Parameters:
-	/// - `collection_id`: collection id
-	/// - `owner`: owner
-	/// - `admin`: admin
-	fn create_collection(
-		collection_id: CollectionId,
-		owner: AccountId,
-		admin: AccountId,
+	/// - `who`: signer and collection owner
+	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `config`: collection configuration
+	fn do_create_collection(
+		who: AccountId,
+		maybe_admin: Option<AccountId>,
+		config: CollectionConfig,
 	) -> DispatchResult;
 
+	fn do_add_collection(
+		who: AccountId,
+		game_id: GameId,
+		collection_ids: Vec<CollectionId>,
+	) -> DispatchResult;
+}
+
+pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// Create item
 	///
 	/// Create items for collection
@@ -80,9 +85,15 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn create_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_create_item(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		config: ItemConfig,
+		amount: Amount,
+	) -> DispatchResult;
 
-	/// Add item
+	/// Do add item
 	///
 	/// Add number amount of item in collection
 	///
@@ -90,7 +101,12 @@ pub trait Create<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `amount`: amount
-	fn add_item(collection_id: CollectionId, item_id: ItemId, amount: Amount) -> DispatchResult;
+	fn do_add_item(
+		who: AccountId,
+		collection_id: CollectionId,
+		item_id: ItemId,
+		amount: Amount,
+	) -> DispatchResult;
 }
 
 pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
@@ -179,6 +195,6 @@ pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
 }
 
-pub trait Support {
-	fn gen_id() -> Option<ID>;
-}
+// pub trait Support {
+// 	fn gen_id() -> CollectionId;
+// }

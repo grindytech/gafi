@@ -20,31 +20,42 @@ pub use pallet::*;
 mod benchmarking;
 
 use frame_support::traits::{
-	tokens::nonfungibles_v2::{Create, Mutate, Transfer},
+	tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 	Currency, Randomness, ReservableCurrency,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::{common::ID, game::GameSetting};
+use gafi_support::{
+	common::ID,
+	game::{CreateCollection, GameSetting},
+};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
+use sp_std::vec::Vec;
 use types::GameDetails;
 
 pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
+pub type BalanceOf<T, I = ()> =
+	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
+pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
+
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
-pub type GameDetailsFor<T, I> = GameDetails<
-	<T as SystemConfig>::AccountId,
-	DepositBalanceOf<T, I>,
->;
+// type InspectCollectionId<T, I = ()> = <pallet_nfts::pallet::Pallet<T, I> as Inspect<<T as
+// SystemConfig>::AccountId>>::CollectionId;
+
+pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
+
+pub type CollectionConfigFor<T, I> =
+	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::common::BlockNumber;
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -70,7 +81,8 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			>;
+			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
+			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -93,16 +105,16 @@ pub mod pallet {
 		/// Max Swapping Fee
 		#[pallet::constant]
 		type MaxSwapFee: Get<Percent>;
+
+		/// Max number of collections in a game
+		#[pallet::constant]
+		type MaxGameCollection: Get<u32>;
 	}
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::GameId,
-		GameDetailsFor<T, I>,
-	>;
+	pub(super) type Games<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
@@ -110,11 +122,20 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (u8, BlockNumber)>;
+		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	#[pallet::storage]
-	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, T::CollectionId>;
+	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::GameId,
+		BoundedVec<T::CollectionId, T::MaxGameCollection>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type CollectionGame<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
 
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -130,31 +151,83 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		GameCreated {id: T::GameId},
+		GameCreated { id: T::GameId },
+		SwapFeeSetted { id: T::GameId, fee: Percent },
+		CollectionCreated { id: T::CollectionId },
 	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
 		NotGameOwner,
-		GameIdNotFound,
+		UnknownGame,
 		NameTooLong,
 		NameTooShort,
 		SwapFeeTooHigh,
 		SwapFeeNotFound,
+		NoPermission,
+		ExceedMaxCollection,
+		UnknownCollection,
 	}
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn create_game(
-			origin: OriginFor<T>,
-			admin: Option<T::AccountId>,
-		) -> DispatchResult {
+		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(game_id, sender, admin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(0)]
+		pub fn set_swap_fee(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			fee: Percent,
+			start_block: BlockNumber<T>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_set_swap_fee(game_id, sender, fee, start_block)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
+		pub fn create_game_colletion(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			maybe_admin: Option<T::AccountId>,
+			config: CollectionConfigFor<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_create_game_collection(sender, game_id, maybe_admin, config)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(0)]
+		pub fn create_collection(
+			origin: OriginFor<T>,
+			maybe_admin: Option<T::AccountId>,
+			config: CollectionConfigFor<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_create_collection(sender, maybe_admin, config)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(0)]
+		pub fn add_game_collection(
+			origin: OriginFor<T>,
+			game_id: T::GameId,
+			collection_id: Vec<T::CollectionId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_add_collection(sender, game_id, collection_id)?;
 			Ok(())
 		}
 	}
