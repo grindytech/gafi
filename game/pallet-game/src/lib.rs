@@ -105,6 +105,10 @@ pub mod pallet {
 		/// Max number of collections in a game
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
+
+		/// Maximum number of item that a collection could has
+		#[pallet::constant]
+		type MaxItem: Get<u32>;
 	}
 
 	/// Store basic game info
@@ -156,6 +160,15 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::storage]
+	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::CollectionId,
+		BoundedVec<(T::ItemId, u32), T::MaxItem>,
+		ValueQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -192,6 +205,8 @@ pub mod pallet {
 		NoPermission,
 		ExceedMaxCollection,
 		UnknownCollection,
+		UnknownItem,
+		ExceedMaxItem,
 	}
 
 	#[pallet::call]

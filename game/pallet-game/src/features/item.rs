@@ -15,6 +15,11 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		maybe_amount: Option<Amount>,
 	) -> DispatchResult {
 
+		// make a deposit
+		
+
+		// random mint
+
 
 		Ok(())
 	}

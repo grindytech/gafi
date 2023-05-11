@@ -299,7 +299,7 @@ fn create_item_should_works() {
 
 		assert_ok!(PalletGame::create_item(RuntimeOrigin::signed(admin.clone()), 0, 0, default_item_config(), 1000));
 
-		assert_eq!(ItemBalances::<Test>::get((0, admin.clone(), 0)), 1000);
+		assert_eq!(ItemReserve::<Test>::get(0).to_vec(),[(0, 1000)]);
 	})
 }
 
@@ -333,7 +333,8 @@ fn add_item_should_works() {
 		assert_ok!(PalletGame::create_item(RuntimeOrigin::signed(admin.clone()), 0, 0, default_item_config(), 1000));
 		assert_ok!(PalletGame::add_item(RuntimeOrigin::signed(admin.clone()), 0, 0, 1000));
 
-		assert_eq!(ItemBalances::<Test>::get((0, admin.clone(), 0)), 2000);
+		assert_eq!(ItemReserve::<Test>::get(0).to_vec(),[(0, 2000)]);
+
 	})
 }
 
