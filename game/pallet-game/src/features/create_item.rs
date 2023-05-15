@@ -1,10 +1,11 @@
-use crate::*;
+use crate::{*, types::Item};
 use frame_support::{
 	pallet_prelude::*,
 	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
 use gafi_support::game::{Amount, CreateItem};
 use pallet_nfts::{CollectionRole, CollectionRoles};
+use sp_core::TryCollect;
 
 impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::ItemId, ItemConfig>
 	for Pallet<T, I>
@@ -28,7 +29,10 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			T::Nfts::mint_into(&collection_id, &item_id, &who, &config, false)?;
 
-			ItemBalances::<T, I>::insert((collection_id, &who, item_id), amount);
+			let _result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
+				reserve_vec.try_push(Item::new(item_id, amount))
+			})
+			.map_err(|_| <Error<T, T>>::ExceedMaxItem);
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
 				collection_id,
@@ -57,13 +61,22 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				Error::<T, I>::NoPermission
 			);
 
-			let balance = ItemBalances::<T, I>::get((collection_id, &who, item_id));
-			ItemBalances::<T, I>::insert((collection_id, &who, item_id), balance + amount);
+			let result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
+				let balances = reserve_vec.into_mut();
+				for balance in balances {
+					if balance.item == item_id {
+						balance.amount += amount;
+						return Ok(balance.amount)
+					}
+				}
+				return Err(Error::<T, I>::UnknownItem)
+			})
+			.map_err(|err| err);
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
 				collection_id,
 				item_id,
-				amount: balance + amount,
+				amount: result.unwrap_or_default(),
 			});
 		} else {
 			return Err(Error::<T, I>::UnknownCollection.into())

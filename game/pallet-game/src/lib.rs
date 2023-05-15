@@ -13,24 +13,23 @@ mod tests;
 
 mod features;
 mod types;
-pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-use frame_support::traits::{
-	tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
-	Currency, Randomness, ReservableCurrency,
+use frame_support::{
+	traits::{
+		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+		Currency, Randomness, ReservableCurrency,
+	},
+	PalletId,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::game::{CreateCollection, CreateItem, GameSetting};
+use gafi_support::game::{CreateCollection, CreateItem, GameSetting, Mutable};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
-use types::GameDetails;
-
-pub type DepositBalanceOf<T, I = ()> =
-	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+use types::{GameCollectionConfig, GameDetails};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -42,14 +41,16 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 // type InspectCollectionId<T, I = ()> = <pallet_nfts::pallet::Pallet<T, I> as Inspect<<T as
 // SystemConfig>::AccountId>>::CollectionId;
 
-pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, DepositBalanceOf<T, I>>;
+pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
 pub type CollectionConfigFor<T, I = ()> =
-	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	use crate::types::Item;
+
+use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use pallet_nfts::CollectionRoles;
@@ -64,6 +65,10 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
+		/// The Game's pallet id
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -76,7 +81,7 @@ pub mod pallet {
 			+ Transfer<Self::AccountId>
 			+ Create<
 				Self::AccountId,
-				CollectionConfig<DepositBalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
+				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
 			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
@@ -88,7 +93,7 @@ pub mod pallet {
 
 		/// The basic amount of funds that must be reserved for game.
 		#[pallet::constant]
-		type GameDeposit: Get<DepositBalanceOf<Self, I>>;
+		type GameDeposit: Get<BalanceOf<Self, I>>;
 
 		/// Max name length
 		#[pallet::constant]
@@ -105,6 +110,14 @@ pub mod pallet {
 		/// Max number of collections in a game
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
+
+		/// Maximum number of item that a collection could has
+		#[pallet::constant]
+		type MaxItem: Get<u32>;
+
+		/// Maximum number of item minted once
+		#[pallet::constant]
+		type MaxMintItem: Get<u32>;
 	}
 
 	/// Store basic game info
@@ -156,6 +169,19 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::storage]
+	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::CollectionId,
+		BoundedVec<Item<T::ItemId>, T::MaxItem>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -192,6 +218,10 @@ pub mod pallet {
 		NoPermission,
 		ExceedMaxCollection,
 		UnknownCollection,
+		UnknownItem,
+		ExceedMaxItem,
+		ExceedAmount,
+		SoldOut,
 	}
 
 	#[pallet::call]
@@ -283,6 +313,25 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::do_add_item(sender, collection, item, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(0)]
+		pub fn mint(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			mint_to: Option<AccountIdLookupOf<T>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let target = match mint_to {
+				Some(acc) => T::Lookup::lookup(acc)?,
+				None => sender.clone(),
+			};
+
+			Self::do_mint(sender, collection, target)?;
 
 			Ok(())
 		}

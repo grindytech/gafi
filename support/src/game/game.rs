@@ -13,8 +13,6 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// - `owner`: owner
 	/// - `maybe_admin`: admin
 	/// - `maybe_name`: name
-	///
-	/// Weight: `O(1)`
 	fn do_create_game(
 		game_id: GameId,
 		who: AccountId,
@@ -117,15 +115,13 @@ pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 	/// Parameters:
 	/// - `_who`: sender
 	/// - `_collection_id`: collection id
-	/// - `_maybe_target`: recipient account, default `minter`
-	/// - `_maybe_amount`: amount of items to mint, default `1`
+	/// - `_target`: recipient account, default `minter`
 	///
 	/// By default, this is not a supported operation.
-	fn mint(
+	fn do_mint(
 		_who: AccountId,
 		_collection_id: CollectionId,
-		_maybe_target: Option<AccountId>,
-		_maybe_amount: Option<Amount>,
+		_target: AccountId,
 	) -> DispatchResult {
 		Err(TokenError::Unsupported.into())
 	}
@@ -139,11 +135,11 @@ pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
 	/// - `maybe_amount`: amount of items to burn, default `1`
-	fn burn(
+	fn do_burn(
 		who: AccountId,
 		collection_id: CollectionId,
 		item_id: ItemId,
-		maybe_amount: Option<Amount>,
+		maybe_amount: Amount,
 	) -> DispatchResult;
 }
 

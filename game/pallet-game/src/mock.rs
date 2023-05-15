@@ -2,7 +2,7 @@ use crate as pallet_game;
 use frame_support::{
 	dispatch::Vec,
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize},
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize}, PalletId,
 };
 use frame_system as system;
 use gafi_support::common::{unit, AccountId, NativeToken::GAKI};
@@ -115,9 +115,14 @@ parameter_types! {
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 	pub MaxGameCollection: u32 = 5;
+	pub MaxItem: u32 = 10;
+	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub MaxMintItem: u32 = 10;
 }
 
 impl pallet_game::Config for Test {
+	type PalletId = PalletGameId;
+
 	type RuntimeEvent = RuntimeEvent;
 
 	type Currency = Balances;
@@ -137,6 +142,11 @@ impl pallet_game::Config for Test {
 	type GameDeposit = GameDeposit;
 
 	type MaxGameCollection = MaxGameCollection;
+
+	type MaxItem = MaxItem;
+
+	type MaxMintItem = MaxMintItem;
+
 }
 
 pub fn run_to_block(n: u64) {

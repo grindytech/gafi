@@ -41,6 +41,7 @@ pub use frame_support::{
 	StorageValue,
 };
 
+use frame_support::PalletId;
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_nfts::PalletFeatures;
@@ -315,9 +316,14 @@ parameter_types! {
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = 5_000_000_000;
 	pub MaxGameCollection: u32 = 5;
+	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub MaxMintItem: u32 = 10;
+	pub MaxItem: u32 = 20;
 }
 
 impl pallet_game::Config for Runtime {
+	type PalletId = PalletGameId;
+
 	type RuntimeEvent = RuntimeEvent;
 
 	type Currency = Balances;
@@ -337,6 +343,10 @@ impl pallet_game::Config for Runtime {
 	type GameDeposit = GameDeposit;
 
 	type MaxGameCollection = MaxGameCollection;
+
+	type MaxMintItem = MaxMintItem;
+
+	type MaxItem =  MaxItem;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -356,7 +366,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		Nfts: pallet_nfts::{Pallet, Event<T>},
+		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
 		Game: pallet_game,
 	}
 );

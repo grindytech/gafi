@@ -34,7 +34,9 @@ impl<T: Config<I>, I: 'static>
 			Some(ad) => ad,
 			None => who.clone(),
 		};
-		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
+
+		let collection_id =
+			T::Nfts::create_collection(&who, &admin, &config.to_collection_config());
 
 		if let Ok(id) = collection_id {
 			// insert game collections
@@ -45,7 +47,7 @@ impl<T: Config<I>, I: 'static>
 
 			// insert collection game
 			CollectionGame::<T, I>::insert(id, game_id);
-
+			GameCollectionConfigOf::<T, I>::insert(id, config);
 			Self::deposit_event(Event::<T, I>::CollectionCreated { collection_id: id });
 		}
 		Ok(())
@@ -60,8 +62,10 @@ impl<T: Config<I>, I: 'static>
 			Some(ad) => ad,
 			None => who.clone(),
 		};
-		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
+		let collection_id =
+			T::Nfts::create_collection(&who, &admin, &config.to_collection_config());
 		if let Ok(id) = collection_id {
+			GameCollectionConfigOf::<T, I>::insert(id, config);
 			Self::deposit_event(Event::<T, I>::CollectionCreated { collection_id: id });
 		}
 		Ok(())
