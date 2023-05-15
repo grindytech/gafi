@@ -1,8 +1,14 @@
-use crate::{mock::*, types::{GameDetails, Item, GameMintSettings}, Error, Event, *};
+use crate::{
+	mock::*,
+	types::{GameDetails, GameMintSettings, Item},
+	Error, Event, *,
+};
 use features::id;
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use gafi_support::common::{unit, NativeToken::GAKI};
-use pallet_nfts::{CollectionRole, CollectionRoles, CollectionSettings, MintSettings, ItemSettings};
+use pallet_nfts::{
+	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings,
+};
 use sp_runtime::AccountId32;
 
 fn make_deposit(account: &AccountId32, balance: u128) {
@@ -27,7 +33,6 @@ fn default_collection_config() -> CollectionConfigFor<Test> {
 fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
 }
-
 
 #[test]
 fn create_first_game_should_works() {
@@ -191,11 +196,9 @@ fn create_game_collection_should_fails() {
 	})
 }
 
-
 #[test]
 fn create_collection_should_works() {
 	new_test_ext().execute_with(|| {
-
 		run_to_block(1);
 		let before_balance = 3 * unit(GAKI);
 		let owner = new_account([0; 32], before_balance);
@@ -213,7 +216,6 @@ fn create_collection_should_works() {
 #[test]
 fn add_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
-
 		run_to_block(1);
 		let before_balance = 3 * unit(GAKI);
 		let owner = new_account([0; 32], before_balance);
@@ -237,14 +239,17 @@ fn add_game_collection_should_works() {
 			default_collection_config(),
 		));
 
-		assert_ok!(PalletGame::add_game_collection(RuntimeOrigin::signed(owner.clone()), 0, [0, 1].to_vec()));
+		assert_ok!(PalletGame::add_game_collection(
+			RuntimeOrigin::signed(owner.clone()),
+			0,
+			[0, 1].to_vec()
+		));
 
 		assert_eq!(GameCollections::<Test>::get(0), [0, 1].to_vec());
 		assert_eq!(CollectionGame::<Test>::get(0).unwrap(), 0);
 		assert_eq!(CollectionGame::<Test>::get(1).unwrap(), 0);
 	})
 }
-
 
 #[test]
 fn create_item_should_works() {
@@ -267,9 +272,15 @@ fn create_item_should_works() {
 			default_collection_config(),
 		));
 
-		assert_ok!(PalletGame::create_item(RuntimeOrigin::signed(admin.clone()), 0, 0, default_item_config(), 1000));
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			default_item_config(),
+			1000
+		));
 
-		assert_eq!(ItemReserve::<Test>::get(0).to_vec(),[(0, 1000)]);
+		assert_eq!(ItemReserve::<Test>::get(0).to_vec(), [Item::new(0, 1000)]);
 	})
 }
 
@@ -294,28 +305,45 @@ fn add_item_should_works() {
 			default_collection_config(),
 		));
 
-		assert_ok!(PalletGame::create_item(RuntimeOrigin::signed(admin.clone()), 0, 0, default_item_config(), 1000));
-		assert_ok!(PalletGame::add_item(RuntimeOrigin::signed(admin.clone()), 0, 0, 1000));
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			default_item_config(),
+			1000
+		));
+		assert_ok!(PalletGame::add_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			1000
+		));
 
-		assert_eq!(ItemReserve::<Test>::get(0).to_vec(),[(0, 2000)]);
-
+		assert_eq!(ItemReserve::<Test>::get(0).to_vec(), [Item::new(0, 2000)]);
 	})
 }
 
 #[test]
-fn random_item_should_works() {
+fn withdraw_reserve_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(2);
-
-		let source = vec![Item::new(1, 10), Item::new(2, 5), Item::new(3, 1)];
-
-		let mut random_item = PalletGame::random_item(&source).unwrap().0;
-		for i in 0..15 {
-			let new_source = random_item.clone();
-			random_item = PalletGame::random_item(&new_source).unwrap().0;
-			println!("random_item: {:?}", random_item);
-		}
 		
-	})
+		let _  = ItemReserve::<Test>::try_mutate(0, |reserve_vec| {
+			let _ = reserve_vec.try_push(Item::new(1, 9));
+			let _ = reserve_vec.try_push(Item::new(2, 5));
+			let _ =reserve_vec.try_push(Item::new(3, 1));
+			Ok(())
+		})
+		.map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
 
+		for _i in 0..15 {
+			let item = PalletGame::withdraw_reserve(0);
+			assert_eq!(item.is_ok(), true);
+		}
+
+		for _i in 0..3 {
+			let item = PalletGame::withdraw_reserve(0);
+			assert_eq!(item.is_err(), true);
+		}
+	})
 }

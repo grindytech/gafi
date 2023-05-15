@@ -10,9 +10,8 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		collection_id: T::CollectionId,
 		target: T::AccountId,
 	) -> DispatchResult {
-
 		let mut fee = BalanceOf::<T, I>::default();
-		
+
 		// if collection owner not found, transfer to signer
 		let mut collection_owner = who.clone();
 
@@ -31,7 +30,7 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		)?;
 
 		// random mint
-		if let Ok(item) = Self::random_item(collection_id) {
+		if let Ok(item) = Self::withdraw_reserve(collection_id) {
 			Self::add_item_balance(target, collection_id, item)?;
 		}
 
@@ -74,37 +73,41 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		return random_number
 	}
 
-	pub fn random_item(
-		collection_id: T::CollectionId,
-	) -> Result<T::ItemId, Error<T, I>> {
-
-		let mut source = ItemReserve::<T, I>::get(collection_id);
-
+	pub fn withdraw_reserve(collection_id: T::CollectionId) -> Result<T::ItemId, Error<T, I>> {
 		let mut total_item = 0_u32;
-		for item in source.clone() {
-			total_item += item.amount;
+		{
+			let source = ItemReserve::<T, I>::get(collection_id);
+
+			for item in source.clone() {
+				total_item += item.amount;
+			}
 		}
 
 		ensure!(total_item > 0, Error::<T, I>::SoldOut);
 
 		let position = Self::random_number(total_item);
 
-		let rand_item: T::ItemId;
-
-		let mut tmp = 0_u32;
-		for i in 0..source.len() {
-			if source[i].amount > 0 && source[i].amount + tmp >= position {
-				source[i] = Item {
-					amount: source[i].amount - 1,
-					item: source[i].item,
-				};
-				rand_item = source[i].item;
-				return Ok(rand_item);
-			} else {
-				tmp += source[i].amount;
+		let result = ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
+			let mut tmp = 0_u32;
+			for reserve in reserve_vec.into_iter() {
+				if reserve.amount > 0 && reserve.amount + tmp >= position {
+					*reserve = Item {
+						amount: reserve.amount - 1,
+						item: reserve.item,
+					};
+					return Ok(*reserve)
+				} else {
+					tmp += reserve.amount;
+				}
 			}
+			Err(Error::<T, I>::ExceedAmount)
+		})
+		.map_err(|_| Error::<T, I>::ExceedAmount);
+
+		match result {
+			Ok(item) => Ok(item.item),
+			Err(err) => Err(err),
 		}
-		Err(Error::<T, I>::SoldOut)
 	}
 
 	pub fn add_item_balance(
