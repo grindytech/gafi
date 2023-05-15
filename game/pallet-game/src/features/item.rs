@@ -1,5 +1,5 @@
 use crate::{types::Item, *};
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, log};
 use gafi_support::game::{Amount, Mutable};
 
 impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
@@ -9,31 +9,66 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		who: T::AccountId,
 		collection_id: T::CollectionId,
 		target: T::AccountId,
+		amount: Amount,
 	) -> DispatchResult {
-		let mut fee = BalanceOf::<T, I>::default();
-
-		// if collection owner not found, transfer to signer
-		let mut collection_owner = who.clone();
-
-		if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
-			collection_owner = owner;
-		}
-		if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
-			fee = config.mint_settings.mint_settings.price.unwrap();
-		}
-		// make a deposit
-		<T as pallet::Config<I>>::Currency::transfer(
-			&who,
-			&collection_owner,
-			fee,
-			ExistenceRequirement::KeepAlive,
-		)?;
-
-		// random mint
-		if let Ok(item) = Self::withdraw_reserve(collection_id) {
-			Self::add_item_balance(target, collection_id, item)?;
+		// validating item amount
+		let mut total_item = 0_u32;
+		{
+			let source = ItemReserve::<T, I>::get(collection_id);
+			for item in source.clone() {
+				total_item += item.amount;
+			}
+			ensure!(total_item > 0, Error::<T, I>::SoldOut);
+			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
+			if let Some(max_mint) = Self::get_max_mint_amount(collection_id) {
+				ensure!(amount <= max_mint, Error::<T, I>::ExceedAllowedAmount);
+			}
 		}
 
+		// make minting fee deposit
+		{
+			// if collection owner not found, transfer to signer
+			let mut collection_owner = who.clone();
+
+			if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
+				collection_owner = owner;
+			}
+			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
+				let fee = config.mint_settings.mint_settings.price.unwrap_or_default();
+				// make a deposit
+				<T as pallet::Config<I>>::Currency::transfer(
+					&who,
+					&collection_owner,
+					fee * amount.into(),
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
+		}
+
+		// random minting
+		let mut minted_items: Vec<T::ItemId> = [].to_vec();
+		{
+			let mut position =
+				<frame_system::Pallet<T>>::block_number().try_into().unwrap_or_default();
+			for _ in 0..amount {
+				position = Self::random_number(total_item, position) % total_item;
+
+				match Self::withdraw_reserve(collection_id, position) {
+					Ok(item) => {
+						Self::add_item_balance(target.clone(), collection_id, item)?;
+						minted_items.push(item);
+					},
+					Err(err) => return Err(err.into()),
+				};
+			}
+		}
+
+		Self::deposit_event(Event::<T, I>::Minted {
+			minter: who,
+			target,
+			collection_id,
+			minted_items,
+		});
 		Ok(())
 	}
 
@@ -61,32 +96,22 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random_number
 	}
 
-	fn random_number(total: u32) -> u32 {
-		let mut random_number = Self::generate_random_number(1);
-		for i in 1..10 {
+	fn random_number(total: u32, seed: u32) -> u32 {
+		let mut random_number = Self::generate_random_number(seed);
+		for _ in 1..10 {
 			if random_number < u32::MAX - u32::MAX % total {
 				break
 			}
 
-			random_number = Self::generate_random_number(i);
+			random_number = Self::generate_random_number(seed);
 		}
 		return random_number
 	}
 
-	pub fn withdraw_reserve(collection_id: T::CollectionId) -> Result<T::ItemId, Error<T, I>> {
-		let mut total_item = 0_u32;
-		{
-			let source = ItemReserve::<T, I>::get(collection_id);
-
-			for item in source.clone() {
-				total_item += item.amount;
-			}
-		}
-
-		ensure!(total_item > 0, Error::<T, I>::SoldOut);
-
-		let position = Self::random_number(total_item);
-
+	pub fn withdraw_reserve(
+		collection_id: T::CollectionId,
+		position: u32,
+	) -> Result<T::ItemId, Error<T, I>> {
 		let result = ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
@@ -100,9 +125,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 					tmp += reserve.amount;
 				}
 			}
-			Err(Error::<T, I>::ExceedAmount)
+			Err(Error::<T, I>::WithdrawReserveFailed)
 		})
-		.map_err(|_| Error::<T, I>::ExceedAmount);
+		.map_err(|_| Error::<T, I>::WithdrawReserveFailed);
 
 		match result {
 			Ok(item) => Ok(item.item),
@@ -118,5 +143,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		let amount = ItemBalances::<T, I>::get((&collection, &who, &item));
 		ItemBalances::<T, I>::insert((collection, who, item), amount + 1);
 		Ok(())
+	}
+
+	pub fn get_max_mint_amount(collection: T::CollectionId) -> Option<u32> {
+		match GameCollectionConfigOf::<T, I>::get(collection) {
+			Some(config) => return config.mint_settings.amount,
+			None => None,
+		}
 	}
 }

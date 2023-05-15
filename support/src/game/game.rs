@@ -122,6 +122,7 @@ pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 		_who: AccountId,
 		_collection_id: CollectionId,
 		_target: AccountId,
+		_amount: Amount,
 	) -> DispatchResult {
 		Err(TokenError::Unsupported.into())
 	}

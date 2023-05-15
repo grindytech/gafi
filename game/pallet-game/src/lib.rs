@@ -205,6 +205,12 @@ use super::*;
 			item_id: T::ItemId,
 			amount: u32,
 		},
+		Minted {
+			minter: T::AccountId,
+			target: T::AccountId,
+			collection_id: T::CollectionId,
+			minted_items: Vec<T::ItemId>,
+		},
 	}
 
 	#[pallet::error]
@@ -220,8 +226,10 @@ use super::*;
 		UnknownCollection,
 		UnknownItem,
 		ExceedMaxItem,
-		ExceedAmount,
+		ExceedTotalAmount,
+		ExceedAllowedAmount,
 		SoldOut,
+		WithdrawReserveFailed,
 	}
 
 	#[pallet::call]
@@ -323,6 +331,7 @@ use super::*;
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			mint_to: Option<AccountIdLookupOf<T>>,
+			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -331,7 +340,7 @@ use super::*;
 				None => sender.clone(),
 			};
 
-			Self::do_mint(sender, collection, target)?;
+			Self::do_mint(sender, collection, target, amount)?;
 
 			Ok(())
 		}
