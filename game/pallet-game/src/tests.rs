@@ -30,12 +30,12 @@ fn default_collection_config() -> CollectionConfigFor<Test> {
 	}
 }
 
-fn price_collection_config(price: u128) -> CollectionConfigFor<Test> {
+fn collection_config(amount: u32, price: u128) -> CollectionConfigFor<Test> {
 	GameCollectionConfig {
 		settings: CollectionSettings::all_enabled(),
 		max_supply: None,
 		mint_settings: GameMintSettings {
-			amount: Some(10),
+			amount: Some(amount),
 			mint_settings: MintSettings {
 				mint_type: MintType::Issuer,
 				price: Some(price),
@@ -383,7 +383,7 @@ fn mint_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			Some(admin.clone()),
-			price_collection_config(mint_fee),
+			collection_config(10, mint_fee),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -424,6 +424,68 @@ fn mint_should_works() {
 		assert_eq!(
 			Balances::free_balance(player.clone()),
 			before_balance - (mint_fee * 3)
+		);
+	})
+}
+
+#[test]
+fn mint_should_fails() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let owner = new_account([0; 32], 3 * unit(GAKI));
+
+		let admin = new_account([1; 32], 3 * unit(GAKI));
+		let mint_fee: u128 = 3 * unit(GAKI);
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			Some(admin.clone())
+		));
+
+		assert_ok!(PalletGame::create_game_colletion(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			Some(admin.clone()),
+			collection_config(9, mint_fee),
+		));
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			default_item_config(),
+			10
+		));
+
+		let player = new_account([2; 32], 3000 * unit(GAKI));
+		assert_err!(
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 10),
+			Error::<Test>::ExceedAllowedAmount
+		);
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			None,
+			9
+		));
+
+		// one left
+		assert_err!(
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 4),
+			Error::<Test>::ExceedTotalAmount
+		);
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			None,
+			1
+		));
+
+		assert_err!(
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 1),
+			Error::<Test>::SoldOut
 		);
 	})
 }
