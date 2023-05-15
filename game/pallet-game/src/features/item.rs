@@ -78,6 +78,12 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		item_id: T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
+		let item_balance =  ItemBalances::<T, I>::get((collection_id, &who, item_id));
+		ensure!(amount <= item_balance, Error::<T, I>::InsufficientItemBalance);
+
+		ItemBalances::<T, I>::insert((collection_id, &who, item_id), item_balance - amount);
+
+		Self::deposit_event(Event::<T, I>::Burned { collection_id, item_id, amount });
 		Ok(())
 	}
 }

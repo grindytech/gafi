@@ -489,3 +489,53 @@ fn mint_should_fails() {
 		);
 	})
 }
+
+#[test]
+pub fn burn_items_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let owner = new_account([0; 32], 3 * unit(GAKI));
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			None
+		));
+
+		assert_ok!(PalletGame::create_game_colletion(
+			RuntimeOrigin::signed(owner.clone()),
+			0,
+			Some(owner.clone()),
+			collection_config(50, 0),
+		));
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(owner.clone()),
+			0,
+			0,
+			default_item_config(),
+			100
+		));
+
+		let player = new_account([2; 32], 3000 * unit(GAKI));
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			None,
+			10
+		));
+		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 10);
+
+		assert_ok!(PalletGame::burn(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			0,
+			5
+		));
+		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
+
+		assert_err!(
+			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
+			Error::<Test>::InsufficientItemBalance
+		);
+	})
+}

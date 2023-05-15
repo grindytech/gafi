@@ -211,6 +211,11 @@ use super::*;
 			collection_id: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
+		Burned {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -230,6 +235,7 @@ use super::*;
 		ExceedAllowedAmount,
 		SoldOut,
 		WithdrawReserveFailed,
+		InsufficientItemBalance,
 	}
 
 	#[pallet::call]
@@ -342,6 +348,20 @@ use super::*;
 
 			Self::do_mint(sender, collection, target, amount)?;
 
+			Ok(())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(0)]
+		pub fn burn(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_burn(sender, collection, item, amount)?;
 			Ok(())
 		}
 	}
