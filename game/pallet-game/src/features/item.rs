@@ -1,5 +1,5 @@
 use crate::{types::Item, *};
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, Mutable};
 
 impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
@@ -11,10 +11,29 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		target: T::AccountId,
 	) -> DispatchResult {
 
-		// make a deposit
+		let mut fee = BalanceOf::<T, I>::default();
+		
+		// if collection owner not found, transfer to signer
+		let mut collection_owner = who.clone();
 
+		if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
+			collection_owner = owner;
+		}
+		if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
+			fee = config.mint_settings.mint_settings.price.unwrap();
+		}
+		// make a deposit
+		<T as pallet::Config<I>>::Currency::transfer(
+			&who,
+			&collection_owner,
+			fee,
+			ExistenceRequirement::KeepAlive,
+		)?;
 
 		// random mint
+		if let Ok(item) = Self::random_item(collection_id) {
+			Self::add_item_balance(target, collection_id, item)?;
+		}
 
 		Ok(())
 	}
@@ -56,8 +75,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	pub fn random_item(
-		source: &Vec<Item<T::ItemId>>,
-	) -> Result<(Vec<Item<T::ItemId>>, T::ItemId), Error<T, I>> {
+		collection_id: T::CollectionId,
+	) -> Result<T::ItemId, Error<T, I>> {
+
+		let mut source = ItemReserve::<T, I>::get(collection_id);
+
 		let mut total_item = 0_u32;
 		for item in source.clone() {
 			total_item += item.amount;
@@ -67,22 +89,31 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		let position = Self::random_number(total_item);
 
-		let mut new_source = source.clone();
 		let rand_item: T::ItemId;
 
 		let mut tmp = 0_u32;
-		for i in 0..new_source.len() {
-			if new_source[i].amount > 0 && new_source[i].amount + tmp >= position {
-				new_source[i] = Item {
-					amount: new_source[i].amount - 1,
-					item: new_source[i].item,
+		for i in 0..source.len() {
+			if source[i].amount > 0 && source[i].amount + tmp >= position {
+				source[i] = Item {
+					amount: source[i].amount - 1,
+					item: source[i].item,
 				};
-				rand_item = new_source[i].item;
-				return Ok((new_source, rand_item))
+				rand_item = source[i].item;
+				return Ok(rand_item);
 			} else {
-				tmp += new_source[i].amount;
+				tmp += source[i].amount;
 			}
 		}
 		Err(Error::<T, I>::SoldOut)
+	}
+
+	pub fn add_item_balance(
+		who: T::AccountId,
+		collection: T::CollectionId,
+		item: T::ItemId,
+	) -> Result<(), Error<T, I>> {
+		let amount = ItemBalances::<T, I>::get((&collection, &who, &item));
+		ItemBalances::<T, I>::insert((collection, who, item), amount + 1);
+		Ok(())
 	}
 }

@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{*, types::Item};
 use frame_support::{
 	pallet_prelude::*,
 	traits::tokens::nonfungibles_v2::{Create, Inspect},
@@ -30,7 +30,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			T::Nfts::mint_into(&collection_id, &item_id, &who, &config, false)?;
 
 			let _result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
-				reserve_vec.try_push((item_id, amount))
+				reserve_vec.try_push(Item::new(item_id, amount))
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxItem);
 
@@ -64,9 +64,9 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			let result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
 				let balances = reserve_vec.into_mut();
 				for balance in balances {
-					if balance.0 == item_id {
-						balance.1 += amount;
-						return Ok(balance.1)
+					if balance.item == item_id {
+						balance.amount += amount;
+						return Ok(balance.amount)
 					}
 				}
 				return Err(Error::<T, I>::UnknownItem)

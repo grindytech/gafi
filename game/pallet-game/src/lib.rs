@@ -29,7 +29,7 @@ use gafi_support::game::{CreateCollection, CreateItem, GameSetting, Mutable};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
-use types::{GameDetails, GameCollectionConfig};
+use types::{GameCollectionConfig, GameDetails};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -48,7 +48,9 @@ pub type CollectionConfigFor<T, I = ()> =
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	use crate::types::Item;
+
+use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use pallet_nfts::CollectionRoles;
@@ -116,7 +118,6 @@ pub mod pallet {
 		/// Maximum number of item minted once
 		#[pallet::constant]
 		type MaxMintItem: Get<u32>;
-		
 	}
 
 	/// Store basic game info
@@ -173,18 +174,13 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::CollectionId,
-		BoundedVec<(T::ItemId, u32), T::MaxItem>,
+		BoundedVec<Item<T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
 
 	#[pallet::storage]
-	pub(super) type CollectionFee<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::CollectionId,
-		BalanceOf<T, I>,
-		OptionQuery,
-	>;
+	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
