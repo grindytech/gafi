@@ -107,7 +107,7 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	) -> DispatchResult;
 }
 
-pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
+pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	/// Mint
 	///
 	/// Random mint item in the collection
@@ -182,8 +182,14 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	) -> DispatchResult;
 }
 
-pub trait Transfer {
-	fn transfer() -> DispatchResult;
+pub trait TransferItem<AccountId, CollectionId, ItemId> {
+	fn do_transfer_item(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		destination: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
 
 	fn swap() -> DispatchResult;
 }

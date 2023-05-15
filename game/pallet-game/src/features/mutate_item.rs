@@ -1,8 +1,8 @@
 use crate::{types::Item, *};
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, log};
-use gafi_support::game::{Amount, Mutable};
+use gafi_support::game::{Amount, MutateItem};
 
-impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
+impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
 	for Pallet<T, I>
 {
 	fn do_mint(

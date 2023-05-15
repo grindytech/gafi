@@ -25,7 +25,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::game::{CreateCollection, CreateItem, GameSetting, Mutable};
+use gafi_support::game::{CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
@@ -50,7 +50,7 @@ pub type CollectionConfigFor<T, I = ()> =
 pub mod pallet {
 	use crate::types::Item;
 
-use super::*;
+	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use pallet_nfts::CollectionRoles;
@@ -216,6 +216,13 @@ use super::*;
 			item_id: T::ItemId,
 			amount: u32,
 		},
+		Transferred {
+			from: T::AccountId,
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			dest: T::AccountId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -362,6 +369,31 @@ use super::*;
 			let sender = ensure_signed(origin)?;
 
 			Self::do_burn(sender, collection, item, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(0)]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			dest: AccountIdLookupOf<T>,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let destination = T::Lookup::lookup(dest)?;
+			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
+
+			Self::deposit_event(Event::<T, I>::Transferred {
+				from: sender,
+				collection_id: collection,
+				item_id: item,
+				dest: destination,
+				amount,
+			});
+
 			Ok(())
 		}
 	}
