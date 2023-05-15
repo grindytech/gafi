@@ -51,6 +51,31 @@ fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
 }
 
+fn create_items() {
+	run_to_block(1);
+	let owner = new_account([0; 32], 3 * unit(GAKI));
+
+	assert_ok!(PalletGame::create_game(
+		RuntimeOrigin::signed(owner.clone()),
+		owner.clone()
+	));
+
+	assert_ok!(PalletGame::create_game_colletion(
+		RuntimeOrigin::signed(owner.clone()),
+		0,
+		owner.clone(),
+		collection_config(50, 0),
+	));
+
+	assert_ok!(PalletGame::create_item(
+		RuntimeOrigin::signed(owner.clone()),
+		0,
+		0,
+		default_item_config(),
+		100
+	));
+}
+
 #[test]
 fn create_first_game_should_works() {
 	new_test_ext().execute_with(|| {
@@ -62,7 +87,7 @@ fn create_first_game_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone()
 		));
 
 		let game = Games::<Test>::get(0).unwrap();
@@ -95,7 +120,7 @@ fn set_swap_fee_should_works() {
 		let admin = new_account([1; 32], 3 * unit(GAKI));
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::set_swap_fee(
@@ -122,7 +147,7 @@ fn set_swap_fee_should_fails() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_err!(
@@ -149,13 +174,13 @@ fn create_game_collection_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 
@@ -165,7 +190,7 @@ fn create_game_collection_should_works() {
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin),
+			admin.clone(),
 			default_collection_config(),
 		));
 		assert_eq!(GameCollections::<Test>::get(0)[1], 1);
@@ -185,7 +210,7 @@ fn create_game_collection_should_fails() {
 
 			assert_ok!(PalletGame::create_game(
 				RuntimeOrigin::signed(owner.clone()),
-				Some(admin.clone())
+				admin.clone(),
 			));
 
 			// random acc should has no permission
@@ -193,7 +218,7 @@ fn create_game_collection_should_fails() {
 				PalletGame::create_game_colletion(
 					RuntimeOrigin::signed(acc.clone()),
 					0,
-					Some(acc.clone()),
+					acc.clone(),
 					default_collection_config(),
 				),
 				Error::<Test>::NoPermission
@@ -204,7 +229,7 @@ fn create_game_collection_should_fails() {
 				PalletGame::create_game_colletion(
 					RuntimeOrigin::signed(owner.clone()),
 					0,
-					Some(owner.clone()),
+					owner.clone(),
 					default_collection_config(),
 				),
 				Error::<Test>::NoPermission
@@ -224,7 +249,7 @@ fn create_collection_should_works() {
 
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(admin.clone()),
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 	})
@@ -241,18 +266,18 @@ fn add_game_collection_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 
@@ -279,13 +304,13 @@ fn create_item_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 
@@ -312,13 +337,13 @@ fn add_item_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin.clone()),
+			admin.clone(),
 			default_collection_config(),
 		));
 
@@ -353,13 +378,13 @@ fn withdraw_reserve_should_works() {
 		})
 		.map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
 
-		let item = PalletGame::withdraw_reserve(0, 0);
+		let item = PalletGame::withdraw_reserve(&0, 0);
 		assert_eq!(item.unwrap(), 1);
 
-		let item = PalletGame::withdraw_reserve(0, 9);
+		let item = PalletGame::withdraw_reserve(&0, 9);
 		assert_eq!(item.unwrap(), 2);
 
-		let item = PalletGame::withdraw_reserve(0, 13);
+		let item = PalletGame::withdraw_reserve(&0, 13);
 		assert_eq!(item.unwrap(), 3);
 	})
 }
@@ -376,13 +401,13 @@ fn mint_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin.clone()),
+			admin.clone(),
 			collection_config(10, mint_fee),
 		));
 
@@ -415,7 +440,7 @@ fn mint_should_works() {
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
 			0,
-			None,
+			player.clone(),
 			3
 		));
 		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 1);
@@ -439,13 +464,13 @@ fn mint_should_fails() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			Some(admin.clone())
+			admin.clone(),
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			Some(admin.clone()),
+			admin.clone(),
 			collection_config(9, mint_fee),
 		));
 
@@ -459,32 +484,32 @@ fn mint_should_fails() {
 
 		let player = new_account([2; 32], 3000 * unit(GAKI));
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 10),
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 10),
 			Error::<Test>::ExceedAllowedAmount
 		);
 
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
 			0,
-			None,
+			player.clone(),
 			9
 		));
 
 		// one left
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 4),
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 4),
 			Error::<Test>::ExceedTotalAmount
 		);
 
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
 			0,
-			None,
+			player.clone(),
 			1
 		));
 
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, None, 1),
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 1),
 			Error::<Test>::SoldOut
 		);
 	})
@@ -498,13 +523,13 @@ pub fn burn_items_should_works() {
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
-			None
+			owner.clone()
 		));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(owner.clone()),
 			0,
-			Some(owner.clone()),
+			owner.clone(),
 			collection_config(50, 0),
 		));
 
@@ -520,7 +545,7 @@ pub fn burn_items_should_works() {
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
 			0,
-			None,
+			player.clone(),
 			10
 		));
 		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 10);
@@ -535,6 +560,38 @@ pub fn burn_items_should_works() {
 
 		assert_err!(
 			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
+			Error::<Test>::InsufficientItemBalance
+		);
+	})
+}
+
+#[test]
+pub fn transfer_item_should_works() {
+	new_test_ext().execute_with(|| {
+		create_items();
+
+		let player = new_account([2; 32], 3000 * unit(GAKI));
+		let dest = new_account([3; 32], 3000 * unit(GAKI));
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			10
+		));
+
+		assert_ok!(PalletGame::transfer(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			0,
+			dest.clone(),
+			5
+		));
+
+		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((0, dest.clone(), 0)), 5);
+
+		assert_err!(
+			PalletGame::transfer(RuntimeOrigin::signed(player.clone()), 0, 0, dest.clone(), 6),
 			Error::<Test>::InsufficientItemBalance
 		);
 	})

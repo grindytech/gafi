@@ -7,16 +7,11 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 	for Pallet<T, I>
 {
 	fn do_create_game(
-		id: T::GameId,
-		who: T::AccountId,
-		maybe_admin: Option<T::AccountId>,
+		who: &T::AccountId,
+		id: &T::GameId,
+		admin: &T::AccountId,
 	) -> DispatchResult {
 		<T as Config<I>>::Currency::reserve(&who, T::GameDeposit::get())?;
-
-		let admin = match maybe_admin {
-			Some(admin) => admin,
-			None => who.clone(),
-		};
 
 		let game = GameDetails {
 			owner: who.clone(),
@@ -36,13 +31,13 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		);
 
 		Games::<T, I>::insert(id, game);
-		Self::deposit_event(Event::GameCreated { game_id: id });
+		Self::deposit_event(Event::GameCreated { game_id: *id });
 		Ok(())
 	}
 
 	fn do_set_swap_fee(
-		id: T::GameId,
-		who: T::AccountId,
+		who: &T::AccountId,
+		id: &T::GameId,
 		fee: Percent,
 		start_block: BlockNumber<T>,
 	) -> DispatchResult {
@@ -54,7 +49,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		ensure!(fee <= T::MaxSwapFee::get(), Error::<T, I>::SwapFeeTooHigh);
 
 		SwapFee::<T, I>::insert(id, (fee, start_block));
-		Self::deposit_event(Event::SwapFeeSetted { game_id: id, fee });
+		Self::deposit_event(Event::SwapFeeSetted { game_id: *id, fee });
 		Ok(())
 	}
 }

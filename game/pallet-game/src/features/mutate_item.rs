@@ -1,14 +1,14 @@
 use crate::{types::Item, *};
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, log};
-use gafi_support::game::{Amount, Mutable};
+use frame_support::{log, pallet_prelude::*, traits::ExistenceRequirement};
+use gafi_support::game::{Amount, MutateItem};
 
-impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
+impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
 	for Pallet<T, I>
 {
 	fn do_mint(
-		who: T::AccountId,
-		collection_id: T::CollectionId,
-		target: T::AccountId,
+		who: &T::AccountId,
+		collection_id: &T::CollectionId,
+		target: &T::AccountId,
 		amount: Amount,
 	) -> DispatchResult {
 		// validating item amount
@@ -20,7 +20,7 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 			}
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
-			if let Some(max_mint) = Self::get_max_mint_amount(collection_id) {
+			if let Some(max_mint) = Self::get_max_mint_amount(*collection_id) {
 				ensure!(amount <= max_mint, Error::<T, I>::ExceedAllowedAmount);
 			}
 		}
@@ -55,7 +55,7 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 
 				match Self::withdraw_reserve(collection_id, position) {
 					Ok(item) => {
-						Self::add_item_balance(target.clone(), collection_id, item)?;
+						Self::add_item_balance(target.clone(), collection_id.clone(), item)?;
 						minted_items.push(item);
 					},
 					Err(err) => return Err(err.into()),
@@ -64,26 +64,33 @@ impl<T: Config<I>, I: 'static> Mutable<T::AccountId, T::GameId, T::CollectionId,
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
-			minter: who,
-			target,
-			collection_id,
+			minter: who.clone(),
+			target: target.clone(),
+			collection_id: *collection_id,
 			minted_items,
 		});
 		Ok(())
 	}
 
 	fn do_burn(
-		who: T::AccountId,
-		collection_id: T::CollectionId,
-		item_id: T::ItemId,
+		who: &T::AccountId,
+		collection_id: &T::CollectionId,
+		item_id: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		let item_balance =  ItemBalances::<T, I>::get((collection_id, &who, item_id));
-		ensure!(amount <= item_balance, Error::<T, I>::InsufficientItemBalance);
+		let item_balance = ItemBalances::<T, I>::get((collection_id, &who, item_id));
+		ensure!(
+			amount <= item_balance,
+			Error::<T, I>::InsufficientItemBalance
+		);
 
 		ItemBalances::<T, I>::insert((collection_id, &who, item_id), item_balance - amount);
 
-		Self::deposit_event(Event::<T, I>::Burned { collection_id, item_id, amount });
+		Self::deposit_event(Event::<T, I>::Burned {
+			collection_id: *collection_id,
+			item_id: *item_id,
+			amount,
+		});
 		Ok(())
 	}
 }
@@ -115,7 +122,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	pub fn withdraw_reserve(
-		collection_id: T::CollectionId,
+		collection_id: &T::CollectionId,
 		position: u32,
 	) -> Result<T::ItemId, Error<T, I>> {
 		let result = ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {

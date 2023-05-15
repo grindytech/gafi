@@ -25,7 +25,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::game::{CreateCollection, CreateItem, GameSetting, Mutable};
+use gafi_support::game::{CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
@@ -50,7 +50,7 @@ pub type CollectionConfigFor<T, I = ()> =
 pub mod pallet {
 	use crate::types::Item;
 
-use super::*;
+	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use pallet_nfts::CollectionRoles;
@@ -216,6 +216,13 @@ use super::*;
 			item_id: T::ItemId,
 			amount: u32,
 		},
+		Transferred {
+			from: T::AccountId,
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			dest: T::AccountId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -242,11 +249,11 @@ use super::*;
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>) -> DispatchResult {
+		pub fn create_game(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(game_id, sender, admin)?;
+			Self::do_create_game(&sender, &game_id, &admin)?;
 			Ok(())
 		}
 
@@ -259,7 +266,7 @@ use super::*;
 			start_block: BlockNumber<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_set_swap_fee(game_id, sender, fee, start_block)?;
+			Self::do_set_swap_fee(&sender, &game_id, fee, start_block)?;
 			Ok(())
 		}
 
@@ -268,11 +275,11 @@ use super::*;
 		pub fn create_game_colletion(
 			origin: OriginFor<T>,
 			game_id: T::GameId,
-			maybe_admin: Option<T::AccountId>,
+			admin: T::AccountId,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(sender, game_id, maybe_admin, config)?;
+			Self::do_create_game_collection(&sender, &game_id, &admin, &config)?;
 			Ok(())
 		}
 
@@ -280,11 +287,12 @@ use super::*;
 		#[pallet::weight(0)]
 		pub fn create_collection(
 			origin: OriginFor<T>,
-			maybe_admin: Option<T::AccountId>,
+			admin: T::AccountId,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(sender, maybe_admin, config)?;
+			Self::do_create_collection(&sender, &admin, &config)?;
+
 			Ok(())
 		}
 
@@ -296,7 +304,7 @@ use super::*;
 			collection: Vec<T::CollectionId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_add_collection(sender, game, collection)?;
+			Self::do_add_collection(&sender, &game, &collection)?;
 			Ok(())
 		}
 
@@ -311,7 +319,7 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_create_item(sender, collection, item, config, amount)?;
+			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
 
 			Ok(())
 		}
@@ -326,7 +334,7 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_add_item(sender, collection, item, amount)?;
+			Self::do_add_item(&sender, &collection, &item, amount)?;
 
 			Ok(())
 		}
@@ -336,17 +344,14 @@ use super::*;
 		pub fn mint(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
-			mint_to: Option<AccountIdLookupOf<T>>,
+			mint_to: AccountIdLookupOf<T>,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let target = match mint_to {
-				Some(acc) => T::Lookup::lookup(acc)?,
-				None => sender.clone(),
-			};
+			let target = T::Lookup::lookup(mint_to)?;
 
-			Self::do_mint(sender, collection, target, amount)?;
+			Self::do_mint(&sender, &collection, &target, amount)?;
 
 			Ok(())
 		}
@@ -361,7 +366,32 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_burn(sender, collection, item, amount)?;
+			Self::do_burn(&sender, &collection, &item, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(0)]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			dest: AccountIdLookupOf<T>,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let destination = T::Lookup::lookup(dest)?;
+			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
+
+			Self::deposit_event(Event::<T, I>::Transferred {
+				from: sender,
+				collection_id: collection,
+				item_id: item,
+				dest: destination,
+				amount,
+			});
+
 			Ok(())
 		}
 	}

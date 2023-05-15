@@ -9,28 +9,23 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Implementing the function create game
 	///
 	/// Parameters:
+	/// - `who`: signer and game owner
 	/// - `id`: new game id
-	/// - `owner`: owner
-	/// - `maybe_admin`: admin
-	/// - `maybe_name`: name
-	fn do_create_game(
-		game_id: GameId,
-		who: AccountId,
-		maybe_admin: Option<AccountId>,
-	) -> DispatchResult;
+	/// - `admin`: admin
+	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
 
 	/// Do set swap fee
 	///
 	///  Implementing the function set swap fee
 	///
 	/// Parameters:
-	/// - `id`: game id
-	/// - `owner`: owner
+	/// - `who`: owner
+	/// - `game`: game id
 	/// - `fee`: percent of swapping volume
 	/// - `start_block`: block apply swap fee
 	fn do_set_swap_fee(
-		game_id: GameId,
-		who: AccountId,
+		who: &AccountId,
+		game: &GameId,
 		fee: Percent,
 		start_block: BlockNumber,
 	) -> DispatchResult;
@@ -43,14 +38,14 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	///
 	/// Parameters:
 	/// - `who`: signer and collection owner
-	/// - `game_id`: game id
-	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `game`: game id
+	/// - `admin`: if admin not provided, owner also an admin
 	/// - `config`: collection configuration
 	fn do_create_game_collection(
-		who: AccountId,
-		game_id: GameId,
-		maybe_admin: Option<AccountId>,
-		config: CollectionConfig,
+		who: &AccountId,
+		game: &GameId,
+		admin: &AccountId,
+		config: &CollectionConfig,
 	) -> DispatchResult;
 
 	/// Do create collection
@@ -59,35 +54,44 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	///
 	/// Parameters:
 	/// - `who`: signer and collection owner
-	/// - `maybe_admin`: if admin not provided, owner also an admin
+	/// - `admin`: admin role
 	/// - `config`: collection configuration
 	fn do_create_collection(
-		who: AccountId,
-		maybe_admin: Option<AccountId>,
-		config: CollectionConfig,
+		who: &AccountId,
+		admin: &AccountId,
+		config: &CollectionConfig,
 	) -> DispatchResult;
 
+	/// Do add collection
+	///
+	/// Add more amount on an existing game
+	///
+	/// Parameters:
+	/// - `who`: signer and collection owner
+	/// - `game`: game id
+	/// - `collection_ids`: collection ids
 	fn do_add_collection(
-		who: AccountId,
-		game_id: GameId,
-		collection_ids: Vec<CollectionId>,
+		who: &AccountId,
+		game: &GameId,
+		collection_ids: &Vec<CollectionId>,
 	) -> DispatchResult;
 }
 
 pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
-	/// Create item
+	/// Do Create item
 	///
 	/// Create items for collection
 	///
 	/// Parameters:
-	/// - `collection_id`: collection id
-	/// - `item_id`: item id
+	/// - `who`: signer
+	/// - `collection`: collection id
+	/// - `item`: item id
 	/// - `amount`: amount
 	fn do_create_item(
-		who: AccountId,
-		collection_id: CollectionId,
-		item_id: ItemId,
-		config: ItemConfig,
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		config: &ItemConfig,
 		amount: Amount,
 	) -> DispatchResult;
 
@@ -96,32 +100,33 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// Add number amount of item in collection
 	///
 	/// Parameters:
-	/// - `collection_id`: collection id
-	/// - `item_id`: item id
+	/// - `who`: signer
+	/// - `collection`: collection id
+	/// - `item`: item id
 	/// - `amount`: amount
 	fn do_add_item(
-		who: AccountId,
-		collection_id: CollectionId,
-		item_id: ItemId,
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
 		amount: Amount,
 	) -> DispatchResult;
 }
 
-pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
+pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	/// Mint
 	///
 	/// Random mint item in the collection
 	///
 	/// Parameters:
 	/// - `_who`: sender
-	/// - `_collection_id`: collection id
+	/// - `_collection`: collection id
 	/// - `_target`: recipient account, default `minter`
 	///
 	/// By default, this is not a supported operation.
 	fn do_mint(
-		_who: AccountId,
-		_collection_id: CollectionId,
-		_target: AccountId,
+		_who: &AccountId,
+		_collection: &CollectionId,
+		_target: &AccountId,
 		_amount: Amount,
 	) -> DispatchResult {
 		Err(TokenError::Unsupported.into())
@@ -133,13 +138,13 @@ pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 	///
 	/// Parameters:
 	/// - `who`: item owner
-	/// - `collection_id`: collection id
-	/// - `item_id`: item id
+	/// - `collection`: collection id
+	/// - `item`: item id
 	/// - `amount`: amount of items to burn
 	fn do_burn(
-		who: AccountId,
-		collection_id: CollectionId,
-		item_id: ItemId,
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
 		amount: Amount,
 	) -> DispatchResult;
 }
@@ -151,16 +156,16 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	///
 	/// Parameters:
 	/// - `who`: item owner
-	/// - `collection_id`: collection id
-	/// - `item_id`: item id
+	/// - `collection`: collection id
+	/// - `item`: item id
 	/// - `data`: metadata
 	/// - `level`: upgrade level
 	/// - `fee`: upgrade fee
 	fn set_upgrade(
-		who: AccountId,
-		collection_id: CollectionId,
-		item_id: ItemId,
-		data: Metadata<StringLimit>,
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		data: &Metadata<StringLimit>,
 		level: Level,
 		fee: Balance,
 	) -> DispatchResult;
@@ -171,19 +176,25 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	///
 	/// Parameters:
 	/// - `who`: who
-	/// - `collection_id`: collection id
-	/// - `item_id`: item id
-	/// - `maybe_amount`: amount of items
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `amount`: amount of items
 	fn upgrade(
-		who: AccountId,
-		collection_id: CollectionId,
-		item_id: ItemId,
-		maybe_amount: Option<Amount>,
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		amount: Amount,
 	) -> DispatchResult;
 }
 
-pub trait Transfer {
-	fn transfer() -> DispatchResult;
+pub trait TransferItem<AccountId, CollectionId, ItemId> {
+	fn do_transfer_item(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		destination: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
 
 	fn swap() -> DispatchResult;
 }

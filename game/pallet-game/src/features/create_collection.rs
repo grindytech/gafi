@@ -15,10 +15,10 @@ impl<T: Config<I>, I: 'static>
 	for Pallet<T, I>
 {
 	fn do_create_game_collection(
-		who: T::AccountId,
-		game_id: T::GameId,
-		maybe_admin: Option<T::AccountId>,
-		config: CollectionConfigFor<T, I>,
+		who: &T::AccountId,
+		game_id: &T::GameId,
+		admin: &T::AccountId,
+		config: &CollectionConfigFor<T, I>,
 	) -> DispatchResult {
 		// verify create collection role
 		ensure!(
@@ -30,10 +30,6 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		// get admin or owner is an admin in default
-		let admin = match maybe_admin {
-			Some(ad) => ad,
-			None => who.clone(),
-		};
 
 		let collection_id =
 			T::Nfts::create_collection(&who, &admin, &config.to_collection_config());
@@ -54,14 +50,10 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_create_collection(
-		who: T::AccountId,
-		maybe_admin: Option<T::AccountId>,
-		config: CollectionConfigFor<T, I>,
+		who: &T::AccountId,
+		admin: &T::AccountId,
+		config: &CollectionConfigFor<T, I>,
 	) -> DispatchResult {
-		let admin = match maybe_admin {
-			Some(ad) => ad,
-			None => who.clone(),
-		};
 		let collection_id =
 			T::Nfts::create_collection(&who, &admin, &config.to_collection_config());
 		if let Ok(id) = collection_id {
@@ -72,9 +64,9 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_add_collection(
-		who: T::AccountId,
-		game_id: T::GameId,
-		collection_ids: Vec<T::CollectionId>,
+		who: &T::AccountId,
+		game_id: &T::GameId,
+		collection_ids: &Vec<T::CollectionId>,
 	) -> DispatchResult {
 		// make sure signer is game owner
 		if let Some(game) = Games::<T, I>::get(game_id) {
@@ -84,7 +76,7 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		// make sure signer is collection owner
-		for id in &collection_ids {
+		for id in collection_ids {
 			if let Some(owner) = T::Nfts::collection_owner(&id) {
 				ensure!(owner == who.clone(), Error::<T, I>::NoPermission);
 			} else {
