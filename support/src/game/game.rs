@@ -135,12 +135,12 @@ pub trait Mutable<AccountId, GameId, CollectionId, ItemId> {
 	/// - `who`: item owner
 	/// - `collection_id`: collection id
 	/// - `item_id`: item id
-	/// - `maybe_amount`: amount of items to burn, default `1`
+	/// - `amount`: amount of items to burn
 	fn do_burn(
 		who: AccountId,
 		collection_id: CollectionId,
 		item_id: ItemId,
-		maybe_amount: Amount,
+		amount: Amount,
 	) -> DispatchResult;
 }
 
