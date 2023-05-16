@@ -11,10 +11,10 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 	for Pallet<T, I>
 {
 	fn do_create_item(
-		who: T::AccountId,
-		collection_id: T::CollectionId,
-		item_id: T::ItemId,
-		config: ItemConfig,
+		who: &T::AccountId,
+		collection_id: &T::CollectionId,
+		item_id: &T::ItemId,
+		config: &ItemConfig,
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
@@ -30,13 +30,14 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			T::Nfts::mint_into(&collection_id, &item_id, &who, &config, false)?;
 
 			let _result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
-				reserve_vec.try_push(Item::new(item_id, amount))
+				reserve_vec.try_push(Item::new(item_id.clone(), amount))
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxItem);
 
+
 			Self::deposit_event(Event::<T, I>::ItemCreated {
-				collection_id,
-				item_id,
+				collection_id: *collection_id,
+				item_id: *item_id,
 				amount,
 			});
 			Ok(())
@@ -46,9 +47,9 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 	}
 
 	fn do_add_item(
-		who: T::AccountId,
-		collection_id: T::CollectionId,
-		item_id: T::ItemId,
+		who: &T::AccountId,
+		collection_id: &T::CollectionId,
+		item_id: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
@@ -64,7 +65,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			let result = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
 				let balances = reserve_vec.into_mut();
 				for balance in balances {
-					if balance.item == item_id {
+					if balance.item == *item_id {
 						balance.amount += amount;
 						return Ok(balance.amount)
 					}
@@ -74,8 +75,8 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			.map_err(|err| err);
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
-				collection_id,
-				item_id,
+				collection_id: *collection_id,
+				item_id: *item_id,
 				amount: result.unwrap_or_default(),
 			});
 		} else {

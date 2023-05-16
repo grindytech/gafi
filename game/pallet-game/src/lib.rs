@@ -25,11 +25,13 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::game::{CreateCollection, CreateItem, GameSetting, Mutable};
+use gafi_support::game::{
+	CreateCollection, CreateItem, GameSetting, Metadata, MutateItem, TransferItem, UpgradeItem,
+};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
-use types::{GameCollectionConfig, GameDetails};
+use types::{GameCollectionConfig, GameDetails, ItemUpgradeConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -46,13 +48,21 @@ pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, Bala
 pub type CollectionConfigFor<T, I = ()> =
 	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
+pub type ItemUpgradeConfigFor<T, I = ()> = ItemUpgradeConfig<
+	<T as pallet_nfts::Config>::CollectionId,
+	<T as pallet_nfts::Config>::ItemId,
+	BalanceOf<T, I>,
+	Metadata<<T as pallet_nfts::Config>::StringLimit>,
+>;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::Item;
 
-use super::*;
+	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
+	use gafi_support::game::{Level, Metadata};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -118,6 +128,10 @@ use super::*;
 		/// Maximum number of item minted once
 		#[pallet::constant]
 		type MaxMintItem: Get<u32>;
+
+		/// The basic amount of funds that must be reserved for any upgrade.
+		#[pallet::constant]
+		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
 	}
 
 	/// Store basic game info
@@ -182,6 +196,18 @@ use super::*;
 	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
+	#[pallet::storage]
+	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::ItemId>,
+			NMapKey<Blake2_128Concat, Level>,
+		),
+		ItemUpgradeConfigFor<T, I>,
+		OptionQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -211,6 +237,18 @@ use super::*;
 			collection_id: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
+		Burned {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
+		Transferred {
+			from: T::AccountId,
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			dest: T::AccountId,
+			amount: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -230,17 +268,20 @@ use super::*;
 		ExceedAllowedAmount,
 		SoldOut,
 		WithdrawReserveFailed,
+		InsufficientItemBalance,
+		NoCollectionConfig,
+		UpgradeExists,
 	}
 
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn create_game(origin: OriginFor<T>, admin: Option<T::AccountId>) -> DispatchResult {
+		pub fn create_game(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(game_id, sender, admin)?;
+			Self::do_create_game(&sender, &game_id, &admin)?;
 			Ok(())
 		}
 
@@ -253,7 +294,7 @@ use super::*;
 			start_block: BlockNumber<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_set_swap_fee(game_id, sender, fee, start_block)?;
+			Self::do_set_swap_fee(&sender, &game_id, fee, start_block)?;
 			Ok(())
 		}
 
@@ -262,11 +303,11 @@ use super::*;
 		pub fn create_game_colletion(
 			origin: OriginFor<T>,
 			game_id: T::GameId,
-			maybe_admin: Option<T::AccountId>,
+			admin: T::AccountId,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(sender, game_id, maybe_admin, config)?;
+			Self::do_create_game_collection(&sender, &game_id, &admin, &config)?;
 			Ok(())
 		}
 
@@ -274,11 +315,12 @@ use super::*;
 		#[pallet::weight(0)]
 		pub fn create_collection(
 			origin: OriginFor<T>,
-			maybe_admin: Option<T::AccountId>,
+			admin: T::AccountId,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(sender, maybe_admin, config)?;
+			Self::do_create_collection(&sender, &admin, &config)?;
+
 			Ok(())
 		}
 
@@ -290,7 +332,7 @@ use super::*;
 			collection: Vec<T::CollectionId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_add_collection(sender, game, collection)?;
+			Self::do_add_collection(&sender, &game, &collection)?;
 			Ok(())
 		}
 
@@ -305,7 +347,7 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_create_item(sender, collection, item, config, amount)?;
+			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
 
 			Ok(())
 		}
@@ -320,7 +362,7 @@ use super::*;
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_add_item(sender, collection, item, amount)?;
+			Self::do_add_item(&sender, &collection, &item, amount)?;
 
 			Ok(())
 		}
@@ -330,17 +372,83 @@ use super::*;
 		pub fn mint(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
-			mint_to: Option<AccountIdLookupOf<T>>,
+			mint_to: AccountIdLookupOf<T>,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let target = match mint_to {
-				Some(acc) => T::Lookup::lookup(acc)?,
-				None => sender.clone(),
-			};
+			let target = T::Lookup::lookup(mint_to)?;
 
-			Self::do_mint(sender, collection, target, amount)?;
+			Self::do_mint(&sender, &collection, &target, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(0)]
+		pub fn burn(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_burn(&sender, &collection, &item, amount)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(0)]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			dest: AccountIdLookupOf<T>,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let destination = T::Lookup::lookup(dest)?;
+			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
+
+			Self::deposit_event(Event::<T, I>::Transferred {
+				from: sender,
+				collection_id: collection,
+				item_id: item,
+				dest: destination,
+				amount,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(0)]
+		pub fn set_upgrade_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			new_item: T::ItemId,
+			config: ItemConfig,
+			data: BoundedVec<u8, T::StringLimit>,
+			level: Level,
+			fee: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			Self::do_set_upgrade_item(
+				&sender,
+				&collection,
+				&item,
+				&new_item,
+				&config,
+				data.clone(),
+				level,
+				fee,
+			)?;
+
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
 
 			Ok(())
 		}

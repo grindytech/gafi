@@ -2,7 +2,8 @@ use crate as pallet_game;
 use frame_support::{
 	dispatch::Vec,
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize}, PalletId,
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize},
+	PalletId,
 };
 use frame_system as system;
 use gafi_support::common::{unit, AccountId, NativeToken::GAKI};
@@ -79,8 +80,15 @@ impl pallet_balances::Config for Test {
 
 impl pallet_randomness_collective_flip::Config for Test {}
 
+pub const ITEM_DEPOSIT_VAL: u128 = 3_000_000_000;
+pub const METADATA_DEPOSIT_VAL: u128 = 3_000_000_000;
+pub const BYTE_DEPOSIT_VAL: u128 = 3_000_000;
+
 parameter_types! {
 	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
+	pub ItemDeposit: u128 = ITEM_DEPOSIT_VAL;
+	pub MetadataDepositBase: u128 = METADATA_DEPOSIT_VAL;
+	pub DepositPerByte: u128 = BYTE_DEPOSIT_VAL;
 }
 
 impl pallet_nfts::Config for Test {
@@ -92,10 +100,10 @@ impl pallet_nfts::Config for Test {
 	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ConstU128<2>;
-	type ItemDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<1>;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
 	type AttributeDepositBase = ConstU128<1>;
-	type DepositPerByte = ConstU128<1>;
+	type DepositPerByte = DepositPerByte;
 	type StringLimit = ConstU32<50>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;
@@ -108,6 +116,7 @@ impl pallet_nfts::Config for Test {
 }
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
+pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
 
 parameter_types! {
 	pub MaxNameLength: u32 = 64;
@@ -118,6 +127,7 @@ parameter_types! {
 	pub MaxItem: u32 = 10;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
+	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
 }
 
 impl pallet_game::Config for Test {
@@ -147,6 +157,7 @@ impl pallet_game::Config for Test {
 
 	type MaxMintItem = MaxMintItem;
 
+	type UpgradeDeposit = UpgradeDeposit;
 }
 
 pub fn run_to_block(n: u64) {
