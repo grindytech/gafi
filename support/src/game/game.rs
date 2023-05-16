@@ -149,7 +149,7 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	) -> DispatchResult;
 }
 
-pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, StringLimit> {
+pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, StringLimit> {
 	/// Do Set Upgrade Item
 	///
 	/// Set upgrade item                          
@@ -165,7 +165,9 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
-		data: &Metadata<StringLimit>,
+		new_item: &ItemId,
+		config: &ItemConfig,
+		data: Metadata<StringLimit>,
 		level: Level,
 		fee: Balance,
 	) -> DispatchResult;

@@ -4,7 +4,7 @@ use pallet_nfts::Incrementable;
 use sp_io::hashing::blake2_256;
 
 pub type Amount = u32;
-pub type Level = u8;
+pub type Level = u32;
 pub type Metadata<S> = BoundedVec<u8, S>;
 
 #[derive(Debug, PartialEq, Encode, Decode, Clone, Copy, Eq, MaxEncodedLen)]

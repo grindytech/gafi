@@ -26,7 +26,7 @@ use frame_support::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, Metadata, MutateItem, TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
@@ -47,6 +47,13 @@ pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, Bala
 
 pub type CollectionConfigFor<T, I = ()> =
 	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+
+pub type ItemUpgradeConfigFor<T, I = ()> = ItemUpgradeConfig<
+	<T as pallet_nfts::Config>::CollectionId,
+	<T as pallet_nfts::Config>::ItemId,
+	BalanceOf<T, I>,
+	Metadata<<T as pallet_nfts::Config>::StringLimit>,
+>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -121,9 +128,6 @@ pub mod pallet {
 		/// Maximum number of item minted once
 		#[pallet::constant]
 		type MaxMintItem: Get<u32>;
-
-		/// Maximum upgrade level of item
-		type MaxItemUpgrade: Get<u32>;
 	}
 
 	/// Store basic game info
@@ -194,17 +198,9 @@ pub mod pallet {
 		(
 			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Blake2_128Concat, T::ItemId>,
-			NMapKey<Twox64Concat, Level>,
+			NMapKey<Blake2_128Concat, Level>,
 		),
-		BoundedVec<
-			ItemUpgradeConfig<
-				T::CollectionId,
-				T::ItemId,
-				BalanceOf<T, I>,
-				Metadata<T::StringLimit>,
-			>,
-			T::MaxItemUpgrade,
-		>,
+		ItemUpgradeConfigFor<T, I>,
 		OptionQuery,
 	>;
 
@@ -269,6 +265,8 @@ pub mod pallet {
 		SoldOut,
 		WithdrawReserveFailed,
 		InsufficientItemBalance,
+		NoCollectionConfig,
+		UpgradeExists,
 	}
 
 	#[pallet::call]
@@ -427,13 +425,24 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
+			new_item: T::ItemId,
+			config: ItemConfig,
 			data: BoundedVec<u8, T::StringLimit>,
 			level: Level,
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_set_upgrade_item(&sender, &collection, &item, &data.into(), level, fee)?;
+			Self::do_set_upgrade_item(
+				&sender,
+				&collection,
+				&item,
+				&new_item,
+				&config,
+				data.into(),
+				level,
+				fee,
+			)?;
 
 			Ok(())
 		}

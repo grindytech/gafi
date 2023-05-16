@@ -596,3 +596,11 @@ pub fn transfer_item_should_works() {
 		);
 	})
 }
+
+#[test]
+pub fn set_upgrade_item_should_works() {
+	new_test_ext().execute_with(|| {
+		
+
+	})
+}
