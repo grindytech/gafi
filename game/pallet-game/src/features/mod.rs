@@ -18,3 +18,6 @@ pub use mutate_item::*;
 
 pub mod transfer_item;
 pub use transfer_item::*;
+
+pub mod upgrade_item;
+pub use upgrade_item::*;
