@@ -1,15 +1,14 @@
 use crate::{
 	mock::*,
-	types::{GameDetails, GameMintSettings, Item},
+	types::{GameMintSettings, Item},
 	Error, Event, *,
 };
-use features::id;
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
+use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::common::{unit, NativeToken::GAKI};
 use pallet_nfts::{
 	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
 };
-use sp_runtime::AccountId32;
+use sp_runtime::{AccountId32, BoundedVec};
 
 fn make_deposit(account: &AccountId32, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -49,6 +48,12 @@ fn collection_config(amount: u32, price: u128) -> CollectionConfigFor<Test> {
 
 fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
+}
+
+macro_rules! bvec {
+	($( $x:tt )*) => {
+		vec![$( $x )*].try_into().unwrap()
+	}
 }
 
 fn create_items() {
@@ -600,7 +605,44 @@ pub fn transfer_item_should_works() {
 #[test]
 pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
-		
+		create_items();
 
+		let owner = AccountId32::from([0; 32]);
+		let byte = 50;
+
+		let input: ItemUpgradeConfig<
+			u32,
+			u32,
+			u128,
+			BoundedVec<u8, <Test as pallet_nfts::Config>::StringLimit>,
+		> = ItemUpgradeConfig {
+			collection: 0,
+			item: 100,
+			level: 1,
+			origin: 0,
+			data: bvec![0u8; byte],
+			fee: 3 * unit(GAKI),
+		};
+
+		let before_balance = Balances::free_balance(&owner);
+
+		assert_ok!(PalletGame::set_upgrade_item(
+			RuntimeOrigin::signed(owner.clone()),
+			input.origin,
+			input.collection,
+			input.item,
+			default_item_config(),
+			input.data.clone().into(),
+			input.level,
+			input.fee,
+		));
+
+		assert_eq!(UpgradeConfigOf::<Test>::get((0, 0, 1)).unwrap(), input);
+		assert_eq!(
+			Balances::free_balance(&owner),
+			before_balance -
+				UPGRADE_DEPOSIT_VAL -
+				ITEM_DEPOSIT_VAL - (BYTE_DEPOSIT_VAL * u128::try_from(byte).unwrap())
+		);
 	})
 }

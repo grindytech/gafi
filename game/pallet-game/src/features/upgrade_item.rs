@@ -39,7 +39,7 @@ impl<T: Config<I>, I: 'static>
 		// create item
 		let _ = T::Nfts::mint_into(collection, new_item, who, config, false)?;
 
-		// insert
+		// insert upgrade config
 		UpgradeConfigOf::<T, I>::insert(
 			(collection, item, level),
 			ItemUpgradeConfig {

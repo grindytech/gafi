@@ -128,6 +128,10 @@ pub mod pallet {
 		/// Maximum number of item minted once
 		#[pallet::constant]
 		type MaxMintItem: Get<u32>;
+
+		/// The basic amount of funds that must be reserved for any upgrade.
+		#[pallet::constant]
+		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
 	}
 
 	/// Store basic game info
@@ -431,7 +435,7 @@ pub mod pallet {
 			level: Level,
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
+			let sender = ensure_signed(origin.clone())?;
 
 			Self::do_set_upgrade_item(
 				&sender,
@@ -439,10 +443,12 @@ pub mod pallet {
 				&item,
 				&new_item,
 				&config,
-				data.into(),
+				data.clone(),
 				level,
 				fee,
 			)?;
+
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
 
 			Ok(())
 		}
