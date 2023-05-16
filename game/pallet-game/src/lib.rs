@@ -25,11 +25,13 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::Config as SystemConfig;
-use gafi_support::game::{CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem};
+use gafi_support::game::{
+	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
+};
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
 use sp_std::vec::Vec;
-use types::{GameCollectionConfig, GameDetails};
+use types::{GameCollectionConfig, GameDetails, ItemUpgradeConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -53,6 +55,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
+	use gafi_support::game::{Level, Metadata};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -118,6 +121,9 @@ pub mod pallet {
 		/// Maximum number of item minted once
 		#[pallet::constant]
 		type MaxMintItem: Get<u32>;
+
+		/// Maximum upgrade level of item
+		type MaxItemUpgrade: Get<u32>;
 	}
 
 	/// Store basic game info
@@ -181,6 +187,26 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
+
+	#[pallet::storage]
+	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::ItemId>,
+			NMapKey<Twox64Concat, Level>,
+		),
+		BoundedVec<
+			ItemUpgradeConfig<
+				T::CollectionId,
+				T::ItemId,
+				BalanceOf<T, I>,
+				Metadata<T::StringLimit>,
+			>,
+			T::MaxItemUpgrade,
+		>,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -391,6 +417,23 @@ pub mod pallet {
 				dest: destination,
 				amount,
 			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(0)]
+		pub fn set_upgrade_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			data: BoundedVec<u8, T::StringLimit>,
+			level: Level,
+			fee: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_set_upgrade_item(&sender, &collection, &item, &data.into(), level, fee)?;
 
 			Ok(())
 		}

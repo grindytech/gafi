@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+use gafi_support::game::Metadata;
 use core::primitive::u32;
 use frame_support::{BoundedVec, RuntimeDebug};
 use pallet_nfts::{CollectionSettings, ItemSettings, MintSettings, CollectionConfig};
@@ -75,4 +76,20 @@ impl<ItemId> Item<ItemId> {
 	pub fn new(item: ItemId, amount: u32) -> Self {
 		Item { item, amount }
 	}
+}
+
+/// Item upgrade configuration.
+#[derive(
+	Clone, Copy, Decode, Default, Encode, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
+)]
+pub struct ItemUpgradeConfig<CollectionId, ItemId, Price, Metadata> {
+	pub collection: CollectionId,
+
+	pub origin: ItemId,
+
+	pub fee: Price,
+
+	pub level: u32,
+
+	pub data: Metadata,
 }

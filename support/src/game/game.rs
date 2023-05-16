@@ -149,8 +149,8 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	) -> DispatchResult;
 }
 
-pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
-	/// Set Upgrade
+pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, StringLimit> {
+	/// Do Set Upgrade Item
 	///
 	/// Set upgrade item                          
 	///
@@ -161,7 +161,7 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	/// - `data`: metadata
 	/// - `level`: upgrade level
 	/// - `fee`: upgrade fee
-	fn set_upgrade(
+	fn do_set_upgrade_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
@@ -170,7 +170,7 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 		fee: Balance,
 	) -> DispatchResult;
 
-	/// Upgrade
+	/// Do Upgrade Item
 	///
 	/// Upgrade item to the next level
 	///
@@ -179,7 +179,7 @@ pub trait Upgrade<AccountId, Balance, CollectionId, ItemId, StringLimit> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `amount`: amount of items
-	fn upgrade(
+	fn do_upgrade_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
