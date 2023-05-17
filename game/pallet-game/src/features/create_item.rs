@@ -1,12 +1,9 @@
 use crate::{*, types::Item};
 use frame_support::{
 	pallet_prelude::*,
-	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
 use gafi_support::game::{Amount, CreateItem};
 use pallet_nfts::{CollectionRole, CollectionRoles};
-use sp_core::TryCollect;
-
 impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::ItemId, ItemConfig>
 	for Pallet<T, I>
 {

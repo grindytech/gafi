@@ -1,4 +1,4 @@
-use super::{Amount, Level, Metadata};
+use super::{Amount, Level};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;

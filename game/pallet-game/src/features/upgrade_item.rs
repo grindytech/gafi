@@ -1,12 +1,9 @@
-use core::ops::Mul;
-
-use crate::{types::Item, *};
+use crate::{*};
 use frame_support::{
-	log::{self},
 	pallet_prelude::*,
 	traits::ExistenceRequirement,
 };
-use gafi_support::game::{Amount, Level, Metadata, MutateItem, UpgradeItem};
+use gafi_support::game::{Amount, UpgradeItem};
 
 impl<T: Config<I>, I: 'static>
 	UpgradeItem<

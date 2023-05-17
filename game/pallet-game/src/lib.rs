@@ -26,7 +26,7 @@ use frame_support::{
 };
 use frame_system::Config as SystemConfig;
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, Metadata, MutateItem, TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_runtime::{traits::StaticLookup, Percent};
@@ -60,7 +60,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Level, Metadata};
+	use gafi_support::game::{Level};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]

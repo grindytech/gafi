@@ -1,8 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use gafi_support::game::Metadata;
 use core::primitive::u32;
-use frame_support::{BoundedVec, RuntimeDebug};
-use pallet_nfts::{CollectionSettings, ItemSettings, MintSettings, CollectionConfig};
+use frame_support::{RuntimeDebug};
+use pallet_nfts::{CollectionSettings, MintSettings, CollectionConfig};
 use scale_info::TypeInfo;
 
 /// Information about a game.

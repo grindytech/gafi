@@ -1,13 +1,12 @@
-use crate::{types::GameDetails, *};
+use crate::{*};
 use frame_support::{
 	pallet_prelude::*,
 	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
 use gafi_support::{
-	common::{BlockNumber, Hash},
-	game::{Amount, CreateCollection},
+	game::{CreateCollection},
 };
-use pallet_nfts::{CollectionConfig, CollectionRole, CollectionRoles};
+use pallet_nfts::{CollectionRole, CollectionRoles};
 use sp_std::vec::Vec;
 
 impl<T: Config<I>, I: 'static>

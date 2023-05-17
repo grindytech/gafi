@@ -1,5 +1,5 @@
 use crate::{types::Item, *};
-use frame_support::{log, pallet_prelude::*, traits::ExistenceRequirement};
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, MutateItem};
 
 impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
