@@ -60,7 +60,7 @@ pub mod pallet {
 	use crate::types::Item;
 
 	use super::*;
-	use frame_support::{pallet_prelude::*, Twox64Concat};
+	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use gafi_support::game::{Level, Metadata};
 	use pallet_nfts::CollectionRoles;
@@ -195,6 +195,26 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
+
+	#[pallet::storage]
+	pub(super) type LevelOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		Blake2_128Concat,
+		T::ItemId,
+		Level,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type OriginItemOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(T::CollectionId, T::ItemId),
+		(T::CollectionId, T::ItemId),
+		OptionQuery,
+	>;
 
 	#[pallet::storage]
 	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
@@ -449,6 +469,21 @@ pub mod pallet {
 			)?;
 
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(0)]
+		pub fn upgrade_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_upgrade_item(&sender, &collection, &item, amount)?;
 
 			Ok(())
 		}
