@@ -49,10 +49,8 @@ pub type CollectionConfigFor<T, I = ()> =
 	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> = ItemUpgradeConfig<
-	<T as pallet_nfts::Config>::CollectionId,
 	<T as pallet_nfts::Config>::ItemId,
 	BalanceOf<T, I>,
-	Metadata<<T as pallet_nfts::Config>::StringLimit>,
 >;
 
 #[frame_support::pallet]
@@ -269,6 +267,17 @@ pub mod pallet {
 			dest: T::AccountId,
 			amount: u32,
 		},
+		Upgraded {
+			who: T::AccountId,
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			amount: u32,
+		},
+		UpgradeSet {
+			collection_id: T::CollectionId,
+			item_id: T::ItemId,
+			level: Level,
+		},
 	}
 
 	#[pallet::error]
@@ -463,7 +472,6 @@ pub mod pallet {
 				&item,
 				&new_item,
 				&config,
-				data.clone(),
 				level,
 				fee,
 			)?;

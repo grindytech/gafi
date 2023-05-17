@@ -80,22 +80,9 @@ impl<ItemId> Item<ItemId> {
 
 /// Item upgrade configuration.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ItemUpgradeConfig<CollectionId, ItemId, Price, Metadata> {
-
-	pub collection: CollectionId,
-
-	pub origin: ItemId,
+pub struct ItemUpgradeConfig<ItemId, Price> {
 
 	pub item: ItemId,
 
 	pub fee: Price,
-
-	pub level: u32,
-
-	pub data: Metadata,
 }
-
-// impl<CollectionId, ItemId, Price, Metadata> ItemUpgradeConfig<CollectionId, ItemId, Price, Metadata> {
-// 	pub fn new(collection: CollectionId, origin: ItemId,)
-// }
-

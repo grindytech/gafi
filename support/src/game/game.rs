@@ -167,7 +167,6 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, Stri
 		item: &ItemId,
 		new_item: &ItemId,
 		config: &ItemConfig,
-		data: Metadata<StringLimit>,
 		level: Level,
 		fee: Balance,
 	) -> DispatchResult;
