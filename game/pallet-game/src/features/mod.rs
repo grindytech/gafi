@@ -4,9 +4,6 @@ pub use create_collection::*;
 pub mod game_setting;
 pub use game_setting::*;
 
-pub mod id;
-pub use id::*;
-
 pub mod roles;
 pub use roles::*;
 

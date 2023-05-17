@@ -315,6 +315,7 @@ parameter_types! {
 	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = 5_000_000_000;
+	pub UpgradeDeposit: u128 = 1_000_000_000;
 	pub MaxGameCollection: u32 = 5;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
@@ -346,7 +347,9 @@ impl pallet_game::Config for Runtime {
 
 	type MaxMintItem = MaxMintItem;
 
-	type MaxItem =  MaxItem;
+	type MaxItem = MaxItem;
+
+	type UpgradeDeposit = UpgradeDeposit;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

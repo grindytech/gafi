@@ -610,17 +610,8 @@ pub fn set_upgrade_item_should_works() {
 		let owner = AccountId32::from([0; 32]);
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<
-			u32,
-			u32,
-			u128,
-			BoundedVec<u8, <Test as pallet_nfts::Config>::StringLimit>,
-		> = ItemUpgradeConfig {
-			collection: 0,
+		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
 			item: 100,
-			level: 1,
-			origin: 0,
-			data: bvec![0u8; byte],
 			fee: 3 * unit(GAKI),
 		};
 
@@ -628,12 +619,12 @@ pub fn set_upgrade_item_should_works() {
 
 		assert_ok!(PalletGame::set_upgrade_item(
 			RuntimeOrigin::signed(owner.clone()),
-			input.origin,
-			input.collection,
+			0,
+			0,
 			input.item,
 			default_item_config(),
-			input.data.clone().into(),
-			input.level,
+			bvec![0u8; byte],
+			1,
 			input.fee,
 		));
 
@@ -659,32 +650,23 @@ pub fn upgrade_item_shoud_works() {
 		let owner = AccountId32::from([0; 32]);
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<
-			u32,
-			u32,
-			u128,
-			BoundedVec<u8, <Test as pallet_nfts::Config>::StringLimit>,
-		> = ItemUpgradeConfig {
-			collection: 0,
+		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
 			item: 100,
-			level: 1,
-			origin: 0,
-			data: bvec![0u8; byte],
 			fee: 3 * unit(GAKI),
 		};
 
 		assert_ok!(PalletGame::set_upgrade_item(
 			RuntimeOrigin::signed(owner.clone()),
-			input.origin,
-			input.collection,
+			0,
+			0,
 			input.item,
 			default_item_config(),
-			input.data.clone().into(),
-			input.level,
+			bvec![0u8; byte],
+			1,
 			input.fee,
 		));
 
-		let player = AccountId32::from([3; 32]);
+		let player = new_account([3; 32], 10000 * unit(GAKI));
 
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
@@ -693,14 +675,25 @@ pub fn upgrade_item_shoud_works() {
 			10
 		));
 
+		let player_before_balance = Balances::free_balance(&player);
+		let owner_before_balance = Balances::free_balance(&owner);
+
 		assert_ok!(PalletGame::upgrade_item(
 			RuntimeOrigin::signed(player.clone()),
-			input.collection,
+			0,
 			0,
 			3
 		));
 
 		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 7);
 		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 100)), 3);
+		assert_eq!(
+			Balances::free_balance(&player),
+			player_before_balance - (input.fee * 3)
+		);
+		assert_eq!(
+			Balances::free_balance(&owner),
+			owner_before_balance + (input.fee * 3)
+		);
 	})
 }

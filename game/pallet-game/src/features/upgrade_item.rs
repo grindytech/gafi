@@ -1,12 +1,9 @@
-use core::ops::Mul;
-
-use crate::{types::Item, *};
+use crate::{*};
 use frame_support::{
-	log::{self},
 	pallet_prelude::*,
 	traits::ExistenceRequirement,
 };
-use gafi_support::game::{Amount, Level, Metadata, MutateItem, UpgradeItem};
+use gafi_support::game::{Amount, UpgradeItem};
 
 impl<T: Config<I>, I: 'static>
 	UpgradeItem<
@@ -24,7 +21,6 @@ impl<T: Config<I>, I: 'static>
 		item: &T::ItemId,
 		new_item: &T::ItemId,
 		config: &ItemConfig,
-		data: Metadata<T::StringLimit>,
 		level: gafi_support::game::Level,
 		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
@@ -50,14 +46,16 @@ impl<T: Config<I>, I: 'static>
 		UpgradeConfigOf::<T, I>::insert(
 			(collection, item, level),
 			ItemUpgradeConfig {
-				collection: *collection,
-				origin: *item,
 				item: *new_item,
-				level,
 				fee,
-				data,
 			},
 		);
+
+		Self::deposit_event(Event::<T, I>::UpgradeSet {
+			collection_id: *collection,
+			item_id: *item,
+			level,
+		});
 
 		Ok(())
 	}
@@ -69,7 +67,7 @@ impl<T: Config<I>, I: 'static>
 		amount: Amount,
 	) -> DispatchResult {
 		let next_level = LevelOf::<T, I>::get(collection, item) + 1;
-		
+
 		// get origin item
 		let origin_item = match OriginItemOf::<T, I>::get((collection, item)) {
 			Some(val) => val.1,
@@ -77,10 +75,25 @@ impl<T: Config<I>, I: 'static>
 		};
 
 		if let Some(config) = UpgradeConfigOf::<T, I>::get((collection, origin_item, next_level)) {
-				Self::minus_item_balance(who, collection, item, amount)?;
-				Self::add_item_balance(who, collection, &config.item, amount)?;
-		}
+			if let Some(owner) = T::Nfts::collection_owner(collection) {
+				<T as pallet::Config<I>>::Currency::transfer(
+					&who,
+					&owner,
+					config.fee * amount.into(),
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
 
+			Self::minus_item_balance(who, collection, item, amount)?;
+			Self::add_item_balance(who, collection, &config.item, amount)?;
+
+			Self::deposit_event(Event::Upgraded {
+				who: who.clone(),
+				collection_id: *collection,
+				item_id: config.item,
+				amount,
+			})
+		}
 		Ok(())
 	}
 }

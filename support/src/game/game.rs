@@ -1,4 +1,4 @@
-use super::{Amount, Level, Metadata};
+use super::{Amount, Level};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
@@ -167,7 +167,6 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, Stri
 		item: &ItemId,
 		new_item: &ItemId,
 		config: &ItemConfig,
-		data: Metadata<StringLimit>,
 		level: Level,
 		fee: Balance,
 	) -> DispatchResult;

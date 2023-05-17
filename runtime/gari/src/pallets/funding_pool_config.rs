@@ -3,7 +3,7 @@ use frame_system::EnsureRoot;
 use gafi_support::common::{unit, NativeToken::GAFI};
 use sp_runtime::{Permill, AccountId32};
 
-use crate::{Balances, RandomnessCollectiveFlip, Runtime, RuntimeEvent, Vec};
+use crate::{Balances, RandomnessCollectiveFlip, Runtime, RuntimeEvent};
 
 parameter_types! {
 	pub ReservationFee: u128 = 1 * unit(GAFI);
