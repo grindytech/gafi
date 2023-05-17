@@ -56,7 +56,7 @@ macro_rules! bvec {
 	}
 }
 
-fn create_items() {
+fn create_items(amount: u32) {
 	run_to_block(1);
 	let owner = new_account([0; 32], 3 * unit(GAKI));
 
@@ -77,7 +77,7 @@ fn create_items() {
 		0,
 		0,
 		default_item_config(),
-		100
+		amount
 	));
 }
 
@@ -573,7 +573,7 @@ pub fn burn_items_should_works() {
 #[test]
 pub fn transfer_item_should_works() {
 	new_test_ext().execute_with(|| {
-		create_items();
+		create_items(100);
 
 		let player = new_account([2; 32], 3000 * unit(GAKI));
 		let dest = new_account([3; 32], 3000 * unit(GAKI));
@@ -605,7 +605,7 @@ pub fn transfer_item_should_works() {
 #[test]
 pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
-		create_items();
+		create_items(100);
 
 		let owner = AccountId32::from([0; 32]);
 		let byte = 50;
@@ -637,6 +637,10 @@ pub fn set_upgrade_item_should_works() {
 			input.fee,
 		));
 
+		assert_eq!(LevelOf::<Test>::get(0, 0), 0);
+		assert_eq!(LevelOf::<Test>::get(0, 100), 1);
+		assert_eq!(OriginItemOf::<Test>::get((0, 100)).unwrap(), (0, 0));
+
 		assert_eq!(UpgradeConfigOf::<Test>::get((0, 0, 1)).unwrap(), input);
 		assert_eq!(
 			Balances::free_balance(&owner),
@@ -644,5 +648,59 @@ pub fn set_upgrade_item_should_works() {
 				UPGRADE_DEPOSIT_VAL -
 				ITEM_DEPOSIT_VAL - (BYTE_DEPOSIT_VAL * u128::try_from(byte).unwrap())
 		);
+	})
+}
+
+#[test]
+pub fn upgrade_item_shoud_works() {
+	new_test_ext().execute_with(|| {
+		create_items(100);
+
+		let owner = AccountId32::from([0; 32]);
+		let byte = 50;
+
+		let input: ItemUpgradeConfig<
+			u32,
+			u32,
+			u128,
+			BoundedVec<u8, <Test as pallet_nfts::Config>::StringLimit>,
+		> = ItemUpgradeConfig {
+			collection: 0,
+			item: 100,
+			level: 1,
+			origin: 0,
+			data: bvec![0u8; byte],
+			fee: 3 * unit(GAKI),
+		};
+
+		assert_ok!(PalletGame::set_upgrade_item(
+			RuntimeOrigin::signed(owner.clone()),
+			input.origin,
+			input.collection,
+			input.item,
+			default_item_config(),
+			input.data.clone().into(),
+			input.level,
+			input.fee,
+		));
+
+		let player = AccountId32::from([3; 32]);
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			10
+		));
+
+		assert_ok!(PalletGame::upgrade_item(
+			RuntimeOrigin::signed(player.clone()),
+			input.collection,
+			0,
+			3
+		));
+
+		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 7);
+		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 100)), 3);
 	})
 }
