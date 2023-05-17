@@ -17,6 +17,7 @@ codec = {package = "parity-scale-codec", version = "3.0.0", default-features = f
   "derive",
 ]}
 enumflags2 = {version = "0.7.5"}
+log = { version = "0.4.17", default-features = false }
 
 frame-benchmarking = {workspace = true, default-features = false, optional = true}
 frame-support = {workspace = true, default-features = false}
@@ -26,6 +27,7 @@ pallet-nfts = {workspace = true, default-features = false}
 pallet-randomness-collective-flip = {workspace = true, default-features = false}
 scale-info = {workspace = true, default-features = false, features = ["derive"]}
 sp-core = {workspace = true, default-features = false}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true, default-features = false}
 sp-std = {workspace = true, default-features = false}
 
@@ -53,5 +55,6 @@ std = [
   "pallet-balances/std",
   "pallet-randomness-collective-flip/std",
   "sp-std/std",
+  "sp-io/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

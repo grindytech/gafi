@@ -17,6 +17,7 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use codec::{Decode, MaxEncodedLen};
 use frame_support::{
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
@@ -24,12 +25,19 @@ use frame_support::{
 	},
 	PalletId,
 };
-use frame_system::Config as SystemConfig;
+use frame_system::{
+	offchain::{CreateSignedTransaction, SubmitTransaction},
+	Config as SystemConfig,
+};
 use gafi_support::game::{
 	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
-use sp_runtime::{traits::StaticLookup, Percent};
+use sp_core::offchain::KeyTypeId;
+use sp_runtime::{
+	traits::{StaticLookup, TrailingZeroInput},
+	Percent,
+};
 use sp_std::vec::Vec;
 use types::{GameCollectionConfig, GameDetails, ItemUpgradeConfig};
 
@@ -48,19 +56,42 @@ pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, Bala
 pub type CollectionConfigFor<T, I = ()> =
 	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
-pub type ItemUpgradeConfigFor<T, I = ()> = ItemUpgradeConfig<
-	<T as pallet_nfts::Config>::ItemId,
-	BalanceOf<T, I>,
->;
+pub type ItemUpgradeConfigFor<T, I = ()> =
+	ItemUpgradeConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
+pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
+
+pub mod crypto {
+	use super::KEY_TYPE;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		MultiSignature, MultiSigner,
+	};
+	app_crypto!(sr25519, KEY_TYPE);
+	pub struct TestAuthId;
+
+	// implemented for runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
 
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::Item;
 
 	use super::*;
-	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
-	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Level};
+	use frame_support::{
+		pallet_prelude::{ValueQuery, *},
+		Blake2_128Concat, Twox64Concat,
+	};
+	use frame_system::{
+		pallet_prelude::{OriginFor, *},
+	};
+	use gafi_support::game::Level;
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -72,7 +103,9 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
+	pub trait Config<I: 'static = ()>:
+		frame_system::Config + pallet_nfts::Config + CreateSignedTransaction<Call<Self, I>>
+	{
 		/// The Game's pallet id
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -226,6 +259,9 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	#[pallet::storage]
+	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> = StorageValue<_, [u8; 32], ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -300,6 +336,13 @@ pub mod pallet {
 		InsufficientItemBalance,
 		NoCollectionConfig,
 		UpgradeExists,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
+		fn on_finalize(_block_number: BlockNumberFor<T>) {
+			let _ = Self::submit_random_seed_raw_unsigned(_block_number);
+		}
 	}
 
 	#[pallet::call]
@@ -466,15 +509,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
-			Self::do_set_upgrade_item(
-				&sender,
-				&collection,
-				&item,
-				&new_item,
-				&config,
-				level,
-				fee,
-			)?;
+			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
 
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
 
@@ -495,5 +530,71 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::call_index(13)]
+		#[pallet::weight(0)]
+		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
+			ensure_none(origin)?;
+
+			RandomSeed::<T, I>::set(seed);
+
+			Ok(())
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config<I>, I: 'static> ValidateUnsigned for Pallet<T, I> {
+		type Call = Call<T, I>;
+
+		/// Validate unsigned call to this module.
+		///
+		/// By default unsigned transactions are disallowed, but implementing the validator
+		/// here we make sure that some particular calls (the ones produced by offchain worker)
+		/// are being whitelisted and marked as valid.
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			match call {
+				Call::submit_random_seed_unsigned {seed: _} => match source {
+					TransactionSource::Local | TransactionSource::InBlock => {
+						let valid_tx = |provide| {
+							ValidTransaction::with_tag_prefix("pallet-game")
+								.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+								.and_provides([&provide])
+								.longevity(3)
+								.propagate(true)
+								.build()
+						};
+						valid_tx(b"approve_whitelist_unsigned".to_vec())
+					},
+					_ => InvalidTransaction::Call.into(),
+				},
+				_ => InvalidTransaction::Call.into(),
+			}
+		}
+	}
+}
+
+impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	pub fn gen_random() -> u32 {
+		let seed = RandomSeed::<T, I>::get();
+
+		let random = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
+			.expect("input is padded with zeroes; qed");
+
+		random
+	}
+
+	pub fn submit_random_seed_raw_unsigned(
+		_block_number: T::BlockNumber,
+	) -> Result<(), &'static str> {
+		let random_seed = sp_io::offchain::random_seed();
+
+		let call = Call::submit_random_seed_unsigned {seed: random_seed};
+
+		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into()).map_err(
+			|_| {
+				log::error!("Failed in offchain_unsigned_tx");
+			},
+		);
+		Ok(())
 	}
 }
