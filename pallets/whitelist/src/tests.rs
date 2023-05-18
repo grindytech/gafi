@@ -1,5 +1,5 @@
-use crate::{mock::*, Error, Whitelist, WhitelistSource};
-use codec::{Decode, Encode};
+use crate::{mock::*, Error, WhitelistSource};
+use codec::{Decode};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use funding_pool::{PoolOwned, Pools};
 use gafi_support::{
@@ -10,7 +10,7 @@ use rustc_hex::ToHex;
 use sp_core::{offchain::OffchainWorkerExt, sr25519, H160};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
-	offchain::{http, testing, Duration, Timestamp, TransactionPoolExt},
+	offchain::{ testing, TransactionPoolExt},
 	Permill,
 };
 use std::{str::FromStr, sync::Arc};

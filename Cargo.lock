@@ -3839,6 +3839,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "log",
  "pallet-aura",
  "pallet-balances",
  "pallet-game",
@@ -6970,6 +6971,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-support",
+ "log",
  "pallet-balances",
  "pallet-nfts",
  "pallet-randomness-collective-flip",
@@ -6977,6 +6979,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
 ]

@@ -1,5 +1,5 @@
 use crate::{types::Item, *};
-use frame_support::{log, pallet_prelude::*, traits::ExistenceRequirement};
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, MutateItem};
 
 impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
@@ -48,14 +48,13 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// random minting
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
-			let mut position =
-				<frame_system::Pallet<T>>::block_number().try_into().unwrap_or_default();
+			let mut position = Self::gen_random();
 			for _ in 0..amount {
-				position = Self::random_number(total_item, position) % total_item;
+				position = Self::random_number(total_item, position);
 
 				match Self::withdraw_reserve(collection_id, position) {
 					Ok(item) => {
-						Self::add_item_balance(target.clone(), collection_id.clone(), item)?;
+						Self::add_item_balance(&target, &collection_id, &item, 1)?;
 						minted_items.push(item);
 					},
 					Err(err) => return Err(err.into()),
@@ -118,7 +117,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 			random_number = Self::generate_random_number(seed);
 		}
-		return random_number
+		
+		random_number % total
 	}
 
 	pub fn withdraw_reserve(
@@ -149,12 +149,25 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	pub fn add_item_balance(
-		who: T::AccountId,
-		collection: T::CollectionId,
-		item: T::ItemId,
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		let amount = ItemBalances::<T, I>::get((&collection, &who, &item));
-		ItemBalances::<T, I>::insert((collection, who, item), amount + 1);
+		let balance = ItemBalances::<T, I>::get((&collection, &who, &item));
+		ItemBalances::<T, I>::insert((collection, who, item), balance + amount);
+		Ok(())
+	}
+
+	pub fn minus_item_balance(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		let balance = ItemBalances::<T, I>::get((&collection, &who, &item));
+		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
+		ItemBalances::<T, I>::insert((collection, who, item), balance - amount);
 		Ok(())
 	}
 

@@ -1,11 +1,8 @@
-use crate::{types::Item, *};
+use crate::{*};
 use frame_support::{
 	pallet_prelude::*,
-	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
-use gafi_support::game::{Amount, CreateItem, TransferItem};
-use pallet_nfts::{CollectionRole, CollectionRoles};
-use sp_core::TryCollect;
+use gafi_support::game::{Amount, TransferItem};
 
 impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::ItemId>
 	for Pallet<T, I>
