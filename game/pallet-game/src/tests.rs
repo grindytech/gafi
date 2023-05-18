@@ -1,6 +1,6 @@
 use crate::{
 	mock::*,
-	types::{GameMintSettings, Item},
+	types::{Item},
 	Error, *,
 };
 
@@ -27,26 +27,23 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 }
 
 fn default_collection_config() -> CollectionConfigFor<Test> {
-	GameCollectionConfig {
+	CollectionConfig {
 		settings: CollectionSettings::all_enabled(),
 		max_supply: None,
-		mint_settings: GameMintSettings::default(),
+		mint_settings: MintSettings::default(),
 	}
 }
 
-fn collection_config(amount: u32, price: u128) -> CollectionConfigFor<Test> {
-	GameCollectionConfig {
+fn collection_config(price: u128) -> CollectionConfigFor<Test> {
+	CollectionConfig {
 		settings: CollectionSettings::all_enabled(),
 		max_supply: None,
-		mint_settings: GameMintSettings {
-			amount: Some(amount),
-			mint_settings: MintSettings {
-				mint_type: MintType::Issuer,
-				price: Some(price),
-				start_block: None,
-				end_block: None,
-				default_item_settings: ItemSettings::all_enabled(),
-			},
+		mint_settings: MintSettings {
+			mint_type: MintType::Issuer,
+			price: Some(price),
+			start_block: None,
+			end_block: None,
+			default_item_settings: ItemSettings::all_enabled(),
 		},
 	}
 }
@@ -73,7 +70,7 @@ fn create_items(owner: &sr25519::Public, amount: u32) {
 		RuntimeOrigin::signed(owner.clone()),
 		0,
 		owner.clone(),
-		collection_config(50, 0),
+		default_collection_config(),
 	));
 
 	assert_ok!(PalletGame::create_item(
@@ -99,7 +96,7 @@ fn create_first_game_should_works() {
 			admin.clone()
 		));
 
-		let game = Games::<Test>::get(0).unwrap();
+		let game = Game::<Test>::get(0).unwrap();
 		assert_eq!(game.owner, owner);
 		assert_eq!(game.collections, 0);
 		assert_eq!(game.owner_deposit, GAME_DEPOSIT_VAL);
@@ -193,8 +190,8 @@ fn create_game_collection_should_works() {
 			default_collection_config(),
 		));
 
-		assert_eq!(GameCollections::<Test>::get(0)[0], 0);
-		assert_eq!(CollectionGame::<Test>::get(0), Some(0));
+		assert_eq!(CollectionsOf::<Test>::get(0)[0], 0);
+		assert_eq!(GameOf::<Test>::get(0), Some(0));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
@@ -202,7 +199,7 @@ fn create_game_collection_should_works() {
 			admin.clone(),
 			default_collection_config(),
 		));
-		assert_eq!(GameCollections::<Test>::get(0)[1], 1);
+		assert_eq!(CollectionsOf::<Test>::get(0)[1], 1);
 	})
 }
 
@@ -296,9 +293,9 @@ fn add_game_collection_should_works() {
 			[0, 1].to_vec()
 		));
 
-		assert_eq!(GameCollections::<Test>::get(0), [0, 1].to_vec());
-		assert_eq!(CollectionGame::<Test>::get(0).unwrap(), 0);
-		assert_eq!(CollectionGame::<Test>::get(1).unwrap(), 0);
+		assert_eq!(CollectionsOf::<Test>::get(0), [0, 1].to_vec());
+		assert_eq!(GameOf::<Test>::get(0).unwrap(), 0);
+		assert_eq!(GameOf::<Test>::get(1).unwrap(), 0);
 	})
 }
 
@@ -417,7 +414,7 @@ fn mint_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
-			collection_config(10, mint_fee),
+			collection_config(mint_fee),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -452,9 +449,9 @@ fn mint_should_works() {
 			player.clone(),
 			3
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 1);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 1)), 1);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 2)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 1)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 2)), 1);
 		assert_eq!(
 			Balances::free_balance(player.clone()),
 			before_balance - (mint_fee * 3)
@@ -480,7 +477,7 @@ fn mint_should_fails() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
-			collection_config(9, mint_fee),
+			collection_config(mint_fee),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -488,12 +485,12 @@ fn mint_should_fails() {
 			0,
 			0,
 			default_item_config(),
-			10
+			MAX_ITEM_MINT_VAL + 1
 		));
 
 		let player = new_account(2, 3000 * unit(GAKI));
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 10),
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), MAX_ITEM_MINT_VAL + 1),
 			Error::<Test>::ExceedAllowedAmount
 		);
 
@@ -501,7 +498,7 @@ fn mint_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			0,
 			player.clone(),
-			9
+			MAX_ITEM_MINT_VAL,
 		));
 
 		// one left
@@ -539,7 +536,7 @@ pub fn burn_items_should_works() {
 			RuntimeOrigin::signed(owner.clone()),
 			0,
 			owner.clone(),
-			collection_config(50, 0),
+			collection_config(0),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -557,7 +554,7 @@ pub fn burn_items_should_works() {
 			player.clone(),
 			10
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 10);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 10);
 
 		assert_ok!(PalletGame::burn(
 			RuntimeOrigin::signed(player.clone()),
@@ -565,7 +562,7 @@ pub fn burn_items_should_works() {
 			0,
 			5
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
@@ -578,7 +575,7 @@ pub fn burn_items_should_works() {
 pub fn transfer_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let player = new_account(2, 3000 * unit(GAKI));
@@ -598,8 +595,8 @@ pub fn transfer_item_should_works() {
 			5
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
-		assert_eq!(ItemBalances::<Test>::get((0, dest.clone(), 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((dest.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::transfer(RuntimeOrigin::signed(player.clone()), 0, 0, dest.clone(), 6),
@@ -612,7 +609,7 @@ pub fn transfer_item_should_works() {
 pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let byte = 50;
@@ -653,7 +650,7 @@ pub fn set_upgrade_item_should_works() {
 pub fn upgrade_item_shoud_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let byte = 50;
@@ -693,8 +690,8 @@ pub fn upgrade_item_shoud_works() {
 			3
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 7);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 100)), 3);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 7);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 100)), 3);
 		assert_eq!(
 			Balances::free_balance(&player),
 			player_before_balance - (input.fee * 3)

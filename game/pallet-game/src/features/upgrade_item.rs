@@ -93,6 +93,8 @@ impl<T: Config<I>, I: 'static>
 				item_id: config.item,
 				amount,
 			})
+		} else {
+			return Err(Error::<T, I>::UnknownUpgrade.into());
 		}
 		Ok(())
 	}
