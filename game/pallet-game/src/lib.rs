@@ -19,6 +19,7 @@ mod benchmarking;
 
 use codec::{Decode, MaxEncodedLen};
 use frame_support::{
+	ensure,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
@@ -85,9 +86,7 @@ pub mod pallet {
 		pallet_prelude::{ValueQuery, *},
 		Blake2_128Concat, Twox64Concat,
 	};
-	use frame_system::{
-		pallet_prelude::{OriginFor, *},
-	};
+	use frame_system::pallet_prelude::{OriginFor, *};
 	use gafi_support::game::Level;
 	use pallet_nfts::CollectionRoles;
 
@@ -251,7 +250,7 @@ pub mod pallet {
 		(
 			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Blake2_128Concat, T::ItemId>, // original item
-			NMapKey<Blake2_128Concat, Level>, // level upgrade
+			NMapKey<Blake2_128Concat, Level>,     // level upgrade
 		),
 		ItemUpgradeConfigFor<T, I>,
 		OptionQuery,
@@ -259,7 +258,8 @@ pub mod pallet {
 
 	/// Store random seed generated from the off-chain worker per block
 	#[pallet::storage]
-	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> = StorageValue<_, [u8; 32], ValueQuery>;
+	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, [u8; 32], ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -335,6 +335,7 @@ pub mod pallet {
 		InsufficientItemBalance,
 		NoCollectionConfig,
 		UpgradeExists,
+		UnknownUpgrade,
 	}
 
 	#[pallet::hooks]
@@ -483,14 +484,6 @@ pub mod pallet {
 			let destination = T::Lookup::lookup(dest)?;
 			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
 
-			Self::deposit_event(Event::<T, I>::Transferred {
-				from: sender,
-				collection_id: collection,
-				item_id: item,
-				dest: destination,
-				amount,
-			});
-
 			Ok(())
 		}
 
@@ -552,7 +545,7 @@ pub mod pallet {
 		/// are being whitelisted and marked as valid.
 		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			match call {
-				Call::submit_random_seed_unsigned {seed: _} => match source {
+				Call::submit_random_seed_unsigned { seed: _ } => match source {
 					TransactionSource::Local | TransactionSource::InBlock => {
 						let valid_tx = |provide| {
 							ValidTransaction::with_tag_prefix("pallet-game")
@@ -582,18 +575,25 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
-	pub fn submit_random_seed_raw_unsigned(
-		_block_number: T::BlockNumber,
-	) -> Result<(), &'static str> {
+	fn submit_random_seed_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
 		let random_seed = sp_io::offchain::random_seed();
 
-		let call = Call::submit_random_seed_unsigned {seed: random_seed};
+		let call = Call::submit_random_seed_unsigned { seed: random_seed };
 
-		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into()).map_err(
-			|_| {
+		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
+			.map_err(|_| {
 				log::error!("Failed in offchain_unsigned_tx");
-			},
-		);
+			});
 		Ok(())
+	}
+
+	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
+		match Game::<T, I>::get(game) {
+			Some(config) => {
+				ensure!(config.owner == *who, Error::<T, I>::NoPermission);
+				Ok(())
+			},
+			None => Err(Error::<T, I>::UnknownGame.into()),
+		}
 	}
 }

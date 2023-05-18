@@ -12,19 +12,17 @@ impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::It
 		destination: &T::AccountId,
 		amount: Amount,
 	) -> DispatchResult {
-		let from_balance = ItemBalances::<T, I>::get((who, collection, item));
-		ensure!(
-			amount <= from_balance,
-			Error::<T, I>::InsufficientItemBalance
-		);
+		
+		Self::minus_item_balance(who, collection, item, amount)?;
+		Self::add_item_balance(destination, collection, item, amount)?;
 
-		// update who's balance
-		ItemBalances::<T, I>::insert((who, collection, item), from_balance - amount);
-
-		// update destination's balance
-		let to_balance = ItemBalances::<T, I>::get((destination, collection, item));
-		ItemBalances::<T, I>::insert((destination, collection, item), to_balance + amount);
-
+		Self::deposit_event(Event::<T, I>::Transferred {
+			from: who.clone(),
+			collection_id: *collection,
+			item_id: *item,
+			dest: destination.clone(),
+			amount,
+		});
 		Ok(())
 	}
 

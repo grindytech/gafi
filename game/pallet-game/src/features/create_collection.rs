@@ -28,8 +28,6 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::NoPermission
 		);
 
-		// get admin or owner is an admin in default
-
 		let collection_id =
 			T::Nfts::create_collection(&who, &admin, &config);
 
@@ -68,11 +66,7 @@ impl<T: Config<I>, I: 'static>
 		collection_ids: &Vec<T::CollectionId>,
 	) -> DispatchResult {
 		// make sure signer is game owner
-		if let Some(game) = Game::<T, I>::get(game_id) {
-			ensure!(game.owner == who.clone(), Error::<T, I>::NoPermission);
-		} else {
-			return Err(Error::<T, I>::UnknownGame.into())
-		}
+		Self::ensure_game_owner(who, game_id)?;
 
 		// make sure signer is collection owner
 		for id in collection_ids {
