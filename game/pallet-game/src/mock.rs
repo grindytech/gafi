@@ -6,17 +6,23 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use gafi_support::common::{unit, AccountId, NativeToken::GAKI};
+use gafi_support::common::{unit, NativeToken::GAKI};
 use pallet_nfts::PalletFeatures;
-use sp_core::{ConstU128, ConstU32, H256};
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	Percent,
+use sp_core::{
+	sr25519::{self, Signature},
+	ConstU128, ConstU32, H256,
 };
+use sp_runtime::{
+	testing::{Header, TestXt},
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	AccountId32, Percent, Permill,
+};
+use system::{EnsureRoot, mocking};
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+pub type Extrinsic = TestXt<RuntimeCall, ()>;
+type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
+type Block = mocking::MockBlock<Test>;
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -158,6 +164,37 @@ impl pallet_game::Config for Test {
 	type MaxMintItem = MaxMintItem;
 
 	type UpgradeDeposit = UpgradeDeposit;
+}
+
+parameter_types! {
+	pub const UnsignedPriority: u64 = 100;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+where
+	RuntimeCall: From<C>,
+{
+	type OverarchingCall = RuntimeCall;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 pub fn run_to_block(n: u64) {

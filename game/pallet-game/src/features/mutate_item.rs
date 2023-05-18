@@ -48,10 +48,9 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// random minting
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
-			let mut position =
-				<frame_system::Pallet<T>>::block_number().try_into().unwrap_or_default();
+			let mut position = Self::gen_random();
 			for _ in 0..amount {
-				position = Self::random_number(total_item, position) % total_item;
+				position = Self::random_number(total_item, position);
 
 				match Self::withdraw_reserve(collection_id, position) {
 					Ok(item) => {
@@ -118,7 +117,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 			random_number = Self::generate_random_number(seed);
 		}
-		return random_number
+		
+		random_number % total
 	}
 
 	pub fn withdraw_reserve(
