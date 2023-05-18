@@ -1,4 +1,4 @@
-use crate::{types::Item, *};
+use crate::{*};
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, MutateItem};
 
@@ -42,10 +42,11 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// random minting
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
-			let total_item = TotalReserveOf::<T, I>::get(collection_id);
+			let mut total_item = TotalReserveOf::<T, I>::get(collection_id);
 			let mut position = Self::gen_random();
-			for _ in 0..amount {
+			for i in 0..amount {
 				position = Self::random_number(total_item, position);
+				total_item -= i;
 
 				match Self::withdraw_reserve(collection_id, position) {
 					Ok(item) => {

@@ -1,5 +1,4 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use sp_runtime::BoundedVec;
 use core::primitive::u32;
 use frame_support::{RuntimeDebug};
 use scale_info::TypeInfo;
@@ -29,6 +28,11 @@ pub struct Item<ItemId> {
 impl<ItemId> Item<ItemId> {
 	pub fn new(item: ItemId, amount: u32) -> Self {
 		Item { item, amount }
+	}
+
+	pub fn minus(mut self, amount: u32) -> Self {
+		self.amount -= amount;
+		self
 	}
 }
 

@@ -17,7 +17,7 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-use codec::{Decode, MaxEncodedLen};
+use codec::{MaxEncodedLen};
 use frame_support::{
 	ensure,
 	traits::{
@@ -576,15 +576,6 @@ pub mod pallet {
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	pub fn gen_random() -> u32 {
-		let seed = RandomSeed::<T, I>::get();
-
-		let random = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
-			.expect("input is padded with zeroes; qed");
-
-		random
-	}
-
 	fn submit_random_seed_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
 		let random_seed = sp_io::offchain::random_seed();
 

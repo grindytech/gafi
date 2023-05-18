@@ -1,6 +1,5 @@
 use crate::{*};
 use frame_support::pallet_prelude::*;
-use crate::types::Item;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I>
 {
@@ -10,13 +9,15 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 	/// number lies within `u32::MAX - u32::MAX % n`.
 	/// TODO: deal with randomness freshness
 	/// https://github.com/paritytech/substrate/issues/8311
-	pub fn generate_random_number(seed: u32) -> u32 {
+	fn generate_random_number(seed: u32) -> u32 {
 		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
 		let random_number = <u32>::decode(&mut random_seed.as_ref())
 			.expect("secure hashes should always be bigger than u32; qed");
 		random_number
 	}
-
+	
+	/// Generate a random number from a given seed.
+	/// Generated number lies with `0 - total`.
 	pub(crate) fn random_number(total: u32, seed: u32) -> u32 {
 		let mut random_number = Self::generate_random_number(seed);
 		for _ in 1..10 {
@@ -30,6 +31,16 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 		random_number % total
 	}
 
+	/// Generate a random number from the off-chain worker's random seed
+	pub fn gen_random() -> u32 {
+		let seed = RandomSeed::<T, I>::get();
+
+		let random = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
+			.expect("input is padded with zeroes; qed");
+
+		random
+	}
+
 	pub fn withdraw_reserve(
 		collection_id: &T::CollectionId,
 		position: u32,
@@ -38,10 +49,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
 				if reserve.amount > 0 && reserve.amount + tmp >= position {
-					*reserve = Item {
-						amount: reserve.amount - 1,
-						item: reserve.item,
-					};
+					*reserve = reserve.minus(1);
 					return Ok(*reserve)
 				} else {
 					tmp += reserve.amount;

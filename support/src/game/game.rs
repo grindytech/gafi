@@ -1,8 +1,9 @@
-use super::{Amount, Level};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
+pub type Amount = u32;
+pub type Level = u32;
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	/// Do create a new game
 	///
