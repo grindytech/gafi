@@ -167,6 +167,7 @@ pub mod pallet {
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
+	/// Collections in the game
 	#[pallet::storage]
 	pub(super) type CollectionsOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -176,10 +177,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Collection belongs to
 	#[pallet::storage]
 	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
 
+	/// Game roles
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
@@ -191,6 +194,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Item balances of account
 	#[pallet::storage]
 	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
@@ -203,6 +207,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
 	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -212,10 +217,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Game collection config
 	#[pallet::storage]
 	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
+	/// Level of item
 	#[pallet::storage]
 	pub(super) type LevelOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
@@ -227,6 +234,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Store the original items of the upgraded items
 	#[pallet::storage]
 	pub(super) type OriginItemOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -236,18 +244,20 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Store the upgrade config
 	#[pallet::storage]
 	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::CollectionId>,
-			NMapKey<Blake2_128Concat, T::ItemId>,
-			NMapKey<Blake2_128Concat, Level>,
+			NMapKey<Blake2_128Concat, T::ItemId>, // original item
+			NMapKey<Blake2_128Concat, Level>, // level upgrade
 		),
 		ItemUpgradeConfigFor<T, I>,
 		OptionQuery,
 	>;
 
+	/// Store random seed generated from the off-chain worker per block
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> = StorageValue<_, [u8; 32], ValueQuery>;
 
