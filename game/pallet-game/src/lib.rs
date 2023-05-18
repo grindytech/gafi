@@ -340,7 +340,7 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
-		fn on_finalize(_block_number: BlockNumberFor<T>) {
+		fn offchain_worker(_block_number: BlockNumberFor<T>) {
 			let _ = Self::submit_random_seed_raw_unsigned(_block_number);
 		}
 	}

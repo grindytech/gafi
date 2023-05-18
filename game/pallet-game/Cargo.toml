@@ -38,6 +38,7 @@ gafi-support = {version = "4.0.0-dev", path = "../../support", default-features 
 sp-core = {workspace = true, default-features = false}
 sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true, default-features = false}
+sp-keystore = {workspace = true}
 
 [features]
 default = ["std"]
