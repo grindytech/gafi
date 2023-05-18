@@ -12,32 +12,27 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		amount: Amount,
 	) -> DispatchResult {
 		// validating item amount
-		let mut total_item = 0_u32;
 		{
-			let source = ItemReserve::<T, I>::get(collection_id);
-			for item in source.clone() {
-				total_item += item.amount;
-			}
+			let total_item = TotalReserveOf::<T, I>::get(collection_id);
+
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
 
-			ensure!(amount <= T::MaxMintItem::get(), Error::<T, I>::ExceedAllowedAmount);
+			ensure!(
+				amount <= T::MaxMintItem::get(),
+				Error::<T, I>::ExceedAllowedAmount
+			);
 		}
 
-		// make minting fee deposit
-		{
-			// if collection owner not found, transfer to signer
-			let mut collection_owner = who.clone();
-
-			if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
-				collection_owner = owner;
-			}
+		// deposit mining fee
+		// if collection owner not found, skip deposit
+		if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
 			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
 				let fee = config.mint_settings.price.unwrap_or_default();
 				// make a deposit
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,
-					&collection_owner,
+					&owner,
 					fee * amount.into(),
 					ExistenceRequirement::KeepAlive,
 				)?;
@@ -47,6 +42,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// random minting
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
+			let total_item = TotalReserveOf::<T, I>::get(collection_id);
 			let mut position = Self::gen_random();
 			for _ in 0..amount {
 				position = Self::random_number(total_item, position);
@@ -59,6 +55,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 					Err(err) => return Err(err.into()),
 				};
 			}
+			Self::minus_total_reserve(collection_id, amount)?;
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
@@ -89,84 +86,6 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 			item_id: *item_id,
 			amount,
 		});
-		Ok(())
-	}
-}
-
-impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	/// Generate a random number from a given seed.
-	/// Note that there is potential bias introduced by using modulus operator.
-	/// You should call this function with different seed values until the random
-	/// number lies within `u32::MAX - u32::MAX % n`.
-	/// TODO: deal with randomness freshness
-	/// https://github.com/paritytech/substrate/issues/8311
-	pub fn generate_random_number(seed: u32) -> u32 {
-		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
-		let random_number = <u32>::decode(&mut random_seed.as_ref())
-			.expect("secure hashes should always be bigger than u32; qed");
-		random_number
-	}
-
-	fn random_number(total: u32, seed: u32) -> u32 {
-		let mut random_number = Self::generate_random_number(seed);
-		for _ in 1..10 {
-			if random_number < u32::MAX - u32::MAX % total {
-				break
-			}
-
-			random_number = Self::generate_random_number(seed);
-		}
-
-		random_number % total
-	}
-
-	pub fn withdraw_reserve(
-		collection_id: &T::CollectionId,
-		position: u32,
-	) -> Result<T::ItemId, Error<T, I>> {
-		let result = ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
-			let mut tmp = 0_u32;
-			for reserve in reserve_vec.into_iter() {
-				if reserve.amount > 0 && reserve.amount + tmp >= position {
-					*reserve = Item {
-						amount: reserve.amount - 1,
-						item: reserve.item,
-					};
-					return Ok(*reserve)
-				} else {
-					tmp += reserve.amount;
-				}
-			}
-			Err(Error::<T, I>::WithdrawReserveFailed)
-		})
-		.map_err(|_| Error::<T, I>::WithdrawReserveFailed);
-
-		match result {
-			Ok(item) => Ok(item.item),
-			Err(err) => Err(err),
-		}
-	}
-
-	pub fn add_item_balance(
-		who: &T::AccountId,
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-		amount: u32,
-	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
-		ItemBalances::<T, I>::insert((who, collection, item), balance + amount);
-		Ok(())
-	}
-
-	pub fn minus_item_balance(
-		who: &T::AccountId,
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-		amount: u32,
-	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
-		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
-		ItemBalances::<T, I>::insert((who, collection, item), balance - amount);
 		Ok(())
 	}
 }

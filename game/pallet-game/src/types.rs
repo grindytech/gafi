@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+use sp_runtime::BoundedVec;
 use core::primitive::u32;
 use frame_support::{RuntimeDebug};
 use scale_info::TypeInfo;

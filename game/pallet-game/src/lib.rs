@@ -215,6 +215,16 @@ pub mod pallet {
 		BoundedVec<Item<T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
+	
+	/// Item reserve created by the owner, random mining by player
+	#[pallet::storage]
+	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::CollectionId,
+		u32,
+		ValueQuery,
+	>;
 
 	/// Game collection config
 	#[pallet::storage]
