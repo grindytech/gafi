@@ -1,6 +1,6 @@
 use crate::{
 	mock::*,
-	types::{GameMintSettings, Item},
+	types::{Item},
 	Error, *,
 };
 
@@ -27,26 +27,23 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 }
 
 fn default_collection_config() -> CollectionConfigFor<Test> {
-	GameCollectionConfig {
+	CollectionConfig {
 		settings: CollectionSettings::all_enabled(),
 		max_supply: None,
-		mint_settings: GameMintSettings::default(),
+		mint_settings: MintSettings::default(),
 	}
 }
 
-fn collection_config(amount: u32, price: u128) -> CollectionConfigFor<Test> {
-	GameCollectionConfig {
+fn collection_config(price: u128) -> CollectionConfigFor<Test> {
+	CollectionConfig {
 		settings: CollectionSettings::all_enabled(),
 		max_supply: None,
-		mint_settings: GameMintSettings {
-			amount: Some(amount),
-			mint_settings: MintSettings {
-				mint_type: MintType::Issuer,
-				price: Some(price),
-				start_block: None,
-				end_block: None,
-				default_item_settings: ItemSettings::all_enabled(),
-			},
+		mint_settings: MintSettings {
+			mint_type: MintType::Issuer,
+			price: Some(price),
+			start_block: None,
+			end_block: None,
+			default_item_settings: ItemSettings::all_enabled(),
 		},
 	}
 }
@@ -73,7 +70,7 @@ fn create_items(owner: &sr25519::Public, amount: u32) {
 		RuntimeOrigin::signed(owner.clone()),
 		0,
 		owner.clone(),
-		collection_config(50, 0),
+		default_collection_config(),
 	));
 
 	assert_ok!(PalletGame::create_item(
@@ -417,7 +414,7 @@ fn mint_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
-			collection_config(10, mint_fee),
+			collection_config(mint_fee),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -480,7 +477,7 @@ fn mint_should_fails() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
-			collection_config(9, mint_fee),
+			collection_config(mint_fee),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -488,12 +485,12 @@ fn mint_should_fails() {
 			0,
 			0,
 			default_item_config(),
-			10
+			MAX_ITEM_MINT_VAL + 1
 		));
 
 		let player = new_account(2, 3000 * unit(GAKI));
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 10),
+			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), MAX_ITEM_MINT_VAL + 1),
 			Error::<Test>::ExceedAllowedAmount
 		);
 
@@ -501,7 +498,7 @@ fn mint_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			0,
 			player.clone(),
-			9
+			MAX_ITEM_MINT_VAL,
 		));
 
 		// one left
@@ -539,7 +536,7 @@ pub fn burn_items_should_works() {
 			RuntimeOrigin::signed(owner.clone()),
 			0,
 			owner.clone(),
-			collection_config(50, 0),
+			collection_config(0),
 		));
 
 		assert_ok!(PalletGame::create_item(
@@ -578,7 +575,7 @@ pub fn burn_items_should_works() {
 pub fn transfer_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let player = new_account(2, 3000 * unit(GAKI));
@@ -612,7 +609,7 @@ pub fn transfer_item_should_works() {
 pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let byte = 50;
@@ -653,7 +650,7 @@ pub fn set_upgrade_item_should_works() {
 pub fn upgrade_item_shoud_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
-		
+
 		create_items(&owner, 100);
 
 		let byte = 50;

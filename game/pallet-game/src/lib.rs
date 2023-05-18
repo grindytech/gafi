@@ -39,7 +39,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameCollectionConfig, GameDetails, ItemUpgradeConfig};
+use types::{GameDetails, ItemUpgradeConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -51,7 +51,7 @@ type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Sourc
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
 pub type CollectionConfigFor<T, I = ()> =
-	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	ItemUpgradeConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;

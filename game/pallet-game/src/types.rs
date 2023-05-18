@@ -19,49 +19,45 @@ pub struct GameDetails<AccountId, DepositBalance> {
 	pub(super) admin: AccountId,
 }
 
-/// Holds the information about minting.
-#[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct GameMintSettings<Price, BlockNumber, CollectionId>{
-	/// Default settings each item will get during the mint.
-	pub mint_settings: MintSettings<Price, BlockNumber, CollectionId>,
+// /// Holds the information about minting.
+// #[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+// pub struct GameMintSettings<Price, BlockNumber, CollectionId>{
+// 	/// Default settings each item will get during the mint.
+// 	pub mint_settings: MintSettings<Price, BlockNumber, CollectionId>,
+// }
 
-	/// Max item amount per mint
-	pub amount: Option<u32>,
-}
+// impl<Price, BlockNumber, CollectionId> Default
+// 	for GameMintSettings<Price, BlockNumber, CollectionId>
+// {
+// 	fn default() -> Self {
+// 		Self {
+// 			mint_settings: MintSettings::default(),
+// 		}
+// 	}
+// }
 
-impl<Price, BlockNumber, CollectionId> Default
-	for GameMintSettings<Price, BlockNumber, CollectionId>
-{
-	fn default() -> Self {
-		Self {
-			mint_settings: MintSettings::default(),
-			amount: None,
-		}
-	}
-}
+// /// Game Collection's configuration.
+// #[derive(
+// 	Clone, Copy, Decode, Default, Encode, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
+// )]
+// pub struct GameCollectionConfig<Price, BlockNumber, CollectionId> {
+// 	/// Collection's settings.
+// 	pub settings: CollectionSettings,
+// 	/// Collection's max supply.
+// 	pub max_supply: Option<u32>,
+// 	/// Default settings each item will get during the mint.
+// 	pub mint_settings: GameMintSettings<Price, BlockNumber, CollectionId>,
+// }
 
-/// Game Collection's configuration.
-#[derive(
-	Clone, Copy, Decode, Default, Encode, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
-)]
-pub struct GameCollectionConfig<Price, BlockNumber, CollectionId> {
-	/// Collection's settings.
-	pub settings: CollectionSettings,
-	/// Collection's max supply.
-	pub max_supply: Option<u32>,
-	/// Default settings each item will get during the mint.
-	pub mint_settings: GameMintSettings<Price, BlockNumber, CollectionId>,
-}
-
-impl<Price, BlockNumber, CollectionId> GameCollectionConfig<Price, BlockNumber, CollectionId> {
-	pub fn to_collection_config(self) -> CollectionConfig<Price, BlockNumber, CollectionId> {
-		CollectionConfig {
-			mint_settings: self.mint_settings.mint_settings,
-			max_supply: self.max_supply,
-			settings: self.settings,
-		}
-	}
-}
+// impl<Price, BlockNumber, CollectionId> GameCollectionConfig<Price, BlockNumber, CollectionId> {
+// 	pub fn to_collection_config(self) -> CollectionConfig<Price, BlockNumber, CollectionId> {
+// 		CollectionConfig {
+// 			mint_settings: self.mint_settings.mint_settings,
+// 			max_supply: self.max_supply,
+// 			settings: self.settings,
+// 		}
+// 	}
+// }
 
 
 #[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

@@ -123,6 +123,7 @@ impl pallet_nfts::Config for Test {
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
+pub const MAX_ITEM_MINT_VAL: u32 = 10;
 
 parameter_types! {
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
@@ -130,7 +131,7 @@ parameter_types! {
 	pub MaxGameCollection: u32 = 5;
 	pub MaxItem: u32 = 10;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-	pub MaxMintItem: u32 = 10;
+	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
 }
 

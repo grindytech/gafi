@@ -20,9 +20,8 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 			}
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
-			if let Some(max_mint) = Self::get_max_mint_amount(*collection_id) {
-				ensure!(amount <= max_mint, Error::<T, I>::ExceedAllowedAmount);
-			}
+
+			ensure!(amount <= T::MaxMintItem::get(), Error::<T, I>::ExceedAllowedAmount);
 		}
 
 		// make minting fee deposit
@@ -34,7 +33,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 				collection_owner = owner;
 			}
 			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
-				let fee = config.mint_settings.mint_settings.price.unwrap_or_default();
+				let fee = config.mint_settings.price.unwrap_or_default();
 				// make a deposit
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,
@@ -117,7 +116,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 			random_number = Self::generate_random_number(seed);
 		}
-		
+
 		random_number % total
 	}
 
@@ -169,12 +168,5 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
 		ItemBalances::<T, I>::insert((who, collection, item), balance - amount);
 		Ok(())
-	}
-
-	pub fn get_max_mint_amount(collection: T::CollectionId) -> Option<u32> {
-		match GameCollectionConfigOf::<T, I>::get(collection) {
-			Some(config) => return config.mint_settings.amount,
-			None => None,
-		}
 	}
 }
