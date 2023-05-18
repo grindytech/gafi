@@ -1,7 +1,5 @@
-use crate::{*};
-use frame_support::{
-	pallet_prelude::*,
-};
+use crate::*;
+use frame_support::pallet_prelude::*;
 use gafi_support::game::{Amount, TransferItem};
 
 impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::ItemId>
@@ -14,18 +12,18 @@ impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::It
 		destination: &T::AccountId,
 		amount: Amount,
 	) -> DispatchResult {
-		let from_balance = ItemBalances::<T, I>::get((collection, who, item));
+		let from_balance = ItemBalances::<T, I>::get((who, collection, item));
 		ensure!(
 			amount <= from_balance,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
 		// update who's balance
-		ItemBalances::<T, I>::insert((collection, who, item), from_balance - amount);
+		ItemBalances::<T, I>::insert((who, collection, item), from_balance - amount);
 
 		// update destination's balance
-		let to_balance = ItemBalances::<T, I>::get((collection, destination, item));
-		ItemBalances::<T, I>::insert((collection, destination, item), to_balance + amount);
+		let to_balance = ItemBalances::<T, I>::get((destination, collection, item));
+		ItemBalances::<T, I>::insert((destination, collection, item), to_balance + amount);
 
 		Ok(())
 	}

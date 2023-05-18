@@ -125,8 +125,6 @@ pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
 
 parameter_types! {
-	pub MaxNameLength: u32 = 64;
-	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 	pub MaxGameCollection: u32 = 5;
@@ -148,10 +146,6 @@ impl pallet_game::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 
 	type GameId = u32;
-
-	type MaxNameLength = MaxNameLength;
-
-	type MinNameLength = MinNameLength;
 
 	type MaxSwapFee = MaxSwapFee;
 

@@ -99,7 +99,7 @@ fn create_first_game_should_works() {
 			admin.clone()
 		));
 
-		let game = Games::<Test>::get(0).unwrap();
+		let game = Game::<Test>::get(0).unwrap();
 		assert_eq!(game.owner, owner);
 		assert_eq!(game.collections, 0);
 		assert_eq!(game.owner_deposit, GAME_DEPOSIT_VAL);
@@ -193,8 +193,8 @@ fn create_game_collection_should_works() {
 			default_collection_config(),
 		));
 
-		assert_eq!(GameCollections::<Test>::get(0)[0], 0);
-		assert_eq!(CollectionGame::<Test>::get(0), Some(0));
+		assert_eq!(CollectionsOf::<Test>::get(0)[0], 0);
+		assert_eq!(GameOf::<Test>::get(0), Some(0));
 
 		assert_ok!(PalletGame::create_game_colletion(
 			RuntimeOrigin::signed(admin.clone()),
@@ -202,7 +202,7 @@ fn create_game_collection_should_works() {
 			admin.clone(),
 			default_collection_config(),
 		));
-		assert_eq!(GameCollections::<Test>::get(0)[1], 1);
+		assert_eq!(CollectionsOf::<Test>::get(0)[1], 1);
 	})
 }
 
@@ -296,9 +296,9 @@ fn add_game_collection_should_works() {
 			[0, 1].to_vec()
 		));
 
-		assert_eq!(GameCollections::<Test>::get(0), [0, 1].to_vec());
-		assert_eq!(CollectionGame::<Test>::get(0).unwrap(), 0);
-		assert_eq!(CollectionGame::<Test>::get(1).unwrap(), 0);
+		assert_eq!(CollectionsOf::<Test>::get(0), [0, 1].to_vec());
+		assert_eq!(GameOf::<Test>::get(0).unwrap(), 0);
+		assert_eq!(GameOf::<Test>::get(1).unwrap(), 0);
 	})
 }
 
@@ -452,9 +452,9 @@ fn mint_should_works() {
 			player.clone(),
 			3
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 1);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 1)), 1);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 2)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 1)), 1);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 2)), 1);
 		assert_eq!(
 			Balances::free_balance(player.clone()),
 			before_balance - (mint_fee * 3)
@@ -557,7 +557,7 @@ pub fn burn_items_should_works() {
 			player.clone(),
 			10
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 10);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 10);
 
 		assert_ok!(PalletGame::burn(
 			RuntimeOrigin::signed(player.clone()),
@@ -565,7 +565,7 @@ pub fn burn_items_should_works() {
 			0,
 			5
 		));
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
@@ -598,8 +598,8 @@ pub fn transfer_item_should_works() {
 			5
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 5);
-		assert_eq!(ItemBalances::<Test>::get((0, dest.clone(), 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
+		assert_eq!(ItemBalances::<Test>::get((dest.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::transfer(RuntimeOrigin::signed(player.clone()), 0, 0, dest.clone(), 6),
@@ -693,8 +693,8 @@ pub fn upgrade_item_shoud_works() {
 			3
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 0)), 7);
-		assert_eq!(ItemBalances::<Test>::get((0, player.clone(), 100)), 3);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 7);
+		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 100)), 3);
 		assert_eq!(
 			Balances::free_balance(&player),
 			player_before_balance - (input.fee * 3)

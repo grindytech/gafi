@@ -35,13 +35,13 @@ impl<T: Config<I>, I: 'static>
 
 		if let Ok(id) = collection_id {
 			// insert game collections
-			let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
+			let _result = CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| {
 				collection_vec.try_push(id)
 			})
 			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
 
 			// insert collection game
-			CollectionGame::<T, I>::insert(id, game_id);
+			GameOf::<T, I>::insert(id, game_id);
 			GameCollectionConfigOf::<T, I>::insert(id, config);
 			Self::deposit_event(Event::<T, I>::CollectionCreated { collection_id: id });
 		}
@@ -68,7 +68,7 @@ impl<T: Config<I>, I: 'static>
 		collection_ids: &Vec<T::CollectionId>,
 	) -> DispatchResult {
 		// make sure signer is game owner
-		if let Some(game) = Games::<T, I>::get(game_id) {
+		if let Some(game) = Game::<T, I>::get(game_id) {
 			ensure!(game.owner == who.clone(), Error::<T, I>::NoPermission);
 		} else {
 			return Err(Error::<T, I>::UnknownGame.into())
@@ -83,13 +83,13 @@ impl<T: Config<I>, I: 'static>
 			}
 		}
 
-		let _result = GameCollections::<T, I>::try_mutate(&game_id, |collection_vec| {
+		let _result = CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| {
 			collection_vec.try_extend(collection_ids.clone().into_iter())
 		})
 		.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
 
 		for id in collection_ids {
-			CollectionGame::<T, I>::insert(id, game_id);
+			GameOf::<T, I>::insert(id, game_id);
 		}
 
 		Ok(())

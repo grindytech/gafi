@@ -15,7 +15,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
-		if let Some(game_id) = CollectionGame::<T, I>::get(collection_id) {
+		if let Some(game_id) = GameOf::<T, I>::get(collection_id) {
 			ensure!(
 				GameRoleOf::<T, I>::get(game_id, &who) ==
 					Some(CollectionRoles(
@@ -50,7 +50,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
-		if let Some(game_id) = CollectionGame::<T, I>::get(collection_id) {
+		if let Some(game_id) = GameOf::<T, I>::get(collection_id) {
 			ensure!(
 				GameRoleOf::<T, I>::get(game_id, &who) ==
 					Some(CollectionRoles(

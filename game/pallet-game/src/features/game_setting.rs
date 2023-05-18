@@ -30,7 +30,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 			),
 		);
 
-		Games::<T, I>::insert(id, game);
+		Game::<T, I>::insert(id, game);
 		Self::deposit_event(Event::GameCreated { game_id: *id });
 		Ok(())
 	}

@@ -48,9 +48,6 @@ pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
-// type InspectCollectionId<T, I = ()> = <pallet_nfts::pallet::Pallet<T, I> as Inspect<<T as
-// SystemConfig>::AccountId>>::CollectionId;
-
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
 pub type CollectionConfigFor<T, I = ()> =
@@ -136,14 +133,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max name length
-		#[pallet::constant]
-		type MaxNameLength: Get<u32>;
-
-		/// Min name length
-		#[pallet::constant]
-		type MinNameLength: Get<u32>;
-
 		/// Max Swapping Fee
 		#[pallet::constant]
 		type MaxSwapFee: Get<Percent>;
@@ -167,7 +156,7 @@ pub mod pallet {
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> =
+	pub(super) type Game<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
 	#[pallet::storage]
@@ -179,7 +168,7 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	#[pallet::storage]
-	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type CollectionsOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Twox64Concat,
 		T::GameId,
@@ -188,7 +177,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type CollectionGame<T: Config<I>, I: 'static = ()> =
+	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
 
 	#[pallet::storage]
@@ -206,8 +195,8 @@ pub mod pallet {
 	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
-			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Twox64Concat, T::ItemId>,
 		),
 		u32,

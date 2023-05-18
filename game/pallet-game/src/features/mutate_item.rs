@@ -77,13 +77,13 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		item_id: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		let item_balance = ItemBalances::<T, I>::get((collection_id, &who, item_id));
+		let item_balance = ItemBalances::<T, I>::get((&who, collection_id, item_id));
 		ensure!(
 			amount <= item_balance,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
-		ItemBalances::<T, I>::insert((collection_id, &who, item_id), item_balance - amount);
+		ItemBalances::<T, I>::insert((&who, collection_id, item_id), item_balance - amount);
 
 		Self::deposit_event(Event::<T, I>::Burned {
 			collection_id: *collection_id,
@@ -154,8 +154,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&collection, &who, &item));
-		ItemBalances::<T, I>::insert((collection, who, item), balance + amount);
+		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
+		ItemBalances::<T, I>::insert((who, collection, item), balance + amount);
 		Ok(())
 	}
 
@@ -165,9 +165,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&collection, &who, &item));
+		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
 		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
-		ItemBalances::<T, I>::insert((collection, who, item), balance - amount);
+		ItemBalances::<T, I>::insert((who, collection, item), balance - amount);
 		Ok(())
 	}
 
