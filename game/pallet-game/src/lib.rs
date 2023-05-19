@@ -356,7 +356,7 @@ pub mod pallet {
 		UnknownUpgrade,
 		ItemLocked,
 		NotForSale,
-		AmountAnacceptable,
+		AmountUnacceptable,
 		BuyAllOnly,
 		BidTooLow,
 	}

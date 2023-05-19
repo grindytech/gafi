@@ -836,7 +836,7 @@ pub fn buy_item_should_works() {
 
 		let price = 3 * unit(GAKI);
 		let trade_config = TradeConfig {
-			price: price,
+			price,
 			amount: 10,
 			min_order_quantity: Some(3),
 		};
@@ -872,6 +872,111 @@ pub fn buy_item_should_works() {
 		assert_eq!(
 			Balances::free_balance(&buyer),
 			buyer_before_balance - (price * 3)
+		);
+	})
+}
+
+#[test]
+pub fn buy_item_should_fails() {
+	new_test_ext().execute_with(|| {
+		let owner = new_account(0, 10_000 * unit(GAKI));
+
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
+
+		let seller = new_account(3, 10000 * unit(GAKI));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(seller.clone()),
+			0,
+			seller.clone(),
+			10
+		));
+
+		let price = 3 * unit(GAKI);
+		let trade_config = TradeConfig {
+			price,
+			amount: 10,
+			min_order_quantity: Some(3),
+		};
+
+		assert_ok!(PalletGame::set_price(
+			RuntimeOrigin::signed(seller.clone()),
+			0,
+			0,
+			trade_config.clone()
+		));
+
+		let buyer = new_account(4, 10000 * unit(GAKI));
+
+		assert_err!(
+			PalletGame::buy_item(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				0,
+				seller.clone(),
+				2,
+				price,
+			),
+			Error::<Test>::AmountUnacceptable
+		);
+
+		assert_err!(
+			PalletGame::buy_item(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				0,
+				seller.clone(),
+				4,
+				price - (1 * unit(GAKI)),
+			),
+			Error::<Test>::BidTooLow
+		);
+
+		assert_ok!(PalletGame::buy_item(
+			RuntimeOrigin::signed(buyer.clone()),
+			0,
+			0,
+			seller.clone(),
+			8,
+			price,
+		));
+
+		assert_err!(
+			PalletGame::buy_item(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				0,
+				seller.clone(),
+				4,
+				price,
+			),
+			Error::<Test>::BuyAllOnly
+		);
+
+		assert_ok!(PalletGame::buy_item(
+			RuntimeOrigin::signed(buyer.clone()),
+			0,
+			0,
+			seller.clone(),
+			2,
+			price,
+		));
+
+		assert_err!(
+			PalletGame::buy_item(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				0,
+				seller.clone(),
+				4,
+				price,
+			),
+			Error::<Test>::SoldOut
 		);
 	})
 }

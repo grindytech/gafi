@@ -44,16 +44,16 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 
 		// ensure trade
 		if let Some(trade) = TradeConfigOf::<T, I>::get((seller, collection, item)) {
+			ensure!(trade.amount > 0, Error::<T, I>::SoldOut);
+			
 			// sell all case
 			if let Some(moq) = trade.min_order_quantity {
 				if trade.amount <= moq {
 					ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
+				} else {
+					// check min order quantity
+					ensure!(amount >= moq, Error::<T, I>::AmountUnacceptable);
 				}
-				// check min order quantity
-				ensure!(amount >= moq, Error::<T, I>::AmountAnacceptable);
-
-				// not enough item
-				ensure!(trade.amount >= amount, Error::<T, I>::SoldOut);
 			} else {
 				ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
 			}
@@ -74,7 +74,7 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 
 			{
 				let mut new_trade = trade.clone();
-				new_trade.amount -= amount; 
+				new_trade.amount -= amount;
 				TradeConfigOf::<T, I>::insert((seller, collection, item), new_trade);
 			}
 		} else {
