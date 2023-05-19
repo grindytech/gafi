@@ -702,3 +702,13 @@ pub fn upgrade_item_shoud_works() {
 		);
 	})
 }
+
+#[test]
+pub fn set_price_should_works() {
+	new_test_ext().execute_with(|| {
+		
+
+
+	})
+}
+

@@ -190,6 +190,17 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, Stri
 }
 
 pub trait TransferItem<AccountId, CollectionId, ItemId> {
+
+	/// Do Transfer Item
+	///
+	/// Transfer amount of item from `who` to `distination`
+	///
+	/// Parameters:
+	/// - `who`: from account
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `destination`: destination account
+	/// - `amount`: amount of items
 	fn do_transfer_item(
 		who: &AccountId,
 		collection: &CollectionId,
@@ -199,6 +210,29 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	) -> DispatchResult;
 
 	fn swap() -> DispatchResult;
+}
+
+pub trait Trade<AccountId, CollectionId, ItemId, Price> {
+
+	/// Do Set Price
+	///
+	/// Set item price for selling
+	///
+	/// Parameters:
+	/// - `who`: seller
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `price`: price of each item, `None` for canceled sell
+	/// - `amount`: amount of items
+	/// - `moq`: Minimum Order Quantity, None is selling all or nothing.
+	fn do_set_price(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		price: Option<Price>,
+		amount: Amount,
+		moq: Option<u32>,
+	);
 }
 
 pub trait Destroy<E> {

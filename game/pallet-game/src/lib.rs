@@ -17,7 +17,7 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-use codec::{MaxEncodedLen};
+use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
@@ -215,16 +215,11 @@ pub mod pallet {
 		BoundedVec<Item<T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
-	
+
 	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
-	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::CollectionId,
-		u32,
-		ValueQuery,
-	>;
+	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
 
 	/// Game collection config
 	#[pallet::storage]
@@ -539,6 +534,21 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			RandomSeed::<T, I>::set(seed);
+
+			Ok(())
+		}
+
+		#[pallet::call_index(14)]
+		#[pallet::weight(0)]
+		pub fn set_price(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			price: BalanceOf<T, I>,
+			amount: u32,
+			min_order_quantity: Option<u32>,
+		) -> DispatchResult {
+
 
 			Ok(())
 		}
