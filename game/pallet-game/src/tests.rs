@@ -450,9 +450,9 @@ fn mint_should_works() {
 			player.clone(),
 			3
 		));
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 1);
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 1)), 1);
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 2)), 1);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 1);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 1)), 1);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 2)), 1);
 		assert_eq!(
 			Balances::free_balance(player.clone()),
 			before_balance - (mint_fee * 3)
@@ -560,7 +560,7 @@ pub fn burn_items_should_works() {
 			player.clone(),
 			10
 		));
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 10);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
 
 		assert_ok!(PalletGame::burn(
 			RuntimeOrigin::signed(player.clone()),
@@ -568,7 +568,7 @@ pub fn burn_items_should_works() {
 			0,
 			5
 		));
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
@@ -606,8 +606,8 @@ pub fn transfer_item_should_works() {
 			5
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 5);
-		assert_eq!(ItemBalances::<Test>::get((dest.clone(), 0, 0)), 5);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 5);
+		assert_eq!(ItemBalanceOf::<Test>::get((dest.clone(), 0, 0)), 5);
 
 		assert_err!(
 			PalletGame::transfer(RuntimeOrigin::signed(player.clone()), 0, 0, dest.clone(), 6),
@@ -711,8 +711,8 @@ pub fn upgrade_item_shoud_works() {
 			3
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 0)), 7);
-		assert_eq!(ItemBalances::<Test>::get((player.clone(), 0, 100)), 3);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 7);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 100)), 3);
 		assert_eq!(
 			Balances::free_balance(&player),
 			player_before_balance - (input.fee * 3)
@@ -837,7 +837,7 @@ pub fn buy_item_should_works() {
 		let price = 3 * unit(GAKI);
 		let trade_config = TradeConfig {
 			price,
-			amount: 10,
+			amount: 8,
 			min_order_quantity: Some(3),
 		};
 
@@ -862,8 +862,9 @@ pub fn buy_item_should_works() {
 			price,
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((&seller, 0, 0)), 7);
-		assert_eq!(ItemBalances::<Test>::get((&buyer, 0, 0)), 3);
+		assert_eq!(ItemBalanceOf::<Test>::get((&seller, 0, 0)), 2);
+		assert_eq!(LockBalanceOf::<Test>::get((&seller, 0, 0)), 5);
+		assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, 0)), 3);
 
 		assert_eq!(
 			Balances::free_balance(&seller),

@@ -13,7 +13,7 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 	) -> DispatchResult {
 		// ensure balance
 		ensure!(
-			ItemBalances::<T, I>::get((who, collection, item)) >= config.amount,
+			ItemBalanceOf::<T, I>::get((who, collection, item)) >= config.amount,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
@@ -22,6 +22,9 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 			T::Nfts::can_transfer(collection, item),
 			Error::<T, I>::ItemLocked
 		);
+
+		// lock sale items
+		Self::lock_item(who, collection, item, config.amount)?;
 
 		TradeConfigOf::<T, I>::insert((who, collection, item), config);
 
@@ -70,7 +73,8 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 			)?;
 
 			// transfer item
-			Self::transfer_item(seller, collection, item, who, amount)?;
+			Self::transfer_lock_item(seller, collection, item, who, amount)?;
+			Self::unlock_item( who, collection, item, amount)?;
 
 			{
 				let mut new_trade = trade.clone();

@@ -13,8 +13,7 @@ impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::It
 		amount: Amount,
 	) -> DispatchResult {
 		
-		Self::minus_item_balance(who, collection, item, amount)?;
-		Self::add_item_balance(destination, collection, item, amount)?;
+		Self::transfer_item(who, collection, item, destination, amount)?;
 
 		Self::deposit_event(Event::<T, I>::Transferred {
 			from: who.clone(),

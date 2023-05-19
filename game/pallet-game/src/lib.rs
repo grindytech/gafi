@@ -196,7 +196,20 @@ pub mod pallet {
 
 	/// Item balances of account
 	#[pallet::storage]
-	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
+	pub(super) type ItemBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Twox64Concat, T::ItemId>,
+		),
+		u32,
+		ValueQuery,
+	>;
+
+	/// Storing lock balance
+	#[pallet::storage]
+	pub(super) type LockBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
@@ -351,6 +364,7 @@ pub mod pallet {
 		SoldOut,
 		WithdrawReserveFailed,
 		InsufficientItemBalance,
+		InsufficientLockBalance,
 		NoCollectionConfig,
 		UpgradeExists,
 		UnknownUpgrade,

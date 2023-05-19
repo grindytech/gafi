@@ -84,8 +84,7 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 
-			Self::minus_item_balance(who, collection, item, amount)?;
-			Self::add_item_balance(who, collection, &config.item, amount)?;
+			Self::move_item(who, collection, item, &config.item, amount)?;
 
 			Self::deposit_event(Event::Upgraded {
 				who: who.clone(),
