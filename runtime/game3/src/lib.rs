@@ -41,7 +41,7 @@ pub use frame_support::{
 	StorageValue,
 };
 
-use codec::{Decode, Encode};
+use codec::{ Encode};
 use frame_support::PalletId;
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -371,8 +371,6 @@ where
 }
 
 parameter_types! {
-	pub MaxNameLength: u32 = 64;
-	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = 5_000_000_000;
 	pub UpgradeDeposit: u128 = 1_000_000_000;
@@ -394,10 +392,6 @@ impl pallet_game::Config for Runtime {
 	type Randomness = RandomnessCollectiveFlip;
 
 	type GameId = u32;
-
-	type MaxNameLength = MaxNameLength;
-
-	type MinNameLength = MinNameLength;
 
 	type MaxSwapFee = MaxSwapFee;
 

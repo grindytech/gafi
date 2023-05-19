@@ -1,43 +1,15 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{BoundedVec};
-use pallet_nfts::Incrementable;
-use sp_io::hashing::blake2_256;
+use core::primitive::u32;
+use frame_support::RuntimeDebug;
+use scale_info::TypeInfo;
 
-pub type Amount = u32;
-pub type Level = u32;
-pub type Metadata<S> = BoundedVec<u8, S>;
-
-#[derive(Debug, PartialEq, Encode, Decode, Clone, Copy, Eq, MaxEncodedLen)]
-pub struct CollectionId(pub [u8; 32]);
-
-impl From<u32> for CollectionId {
-	fn from(value: u32) -> Self {
-		CollectionId(value.using_encoded(blake2_256))
-	}
-}
-
-impl CollectionId {
-	fn default() -> Self {
-		CollectionId([0; 32])
-	}
-}
-
-impl Incrementable for CollectionId {
-	fn increment(&self) -> Self {
-		*self
-	}
-
-	fn initial_value() -> Self {
-		CollectionId::default()
-	}
-}
-
-impl<Hash, BlockNumber> From<(Hash, BlockNumber)> for CollectionId
-where
-	Hash: Encode,
-	BlockNumber: Encode,
-{
-	fn from(value: (Hash, BlockNumber)) -> Self {
-		CollectionId(value.using_encoded(blake2_256))
-	}
+/// Trade Item configuration.
+/// - `price`: price of each item, `None` for canceled sell
+/// - `amount`: amount of items
+/// - `min_order_quantity`: Minimum Order Quantity, None is selling all or nothing.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct TradeConfig<Price> {
+	pub price: Price,
+	pub amount: u32,
+	pub min_order_quantity: Option<u32>,
 }

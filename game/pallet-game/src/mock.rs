@@ -123,16 +123,15 @@ impl pallet_nfts::Config for Test {
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
+pub const MAX_ITEM_MINT_VAL: u32 = 10;
 
 parameter_types! {
-	pub MaxNameLength: u32 = 64;
-	pub MinNameLength: u32 = 12;
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 	pub MaxGameCollection: u32 = 5;
 	pub MaxItem: u32 = 10;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-	pub MaxMintItem: u32 = 10;
+	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
 }
 
@@ -148,10 +147,6 @@ impl pallet_game::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 
 	type GameId = u32;
-
-	type MaxNameLength = MaxNameLength;
-
-	type MinNameLength = MinNameLength;
 
 	type MaxSwapFee = MaxSwapFee;
 

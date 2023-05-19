@@ -45,7 +45,7 @@ impl<T: Config<I>, I: 'static>
 		// insert upgrade config
 		UpgradeConfigOf::<T, I>::insert(
 			(collection, item, level),
-			ItemUpgradeConfig {
+			UpgradeItemConfig {
 				item: *new_item,
 				fee,
 			},
@@ -93,6 +93,8 @@ impl<T: Config<I>, I: 'static>
 				item_id: config.item,
 				amount,
 			})
+		} else {
+			return Err(Error::<T, I>::UnknownUpgrade.into());
 		}
 		Ok(())
 	}

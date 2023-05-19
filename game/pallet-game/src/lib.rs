@@ -17,8 +17,9 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-use codec::{Decode, MaxEncodedLen};
+use codec::MaxEncodedLen;
 use frame_support::{
+	ensure,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
@@ -30,7 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, MutateItem, Trade, TradeConfig, TransferItem,
+	UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -39,7 +41,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameCollectionConfig, GameDetails, ItemUpgradeConfig};
+use types::{GameDetails, UpgradeItemConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -48,16 +50,13 @@ pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
 
 type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
-// type InspectCollectionId<T, I = ()> = <pallet_nfts::pallet::Pallet<T, I> as Inspect<<T as
-// SystemConfig>::AccountId>>::CollectionId;
-
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
 pub type CollectionConfigFor<T, I = ()> =
-	GameCollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
-	ItemUpgradeConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -88,9 +87,7 @@ pub mod pallet {
 		pallet_prelude::{ValueQuery, *},
 		Blake2_128Concat, Twox64Concat,
 	};
-	use frame_system::{
-		pallet_prelude::{OriginFor, *},
-	};
+	use frame_system::pallet_prelude::{OriginFor, *};
 	use gafi_support::game::Level;
 	use pallet_nfts::CollectionRoles;
 
@@ -136,14 +133,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max name length
-		#[pallet::constant]
-		type MaxNameLength: Get<u32>;
-
-		/// Min name length
-		#[pallet::constant]
-		type MinNameLength: Get<u32>;
-
 		/// Max Swapping Fee
 		#[pallet::constant]
 		type MaxSwapFee: Get<Percent>;
@@ -167,7 +156,7 @@ pub mod pallet {
 
 	/// Store basic game info
 	#[pallet::storage]
-	pub(super) type Games<T: Config<I>, I: 'static = ()> =
+	pub(super) type Game<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
 	#[pallet::storage]
@@ -178,8 +167,9 @@ pub mod pallet {
 	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
+	/// Collections in the game
 	#[pallet::storage]
-	pub(super) type GameCollections<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type CollectionsOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Twox64Concat,
 		T::GameId,
@@ -187,10 +177,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Collection belongs to
 	#[pallet::storage]
-	pub(super) type CollectionGame<T: Config<I>, I: 'static = ()> =
+	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
 
+	/// Game roles
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
@@ -202,18 +194,20 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Item balances of account
 	#[pallet::storage]
 	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
-			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
 			NMapKey<Twox64Concat, T::ItemId>,
 		),
 		u32,
 		ValueQuery,
 	>;
 
+	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
 	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -223,10 +217,17 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Item reserve created by the owner, random mining by player
+	#[pallet::storage]
+	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
+
+	/// Game collection config
 	#[pallet::storage]
 	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
+	/// Level of item
 	#[pallet::storage]
 	pub(super) type LevelOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
@@ -238,6 +239,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Store the original items of the upgraded items
 	#[pallet::storage]
 	pub(super) type OriginItemOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -247,20 +249,35 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Store the upgrade config
 	#[pallet::storage]
 	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::CollectionId>,
-			NMapKey<Blake2_128Concat, T::ItemId>,
-			NMapKey<Blake2_128Concat, Level>,
+			NMapKey<Blake2_128Concat, T::ItemId>, // original item
+			NMapKey<Blake2_128Concat, Level>,     // level upgrade
 		),
 		ItemUpgradeConfigFor<T, I>,
 		OptionQuery,
 	>;
 
+	/// Store random seed generated from the off-chain worker per block
 	#[pallet::storage]
-	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> = StorageValue<_, [u8; 32], ValueQuery>;
+	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, [u8; 32], ValueQuery>;
+
+	#[pallet::storage]
+	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::ItemId>,
+		),
+		TradeConfig<BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -336,6 +353,12 @@ pub mod pallet {
 		InsufficientItemBalance,
 		NoCollectionConfig,
 		UpgradeExists,
+		UnknownUpgrade,
+		ItemLocked,
+		NotForSale,
+		AmountUnacceptable,
+		BuyAllOnly,
+		BidTooLow,
 	}
 
 	#[pallet::hooks]
@@ -484,14 +507,6 @@ pub mod pallet {
 			let destination = T::Lookup::lookup(dest)?;
 			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
 
-			Self::deposit_event(Event::<T, I>::Transferred {
-				from: sender,
-				collection_id: collection,
-				item_id: item,
-				dest: destination,
-				amount,
-			});
-
 			Ok(())
 		}
 
@@ -540,6 +555,38 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::call_index(14)]
+		#[pallet::weight(0)]
+		pub fn set_price(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			config: TradeConfig<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_set_price(&sender, &collection, &item, &config)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(15)]
+		#[pallet::weight(0)]
+		pub fn buy_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			seller: T::AccountId,
+			amount: u32,
+			bid_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_buy_item(&sender, &collection, &item, &seller, amount, bid_price)?;
+
+			Ok(())
+		}
 	}
 
 	#[pallet::validate_unsigned]
@@ -553,7 +600,7 @@ pub mod pallet {
 		/// are being whitelisted and marked as valid.
 		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			match call {
-				Call::submit_random_seed_unsigned {seed: _} => match source {
+				Call::submit_random_seed_unsigned { seed: _ } => match source {
 					TransactionSource::Local | TransactionSource::InBlock => {
 						let valid_tx = |provide| {
 							ValidTransaction::with_tag_prefix("pallet-game")
@@ -574,27 +621,25 @@ pub mod pallet {
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	pub fn gen_random() -> u32 {
-		let seed = RandomSeed::<T, I>::get();
-
-		let random = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
-			.expect("input is padded with zeroes; qed");
-
-		random
-	}
-
-	pub fn submit_random_seed_raw_unsigned(
-		_block_number: T::BlockNumber,
-	) -> Result<(), &'static str> {
+	fn submit_random_seed_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
 		let random_seed = sp_io::offchain::random_seed();
 
-		let call = Call::submit_random_seed_unsigned {seed: random_seed};
+		let call = Call::submit_random_seed_unsigned { seed: random_seed };
 
-		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into()).map_err(
-			|_| {
+		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
+			.map_err(|_| {
 				log::error!("Failed in offchain_unsigned_tx");
-			},
-		);
+			});
 		Ok(())
+	}
+
+	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
+		match Game::<T, I>::get(game) {
+			Some(config) => {
+				ensure!(config.owner == *who, Error::<T, I>::NoPermission);
+				Ok(())
+			},
+			None => Err(Error::<T, I>::UnknownGame.into()),
+		}
 	}
 }
