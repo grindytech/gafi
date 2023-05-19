@@ -614,7 +614,7 @@ pub fn set_upgrade_item_should_works() {
 
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
+		let input: UpgradeItemConfig<u32, u128> = UpgradeItemConfig {
 			item: 100,
 			fee: 3 * unit(GAKI),
 		};
@@ -655,7 +655,7 @@ pub fn upgrade_item_shoud_works() {
 
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
+		let input: UpgradeItemConfig<u32, u128> = UpgradeItemConfig {
 			item: 100,
 			fee: 3 * unit(GAKI),
 		};
@@ -706,8 +706,27 @@ pub fn upgrade_item_shoud_works() {
 #[test]
 pub fn set_price_should_works() {
 	new_test_ext().execute_with(|| {
-		
 
+		let owner = new_account(0, 10_000 * unit(GAKI));
+
+		create_items(&owner, 100);
+
+		let player = new_account(3, 10000 * unit(GAKI));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			10
+		));
+
+		let trade_config = TradeConfig {
+			price: Some(3 * unit(GAKI)),
+			amount: 9,
+			min_order_quantity: Some(3),
+		};
+
+		assert_ok!(PalletGame::set_price(RuntimeOrigin::signed(player.clone()), 0, 0, trade_config));
 
 	})
 }

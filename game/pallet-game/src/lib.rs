@@ -40,7 +40,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameDetails, ItemUpgradeConfig};
+use types::{GameDetails, TradeConfig, UpgradeItemConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -55,7 +55,7 @@ pub type CollectionConfigFor<T, I = ()> =
 	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
-	ItemUpgradeConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -265,6 +265,18 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
+
+	#[pallet::storage]
+	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::ItemId>,
+		),
+		TradeConfig<BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -544,12 +556,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			price: BalanceOf<T, I>,
-			amount: u32,
-			min_order_quantity: Option<u32>,
+			config: TradeConfig<BalanceOf<T, I>>,
 		) -> DispatchResult {
-
-
 			Ok(())
 		}
 	}

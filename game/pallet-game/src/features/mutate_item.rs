@@ -1,4 +1,4 @@
-use crate::{*};
+use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, MutateItem};
 
@@ -43,18 +43,20 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
 			let mut total_item = TotalReserveOf::<T, I>::get(collection_id);
-			let mut position = Self::gen_random();
+			let mut maybe_position = Some(Self::gen_random());
 			for i in 0..amount {
-				position = Self::random_number(total_item, position);
-				total_item -= i;
+				if let Some(position) = maybe_position {
+					maybe_position = Self::random_number(total_item, position);
+					total_item = total_item.saturating_sub(i);
 
-				match Self::withdraw_reserve(collection_id, position) {
-					Ok(item) => {
-						Self::add_item_balance(&target, &collection_id, &item, 1)?;
-						minted_items.push(item);
-					},
-					Err(err) => return Err(err.into()),
-				};
+					match Self::withdraw_reserve(collection_id, position) {
+						Ok(item) => {
+							Self::add_item_balance(&target, &collection_id, &item, 1)?;
+							minted_items.push(item);
+						},
+						Err(err) => return Err(err.into()),
+					};
+				}
 			}
 			Self::minus_total_reserve(collection_id, amount)?;
 		}
