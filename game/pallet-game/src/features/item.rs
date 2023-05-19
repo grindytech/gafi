@@ -1,5 +1,8 @@
+/// Item module provides utility functions for pallet-game
+
 use crate::*;
 use frame_support::pallet_prelude::*;
+
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Generate a random number from a given seed.
@@ -44,6 +47,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
+	/// Withdraw an item in reserve which item_id depend on position.
+	/// The position of item withdrawal in a sum up from left to right
+	/// Example array [(`item`: `amount`)]: [(1, 5), (2, 4), (3, 3)],
+	/// With position = 4, result item_id = 1.
+	/// With position = 7, result item_id = 2.
+	/// With position = 10, result item_id = 3.
 	pub(crate) fn withdraw_reserve(
 		collection_id: &T::CollectionId,
 		position: u32,

@@ -120,7 +120,7 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
+			> + Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
 		/// generate random ID
@@ -344,6 +344,22 @@ pub mod pallet {
 			item_id: T::ItemId,
 			level: Level,
 		},
+		PriceSet {
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+		ItemBought {
+			seller: T::AccountId,
+			buyer: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+
 	}
 
 	#[pallet::error]
