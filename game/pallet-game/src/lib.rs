@@ -355,6 +355,10 @@ pub mod pallet {
 		UpgradeExists,
 		UnknownUpgrade,
 		ItemLocked,
+		NotForSale,
+		AmountUnacceptable,
+		BuyAllOnly,
+		BidTooLow,
 	}
 
 	#[pallet::hooks]
@@ -563,6 +567,23 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::do_set_price(&sender, &collection, &item, &config)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(15)]
+		#[pallet::weight(0)]
+		pub fn buy_item(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			seller: T::AccountId,
+			amount: u32,
+			bid_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_buy_item(&sender, &collection, &item, &seller, amount, bid_price)?;
 
 			Ok(())
 		}

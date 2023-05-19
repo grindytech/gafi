@@ -231,6 +231,26 @@ pub trait Trade<AccountId, CollectionId, ItemId, Price> {
 		item: &ItemId,
 		config: &TradeConfig<Price>,
 	) -> DispatchResult;
+
+	/// Do Buy Item
+	/// 
+	/// Buy items from specific seller
+	/// 
+	/// Parameters:
+	/// - `who`: buyer
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `seller`: seller
+	/// - `amount`: amount
+	/// - `bid_price`: price of each item
+	fn do_buy_item(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		seller: &AccountId,
+		amount: Amount,
+		bid_price: Price
+	) -> DispatchResult;
 }
 
 pub trait Destroy<E> {
