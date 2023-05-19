@@ -746,7 +746,7 @@ pub fn set_price_should_works() {
 		));
 
 		let trade_config = TradeConfig {
-			price: Some(3 * unit(GAKI)),
+			price: 3 * unit(GAKI),
 			amount: 9,
 			min_order_quantity: Some(3),
 		};
@@ -785,7 +785,7 @@ pub fn set_price_should_fails() {
 		));
 
 		let mut trade_config = TradeConfig {
-			price: Some(3 * unit(GAKI)),
+			price: 3 * unit(GAKI),
 			amount: 11,
 			min_order_quantity: Some(3),
 		};
@@ -831,13 +831,13 @@ pub fn buy_item_should_works() {
 			RuntimeOrigin::signed(seller.clone()),
 			0,
 			seller.clone(),
-			100
+			10
 		));
 
 		let price = 3 * unit(GAKI);
 		let trade_config = TradeConfig {
-			price: Some(price),
-			amount: 11,
+			price: price,
+			amount: 10,
 			min_order_quantity: Some(3),
 		};
 
@@ -862,7 +862,7 @@ pub fn buy_item_should_works() {
 			price,
 		));
 
-		assert_eq!(ItemBalances::<Test>::get((&seller, 0, 0)), 97);
+		assert_eq!(ItemBalances::<Test>::get((&seller, 0, 0)), 7);
 		assert_eq!(ItemBalances::<Test>::get((&buyer, 0, 0)), 3);
 
 		assert_eq!(

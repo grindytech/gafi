@@ -9,7 +9,7 @@ use scale_info::TypeInfo;
 /// - `min_order_quantity`: Minimum Order Quantity, None is selling all or nothing.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct TradeConfig<Price> {
-	pub price: Option<Price>,
+	pub price: Price,
 	pub amount: u32,
 	pub min_order_quantity: Option<u32>,
 }

@@ -1,6 +1,6 @@
 use crate::*;
-use frame_support::pallet_prelude::*;
-use gafi_support::game::Trade;
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
+use gafi_support::game::{Amount, Trade};
 
 impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, BalanceOf<T, I>>
 	for Pallet<T, I>
@@ -33,9 +33,54 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		seller: &T::AccountId,
-		amount: gafi_support::game::Amount,
+		amount: Amount,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		todo!()
+		// ensure item can be transfer
+		ensure!(
+			T::Nfts::can_transfer(collection, item),
+			Error::<T, I>::ItemLocked
+		);
+
+		// ensure trade
+		if let Some(trade) = TradeConfigOf::<T, I>::get((seller, collection, item)) {
+			// sell all case
+			if let Some(moq) = trade.min_order_quantity {
+				if trade.amount <= moq {
+					ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
+				}
+				// check min order quantity
+				ensure!(amount >= moq, Error::<T, I>::AmountAnacceptable);
+
+				// not enough item
+				ensure!(trade.amount >= amount, Error::<T, I>::SoldOut);
+			} else {
+				ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
+			}
+
+			// check price
+			ensure!(bid_price >= trade.price, Error::<T, I>::BidTooLow);
+
+			// make deposit
+			<T as pallet::Config<I>>::Currency::transfer(
+				&who,
+				&seller,
+				trade.price * amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			// transfer item
+			Self::transfer_item(seller, collection, item, who, amount)?;
+
+			{
+				let mut new_trade = trade.clone();
+				new_trade.amount -= amount; 
+				TradeConfigOf::<T, I>::insert((seller, collection, item), new_trade);
+			}
+		} else {
+			return Err(Error::<T, I>::NotForSale.into())
+		}
+
+		Ok(())
 	}
 }

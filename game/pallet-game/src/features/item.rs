@@ -1,9 +1,8 @@
-use crate::{*};
+use crate::*;
 use frame_support::pallet_prelude::*;
 
-impl<T: Config<I>, I: 'static> Pallet<T, I>
-{
-    /// Generate a random number from a given seed.
+impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	/// Generate a random number from a given seed.
 	/// Note that there is potential bias introduced by using modulus operator.
 	/// You should call this function with different seed values until the random
 	/// number lies within `u32::MAX - u32::MAX % n`.
@@ -15,17 +14,17 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 			.expect("secure hashes should always be bigger than u32; qed");
 		random_number
 	}
-	
+
 	/// Generate a random number from a given seed.
 	/// Generated number lies with `0 - total`.
-	pub(crate) fn random_number(total: u32, seed: u32) ->Option<u32> {
+	pub(crate) fn random_number(total: u32, seed: u32) -> Option<u32> {
 		if total == 0 {
-			return None;
+			return None
 		}
 
 		let mut random_number = Self::generate_random_number(seed);
 		for _ in 1..10 {
-			if random_number < u32::MAX.saturating_sub(u32::MAX % total)  {
+			if random_number < u32::MAX.saturating_sub(u32::MAX % total) {
 				break
 			}
 
@@ -85,6 +84,18 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 		let total = TotalReserveOf::<T, I>::get(collection);
 		ensure!(total >= amount, Error::<T, I>::SoldOut);
 		TotalReserveOf::<T, I>::insert(collection, total - amount);
+		Ok(())
+	}
+
+	pub fn transfer_item(
+		from: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		to: &T::AccountId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		Self::minus_item_balance(from, collection, item, amount)?;
+		Self::add_item_balance(to, collection, item, amount)?;
 		Ok(())
 	}
 
