@@ -812,3 +812,66 @@ pub fn set_price_should_fails() {
 		);
 	})
 }
+
+#[test]
+pub fn buy_item_should_works() {
+	new_test_ext().execute_with(|| {
+		let owner = new_account(0, 10_000 * unit(GAKI));
+
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
+
+		let seller = new_account(3, 10000 * unit(GAKI));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(seller.clone()),
+			0,
+			seller.clone(),
+			100
+		));
+
+		let price = 3 * unit(GAKI);
+		let trade_config = TradeConfig {
+			price: Some(price),
+			amount: 11,
+			min_order_quantity: Some(3),
+		};
+
+		assert_ok!(PalletGame::set_price(
+			RuntimeOrigin::signed(seller.clone()),
+			0,
+			0,
+			trade_config.clone()
+		));
+
+		let buyer = new_account(4, 10000 * unit(GAKI));
+
+		let seller_before_balance = Balances::free_balance(&seller);
+		let buyer_before_balance = Balances::free_balance(&buyer);
+
+		assert_ok!(PalletGame::buy_item(
+			RuntimeOrigin::signed(buyer.clone()),
+			0,
+			0,
+			seller.clone(),
+			3,
+			price,
+		));
+
+		assert_eq!(ItemBalances::<Test>::get((&seller, 0, 0)), 97);
+		assert_eq!(ItemBalances::<Test>::get((&buyer, 0, 0)), 3);
+
+		assert_eq!(
+			Balances::free_balance(&seller),
+			seller_before_balance + (price * 3)
+		);
+		assert_eq!(
+			Balances::free_balance(&buyer),
+			buyer_before_balance - (price * 3)
+		);
+	})
+}

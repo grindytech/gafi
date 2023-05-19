@@ -27,4 +27,15 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 
 		Ok(())
 	}
+
+	fn do_buy_item(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		seller: &T::AccountId,
+		amount: gafi_support::game::Amount,
+		bid_price: BalanceOf<T, I>,
+	) -> DispatchResult {
+		todo!()
+	}
 }
