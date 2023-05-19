@@ -21,3 +21,6 @@ pub use upgrade_item::*;
 
 pub mod item;
 pub use item::*;
+
+pub mod trade_item;
+pub use trade_item::*;

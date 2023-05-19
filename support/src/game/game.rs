@@ -2,6 +2,8 @@ use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
+use super::TradeConfig;
+
 pub type Amount = u32;
 pub type Level = u32;
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
@@ -190,6 +192,17 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, Stri
 }
 
 pub trait TransferItem<AccountId, CollectionId, ItemId> {
+
+	/// Do Transfer Item
+	///
+	/// Transfer amount of item from `who` to `distination`
+	///
+	/// Parameters:
+	/// - `who`: from account
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `destination`: destination account
+	/// - `amount`: amount of items
 	fn do_transfer_item(
 		who: &AccountId,
 		collection: &CollectionId,
@@ -199,6 +212,25 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	) -> DispatchResult;
 
 	fn swap() -> DispatchResult;
+}
+
+pub trait Trade<AccountId, CollectionId, ItemId, Price> {
+
+	/// Do Set Price
+	///
+	/// Set item price for selling
+	///
+	/// Parameters:
+	/// - `who`: seller
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `config`: trade config
+	fn do_set_price(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		config: &TradeConfig<Price>,
+	) -> DispatchResult;
 }
 
 pub trait Destroy<E> {

@@ -1,8 +1,4 @@
-use crate::{
-	mock::*,
-	types::{Item},
-	Error, *,
-};
+use crate::{mock::*, types::Item, Error, *};
 
 use sp_core::sr25519;
 use sp_keystore::{testing::KeyStore, SyncCryptoStore};
@@ -58,26 +54,31 @@ macro_rules! bvec {
 	}
 }
 
-fn create_items(owner: &sr25519::Public, amount: u32) {
+fn create_items(
+	who: &sr25519::Public,
+	collection_config: &CollectionConfigFor<Test>,
+	item_config: &ItemConfig,
+	amount: u32,
+) {
 	run_to_block(1);
 
 	assert_ok!(PalletGame::create_game(
-		RuntimeOrigin::signed(owner.clone()),
-		owner.clone()
+		RuntimeOrigin::signed(who.clone()),
+		who.clone()
 	));
 
 	assert_ok!(PalletGame::create_game_colletion(
-		RuntimeOrigin::signed(owner.clone()),
+		RuntimeOrigin::signed(who.clone()),
 		0,
-		owner.clone(),
-		default_collection_config(),
+		who.clone(),
+		*collection_config,
 	));
 
 	assert_ok!(PalletGame::create_item(
-		RuntimeOrigin::signed(owner.clone()),
+		RuntimeOrigin::signed(who.clone()),
 		0,
 		0,
-		default_item_config(),
+		*item_config,
 		amount
 	));
 }
@@ -490,7 +491,12 @@ fn mint_should_fails() {
 
 		let player = new_account(2, 3000 * unit(GAKI));
 		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), MAX_ITEM_MINT_VAL + 1),
+			PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				MAX_ITEM_MINT_VAL + 1
+			),
 			Error::<Test>::ExceedAllowedAmount
 		);
 
@@ -576,7 +582,12 @@ pub fn transfer_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
 
-		create_items(&owner, 100);
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
 
 		let player = new_account(2, 3000 * unit(GAKI));
 		let dest = new_account(3, 3000 * unit(GAKI));
@@ -610,11 +621,16 @@ pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
 
-		create_items(&owner, 100);
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
 
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
+		let input: UpgradeItemConfig<u32, u128> = UpgradeItemConfig {
 			item: 100,
 			fee: 3 * unit(GAKI),
 		};
@@ -651,11 +667,16 @@ pub fn upgrade_item_shoud_works() {
 	new_test_ext().execute_with(|| {
 		let owner = new_account(0, 10_000 * unit(GAKI));
 
-		create_items(&owner, 100);
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
 
 		let byte = 50;
 
-		let input: ItemUpgradeConfig<u32, u128> = ItemUpgradeConfig {
+		let input: UpgradeItemConfig<u32, u128> = UpgradeItemConfig {
 			item: 100,
 			fee: 3 * unit(GAKI),
 		};
@@ -699,6 +720,95 @@ pub fn upgrade_item_shoud_works() {
 		assert_eq!(
 			Balances::free_balance(&owner),
 			owner_before_balance + (input.fee * 3)
+		);
+	})
+}
+
+#[test]
+pub fn set_price_should_works() {
+	new_test_ext().execute_with(|| {
+		let owner = new_account(0, 10_000 * unit(GAKI));
+
+		create_items(
+			&owner,
+			&default_collection_config(),
+			&default_item_config(),
+			100,
+		);
+
+		let player = new_account(3, 10000 * unit(GAKI));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			10
+		));
+
+		let trade_config = TradeConfig {
+			price: Some(3 * unit(GAKI)),
+			amount: 9,
+			min_order_quantity: Some(3),
+		};
+
+		assert_ok!(PalletGame::set_price(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			0,
+			trade_config.clone()
+		));
+
+		assert_eq!(
+			TradeConfigOf::<Test>::get((player.clone(), 0, 0)).unwrap(),
+			trade_config
+		);
+	})
+}
+
+#[test]
+pub fn set_price_should_fails() {
+	new_test_ext().execute_with(|| {
+		let owner = new_account(0, 10_000 * unit(GAKI));
+
+		let mut item_config = ItemConfig::default();
+		item_config.disable_setting(pallet_nfts::ItemSetting::Transferable);
+
+		create_items(&owner, &default_collection_config(), &item_config, 100);
+
+		let player = new_account(3, 10000 * unit(GAKI));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			10
+		));
+
+		let mut trade_config = TradeConfig {
+			price: Some(3 * unit(GAKI)),
+			amount: 11,
+			min_order_quantity: Some(3),
+		};
+
+		assert_err!(
+			PalletGame::set_price(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				0,
+				trade_config.clone()
+			),
+			Error::<Test>::InsufficientItemBalance
+		);
+
+		trade_config.amount = 1;
+		assert_err!(
+			PalletGame::set_price(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				0,
+				trade_config.clone()
+			),
+			Error::<Test>::ItemLocked
 		);
 	})
 }

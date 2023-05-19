@@ -18,17 +18,21 @@ impl<T: Config<I>, I: 'static> Pallet<T, I>
 	
 	/// Generate a random number from a given seed.
 	/// Generated number lies with `0 - total`.
-	pub(crate) fn random_number(total: u32, seed: u32) -> u32 {
+	pub(crate) fn random_number(total: u32, seed: u32) ->Option<u32> {
+		if total == 0 {
+			return None;
+		}
+
 		let mut random_number = Self::generate_random_number(seed);
 		for _ in 1..10 {
-			if random_number < u32::MAX - u32::MAX % total {
+			if random_number < u32::MAX.saturating_sub(u32::MAX % total)  {
 				break
 			}
 
 			random_number = Self::generate_random_number(seed);
 		}
 
-		random_number % total
+		Some(random_number % total)
 	}
 
 	/// Generate a random number from the off-chain worker's random seed

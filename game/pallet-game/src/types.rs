@@ -1,6 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::primitive::u32;
-use frame_support::{RuntimeDebug};
+use frame_support::RuntimeDebug;
 use scale_info::TypeInfo;
 
 /// Information about a game.
@@ -36,10 +36,9 @@ impl<ItemId> Item<ItemId> {
 	}
 }
 
-/// Item upgrade configuration.
+/// Upgrade Item configuration.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ItemUpgradeConfig<ItemId, Price> {
-
+pub struct UpgradeItemConfig<ItemId, Price> {
 	pub item: ItemId,
 
 	pub fee: Price,

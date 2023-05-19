@@ -17,7 +17,7 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-use codec::{MaxEncodedLen};
+use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
@@ -31,7 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, MutateItem, Trade, TradeConfig, TransferItem,
+	UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -40,7 +41,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameDetails, ItemUpgradeConfig};
+use types::{GameDetails, UpgradeItemConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -55,7 +56,7 @@ pub type CollectionConfigFor<T, I = ()> =
 	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
-	ItemUpgradeConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -215,16 +216,11 @@ pub mod pallet {
 		BoundedVec<Item<T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
-	
+
 	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
-	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::CollectionId,
-		u32,
-		ValueQuery,
-	>;
+	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
 
 	/// Game collection config
 	#[pallet::storage]
@@ -270,6 +266,18 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
+
+	#[pallet::storage]
+	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Blake2_128Concat, T::ItemId>,
+		),
+		TradeConfig<BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -346,6 +354,7 @@ pub mod pallet {
 		NoCollectionConfig,
 		UpgradeExists,
 		UnknownUpgrade,
+		ItemLocked,
 	}
 
 	#[pallet::hooks]
@@ -539,6 +548,21 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			RandomSeed::<T, I>::set(seed);
+
+			Ok(())
+		}
+
+		#[pallet::call_index(14)]
+		#[pallet::weight(0)]
+		pub fn set_price(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			config: TradeConfig<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_set_price(&sender, &collection, &item, &config)?;
 
 			Ok(())
 		}
