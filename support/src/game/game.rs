@@ -2,6 +2,8 @@ use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
+use super::TradeConfig;
+
 pub type Amount = u32;
 pub type Level = u32;
 pub trait GameSetting<AccountId, GameId, BlockNumber> {
@@ -222,17 +224,13 @@ pub trait Trade<AccountId, CollectionId, ItemId, Price> {
 	/// - `who`: seller
 	/// - `collection`: collection id
 	/// - `item`: item id
-	/// - `price`: price of each item, `None` for canceled sell
-	/// - `amount`: amount of items
-	/// - `moq`: Minimum Order Quantity, None is selling all or nothing.
+	/// - `config`: trade config
 	fn do_set_price(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
-		price: Option<Price>,
-		amount: Amount,
-		moq: Option<u32>,
-	);
+		config: &TradeConfig<Price>,
+	) -> DispatchResult;
 }
 
 pub trait Destroy<E> {

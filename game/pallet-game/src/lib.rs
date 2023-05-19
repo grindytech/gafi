@@ -31,7 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, MutateItem, Trade, TradeConfig, TransferItem,
+	UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -40,7 +41,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameDetails, TradeConfig, UpgradeItemConfig};
+use types::{GameDetails, UpgradeItemConfig};
 
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -353,6 +354,7 @@ pub mod pallet {
 		NoCollectionConfig,
 		UpgradeExists,
 		UnknownUpgrade,
+		ItemLocked,
 	}
 
 	#[pallet::hooks]
@@ -558,6 +560,10 @@ pub mod pallet {
 			item: T::ItemId,
 			config: TradeConfig<BalanceOf<T, I>>,
 		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_set_price(&sender, &collection, &item, &config)?;
+
 			Ok(())
 		}
 	}

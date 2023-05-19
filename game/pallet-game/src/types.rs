@@ -43,11 +43,3 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 
 	pub fee: Price,
 }
-
-/// Trade Item configuration.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct TradeConfig<Price> {
-	pub price: Option<Price>,
-	pub amount: u32,
-	pub min_order_quantity: Option<u32>,
-}
