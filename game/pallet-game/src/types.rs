@@ -30,7 +30,7 @@ impl<ItemId> Item<ItemId> {
 		Item { item, amount }
 	}
 
-	pub fn minus(mut self, amount: u32) -> Self {
+	pub fn sub(mut self, amount: u32) -> Self {
 		self.amount -= amount;
 		self
 	}

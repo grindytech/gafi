@@ -13,7 +13,7 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 	) -> DispatchResult {
 		// ensure balance
 		ensure!(
-			ItemBalances::<T, I>::get((who, collection, item)) >= config.amount,
+			ItemBalanceOf::<T, I>::get((who, collection, item)) >= config.amount,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
@@ -23,7 +23,18 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 			Error::<T, I>::ItemLocked
 		);
 
+		// lock sale items
+		Self::lock_item(who, collection, item, config.amount)?;
+
 		TradeConfigOf::<T, I>::insert((who, collection, item), config);
+
+		Self::deposit_event(Event::<T, I>::PriceSet {
+			who: who.clone(),
+			collection: *collection,
+			item: *item,
+			amount: config.amount,
+			price: config.price,
+		});
 
 		Ok(())
 	}
@@ -45,7 +56,7 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 		// ensure trade
 		if let Some(trade) = TradeConfigOf::<T, I>::get((seller, collection, item)) {
 			ensure!(trade.amount > 0, Error::<T, I>::SoldOut);
-			
+
 			// sell all case
 			if let Some(moq) = trade.min_order_quantity {
 				if trade.amount <= moq {
@@ -70,13 +81,23 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 			)?;
 
 			// transfer item
-			Self::transfer_item(seller, collection, item, who, amount)?;
+			Self::transfer_lock_item(seller, collection, item, who, amount)?;
+			Self::unlock_item(who, collection, item, amount)?;
 
 			{
 				let mut new_trade = trade.clone();
 				new_trade.amount -= amount;
 				TradeConfigOf::<T, I>::insert((seller, collection, item), new_trade);
 			}
+
+			Self::deposit_event(Event::<T, I>::ItemBought {
+				seller: seller.clone(),
+				buyer: who.clone(),
+				collection: *collection,
+				item: *item,
+				amount,
+				price: trade.price,
+			})
 		} else {
 			return Err(Error::<T, I>::NotForSale.into())
 		}

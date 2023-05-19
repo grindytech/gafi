@@ -120,7 +120,7 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
+			> + Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
 		/// generate random ID
@@ -196,7 +196,20 @@ pub mod pallet {
 
 	/// Item balances of account
 	#[pallet::storage]
-	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
+	pub(super) type ItemBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Twox64Concat, T::ItemId>,
+		),
+		u32,
+		ValueQuery,
+	>;
+
+	/// Storing lock balance
+	#[pallet::storage]
+	pub(super) type LockBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
@@ -331,6 +344,22 @@ pub mod pallet {
 			item_id: T::ItemId,
 			level: Level,
 		},
+		PriceSet {
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+		ItemBought {
+			seller: T::AccountId,
+			buyer: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+
 	}
 
 	#[pallet::error]
@@ -351,6 +380,7 @@ pub mod pallet {
 		SoldOut,
 		WithdrawReserveFailed,
 		InsufficientItemBalance,
+		InsufficientLockBalance,
 		NoCollectionConfig,
 		UpgradeExists,
 		UnknownUpgrade,

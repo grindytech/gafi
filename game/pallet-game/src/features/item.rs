@@ -1,5 +1,8 @@
+/// Item module provides utility functions for pallet-game
+
 use crate::*;
 use frame_support::pallet_prelude::*;
+
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Generate a random number from a given seed.
@@ -35,7 +38,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Generate a random number from the off-chain worker's random seed
-	pub fn gen_random() -> u32 {
+	pub(crate) fn gen_random() -> u32 {
 		let seed = RandomSeed::<T, I>::get();
 
 		let random = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
@@ -44,7 +47,13 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
-	pub fn withdraw_reserve(
+	/// Withdraw an item in reserve which item_id depend on position.
+	/// The position of item withdrawal in a sum up from left to right
+	/// Example array [(`item`: `amount`)]: [(1, 5), (2, 4), (3, 3)],
+	/// With position = 4, result item_id = 1.
+	/// With position = 7, result item_id = 2.
+	/// With position = 10, result item_id = 3.
+	pub(crate) fn withdraw_reserve(
 		collection_id: &T::CollectionId,
 		position: u32,
 	) -> Result<T::ItemId, Error<T, I>> {
@@ -52,7 +61,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
 				if reserve.amount > 0 && reserve.amount + tmp >= position {
-					*reserve = reserve.minus(1);
+					*reserve = reserve.sub(1);
 					return Ok(*reserve)
 				} else {
 					tmp += reserve.amount;
@@ -77,7 +86,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub fn minus_total_reserve(
+	pub(crate) fn minus_total_reserve(
 		collection: &T::CollectionId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
@@ -87,38 +96,107 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub fn transfer_item(
+	pub(crate) fn transfer_item(
 		from: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		to: &T::AccountId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		Self::minus_item_balance(from, collection, item, amount)?;
+		Self::sub_item_balance(from, collection, item, amount)?;
 		Self::add_item_balance(to, collection, item, amount)?;
 		Ok(())
 	}
 
-	pub fn add_item_balance(
+	pub(crate) fn move_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
-		item: &T::ItemId,
+		old_item: &T::ItemId,
+		new_item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
-		ItemBalances::<T, I>::insert((who, collection, item), balance + amount);
+		Self::sub_item_balance(who, collection, old_item, amount)?;
+		Self::add_item_balance(who, collection, new_item, amount)?;
 		Ok(())
 	}
 
-	pub fn minus_item_balance(
+	pub(crate) fn add_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		let balance = ItemBalances::<T, I>::get((&who, &collection, &item));
+		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
+		ItemBalanceOf::<T, I>::insert((who, collection, item), balance + amount);
+		Ok(())
+	}
+
+	pub(crate) fn sub_item_balance(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
 		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
-		ItemBalances::<T, I>::insert((who, collection, item), balance - amount);
+		ItemBalanceOf::<T, I>::insert((who, collection, item), balance - amount);
+		Ok(())
+	}
+
+	fn add_lock_balance(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		LockBalanceOf::<T, I>::insert((who, collection, item), amount);
+		Ok(())
+	}
+
+	fn sub_lock_balance(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		let balance = LockBalanceOf::<T, I>::get((who, collection, item));
+		ensure!(balance >= amount, Error::<T, I>::InsufficientLockBalance);
+		LockBalanceOf::<T, I>::insert((who, collection, item), balance - amount);
+		Ok(())
+	}
+
+	pub(crate) fn lock_item(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		Self::sub_item_balance(who, collection, item, amount)?;
+		Self::add_lock_balance(who, collection, item, amount)?;
+		Ok(())
+	}
+
+	pub(crate) fn unlock_item(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		Self::sub_lock_balance(who, collection, item, amount)?;
+		Self::add_item_balance(who, collection, item, amount)?;
+		Ok(())
+	}
+
+	pub(crate) fn transfer_lock_item(
+		from: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		to: &T::AccountId,
+		amount: u32,
+	) -> Result<(), Error<T, I>> {
+		Self::sub_lock_balance(from, collection, item, amount)?;
+		Self::add_lock_balance(to, collection, item, amount)?;
+
 		Ok(())
 	}
 }
