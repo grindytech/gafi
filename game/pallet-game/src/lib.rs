@@ -88,7 +88,7 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::Level;
+	use gafi_support::game::{Level, Package};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -156,7 +156,6 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any sale.
 		#[pallet::constant]
 		type SaleDeposit: Get<BalanceOf<Self, I>>;
-
 	}
 
 	/// Store basic game info
@@ -365,7 +364,6 @@ pub mod pallet {
 			amount: u32,
 			price: BalanceOf<T, I>,
 		},
-
 	}
 
 	#[pallet::error]
@@ -373,11 +371,11 @@ pub mod pallet {
 		UnknownGame,
 		SwapFeeTooHigh,
 		NoPermission,
- 		/// Exceed the maximum allowed collection in a game
+		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
 		UnknownCollection,
 		UnknownItem,
- 		/// Exceed the maximum allowed item in a collection
+		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
 		ExceedTotalAmount,
@@ -624,6 +622,33 @@ pub mod pallet {
 
 			Self::do_buy_item(&sender, &collection, &item, &seller, amount, bid_price)?;
 
+			Ok(())
+		}
+
+		#[pallet::call_index(16)]
+		#[pallet::weight(0)]
+		pub fn set_bundle(
+			origin: OriginFor<T>,
+			bundle: Vec<Package<T::CollectionId, T::ItemId>>,
+			price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_set_bundle(&sender, bundle, price)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(17)]
+		#[pallet::weight(0)]
+		pub fn buy_bundle(
+			origin: OriginFor<T>,
+			bundle_id: u32,
+			bid_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_buy_bundle(&sender, bundle_id, bid_price)?;
 			Ok(())
 		}
 	}

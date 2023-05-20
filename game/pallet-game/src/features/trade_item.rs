@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, Trade};
+use gafi_support::game::{Amount, Trade, Package};
 
 impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, BalanceOf<T, I>>
 	for Pallet<T, I>
@@ -106,5 +106,21 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 		}
 
 		Ok(())
+	}
+
+	fn do_set_bundle(
+		who: &T::AccountId,
+		bundle: Vec<Package<T::CollectionId, T::ItemId>>,
+		price: BalanceOf<T, I>,
+	) -> DispatchResult {
+		todo!()
+	}
+
+	fn do_buy_bundle(
+		who: &T::AccountId,
+		bundle_id: u32,
+		bid_price: BalanceOf<T, I>,
+	) -> DispatchResult {
+		todo!()
 	}
 }

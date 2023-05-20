@@ -985,3 +985,35 @@ pub fn buy_item_should_fails() {
 		);
 	})
 }
+
+#[test]
+pub fn set_bundle_should_works() {
+	new_test_ext().execute_with( || {
+
+
+	})
+}
+
+#[test]
+pub fn set_bundle_should_fails() {
+	new_test_ext().execute_with( || {
+
+
+	})
+}
+
+#[test]
+pub fn buy_bundle_should_works() {
+	new_test_ext().execute_with( || {
+
+		
+	})
+}
+
+#[test]
+pub fn buy_bundle_should_fails() {
+	new_test_ext().execute_with( || {
+
+		
+	})
+}
