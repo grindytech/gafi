@@ -152,6 +152,11 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any upgrade.
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
+
+		/// The basic amount of funds that must be reserved for any sale.
+		#[pallet::constant]
+		type SaleDeposit: Get<BalanceOf<Self, I>>;
+
 	}
 
 	/// Store basic game info
@@ -275,11 +280,12 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Store random seed generated from the off-chain worker per block
+	/// Storing random seed generated from the off-chain worker every block
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
 
+	/// Storing trade configuration
 	#[pallet::storage]
 	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
@@ -364,20 +370,21 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		NotGameOwner,
 		UnknownGame,
-		NameTooLong,
-		NameTooShort,
 		SwapFeeTooHigh,
-		SwapFeeNotFound,
 		NoPermission,
+ 		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
 		UnknownCollection,
 		UnknownItem,
+ 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
+		/// The number minted items require exceeds the available items in the reserve
 		ExceedTotalAmount,
+		/// The number minted items require exceeds the amount allowed per tx
 		ExceedAllowedAmount,
 		SoldOut,
+		/// Too many attempts
 		WithdrawReserveFailed,
 		InsufficientItemBalance,
 		InsufficientLockBalance,
@@ -386,7 +393,9 @@ pub mod pallet {
 		UnknownUpgrade,
 		ItemLocked,
 		NotForSale,
+		/// Amount of items to buy is too low
 		AmountUnacceptable,
+		/// Buy all items only
 		BuyAllOnly,
 		BidTooLow,
 	}
