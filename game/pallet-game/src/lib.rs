@@ -31,8 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Bundle, CreateCollection, CreateItem, GameSetting, MutateItem, Trade, TradeConfig,
-	TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, MutateItem, Package, Trade, TradeConfig,
+	TransferItem, UpgradeItem, Level
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -41,29 +41,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameDetails, UpgradeItemConfig};
-
-pub type BalanceOf<T, I = ()> =
-	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
-
-pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
-
-type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
-
-pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
-
-pub type CollectionConfigFor<T, I = ()> =
-	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
-
-pub type ItemUpgradeConfigFor<T, I = ()> =
-	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
-
-pub type BundleFor<T, I = ()> = Bundle<
-	<T as pallet_nfts::Config>::CollectionId,
-	<T as pallet_nfts::Config>::ItemId,
-	BalanceOf<T, I>,
-	<T as pallet::Config<I>>::MaxBundle,
->;
+use types::*;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -95,7 +73,6 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Level, Package};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]

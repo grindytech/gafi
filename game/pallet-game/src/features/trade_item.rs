@@ -113,6 +113,8 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, T
 		bundle: Vec<Package<T::CollectionId, T::ItemId>>,
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
+		
+
 		todo!()
 	}
 

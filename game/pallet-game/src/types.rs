@@ -1,7 +1,37 @@
-use codec::{Decode, Encode, MaxEncodedLen};
+use crate::*;
+use codec::{Decode, Encode};
 use core::primitive::u32;
-use frame_support::RuntimeDebug;
+use frame_support::{
+	pallet_prelude::{BoundedVec, MaxEncodedLen},
+	traits::Get,
+	RuntimeDebug,
+};
+
 use scale_info::TypeInfo;
+pub type BalanceOf<T, I = ()> =
+	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+
+pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
+
+pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
+
+pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
+
+pub type CollectionConfigFor<T, I = ()> =
+	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+
+pub type ItemUpgradeConfigFor<T, I = ()> =
+	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+
+pub type BundleFor<T, I = ()> = Bundle<
+	<T as pallet_nfts::Config>::CollectionId,
+	<T as pallet_nfts::Config>::ItemId,
+	BalanceOf<T, I>,
+	<T as pallet::Config<I>>::MaxBundle,
+>;
+
+pub type PackageFor<T> =
+	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -42,4 +72,11 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 	pub item: ItemId,
 
 	pub fee: Price,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(PackageLimit))]
+pub struct Bundle<CollectionId, ItemId, Price, PackageLimit: Get<u32>> {
+	pub(super) packages: BoundedVec<Package<CollectionId, ItemId>, PackageLimit>,
+	pub(super) price: Price,
 }

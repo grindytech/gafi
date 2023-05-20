@@ -1,13 +1,20 @@
-use crate::{mock::*, types::Item, Error, *};
-
+use crate::{
+	mock::*,
+	types::{Item, *},
+	Error, *,
+};
 use sp_core::sr25519;
 use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 
 use frame_support::{assert_err, assert_ok, traits::Currency};
-use gafi_support::common::{unit, NativeToken::GAKI};
+use gafi_support::{
+	common::{unit, NativeToken::GAKI},
+	game::Package,
+};
 use pallet_nfts::{
 	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
 };
+use sp_core::bounded::BoundedVec;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -58,6 +65,7 @@ fn create_items(
 	who: &sr25519::Public,
 	collection_config: &CollectionConfigFor<Test>,
 	item_config: &ItemConfig,
+	item_id: u32,
 	amount: u32,
 ) {
 	run_to_block(1);
@@ -77,7 +85,7 @@ fn create_items(
 	assert_ok!(PalletGame::create_item(
 		RuntimeOrigin::signed(who.clone()),
 		0,
-		0,
+		item_id,
 		*item_config,
 		amount
 	));
@@ -586,6 +594,7 @@ pub fn transfer_item_should_works() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -625,6 +634,7 @@ pub fn set_upgrade_item_should_works() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -671,6 +681,7 @@ pub fn upgrade_item_shoud_works() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -733,6 +744,7 @@ pub fn set_price_should_works() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -777,7 +789,7 @@ pub fn set_price_should_fails() {
 		let mut item_config = ItemConfig::default();
 		item_config.disable_setting(pallet_nfts::ItemSetting::Transferable);
 
-		create_items(&owner, &default_collection_config(), &item_config, 100);
+		create_items(&owner, &default_collection_config(), &item_config, 0, 100);
 
 		let player = new_account(3, 10000 * unit(GAKI));
 
@@ -826,6 +838,7 @@ pub fn buy_item_should_works() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -890,6 +903,7 @@ pub fn buy_item_should_fails() {
 			&owner,
 			&default_collection_config(),
 			&default_item_config(),
+			0,
 			100,
 		);
 
@@ -988,32 +1002,55 @@ pub fn buy_item_should_fails() {
 
 #[test]
 pub fn set_bundle_should_works() {
-	new_test_ext().execute_with( || {
+	new_test_ext().execute_with(|| {
+		let count = 2_u32;
+		let owner = new_account(0, 10_000 * unit(GAKI));
+		for i in 0..count {
+			create_items(
+				&owner,
+				&default_collection_config(),
+				&default_item_config(),
+				i,
+				10,
+			);
+		}
 
+		let seller = new_account(3, 10000 * unit(GAKI));
+		for i in 0..count {
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(seller.clone()),
+				0,
+				seller.clone(),
+				10
+			));
+		}
 
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 10));
+		}
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_bundle(
+			RuntimeOrigin::signed(seller.clone()),
+			packages.to_vec(),
+			price
+		));
 	})
 }
 
 #[test]
 pub fn set_bundle_should_fails() {
-	new_test_ext().execute_with( || {
-
-
-	})
+	new_test_ext().execute_with(|| {})
 }
 
 #[test]
 pub fn buy_bundle_should_works() {
-	new_test_ext().execute_with( || {
-
-		
-	})
+	new_test_ext().execute_with(|| {})
 }
 
 #[test]
 pub fn buy_bundle_should_fails() {
-	new_test_ext().execute_with( || {
-
-		
-	})
+	new_test_ext().execute_with(|| {})
 }

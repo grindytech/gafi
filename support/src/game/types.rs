@@ -1,10 +1,6 @@
 use codec::{Decode, Encode};
 use core::primitive::u32;
-use frame_support::{
-	pallet_prelude::{BoundedVec, MaxEncodedLen},
-	traits::Get,
-	RuntimeDebug,
-};
+use frame_support::{pallet_prelude::MaxEncodedLen, RuntimeDebug};
 use scale_info::TypeInfo;
 
 use super::Amount;
@@ -27,9 +23,12 @@ pub struct Package<CollectionId, ItemId> {
 	pub(super) amount: u32,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(PackageLimit))]
-pub struct Bundle<CollectionId, ItemId, Price, PackageLimit: Get<u32>> {
-	pub(super) packages: BoundedVec<Package<CollectionId, ItemId>, PackageLimit>,
-	pub(super) price: Price,
+impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
+	pub fn new(collection: CollectionId, item: ItemId, amount: Amount) -> Self {
+		Package {
+			collection,
+			item,
+			amount,
+		}
+	}
 }
