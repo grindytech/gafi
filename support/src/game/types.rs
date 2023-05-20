@@ -1,6 +1,10 @@
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 use core::primitive::u32;
-use frame_support::RuntimeDebug;
+use frame_support::{
+	pallet_prelude::{BoundedVec, MaxEncodedLen},
+	traits::Get,
+	RuntimeDebug,
+};
 use scale_info::TypeInfo;
 
 use super::Amount;
@@ -16,9 +20,16 @@ pub struct TradeConfig<Price> {
 	pub min_order_quantity: Option<u32>,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Package<CollectionId, ItemId> {
-	pub collection: CollectionId,
-	pub item: ItemId,
-	pub amount: Amount,
+	pub(super) collection: CollectionId,
+	pub(super) item: ItemId,
+	pub(super) amount: u32,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(PackageLimit))]
+pub struct Bundle<CollectionId, ItemId, Price, PackageLimit: Get<u32>> {
+	pub(super) packages: BoundedVec<Package<CollectionId, ItemId>, PackageLimit>,
+	pub(super) price: Price,
 }

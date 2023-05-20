@@ -214,7 +214,7 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	fn swap() -> DispatchResult;
 }
 
-pub trait Trade<AccountId, CollectionId, ItemId, Price> {
+pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 
 	/// Do Set Price
 	///
@@ -276,7 +276,7 @@ pub trait Trade<AccountId, CollectionId, ItemId, Price> {
 	/// - `bid_price`: the bid price for the bundle
 	fn do_buy_bundle(
 		who: &AccountId,
-		bundle_id: u32,
+		bundle_id: TradeId,
 		bid_price: Price,
 	) -> DispatchResult;
 
