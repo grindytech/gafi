@@ -23,6 +23,9 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 			Error::<T, I>::ItemLocked
 		);
 
+		// ensure reserve deposit
+		<T as Config<I>>::Currency::reserve(&who, T::SaleDeposit::get())?;
+
 		// lock sale items
 		Self::lock_item(who, collection, item, config.amount)?;
 

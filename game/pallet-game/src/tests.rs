@@ -750,6 +750,7 @@ pub fn set_price_should_works() {
 			amount: 9,
 			min_order_quantity: Some(3),
 		};
+		let before_balance = Balances::free_balance(&player);
 
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(player.clone()),
@@ -757,7 +758,10 @@ pub fn set_price_should_works() {
 			0,
 			trade_config.clone()
 		));
-
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance - SALE_DEPOSIT_VAL
+		);
 		assert_eq!(
 			TradeConfigOf::<Test>::get((player.clone(), 0, 0)).unwrap(),
 			trade_config
