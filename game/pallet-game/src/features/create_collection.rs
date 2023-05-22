@@ -1,11 +1,9 @@
-use crate::{*};
+use crate::*;
 use frame_support::{
 	pallet_prelude::*,
 	traits::tokens::nonfungibles_v2::{Create, Inspect},
 };
-use gafi_support::{
-	game::{CreateCollection},
-};
+use gafi_support::game::CreateCollection;
 use pallet_nfts::{CollectionRole, CollectionRoles};
 use sp_std::vec::Vec;
 
@@ -28,15 +26,14 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::NoPermission
 		);
 
-		let collection_id =
-			T::Nfts::create_collection(&who, &admin, &config);
+		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
 
 		if let Ok(id) = collection_id {
 			// insert game collections
-			let _result = CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| {
-				collection_vec.try_push(id)
-			})
-			.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
+			CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| -> DispatchResult {
+				collection_vec.try_push(id).map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
+				Ok(())
+			})?;
 
 			// insert collection game
 			GameOf::<T, I>::insert(id, game_id);
@@ -51,8 +48,7 @@ impl<T: Config<I>, I: 'static>
 		admin: &T::AccountId,
 		config: &CollectionConfigFor<T, I>,
 	) -> DispatchResult {
-		let collection_id =
-			T::Nfts::create_collection(&who, &admin, &config);
+		let collection_id = T::Nfts::create_collection(&who, &admin, &config);
 		if let Ok(id) = collection_id {
 			GameCollectionConfigOf::<T, I>::insert(id, config);
 			Self::deposit_event(Event::<T, I>::CollectionCreated { collection_id: id });
@@ -77,10 +73,12 @@ impl<T: Config<I>, I: 'static>
 			}
 		}
 
-		let _result = CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| {
-			collection_vec.try_extend(collection_ids.clone().into_iter())
-		})
-		.map_err(|_| <Error<T, T>>::ExceedMaxCollection);
+		CollectionsOf::<T, I>::try_mutate(&game_id, |collection_vec| -> DispatchResult {
+			collection_vec
+				.try_extend(collection_ids.clone().into_iter())
+				.map_err(|_| <Error<T, I>>::ExceedMaxCollection)?;
+			Ok(())
+		})?;
 
 		for id in collection_ids {
 			GameOf::<T, I>::insert(id, game_id);

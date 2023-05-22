@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
-use super::TradeConfig;
+use super::{TradeConfig, Package, Bundle};
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -214,7 +214,7 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	fn swap() -> DispatchResult;
 }
 
-pub trait Trade<AccountId, CollectionId, ItemId, Price> {
+pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
 
 	/// Do Set Price
 	///
@@ -251,6 +251,37 @@ pub trait Trade<AccountId, CollectionId, ItemId, Price> {
 		amount: Amount,
 		bid_price: Price
 	) -> DispatchResult;
+
+	/// Do Set Bundle
+	/// 
+	/// Bundling for sale
+	/// 
+	/// Parameters:
+	/// - `id`: bundle id
+	/// - `who`: seller
+	/// - `bundle`: bundle
+	/// - `price`: price of bundle
+	fn do_set_bundle(
+		id: &BundleId,
+		who: &AccountId,
+		bundle: Bundle<CollectionId, ItemId>,
+		price: Price,
+	) -> DispatchResult;
+
+	/// Do Buy Bundle
+	/// 
+	/// Buy a bundle from bundle id
+	/// 
+	/// Parameters:
+	/// - `id`: bundle id
+	/// - `who`: buyer
+	/// - `bid_price`: the bid price for the bundle
+	fn do_buy_bundle(
+		id: &BundleId,
+		who: &AccountId,
+		bid_price: Price,
+	) -> DispatchResult;
+
 }
 
 pub trait Destroy<E> {

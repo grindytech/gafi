@@ -31,8 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, Trade, TradeConfig, TransferItem,
-	UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TradeConfig,
+	TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -41,22 +41,7 @@ use sp_runtime::{
 	Percent,
 };
 use sp_std::vec::Vec;
-use types::{GameDetails, UpgradeItemConfig};
-
-pub type BalanceOf<T, I = ()> =
-	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
-
-pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
-
-type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
-
-pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
-
-pub type CollectionConfigFor<T, I = ()> =
-	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
-
-pub type ItemUpgradeConfigFor<T, I = ()> =
-	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+use types::*;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
 pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
@@ -84,11 +69,11 @@ pub mod pallet {
 
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{ValueQuery, *},
+		pallet_prelude::{OptionQuery, ValueQuery, *},
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::Level;
+	use gafi_support::{common::ID, game::Bundle};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -120,7 +105,7 @@ pub mod pallet {
 			+ Create<
 				Self::AccountId,
 				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
-			> + frame_support::traits::tokens::nonfungibles_v2::Inspect<Self::AccountId>
+			> + Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
 
 		/// generate random ID
@@ -128,6 +113,9 @@ pub mod pallet {
 
 		/// The type used to identify a unique game
 		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+
+		/// The type used to identify a unique trade
+		type BundleId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for game.
 		#[pallet::constant]
@@ -152,6 +140,19 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any upgrade.
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
+
+		/// The basic amount of funds that must be reserved for any sale.
+		#[pallet::constant]
+		type SaleDeposit: Get<BalanceOf<Self, I>>;
+
+		/// Maximum collection in a bundle
+		#[pallet::constant]
+		type MaxBundle: Get<u32>;
+
+		/// The basic amount of funds that must be reserved for any bundle sale.
+		#[pallet::constant]
+		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
 	}
 
 	/// Store basic game info
@@ -196,7 +197,20 @@ pub mod pallet {
 
 	/// Item balances of account
 	#[pallet::storage]
-	pub(super) type ItemBalances<T: Config<I>, I: 'static = ()> = StorageNMap<
+	pub(super) type ItemBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::CollectionId>,
+			NMapKey<Twox64Concat, T::ItemId>,
+		),
+		u32,
+		ValueQuery,
+	>;
+
+	/// Storing lock balance
+	#[pallet::storage]
+	pub(super) type LockBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
@@ -262,11 +276,12 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Store random seed generated from the off-chain worker per block
+	/// Storing random seed generated from the off-chain worker every block
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
 
+	/// Storing trade configuration
 	#[pallet::storage]
 	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
@@ -276,6 +291,30 @@ pub mod pallet {
 			NMapKey<Blake2_128Concat, T::ItemId>,
 		),
 		TradeConfig<BalanceOf<T, I>>,
+		OptionQuery,
+	>;
+
+	/// Storing next bundle id
+	#[pallet::storage]
+	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::BundleId, OptionQuery>;
+
+	/// Storing bundle
+	#[pallet::storage]
+	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::BundleId,
+		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type BundleConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::BundleId,
+		BundleConfig<T::AccountId, BalanceOf<T, I>>,
 		OptionQuery,
 	>;
 
@@ -331,34 +370,67 @@ pub mod pallet {
 			item_id: T::ItemId,
 			level: Level,
 		},
+		PriceSet {
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+		ItemBought {
+			seller: T::AccountId,
+			buyer: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+		BundleSet {
+			id: T::BundleId,
+			who: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
+		BundleBought {
+			id: T::BundleId,
+			seller: T::AccountId,
+			buyer: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		NotGameOwner,
 		UnknownGame,
-		NameTooLong,
-		NameTooShort,
 		SwapFeeTooHigh,
-		SwapFeeNotFound,
 		NoPermission,
+		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
+		ExceedMaxBundle,
 		UnknownCollection,
 		UnknownItem,
+		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
+		/// The number minted items require exceeds the available items in the reserve
 		ExceedTotalAmount,
+		/// The number minted items require exceeds the amount allowed per tx
 		ExceedAllowedAmount,
 		SoldOut,
+		/// Too many attempts
 		WithdrawReserveFailed,
 		InsufficientItemBalance,
+		InsufficientLockBalance,
 		NoCollectionConfig,
 		UpgradeExists,
 		UnknownUpgrade,
 		ItemLocked,
 		NotForSale,
+		/// Amount of items to buy is too low
 		AmountUnacceptable,
+		/// Buy all items only
 		BuyAllOnly,
 		BidTooLow,
+		IdExists,
+		MintTooFast,
 	}
 
 	#[pallet::hooks]
@@ -585,6 +657,34 @@ pub mod pallet {
 
 			Self::do_buy_item(&sender, &collection, &item, &seller, amount, bid_price)?;
 
+			Ok(())
+		}
+
+		#[pallet::call_index(16)]
+		#[pallet::weight(0)]
+		pub fn set_bundle(
+			origin: OriginFor<T>,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
+			price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::BundleId::initial_value());
+
+			Self::do_set_bundle(&bundle_id, &sender, bundle, price)?;
+
+			Ok(())
+		}
+
+		#[pallet::call_index(17)]
+		#[pallet::weight(0)]
+		pub fn buy_bundle(
+			origin: OriginFor<T>,
+			bundle_id: T::BundleId,
+			bid_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_buy_bundle(&bundle_id, &sender, bid_price)?;
 			Ok(())
 		}
 	}
