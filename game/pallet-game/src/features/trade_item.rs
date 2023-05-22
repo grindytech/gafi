@@ -122,6 +122,8 @@ impl<T: Config<I>, I: 'static>
 			);
 		}
 
+		// ensure
+
 		// ensure available id
 		let bundle_id = Self::get_bundle_id(&bundle, &who);
 		ensure!(
@@ -134,10 +136,10 @@ impl<T: Config<I>, I: 'static>
 			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 		}
 
-		let _ = BundleOf::<T, I>::try_mutate(bundle_id, |package_vec| {
-			package_vec.try_extend(bundle.into_iter())
-		})
-		.map_err(|_| <Error<T, T>>::ExceedMaxBundle);
+		<BundleOf<T, I>>::try_mutate(bundle_id,|package_vec| -> DispatchResult {
+			package_vec.try_append(bundle.clone().into_mut()).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+			Ok(())
+		})?;
 
 		BundleConfigOf::<T, I>::insert(
 			bundle_id,
@@ -152,7 +154,7 @@ impl<T: Config<I>, I: 'static>
 
 	fn do_buy_bundle(
 		who: &T::AccountId,
-		bundle_id: T::TradeId,
+		bundle_id: <T as pallet::Config<I>>::TradeId,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		todo!()

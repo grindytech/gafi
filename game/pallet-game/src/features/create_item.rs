@@ -73,7 +73,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 					}
 					return Err(Error::<T, I>::UnknownItem)
 				})
-				.map_err(|err| err);
+				.map_err(|err| err)?;
 
 				Self::add_total_reserve(collection_id, amount)?;
 			}

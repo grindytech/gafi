@@ -1043,7 +1043,59 @@ pub fn set_bundle_should_works() {
 
 #[test]
 pub fn set_bundle_should_fails() {
-	new_test_ext().execute_with(|| {})
+	new_test_ext().execute_with(|| {
+		let seller = new_account(0, 10_000 * unit(GAKI));
+
+		for i in 0..(MAX_BUNDLE_VAL + 5) {
+			ItemBalanceOf::<Test>::insert((&seller, 0, i), 10);
+		}
+
+		{
+			let packages: Vec<PackageFor<Test>> = vec![Package::new(0, 0, 11)];
+			assert_err!(
+				PalletGame::set_bundle(
+					RuntimeOrigin::signed(seller.clone()),
+					packages.clone(),
+					100 * unit(GAKI),
+				),
+				Error::<Test>::InsufficientItemBalance
+			);
+		}
+
+		{
+			let packages: Vec<PackageFor<Test>> = vec![Package::new(0, 0, 1)];
+			assert_ok!(PalletGame::set_bundle(
+				RuntimeOrigin::signed(seller.clone()),
+				packages.clone(),
+				100 * unit(GAKI),
+			));
+
+			assert_err!(
+				PalletGame::set_bundle(
+					RuntimeOrigin::signed(seller.clone()),
+					packages.clone(),
+					100 * unit(GAKI),
+				),
+				Error::<Test>::IdExists
+			);
+		}
+
+		{
+			let mut packages: Vec<PackageFor<Test>> = vec![];
+
+			for i in 0..(MAX_BUNDLE_VAL + 5) {
+				packages.push(Package::new(0, i, 1));
+			}
+			assert_err!(
+				PalletGame::set_bundle(
+					RuntimeOrigin::signed(seller.clone()),
+					packages.clone(),
+					100 * unit(GAKI),
+				),
+				Error::<Test>::ExceedMaxBundle
+			);
+		}
+	})
 }
 
 #[test]
