@@ -2,8 +2,7 @@ use crate::*;
 use codec::{Decode, Encode};
 use core::primitive::u32;
 use frame_support::{
-	pallet_prelude::{BoundedVec, MaxEncodedLen},
-	traits::Get,
+	pallet_prelude::{MaxEncodedLen},
 	RuntimeDebug,
 };
 
@@ -23,14 +22,7 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
-pub type BundleFor<T, I = ()> = Bundle<
-	<T as pallet_nfts::Config>::CollectionId,
-	<T as pallet_nfts::Config>::ItemId,
-	BalanceOf<T, I>,
-	<T as pallet::Config<I>>::MaxBundle,
->;
-
-pub type PackageFor<T> =
+pub(crate) type PackageFor<T> =
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
 /// Information about a game.
@@ -74,9 +66,8 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 	pub fee: Price,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(PackageLimit))]
-pub struct Bundle<CollectionId, ItemId, Price, PackageLimit: Get<u32>> {
-	pub(super) packages: BoundedVec<Package<CollectionId, ItemId>, PackageLimit>,
-	pub(super) price: Price,
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct BundleConfig<AccountId, Price> {
+	pub owner: AccountId,
+	pub price: Price,
 }

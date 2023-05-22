@@ -44,10 +44,10 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		{
 			let mut total_item = TotalReserveOf::<T, I>::get(collection_id);
 			let mut maybe_position = Some(Self::gen_random());
-			for i in 0..amount {
+			for _ in 0..amount {
 				if let Some(position) = maybe_position {
 					maybe_position = Self::random_number(total_item, position);
-					total_item = total_item.saturating_sub(i);
+					total_item = total_item.saturating_sub(1);
 
 					match Self::withdraw_reserve(collection_id, position) {
 						Ok(item) => {
@@ -56,6 +56,8 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 						},
 						Err(err) => return Err(err.into()),
 					};
+				} else {
+					return Err(Error::<T, I>::MintTooFast.into());
 				}
 			}
 			Self::minus_total_reserve(collection_id, amount)?;

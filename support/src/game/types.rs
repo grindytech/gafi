@@ -5,6 +5,8 @@ use scale_info::TypeInfo;
 
 use super::Amount;
 
+pub type Bundle<CollectionId, ItemId> = Vec<Package<CollectionId, ItemId>>;
+
 /// Trade Item configuration.
 /// - `price`: price of each item, `None` for canceled sell
 /// - `amount`: amount of items
@@ -18,9 +20,9 @@ pub struct TradeConfig<Price> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Package<CollectionId, ItemId> {
-	pub(super) collection: CollectionId,
-	pub(super) item: ItemId,
-	pub(super) amount: u32,
+	pub collection: CollectionId,
+	pub item: ItemId,
+	pub amount: u32,
 }
 
 impl<CollectionId, ItemId> Package<CollectionId, ItemId> {

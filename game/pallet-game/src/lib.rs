@@ -31,8 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, MutateItem, Package, Trade, TradeConfig,
-	TransferItem, UpgradeItem, Level
+	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TradeConfig,
+	TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -73,6 +73,7 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
+	use gafi_support::{common::ID, game::Bundle};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -295,8 +296,22 @@ pub mod pallet {
 
 	/// Storing bundle
 	#[pallet::storage]
-	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::TradeId, BundleFor<T, I>, OptionQuery>;
+	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		ID,
+		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type BundleConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		ID,
+		BundleConfig<T::AccountId, BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -374,6 +389,7 @@ pub mod pallet {
 		NoPermission,
 		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
+		ExceedMaxBundle,
 		UnknownCollection,
 		UnknownItem,
 		/// Exceed the maximum allowed item in a collection
@@ -397,6 +413,8 @@ pub mod pallet {
 		/// Buy all items only
 		BuyAllOnly,
 		BidTooLow,
+		IdExists,
+		MintTooFast,
 	}
 
 	#[pallet::hooks]
@@ -630,7 +648,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
-			bundle: Vec<Package<T::CollectionId, T::ItemId>>,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
-use super::{TradeConfig, Package};
+use super::{TradeConfig, Package, Bundle};
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -262,7 +262,7 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `price`: price of bundle
 	fn do_set_bundle(
 		who: &AccountId,
-		bundle: Vec<Package<CollectionId, ItemId>>,
+		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
 	) -> DispatchResult;
 
