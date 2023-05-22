@@ -154,7 +154,7 @@ impl pallet_game::Config for Test {
 
 	type GameId = u32;
 
-	type TradeId = u32;
+	type BundleId = u32;
 
 	type MaxSwapFee = MaxSwapFee;
 

@@ -2,6 +2,7 @@ use codec::{Decode, Encode};
 use core::primitive::u32;
 use frame_support::{pallet_prelude::MaxEncodedLen, RuntimeDebug};
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 use super::Amount;
 

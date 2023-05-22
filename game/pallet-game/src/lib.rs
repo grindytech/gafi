@@ -115,7 +115,7 @@ pub mod pallet {
 		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The type used to identify a unique trade
-		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+		type BundleId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for game.
 		#[pallet::constant]
@@ -297,14 +297,14 @@ pub mod pallet {
 	/// Storing next bundle id
 	#[pallet::storage]
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, T::TradeId, OptionQuery>;
+		StorageValue<_, T::BundleId, OptionQuery>;
 
 	/// Storing bundle
 	#[pallet::storage]
 	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		T::TradeId,
+		T::BundleId,
 		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
 		ValueQuery,
 	>;
@@ -313,7 +313,7 @@ pub mod pallet {
 	pub(super) type BundleConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		T::TradeId,
+		T::BundleId,
 		BundleConfig<T::AccountId, BalanceOf<T, I>>,
 		OptionQuery,
 	>;
@@ -383,6 +383,17 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
+			price: BalanceOf<T, I>,
+		},
+		BundleSet {
+			id: T::BundleId,
+			who: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
+		BundleBought {
+			id: T::BundleId,
+			seller: T::AccountId,
+			buyer: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
 	}
@@ -657,7 +668,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::BundleId::initial_value());
 
 			Self::do_set_bundle(&bundle_id, &sender, bundle, price)?;
 
@@ -668,7 +679,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
-			bundle_id: T::TradeId,
+			bundle_id: T::BundleId,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

@@ -3,7 +3,7 @@ use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, Bundle, Package, Trade};
 
 impl<T: Config<I>, I: 'static>
-	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
+	Trade<T::AccountId, T::CollectionId, T::ItemId, T::BundleId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_price(
 		who: &T::AccountId,
@@ -109,7 +109,7 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_set_bundle(
-		id: &T::TradeId,
+		id: &T::BundleId,
 		who: &T::AccountId,
 		bundle: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
@@ -150,11 +150,17 @@ impl<T: Config<I>, I: 'static>
 			},
 		);
 
+		Self::deposit_event(Event::<T, I>::BundleSet {
+			id: *id,
+			who: who.clone(),
+			price,
+		});
+
 		Ok(())
 	}
 
 	fn do_buy_bundle(
-		bundle_id: &T::TradeId,
+		bundle_id: &T::BundleId,
 		who: &T::AccountId,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
@@ -190,14 +196,19 @@ impl<T: Config<I>, I: 'static>
 					package.amount,
 				)?;
 
-				Self::unlock_item(
-					who,
-					&package.collection,
-					&package.item,
-					package.amount,
-				)?;
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
-			<T as pallet::Config<I>>::Currency::unreserve(&bundle_config.owner, T::BundleDeposit::get());
+			<T as pallet::Config<I>>::Currency::unreserve(
+				&bundle_config.owner,
+				T::BundleDeposit::get(),
+			);
+
+			Self::deposit_event(Event::<T, I>::BundleBought {
+				id: *bundle_id,
+				seller: bundle_config.owner,
+				buyer: who.clone(),
+				price: bundle_config.price,
+			});
 		}
 
 		Ok(())
