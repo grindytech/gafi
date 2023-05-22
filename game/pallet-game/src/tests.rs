@@ -9,7 +9,7 @@ use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
-	game::{Bundle, Package},
+	game::{Package},
 };
 use pallet_nfts::{
 	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
@@ -88,11 +88,7 @@ fn create_items(
 	));
 }
 
-fn mint_items(
-	miner: &sr25519::Public,
-	amount: u32,
-	count: u32,
-) {
+fn mint_items(miner: &sr25519::Public, amount: u32, count: u32) {
 	let admin = new_account(0, 1000 * unit(GAKI));
 
 	assert_ok!(PalletGame::create_game(
@@ -115,7 +111,7 @@ fn mint_items(
 			default_item_config(),
 			amount
 		));
-	
+
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(miner.clone()),
 			0,
@@ -1163,5 +1159,45 @@ pub fn buy_bundle_should_works() {
 
 #[test]
 pub fn buy_bundle_should_fails() {
-	new_test_ext().execute_with(|| {})
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let count = 2_u32;
+		let seller = new_account(0, 10_000 * unit(GAKI));
+
+		mint_items(&seller, 10, count);
+
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_bundle(
+			RuntimeOrigin::signed(seller.clone()),
+			packages.clone(),
+			price
+		));
+
+		let buyer = new_account(1, 1 * unit(GAKI));
+		assert_err!(
+			PalletGame::buy_bundle(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				price * unit(GAKI)
+			),
+			pallet_balances::Error::<Test>::InsufficientBalance
+		);
+
+		let buyer = new_account(1, 1000 * unit(GAKI));
+		assert_err!(
+			PalletGame::buy_bundle(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				price - 1 * unit(GAKI)
+			),
+			Error::<Test>::BidTooLow
+		);
+	})
 }
