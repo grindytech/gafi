@@ -125,6 +125,7 @@ pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const MAX_ITEM_MINT_VAL: u32 = 10;
 pub const SALE_DEPOSIT_VAL: u128 = 2_000_000_000;
+pub const MAX_BUNDLE_VAL: u32 = 5;
 
 parameter_types! {
 	pub MaxSwapFee: Percent = Percent::from_parts(30);
@@ -135,6 +136,7 @@ parameter_types! {
 	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
 	pub SaleDeposit: u128 = SALE_DEPOSIT_VAL;
+	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 }
 
 impl pallet_game::Config for Test {
@@ -150,6 +152,8 @@ impl pallet_game::Config for Test {
 
 	type GameId = u32;
 
+	type TradeId = u32;
+
 	type MaxSwapFee = MaxSwapFee;
 
 	type GameDeposit = GameDeposit;
@@ -163,6 +167,8 @@ impl pallet_game::Config for Test {
 	type UpgradeDeposit = UpgradeDeposit;
 
 	type SaleDeposit = SaleDeposit;
+
+	type MaxBundle = MaxBundle;
 }
 
 parameter_types! {

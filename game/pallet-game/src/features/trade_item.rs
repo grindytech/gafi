@@ -1,9 +1,9 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, Trade};
+use gafi_support::game::{Amount, Bundle, Package, Trade};
 
-impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, BalanceOf<T, I>>
-	for Pallet<T, I>
+impl<T: Config<I>, I: 'static>
+	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_price(
 		who: &T::AccountId,
@@ -106,5 +106,57 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::CollectionId, T::ItemId, B
 		}
 
 		Ok(())
+	}
+
+	fn do_set_bundle(
+		who: &T::AccountId,
+		bundle: Bundle<T::CollectionId, T::ItemId>,
+		price: BalanceOf<T, I>,
+	) -> DispatchResult {
+		// ensure ownership
+		for package in bundle.clone() {
+			ensure!(
+				ItemBalanceOf::<T, I>::get((who, package.collection, package.item)) >=
+					package.amount,
+				Error::<T, I>::InsufficientItemBalance,
+			);
+		}
+
+		// ensure
+
+		// ensure available id
+		let bundle_id = Self::get_bundle_id(&bundle, &who);
+		ensure!(
+			!BundleOf::<T, I>::contains_key(bundle_id),
+			Error::<T, I>::IdExists,
+		);
+
+		// lock bundle
+		for package in bundle.clone() {
+			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+		}
+
+		<BundleOf<T, I>>::try_mutate(bundle_id,|package_vec| -> DispatchResult {
+			package_vec.try_append(bundle.clone().into_mut()).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+			Ok(())
+		})?;
+
+		BundleConfigOf::<T, I>::insert(
+			bundle_id,
+			BundleConfig {
+				owner: who.clone(),
+				price,
+			},
+		);
+
+		Ok(())
+	}
+
+	fn do_buy_bundle(
+		who: &T::AccountId,
+		bundle_id: <T as pallet::Config<I>>::TradeId,
+		bid_price: BalanceOf<T, I>,
+	) -> DispatchResult {
+		todo!()
 	}
 }

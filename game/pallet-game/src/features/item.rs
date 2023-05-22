@@ -2,7 +2,8 @@
 
 use crate::*;
 use frame_support::pallet_prelude::*;
-
+use gafi_support::{game::Bundle, common::ID};
+use sp_io::hashing::blake2_256;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Generate a random number from a given seed.
@@ -198,5 +199,18 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Self::add_lock_balance(to, collection, item, amount)?;
 
 		Ok(())
+	}
+
+	pub(crate) fn get_bundle_id(
+		bundle: &Bundle<T::CollectionId, T::ItemId>,
+		who: &T::AccountId,
+	) -> ID {
+		let payload = (
+			bundle,
+			who,
+			<frame_system::Pallet<T>>::block_number(),
+		);
+
+		payload.using_encoded(blake2_256)
 	}
 }

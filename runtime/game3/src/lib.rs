@@ -41,7 +41,7 @@ pub use frame_support::{
 	StorageValue,
 };
 
-use codec::{ Encode};
+use codec::Encode;
 use frame_support::PalletId;
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -378,6 +378,8 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
+	pub SaleDeposit: u128 = 1_000_000_000;
+	pub MaxBundle: u32 = 10;
 }
 
 impl pallet_game::Config for Runtime {
@@ -404,6 +406,12 @@ impl pallet_game::Config for Runtime {
 	type MaxItem = MaxItem;
 
 	type UpgradeDeposit = UpgradeDeposit;
+
+	type SaleDeposit = SaleDeposit;
+
+	type TradeId = u32;
+
+	type MaxBundle = MaxBundle;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

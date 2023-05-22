@@ -26,10 +26,10 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			// issues new amount of item
 			{
-				let _ = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
+				ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
 					reserve_vec.try_push(Item::new(item_id.clone(), amount))
 				})
-				.map_err(|_| <Error<T, T>>::ExceedMaxItem);
+				.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
 
 				Self::add_total_reserve(collection_id, amount)?;
 			}
@@ -63,7 +63,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			// issues amount of item
 			{
-				let _ = ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
+				ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
 					let balances = reserve_vec.into_mut();
 					for balance in balances {
 						if balance.item == *item_id {
@@ -73,7 +73,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 					}
 					return Err(Error::<T, I>::UnknownItem)
 				})
-				.map_err(|err| err);
+				.map_err(|err| err)?;
 
 				Self::add_total_reserve(collection_id, amount)?;
 			}
