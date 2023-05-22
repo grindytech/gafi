@@ -148,6 +148,11 @@ pub mod pallet {
 		/// Maximum collection in a bundle
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
+
+		/// The basic amount of funds that must be reserved for any bundle sale.
+		#[pallet::constant]
+		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
 	}
 
 	/// Store basic game info
@@ -299,7 +304,7 @@ pub mod pallet {
 	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		ID,
+		T::TradeId,
 		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
 		ValueQuery,
 	>;
@@ -308,7 +313,7 @@ pub mod pallet {
 	pub(super) type BundleConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		ID,
+		T::TradeId,
 		BundleConfig<T::AccountId, BalanceOf<T, I>>,
 		OptionQuery,
 	>;
@@ -652,8 +657,9 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 
-			Self::do_set_bundle(&sender, bundle, price)?;
+			Self::do_set_bundle(&bundle_id, &sender, bundle, price)?;
 
 			Ok(())
 		}
@@ -667,7 +673,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_buy_bundle(&sender, bundle_id, bid_price)?;
+			Self::do_buy_bundle(&bundle_id, &sender, bid_price)?;
 			Ok(())
 		}
 	}

@@ -46,9 +46,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 			let mut maybe_position = Some(Self::gen_random());
 			for _ in 0..amount {
 				if let Some(position) = maybe_position {
-					maybe_position = Self::random_number(total_item, position);
 					total_item = total_item.saturating_sub(1);
-
 					match Self::withdraw_reserve(collection_id, position) {
 						Ok(item) => {
 							Self::add_item_balance(&target, &collection_id, &item, 1)?;
@@ -56,11 +54,12 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 						},
 						Err(err) => return Err(err.into()),
 					};
+					maybe_position = Self::random_number(total_item, position);
 				} else {
 					return Err(Error::<T, I>::MintTooFast.into());
 				}
 			}
-			Self::minus_total_reserve(collection_id, amount)?;
+			Self::sub_total_reserve(collection_id, amount)?;
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
