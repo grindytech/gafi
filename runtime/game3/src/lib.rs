@@ -380,6 +380,7 @@ parameter_types! {
 	pub MaxItem: u32 = 20;
 	pub SaleDeposit: u128 = 1_000_000_000;
 	pub MaxBundle: u32 = 10;
+	pub BundleDeposit: u128 = 2_000_000_000;
 }
 
 impl pallet_game::Config for Runtime {
@@ -409,9 +410,11 @@ impl pallet_game::Config for Runtime {
 
 	type SaleDeposit = SaleDeposit;
 
-	type TradeId = u32;
+	type BundleId = u32;
 
 	type MaxBundle = MaxBundle;
+
+	type BundleDeposit = BundleDeposit;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

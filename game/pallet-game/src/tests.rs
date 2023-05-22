@@ -9,12 +9,11 @@ use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
-	game::{Bundle, Package},
+	game::{Package},
 };
 use pallet_nfts::{
 	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
 };
-use sp_core::bounded::BoundedVec;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -87,6 +86,39 @@ fn create_items(
 		*item_config,
 		amount
 	));
+}
+
+fn mint_items(miner: &sr25519::Public, amount: u32, count: u32) {
+	let admin = new_account(0, 1000 * unit(GAKI));
+
+	assert_ok!(PalletGame::create_game(
+		RuntimeOrigin::signed(admin.clone()),
+		admin.clone()
+	));
+
+	assert_ok!(PalletGame::create_game_colletion(
+		RuntimeOrigin::signed(admin.clone()),
+		0,
+		admin.clone(),
+		default_collection_config(),
+	));
+
+	for i in 0..count {
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			i,
+			default_item_config(),
+			amount
+		));
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(miner.clone()),
+			0,
+			miner.clone(),
+			amount
+		));
+	}
 }
 
 #[test]
@@ -1015,12 +1047,12 @@ pub fn buy_item_should_fails() {
 #[test]
 pub fn set_bundle_should_works() {
 	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
 		let count = 2_u32;
 		let seller = new_account(0, 10_000 * unit(GAKI));
 
-		for i in 0..count {
-			ItemBalanceOf::<Test>::insert((&seller, 0, i), 10);
-		}
+		mint_items(&seller, 10, count);
 
 		let mut packages: Vec<PackageFor<Test>> = vec![];
 		for i in 0..count {
@@ -1035,9 +1067,7 @@ pub fn set_bundle_should_works() {
 			price
 		));
 
-		let bundle_id = PalletGame::get_bundle_id(&packages, &seller);
-
-		assert_eq!(BundleOf::<Test>::get(bundle_id), packages);
+		assert_eq!(BundleOf::<Test>::get(0), packages);
 	})
 }
 
@@ -1063,24 +1093,6 @@ pub fn set_bundle_should_fails() {
 		}
 
 		{
-			let packages: Vec<PackageFor<Test>> = vec![Package::new(0, 0, 1)];
-			assert_ok!(PalletGame::set_bundle(
-				RuntimeOrigin::signed(seller.clone()),
-				packages.clone(),
-				100 * unit(GAKI),
-			));
-
-			assert_err!(
-				PalletGame::set_bundle(
-					RuntimeOrigin::signed(seller.clone()),
-					packages.clone(),
-					100 * unit(GAKI),
-				),
-				Error::<Test>::IdExists
-			);
-		}
-
-		{
 			let mut packages: Vec<PackageFor<Test>> = vec![];
 
 			for i in 0..(MAX_BUNDLE_VAL + 5) {
@@ -1100,10 +1112,92 @@ pub fn set_bundle_should_fails() {
 
 #[test]
 pub fn buy_bundle_should_works() {
-	new_test_ext().execute_with(|| {})
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let count = 2_u32;
+		let seller = new_account(0, 10_000 * unit(GAKI));
+
+		mint_items(&seller, 10, count);
+
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_bundle(
+			RuntimeOrigin::signed(seller.clone()),
+			packages.clone(),
+			price
+		));
+
+		let buyer = new_account(1, 10_000 * unit(GAKI));
+
+		let seller_before_balance = Balances::free_balance(&seller);
+		let buyer_before_balance = Balances::free_balance(&buyer);
+
+		assert_ok!(PalletGame::buy_bundle(
+			RuntimeOrigin::signed(buyer.clone()),
+			0,
+			price
+		));
+		for i in 0..count {
+			assert_eq!(ItemBalanceOf::<Test>::get((buyer.clone(), 0, i)), 5);
+		}
+		for i in 0..count {
+			assert_eq!(ItemBalanceOf::<Test>::get((seller.clone(), 0, i)), 5);
+		}
+		assert_eq!(
+			Balances::free_balance(&seller),
+			seller_before_balance + price + BUNDLE_DEPOSIT_VAL
+		);
+		assert_eq!(Balances::free_balance(&buyer), buyer_before_balance - price);
+	})
 }
 
 #[test]
 pub fn buy_bundle_should_fails() {
-	new_test_ext().execute_with(|| {})
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let count = 2_u32;
+		let seller = new_account(0, 10_000 * unit(GAKI));
+
+		mint_items(&seller, 10, count);
+
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_bundle(
+			RuntimeOrigin::signed(seller.clone()),
+			packages.clone(),
+			price
+		));
+
+		let buyer = new_account(1, 1 * unit(GAKI));
+		assert_err!(
+			PalletGame::buy_bundle(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				price * unit(GAKI)
+			),
+			pallet_balances::Error::<Test>::InsufficientBalance
+		);
+
+		let buyer = new_account(1, 1000 * unit(GAKI));
+		assert_err!(
+			PalletGame::buy_bundle(
+				RuntimeOrigin::signed(buyer.clone()),
+				0,
+				price - 1 * unit(GAKI)
+			),
+			Error::<Test>::BidTooLow
+		);
+	})
 }
