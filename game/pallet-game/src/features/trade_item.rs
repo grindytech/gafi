@@ -79,6 +79,7 @@ impl<T: Config<I>, I: 'static>
 					trade_config.price * amount.into(),
 					ExistenceRequirement::KeepAlive,
 				)?;
+
 				// transfer item
 				Self::transfer_lock_item(
 					&trade_config.owner,
@@ -215,5 +216,48 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		Ok(())
+	}
+
+	fn do_cancel_price(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(package) = PackageOf::<T, I>::get(id) {
+			if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+				// ensure owner
+				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+				// unlock items
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+
+				// unreserve
+				<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::SaleDeposit::get());
+
+				// remove storage
+				PackageOf::<T, I>::remove(id);
+				TradeConfigOf::<T, I>::remove(id);
+				return Ok(())
+			}
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
+	}
+
+	fn do_cancel_bundle(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+			// ensure owner
+			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+			let bundle = BundleOf::<T, I>::get(id);
+			// unlock items
+			for package in bundle.clone() {
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+			}
+
+			// unreserve
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			// remove storage
+			BundleOf::<T, I>::remove(id);
+			TradeConfigOf::<T, I>::remove(id);
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

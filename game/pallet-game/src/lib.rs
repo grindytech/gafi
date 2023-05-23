@@ -31,8 +31,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade,
-	TransferItem, UpgradeItem,
+	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TransferItem,
+	UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -73,7 +73,7 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::{game::Bundle};
+	use gafi_support::game::Bundle;
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -404,6 +404,7 @@ pub mod pallet {
 		ExceedMaxBundle,
 		UnknownCollection,
 		UnknownItem,
+		UnknownTrade,
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -633,9 +634,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 
-			Self::do_set_price(&bundle_id, &sender, package, price)?;
+			Self::do_set_price(&trade_id, &sender, package, price)?;
 
 			Ok(())
 		}
@@ -663,9 +664,9 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 
-			Self::do_set_bundle(&bundle_id, &sender, bundle, price)?;
+			Self::do_set_bundle(&trade_id, &sender, bundle, price)?;
 
 			Ok(())
 		}
@@ -674,12 +675,28 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
-			bundle_id: T::TradeId,
+			trade_id: T::TradeId,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_buy_bundle(&bundle_id, &sender, bid_price)?;
+			Self::do_buy_bundle(&trade_id, &sender, bid_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(18)]
+		#[pallet::weight(0)]
+		pub fn cancel_set_price(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_cancel_price(&trade_id, &sender)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(19)]
+		#[pallet::weight(0)]
+		pub fn cancel_set_bundle(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_cancel_bundle(&trade_id, &sender)?;
 			Ok(())
 		}
 	}

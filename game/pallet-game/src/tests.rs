@@ -838,7 +838,11 @@ pub fn set_price_should_fails() {
 		};
 		let price = 3 * unit(GAKI);
 		assert_err!(
-			PalletGame::set_price(RuntimeOrigin::signed(player.clone()), package.clone(), price,),
+			PalletGame::set_price(
+				RuntimeOrigin::signed(player.clone()),
+				package.clone(),
+				price,
+			),
 			Error::<Test>::InsufficientItemBalance
 		);
 
@@ -1129,4 +1133,74 @@ pub fn buy_bundle_should_fails() {
 			Error::<Test>::BidTooLow
 		);
 	})
+}
+
+#[test]
+pub fn cancel_set_price_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let count = 2_u32;
+		let player = new_account(2, 10_000 * unit(GAKI));
+		mint_items(&player, 10, count);
+
+		let package = Package {
+			collection: 0,
+			item: 0,
+			amount: 10,
+		};
+
+		assert_ok!(PalletGame::set_price(
+			RuntimeOrigin::signed(player.clone()),
+			package,
+			3 * unit(GAKI),
+		));
+
+		let before_balance = Balances::free_balance(&player);
+
+		assert_ok!(PalletGame::cancel_set_price(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+		));
+
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
+		assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, 0)), 0);
+		assert_eq!(Balances::free_balance(&player), before_balance + SALE_DEPOSIT_VAL);
+		
+	});
+}
+
+#[test]
+pub fn cancel_set_bundle_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let count = 2_u32;
+		let player = new_account(2, 10_000 * unit(GAKI));
+		mint_items(&player, 10, count);
+
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+
+		assert_ok!(PalletGame::set_bundle(
+			RuntimeOrigin::signed(player.clone()),
+			packages,
+			3 * unit(GAKI),
+		));
+
+		let before_balance = Balances::free_balance(&player);
+
+		assert_ok!(PalletGame::cancel_set_bundle(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+		));
+
+		for i in 0..count {
+			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 10);
+			assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
+		}
+		assert_eq!(Balances::free_balance(&player), before_balance + BUNDLE_DEPOSIT_VAL);
+	});
 }

@@ -250,12 +250,24 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 		bid_price: Price
 	) -> DispatchResult;
 
+	/// Do Cancel Price
+	/// 
+	/// Cancel the trade, unlock the locked items, and unreserve the deposit.
+	/// 
+	/// Parameters:
+	/// - `id`: trade id
+	/// - `who`: owner
+	fn do_cancel_price(
+		id: &TradeId,
+		who: &AccountId,
+	) -> DispatchResult;
+
 	/// Do Set Bundle
 	/// 
 	/// Bundling for sale
 	/// 
 	/// Parameters:
-	/// - `id`: bundle id
+	/// - `id`: trade id
 	/// - `who`: seller
 	/// - `bundle`: bundle
 	/// - `price`: price of bundle
@@ -271,7 +283,7 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Buy a bundle from bundle id
 	/// 
 	/// Parameters:
-	/// - `id`: bundle id
+	/// - `id`: trade id
 	/// - `who`: buyer
 	/// - `bid_price`: the bid price for the bundle
 	fn do_buy_bundle(
@@ -280,6 +292,15 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 		bid_price: Price,
 	) -> DispatchResult;
 
+	/// Do Cancel Bundle
+	/// 
+	/// Cancel the bundle sale, unlock items, and unreserve the deposit.
+	/// - `id`: trade id
+	/// - `who`: owner
+	fn do_cancel_bundle(
+		id: &TradeId,
+		who: &AccountId,
+	) -> DispatchResult;
 }
 
 pub trait Destroy<E> {

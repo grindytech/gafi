@@ -22,6 +22,7 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
+#[cfg(test)]
 pub(crate) type PackageFor<T> =
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
