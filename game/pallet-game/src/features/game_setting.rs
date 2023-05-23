@@ -1,7 +1,6 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
 use pallet_nfts::{CollectionRole, CollectionRoles};
-use sp_runtime::Percent;
 
 impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumber>
 	for Pallet<T, I>

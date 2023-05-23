@@ -68,6 +68,10 @@ check-gari:
 check-benchmark:
 	cargo check --release --features runtime-benchmarks,with-dev
 
+.PHONY: check-benchmark-game3
+check-benchmark-game3:
+	cargo check --release --features runtime-benchmarks,with-game3
+
 .PHONY: benchmark
 benchmark:
 	cargo build --release --features runtime-benchmarks,with-dev

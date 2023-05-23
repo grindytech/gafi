@@ -17,7 +17,6 @@ fn main() -> sc_cli::Result<()> {
 	// #[cfg(feature = "runtime-benchmarks")]
 	// return gafi_cli::command::run_gari();
 	
-	// Devnet
 	#[cfg(feature = "runtime-benchmarks")]
-	return solochain::command::run();
+	return game3_node::command::run();
 }

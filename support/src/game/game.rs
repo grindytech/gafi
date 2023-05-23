@@ -1,5 +1,5 @@
 use frame_support::pallet_prelude::DispatchResult;
-use sp_runtime::{Percent, TokenError};
+use sp_runtime::{TokenError};
 use sp_std::vec::Vec;
 
 use super::{Bundle, Package};
@@ -13,7 +13,7 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	///
 	/// Parameters:
 	/// - `who`: signer and game owner
-	/// - `id`: new game id
+	/// - `game`: new game id
 	/// - `admin`: admin
 	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
 }
