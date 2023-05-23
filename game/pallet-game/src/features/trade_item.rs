@@ -32,6 +32,8 @@ impl<T: Config<I>, I: 'static>
 		// lock sale items
 		Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 
+		NextTradeId::<T, I>::set(Some(id.increment()));
+
 		PackageOf::<T, I>::insert(id, &package);
 		TradeConfigOf::<T, I>::insert(
 			id,
@@ -106,7 +108,7 @@ impl<T: Config<I>, I: 'static>
 				})
 			}
 		} else {
-			return Err(Error::<T, I>::NotForSale.into())
+			return Err(Error::<T, I>::UnknownTrade.into())
 		}
 
 		Ok(())
@@ -213,6 +215,8 @@ impl<T: Config<I>, I: 'static>
 				buyer: who.clone(),
 				price: bundle_config.price,
 			});
+		} else {
+			return Err(Error::<T, I>::UnknownTrade.into())
 		}
 
 		Ok(())
