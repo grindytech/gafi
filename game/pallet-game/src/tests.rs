@@ -803,6 +803,7 @@ pub fn set_price_should_works() {
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
+				trade: TradeType::Normal,
 				owner: player.clone(),
 				price,
 			}
@@ -1165,8 +1166,10 @@ pub fn cancel_set_price_should_works() {
 
 		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
 		assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, 0)), 0);
-		assert_eq!(Balances::free_balance(&player), before_balance + SALE_DEPOSIT_VAL);
-		
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + SALE_DEPOSIT_VAL
+		);
 	});
 }
 
@@ -1201,6 +1204,84 @@ pub fn cancel_set_bundle_should_works() {
 			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 10);
 			assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
 		}
-		assert_eq!(Balances::free_balance(&player), before_balance + BUNDLE_DEPOSIT_VAL);
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + BUNDLE_DEPOSIT_VAL
+		);
 	});
+}
+
+#[test]
+pub fn set_wishlist_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let count = 2_u32;
+		let buyer = new_account(3, 1000 * unit(GAKI));
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+		let price = 3 * unit(GAKI);
+
+		let before_balance = Balances::free_balance(&buyer);
+		assert_ok!(PalletGame::set_wishlist(
+			RuntimeOrigin::signed(buyer.clone()),
+			packages.clone(),
+			price,
+		));
+
+		assert_eq!(BundleOf::<Test>::get(0), packages);
+		assert_eq!(
+			TradeConfigOf::<Test>::get(0).unwrap(),
+			TradeConfig {
+				trade: TradeType::Wishlist,
+				owner: buyer.clone(),
+				price
+			}
+		);
+		assert_eq!(
+			Balances::free_balance(&buyer),
+			before_balance - (BUNDLE_DEPOSIT_VAL + price)
+		);
+	})
+}
+
+#[test]
+pub fn fill_wishlist_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let count = 2_u32;
+		let player = new_account(2, 10_000 * unit(GAKI));
+		mint_items(&player, 10, count);
+
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+		let price = 3 * unit(GAKI);
+
+		let buyer = new_account(3, 1000 * unit(GAKI));
+		assert_ok!(PalletGame::set_wishlist(
+			RuntimeOrigin::signed(buyer.clone()),
+			packages.clone(),
+			price,
+		));
+
+		let before_player_balance = Balances::free_balance(&player);
+		assert_ok!(PalletGame::fill_wishlist(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			price
+		));
+
+		for i in 0..count {
+			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 5);
+			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 5);
+		}
+		assert_eq!(Balances::reserved_balance(&buyer), 0);
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_player_balance + price
+		);
+	})
 }
