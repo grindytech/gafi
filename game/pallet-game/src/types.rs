@@ -67,7 +67,7 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct BundleConfig<AccountId, Price> {
+pub struct TradeConfig<AccountId, Price> {
 	pub owner: AccountId,
 	pub price: Price,
 }

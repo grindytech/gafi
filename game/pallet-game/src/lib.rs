@@ -31,7 +31,7 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TradeConfig,
+	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade,
 	TransferItem, UpgradeItem,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -73,7 +73,7 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::{common::ID, game::Bundle};
+	use gafi_support::{game::Bundle};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -115,7 +115,7 @@ pub mod pallet {
 		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The type used to identify a unique trade
-		type BundleId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for game.
 		#[pallet::constant]
@@ -152,7 +152,6 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any bundle sale.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
-
 	}
 
 	/// Store basic game info
@@ -281,40 +280,37 @@ pub mod pallet {
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
 
-	/// Storing trade configuration
-	#[pallet::storage]
-	pub(crate) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
-		_,
-		(
-			NMapKey<Blake2_128Concat, T::AccountId>,
-			NMapKey<Blake2_128Concat, T::CollectionId>,
-			NMapKey<Blake2_128Concat, T::ItemId>,
-		),
-		TradeConfig<BalanceOf<T, I>>,
-		OptionQuery,
-	>;
-
 	/// Storing next bundle id
 	#[pallet::storage]
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, T::BundleId, OptionQuery>;
+		StorageValue<_, T::TradeId, OptionQuery>;
+
+	/// Storing package
+	#[pallet::storage]
+	pub(super) type PackageOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		Package<T::CollectionId, T::ItemId>,
+		OptionQuery,
+	>;
 
 	/// Storing bundle
 	#[pallet::storage]
 	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		T::BundleId,
+		T::TradeId,
 		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
 		ValueQuery,
 	>;
 
 	#[pallet::storage]
-	pub(super) type BundleConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		T::BundleId,
-		BundleConfig<T::AccountId, BalanceOf<T, I>>,
+		T::TradeId,
+		TradeConfig<T::AccountId, BalanceOf<T, I>>,
 		OptionQuery,
 	>;
 
@@ -386,12 +382,12 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		},
 		BundleSet {
-			id: T::BundleId,
+			id: T::TradeId,
 			who: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
 		BundleBought {
-			id: T::BundleId,
+			id: T::TradeId,
 			seller: T::AccountId,
 			buyer: T::AccountId,
 			price: BalanceOf<T, I>,
@@ -632,13 +628,14 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn set_price(
 			origin: OriginFor<T>,
-			collection: T::CollectionId,
-			item: T::ItemId,
-			config: TradeConfig<BalanceOf<T, I>>,
+			package: Package<T::CollectionId, T::ItemId>,
+			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_set_price(&sender, &collection, &item, &config)?;
+			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+
+			Self::do_set_price(&bundle_id, &sender, package, price)?;
 
 			Ok(())
 		}
@@ -647,15 +644,13 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn buy_item(
 			origin: OriginFor<T>,
-			collection: T::CollectionId,
-			item: T::ItemId,
-			seller: T::AccountId,
+			id: T::TradeId,
 			amount: u32,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_buy_item(&sender, &collection, &item, &seller, amount, bid_price)?;
+			Self::do_buy_item(&id, &sender, amount, bid_price)?;
 
 			Ok(())
 		}
@@ -668,7 +663,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::BundleId::initial_value());
+			let bundle_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 
 			Self::do_set_bundle(&bundle_id, &sender, bundle, price)?;
 
@@ -679,7 +674,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
-			bundle_id: T::BundleId,
+			bundle_id: T::TradeId,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

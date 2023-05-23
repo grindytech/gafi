@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{Percent, TokenError};
 use sp_std::vec::Vec;
 
-use super::{TradeConfig, Package, Bundle};
+use super::{Package, Bundle};
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -214,7 +214,7 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	fn swap() -> DispatchResult;
 }
 
-pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
+pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 
 	/// Do Set Price
 	///
@@ -226,10 +226,10 @@ pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
 	/// - `item`: item id
 	/// - `config`: trade config
 	fn do_set_price(
+		id: &TradeId,
 		who: &AccountId,
-		collection: &CollectionId,
-		item: &ItemId,
-		config: &TradeConfig<Price>,
+		package: Package<CollectionId, ItemId>,
+		price: Price,
 	) -> DispatchResult;
 
 	/// Do Buy Item
@@ -244,10 +244,8 @@ pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
 	/// - `amount`: amount
 	/// - `bid_price`: price of each item
 	fn do_buy_item(
+		id: &TradeId,
 		who: &AccountId,
-		collection: &CollectionId,
-		item: &ItemId,
-		seller: &AccountId,
 		amount: Amount,
 		bid_price: Price
 	) -> DispatchResult;
@@ -262,7 +260,7 @@ pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
 	/// - `bundle`: bundle
 	/// - `price`: price of bundle
 	fn do_set_bundle(
-		id: &BundleId,
+		id: &TradeId,
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
@@ -277,7 +275,7 @@ pub trait Trade<AccountId, CollectionId, ItemId, BundleId, Price> {
 	/// - `who`: buyer
 	/// - `bid_price`: the bid price for the bundle
 	fn do_buy_bundle(
-		id: &BundleId,
+		id: &TradeId,
 		who: &AccountId,
 		bid_price: Price,
 	) -> DispatchResult;

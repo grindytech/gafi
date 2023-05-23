@@ -9,7 +9,7 @@ use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
-	game::{Package},
+	game::Package,
 };
 use pallet_nfts::{
 	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
@@ -456,29 +456,15 @@ fn mint_should_works() {
 			collection_config(mint_fee),
 		));
 
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			0,
-			default_item_config(),
-			1
-		));
-
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			1,
-			default_item_config(),
-			1
-		));
-
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			2,
-			default_item_config(),
-			1
-		));
+		for i in 0..3 {
+			assert_ok!(PalletGame::create_item(
+				RuntimeOrigin::signed(admin.clone()),
+				0,
+				i,
+				default_item_config(),
+				1
+			));
+		}
 
 		let before_balance = 3000 * unit(GAKI);
 		let player = new_account(2, before_balance);
@@ -488,9 +474,9 @@ fn mint_should_works() {
 			player.clone(),
 			3
 		));
-		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 1);
-		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 1)), 1);
-		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 2)), 1);
+		for i in 0..3 {
+			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 1);
+		}
 		assert_eq!(
 			Balances::free_balance(player.clone()),
 			before_balance - (mint_fee * 3)
@@ -795,26 +781,31 @@ pub fn set_price_should_works() {
 			10
 		));
 
-		let trade_config = TradeConfig {
-			price: 3 * unit(GAKI),
+		let package = Package {
+			collection: 0,
+			item: 0,
 			amount: 9,
-			min_order_quantity: Some(3),
 		};
+		let price = 3 * unit(GAKI);
+
 		let before_balance = Balances::free_balance(&player);
 
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(player.clone()),
-			0,
-			0,
-			trade_config.clone()
+			package.clone(),
+			price,
 		));
 		assert_eq!(
 			Balances::free_balance(&player),
 			before_balance - SALE_DEPOSIT_VAL
 		);
+		assert_eq!(PackageOf::<Test>::get(0).unwrap(), package);
 		assert_eq!(
-			TradeConfigOf::<Test>::get((player.clone(), 0, 0)).unwrap(),
-			trade_config
+			TradeConfigOf::<Test>::get(0).unwrap(),
+			TradeConfig {
+				owner: player.clone(),
+				price,
+			}
 		);
 	})
 }
@@ -840,30 +831,20 @@ pub fn set_price_should_fails() {
 			10
 		));
 
-		let mut trade_config = TradeConfig {
-			price: 3 * unit(GAKI),
+		let mut package = Package {
+			collection: 0,
+			item: 0,
 			amount: 11,
-			min_order_quantity: Some(3),
 		};
-
+		let price = 3 * unit(GAKI);
 		assert_err!(
-			PalletGame::set_price(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				0,
-				trade_config.clone()
-			),
+			PalletGame::set_price(RuntimeOrigin::signed(player.clone()), package.clone(), price,),
 			Error::<Test>::InsufficientItemBalance
 		);
 
-		trade_config.amount = 1;
+		package.amount = 1;
 		assert_err!(
-			PalletGame::set_price(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				0,
-				trade_config.clone()
-			),
+			PalletGame::set_price(RuntimeOrigin::signed(player.clone()), package, price,),
 			Error::<Test>::ItemLocked
 		);
 	})
@@ -894,17 +875,16 @@ pub fn buy_item_should_works() {
 		));
 
 		let price = 3 * unit(GAKI);
-		let trade_config = TradeConfig {
-			price,
+		let package = Package {
+			collection: 0,
+			item: 0,
 			amount: 8,
-			min_order_quantity: Some(3),
 		};
 
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(seller.clone()),
-			0,
-			0,
-			trade_config.clone()
+			package,
+			price,
 		));
 
 		let buyer = new_account(4, 10000 * unit(GAKI));
@@ -915,8 +895,6 @@ pub fn buy_item_should_works() {
 		assert_ok!(PalletGame::buy_item(
 			RuntimeOrigin::signed(buyer.clone()),
 			0,
-			0,
-			seller.clone(),
 			3,
 			price,
 		));
@@ -961,17 +939,16 @@ pub fn buy_item_should_fails() {
 		));
 
 		let price = 3 * unit(GAKI);
-		let trade_config = TradeConfig {
-			price,
+		let package = Package {
+			collection: 0,
+			item: 0,
 			amount: 10,
-			min_order_quantity: Some(3),
 		};
 
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(seller.clone()),
-			0,
-			0,
-			trade_config.clone()
+			package,
+			price,
 		));
 
 		let buyer = new_account(4, 10000 * unit(GAKI));
@@ -980,21 +957,7 @@ pub fn buy_item_should_fails() {
 			PalletGame::buy_item(
 				RuntimeOrigin::signed(buyer.clone()),
 				0,
-				0,
-				seller.clone(),
-				2,
-				price,
-			),
-			Error::<Test>::AmountUnacceptable
-		);
-
-		assert_err!(
-			PalletGame::buy_item(
-				RuntimeOrigin::signed(buyer.clone()),
-				0,
-				0,
-				seller.clone(),
-				4,
+				1,
 				price - (1 * unit(GAKI)),
 			),
 			Error::<Test>::BidTooLow
@@ -1003,42 +966,12 @@ pub fn buy_item_should_fails() {
 		assert_ok!(PalletGame::buy_item(
 			RuntimeOrigin::signed(buyer.clone()),
 			0,
-			0,
-			seller.clone(),
 			8,
 			price,
 		));
 
 		assert_err!(
-			PalletGame::buy_item(
-				RuntimeOrigin::signed(buyer.clone()),
-				0,
-				0,
-				seller.clone(),
-				4,
-				price,
-			),
-			Error::<Test>::BuyAllOnly
-		);
-
-		assert_ok!(PalletGame::buy_item(
-			RuntimeOrigin::signed(buyer.clone()),
-			0,
-			0,
-			seller.clone(),
-			2,
-			price,
-		));
-
-		assert_err!(
-			PalletGame::buy_item(
-				RuntimeOrigin::signed(buyer.clone()),
-				0,
-				0,
-				seller.clone(),
-				4,
-				price,
-			),
+			PalletGame::buy_item(RuntimeOrigin::signed(buyer.clone()), 0, 4, price,),
 			Error::<Test>::SoldOut
 		);
 	})
@@ -1182,11 +1115,7 @@ pub fn buy_bundle_should_fails() {
 
 		let buyer = new_account(1, 1 * unit(GAKI));
 		assert_err!(
-			PalletGame::buy_bundle(
-				RuntimeOrigin::signed(buyer.clone()),
-				0,
-				price * unit(GAKI)
-			),
+			PalletGame::buy_bundle(RuntimeOrigin::signed(buyer.clone()), 0, price * unit(GAKI)),
 			pallet_balances::Error::<Test>::InsufficientBalance
 		);
 
