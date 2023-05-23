@@ -36,10 +36,7 @@ use gafi_support::game::{
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
-use sp_runtime::{
-	traits::{StaticLookup, TrailingZeroInput},
-	Percent,
-};
+use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 use sp_std::vec::Vec;
 use types::*;
 
@@ -145,7 +142,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
 
-		/// The basic amount of funds that must be reserved for any bundle sale.
+		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 	}
@@ -212,7 +209,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Item reserve created by the owner, random mining by player
+	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
 	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -297,6 +294,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing trade configuration
 	#[pallet::storage]
 	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -384,37 +382,37 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		UnknownGame,
 		NoPermission,
-		/// Exceed the maximum allowed collection in a game
-		ExceedMaxCollection,
-		ExceedMaxBundle,
+		
+		UnknownGame,
 		UnknownCollection,
 		UnknownItem,
 		UnknownTrade,
+		UnknownUpgrade,
+		
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
 		ExceedTotalAmount,
 		/// The number minted items require exceeds the amount allowed per tx
 		ExceedAllowedAmount,
+		/// Exceed the maximum allowed collection in a game
+		ExceedMaxCollection,
+		/// Exceed max collections in a bundle
+		ExceedMaxBundle,
+		
 		SoldOut,
 		/// Too many attempts
 		WithdrawReserveFailed,
+		UpgradeExists,
+
 		InsufficientItemBalance,
 		InsufficientLockBalance,
-		NoCollectionConfig,
-		UpgradeExists,
-		UnknownUpgrade,
 		ItemLocked,
 		NotForSale,
-		/// Amount of items to buy is too low
-		AmountUnacceptable,
-		/// Buy all items only
-		BuyAllOnly,
 		BidTooLow,
 		AskTooHigh,
-		IdExists,
+		TradeIdInUse,
 		MintTooFast,
 	}
 
@@ -681,7 +679,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
-		)-> DispatchResult {
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;

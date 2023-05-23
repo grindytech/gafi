@@ -1,8 +1,5 @@
 use crate::*;
-use frame_support::{
-	pallet_prelude::*,
-	traits::{BalanceStatus},
-};
+use frame_support::{pallet_prelude::*, traits::BalanceStatus};
 use gafi_support::game::{Bundle, Wishlist};
 
 impl<T: Config<I>, I: 'static>
@@ -15,7 +12,10 @@ impl<T: Config<I>, I: 'static>
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure available id
-		ensure!(!BundleOf::<T, I>::contains_key(id), Error::<T, I>::IdExists);
+		ensure!(
+			!BundleOf::<T, I>::contains_key(id),
+			Error::<T, I>::TradeIdInUse
+		);
 
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 		<T as Config<I>>::Currency::reserve(&who, price)?;
@@ -57,7 +57,10 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
-			ensure!(config.trade == TradeType::Wishlist, Error::<T, I>::UnknownTrade);
+			ensure!(
+				config.trade == TradeType::Wishlist,
+				Error::<T, I>::UnknownTrade
+			);
 
 			// check price
 			ensure!(ask_price <= config.price, Error::<T, I>::AskTooHigh);
@@ -81,10 +84,8 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-		} else {
-			return Err(Error::<T, I>::UnknownTrade.into())
+			return Ok(())
 		}
-
-		Ok(())
+		return Err(Error::<T, I>::NotForSale.into())
 	}
 }
