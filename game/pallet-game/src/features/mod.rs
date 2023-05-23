@@ -24,3 +24,6 @@ pub use item::*;
 
 pub mod trade_item;
 pub use trade_item::*;
+
+pub mod wishlist;
+pub use wishlist::*;

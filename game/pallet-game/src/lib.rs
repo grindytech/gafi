@@ -32,7 +32,7 @@ use frame_system::{
 };
 use gafi_support::game::{
 	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TransferItem,
-	UpgradeItem,
+	UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -426,6 +426,7 @@ pub mod pallet {
 		/// Buy all items only
 		BuyAllOnly,
 		BidTooLow,
+		AskTooHigh,
 		IdExists,
 		MintTooFast,
 	}
@@ -697,6 +698,31 @@ pub mod pallet {
 		pub fn cancel_set_bundle(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_cancel_bundle(&trade_id, &sender)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(20)]
+		#[pallet::weight(0)]
+		pub fn set_wishlist(
+			origin: OriginFor<T>,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
+			price: BalanceOf<T, I>,
+		)-> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(21)]
+		#[pallet::weight(0)]
+		pub fn fill_wishlist(
+			origin: OriginFor<T>,
+			trade_id: T::TradeId,
+			ask_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_fill_wishlist(&trade_id, &sender, ask_price)?;
 			Ok(())
 		}
 	}
