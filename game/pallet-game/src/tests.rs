@@ -1205,3 +1205,21 @@ pub fn cancel_set_bundle_should_works() {
 		assert_eq!(Balances::free_balance(&player), before_balance + BUNDLE_DEPOSIT_VAL);
 	});
 }
+
+#[test]
+pub fn set_wishlist_should_works() {
+	new_test_ext().execute_with(|| {
+
+
+
+	})
+}
+
+#[test]
+pub fn fill_wishlist_should_works() {
+	new_test_ext().execute_with(|| {
+
+
+
+	})
+}

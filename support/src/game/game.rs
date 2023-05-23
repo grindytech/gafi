@@ -304,10 +304,10 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 }
 
 
-/// Trait for wish list functionality
+/// Trait for wishlist functionality
 pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 
-	fn do_create_wishlist(
+	fn do_set_wishlist(
 		id: &TradeId,
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
