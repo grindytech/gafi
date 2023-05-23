@@ -803,6 +803,7 @@ pub fn set_price_should_works() {
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
+				trade: TradeType::Normal,
 				owner: player.clone(),
 				price,
 			}

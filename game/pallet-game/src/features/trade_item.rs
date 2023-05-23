@@ -38,6 +38,7 @@ impl<T: Config<I>, I: 'static>
 		TradeConfigOf::<T, I>::insert(
 			id,
 			TradeConfig {
+				trade: TradeType::Normal,
 				owner: who.clone(),
 				price,
 			},
@@ -61,16 +62,21 @@ impl<T: Config<I>, I: 'static>
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		if let Some(package) = PackageOf::<T, I>::get(id) {
-			// ensure item can be transfer
-			ensure!(
-				T::Nfts::can_transfer(&package.collection, &package.item),
-				Error::<T, I>::ItemLocked
-			);
-
-			// ensure trade
-			ensure!(package.amount >= amount, Error::<T, I>::SoldOut);
-
 			if let Some(trade_config) = TradeConfigOf::<T, I>::get(id) {
+				ensure!(
+					trade_config.trade == TradeType::Normal,
+					Error::<T, I>::UnknownTrade
+				);
+
+				// ensure item can be transfer
+				ensure!(
+					T::Nfts::can_transfer(&package.collection, &package.item),
+					Error::<T, I>::ItemLocked
+				);
+
+				// ensure trade
+				ensure!(package.amount >= amount, Error::<T, I>::SoldOut);
+
 				// check price
 				ensure!(bid_price >= trade_config.price, Error::<T, I>::BidTooLow);
 
@@ -105,13 +111,13 @@ impl<T: Config<I>, I: 'static>
 					item: package.item,
 					amount,
 					price: trade_config.price,
-				})
-			}
-		} else {
-			return Err(Error::<T, I>::UnknownTrade.into())
+				});
+				
+				return Ok(());
+			} 
 		}
-
-		Ok(())
+		
+		return Err(Error::<T, I>::UnknownTrade.into());
 	}
 
 	fn do_set_bundle(
@@ -151,6 +157,7 @@ impl<T: Config<I>, I: 'static>
 		TradeConfigOf::<T, I>::insert(
 			id,
 			TradeConfig {
+				trade: TradeType::Bundle,
 				owner: who.clone(),
 				price,
 			},

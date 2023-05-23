@@ -303,6 +303,24 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	) -> DispatchResult;
 }
 
+
+/// Trait for wish list functionality
+pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
+
+	fn do_create_wishlist(
+		id: &TradeId,
+		who: &AccountId,
+		bundle: Bundle<CollectionId, ItemId>,
+		price: Price,
+	) -> DispatchResult;
+
+	fn do_fill_wishlist(
+		id: &TradeId,
+		who: &AccountId,
+		ask_price: Price,
+	) -> DispatchResult;
+}
+
 pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
 }
