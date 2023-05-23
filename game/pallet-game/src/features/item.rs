@@ -1,5 +1,4 @@
 /// Item module provides utility functions for pallet-game
-
 use crate::*;
 use frame_support::pallet_prelude::*;
 
@@ -56,24 +55,18 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection_id: &T::CollectionId,
 		position: u32,
 	) -> Result<T::ItemId, Error<T, I>> {
-		let result = ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
+		ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
 				if reserve.amount > 0 && reserve.amount + tmp >= position {
 					*reserve = reserve.sub(1);
-					return Ok(*reserve)
+					return Ok(reserve.clone().item)
 				} else {
 					tmp += reserve.amount;
 				}
 			}
-			Err(Error::<T, I>::WithdrawReserveFailed)
+			return Err(Error::<T, I>::WithdrawReserveFailed.into())
 		})
-		.map_err(|_| Error::<T, I>::WithdrawReserveFailed);
-
-		match result {
-			Ok(item) => Ok(item.item),
-			Err(err) => Err(err),
-		}
 	}
 
 	pub(crate) fn add_total_reserve(
