@@ -1254,5 +1254,34 @@ pub fn fill_wishlist_should_works() {
 		let player = new_account(2, 10_000 * unit(GAKI));
 		mint_items(&player, 10, count);
 
+		let mut packages: Vec<PackageFor<Test>> = vec![];
+		for i in 0..count {
+			packages.push(Package::new(0, i, 5));
+		}
+		let price = 3 * unit(GAKI);
+
+		let buyer = new_account(3, 1000 * unit(GAKI));
+		assert_ok!(PalletGame::set_wishlist(
+			RuntimeOrigin::signed(buyer.clone()),
+			packages.clone(),
+			price,
+		));
+
+		let before_player_balance = Balances::free_balance(&player);
+		assert_ok!(PalletGame::fill_wishlist(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			price
+		));
+
+		for i in 0..count {
+			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 5);
+			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 5);
+		}
+		assert_eq!(Balances::reserved_balance(&buyer), 0);
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_player_balance + price
+		);
 	})
 }

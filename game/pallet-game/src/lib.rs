@@ -426,6 +426,7 @@ pub mod pallet {
 		/// Buy all items only
 		BuyAllOnly,
 		BidTooLow,
+		AskTooHigh,
 		IdExists,
 		MintTooFast,
 	}
@@ -710,6 +711,18 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(21)]
+		#[pallet::weight(0)]
+		pub fn fill_wishlist(
+			origin: OriginFor<T>,
+			trade_id: T::TradeId,
+			ask_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_fill_wishlist(&trade_id, &sender, ask_price)?;
 			Ok(())
 		}
 	}
