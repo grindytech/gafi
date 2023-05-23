@@ -410,7 +410,7 @@ impl pallet_game::Config for Runtime {
 
 	type SaleDeposit = SaleDeposit;
 
-	type BundleId = u32;
+	type TradeId = u32;
 
 	type MaxBundle = MaxBundle;
 

@@ -3,23 +3,26 @@ use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, Bundle, Package, Trade};
 
 impl<T: Config<I>, I: 'static>
-	Trade<T::AccountId, T::CollectionId, T::ItemId, T::BundleId, BalanceOf<T, I>> for Pallet<T, I>
+	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_price(
+		id: &T::TradeId,
 		who: &T::AccountId,
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-		config: &TradeConfig<BalanceOf<T, I>>,
+		package: Package<T::CollectionId, T::ItemId>,
+		price: BalanceOf<T, I>,
 	) -> DispatchResult {
+		// ensure available id
+		ensure!(!BundleOf::<T, I>::contains_key(id), Error::<T, I>::IdExists);
+
 		// ensure balance
 		ensure!(
-			ItemBalanceOf::<T, I>::get((who, collection, item)) >= config.amount,
+			ItemBalanceOf::<T, I>::get((who, package.collection, package.item)) >= package.amount,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
 		// ensure transferable
 		ensure!(
-			T::Nfts::can_transfer(collection, item),
+			T::Nfts::can_transfer(&package.collection, &package.item),
 			Error::<T, I>::ItemLocked
 		);
 
@@ -27,80 +30,81 @@ impl<T: Config<I>, I: 'static>
 		<T as Config<I>>::Currency::reserve(&who, T::SaleDeposit::get())?;
 
 		// lock sale items
-		Self::lock_item(who, collection, item, config.amount)?;
+		Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 
-		TradeConfigOf::<T, I>::insert((who, collection, item), config);
+		PackageOf::<T, I>::insert(id, &package);
+		TradeConfigOf::<T, I>::insert(
+			id,
+			TradeConfig {
+				owner: who.clone(),
+				price,
+			},
+		);
 
 		Self::deposit_event(Event::<T, I>::PriceSet {
 			who: who.clone(),
-			collection: *collection,
-			item: *item,
-			amount: config.amount,
-			price: config.price,
+			collection: package.collection,
+			item: package.item,
+			amount: package.amount,
+			price,
 		});
 
 		Ok(())
 	}
 
 	fn do_buy_item(
+		id: &T::TradeId,
 		who: &T::AccountId,
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-		seller: &T::AccountId,
 		amount: Amount,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		// ensure item can be transfer
-		ensure!(
-			T::Nfts::can_transfer(collection, item),
-			Error::<T, I>::ItemLocked
-		);
+		if let Some(package) = PackageOf::<T, I>::get(id) {
+			// ensure item can be transfer
+			ensure!(
+				T::Nfts::can_transfer(&package.collection, &package.item),
+				Error::<T, I>::ItemLocked
+			);
 
-		// ensure trade
-		if let Some(trade) = TradeConfigOf::<T, I>::get((seller, collection, item)) {
-			ensure!(trade.amount > 0, Error::<T, I>::SoldOut);
+			// ensure trade
+			ensure!(package.amount >= amount, Error::<T, I>::SoldOut);
 
-			// sell all case
-			if let Some(moq) = trade.min_order_quantity {
-				if trade.amount <= moq {
-					ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
-				} else {
-					// check min order quantity
-					ensure!(amount >= moq, Error::<T, I>::AmountUnacceptable);
+			if let Some(trade_config) = TradeConfigOf::<T, I>::get(id) {
+				// check price
+				ensure!(bid_price >= trade_config.price, Error::<T, I>::BidTooLow);
+
+				// make deposit
+				<T as pallet::Config<I>>::Currency::transfer(
+					&who,
+					&trade_config.owner,
+					trade_config.price * amount.into(),
+					ExistenceRequirement::KeepAlive,
+				)?;
+
+				// transfer item
+				Self::transfer_lock_item(
+					&trade_config.owner,
+					&package.collection,
+					&package.item,
+					who,
+					amount,
+				)?;
+				Self::unlock_item(who, &package.collection, &package.item, amount)?;
+
+				{
+					let mut new_package = package.clone();
+					new_package.amount -= amount;
+					PackageOf::<T, I>::insert(id, new_package);
 				}
-			} else {
-				ensure!(amount == trade.amount, Error::<T, I>::BuyAllOnly);
+
+				Self::deposit_event(Event::<T, I>::ItemBought {
+					seller: trade_config.owner,
+					buyer: who.clone(),
+					collection: package.collection,
+					item: package.item,
+					amount,
+					price: trade_config.price,
+				})
 			}
-
-			// check price
-			ensure!(bid_price >= trade.price, Error::<T, I>::BidTooLow);
-
-			// make deposit
-			<T as pallet::Config<I>>::Currency::transfer(
-				&who,
-				&seller,
-				trade.price * amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			// transfer item
-			Self::transfer_lock_item(seller, collection, item, who, amount)?;
-			Self::unlock_item(who, collection, item, amount)?;
-
-			{
-				let mut new_trade = trade.clone();
-				new_trade.amount -= amount;
-				TradeConfigOf::<T, I>::insert((seller, collection, item), new_trade);
-			}
-
-			Self::deposit_event(Event::<T, I>::ItemBought {
-				seller: seller.clone(),
-				buyer: who.clone(),
-				collection: *collection,
-				item: *item,
-				amount,
-				price: trade.price,
-			})
 		} else {
 			return Err(Error::<T, I>::NotForSale.into())
 		}
@@ -109,7 +113,7 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_set_bundle(
-		id: &T::BundleId,
+		id: &T::TradeId,
 		who: &T::AccountId,
 		bundle: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
@@ -142,9 +146,9 @@ impl<T: Config<I>, I: 'static>
 
 		NextTradeId::<T, I>::set(Some(id.increment()));
 
-		BundleConfigOf::<T, I>::insert(
+		TradeConfigOf::<T, I>::insert(
 			id,
-			BundleConfig {
+			TradeConfig {
 				owner: who.clone(),
 				price,
 			},
@@ -160,7 +164,7 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_buy_bundle(
-		bundle_id: &T::BundleId,
+		bundle_id: &T::TradeId,
 		who: &T::AccountId,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
@@ -174,7 +178,7 @@ impl<T: Config<I>, I: 'static>
 			);
 		}
 
-		if let Some(bundle_config) = BundleConfigOf::<T, I>::get(bundle_id) {
+		if let Some(bundle_config) = TradeConfigOf::<T, I>::get(bundle_id) {
 			// check price
 			ensure!(bid_price >= bundle_config.price, Error::<T, I>::BidTooLow);
 
@@ -212,5 +216,48 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		Ok(())
+	}
+
+	fn do_cancel_price(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(package) = PackageOf::<T, I>::get(id) {
+			if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+				// ensure owner
+				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+				// unlock items
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+
+				// unreserve
+				<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::SaleDeposit::get());
+
+				// remove storage
+				PackageOf::<T, I>::remove(id);
+				TradeConfigOf::<T, I>::remove(id);
+				return Ok(())
+			}
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
+	}
+
+	fn do_cancel_bundle(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+			// ensure owner
+			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+			let bundle = BundleOf::<T, I>::get(id);
+			// unlock items
+			for package in bundle.clone() {
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+			}
+
+			// unreserve
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			// remove storage
+			BundleOf::<T, I>::remove(id);
+			TradeConfigOf::<T, I>::remove(id);
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

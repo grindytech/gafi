@@ -22,6 +22,7 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
+#[cfg(test)]
 pub(crate) type PackageFor<T> =
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
@@ -67,7 +68,7 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct BundleConfig<AccountId, Price> {
+pub struct TradeConfig<AccountId, Price> {
 	pub owner: AccountId,
 	pub price: Price,
 }
