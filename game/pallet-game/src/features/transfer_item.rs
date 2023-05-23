@@ -17,8 +17,8 @@ impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::It
 
 		Self::deposit_event(Event::<T, I>::Transferred {
 			from: who.clone(),
-			collection_id: *collection,
-			item_id: *item,
+			collection: *collection,
+			item: *item,
 			dest: destination.clone(),
 			amount,
 		});

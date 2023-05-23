@@ -7,13 +7,13 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 {
 	fn do_mint(
 		who: &T::AccountId,
-		collection_id: &T::CollectionId,
+		collection: &T::CollectionId,
 		target: &T::AccountId,
 		amount: Amount,
 	) -> DispatchResult {
 		// validating item amount
 		{
-			let total_item = TotalReserveOf::<T, I>::get(collection_id);
+			let total_item = TotalReserveOf::<T, I>::get(collection);
 
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
@@ -26,8 +26,8 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 
 		// deposit mining fee
 		// if collection owner not found, skip deposit
-		if let Some(owner) = T::Nfts::collection_owner(&collection_id) {
-			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection_id) {
+		if let Some(owner) = T::Nfts::collection_owner(&collection) {
+			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection) {
 				let fee = config.mint_settings.price.unwrap_or_default();
 				// make a deposit
 				<T as pallet::Config<I>>::Currency::transfer(
@@ -42,13 +42,13 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// random minting
 		let mut minted_items: Vec<T::ItemId> = [].to_vec();
 		{
-			let mut total_item = TotalReserveOf::<T, I>::get(collection_id);
+			let mut total_item = TotalReserveOf::<T, I>::get(collection);
 			let mut maybe_position = Self::random_number(total_item, Self::gen_random());
 			for _ in 0..amount {
 				if let Some(position) = maybe_position {
-					match Self::withdraw_reserve(collection_id, position) {
+					match Self::withdraw_reserve(collection, position) {
 						Ok(item) => {
-							Self::add_item_balance(&target, &collection_id, &item, 1)?;
+							Self::add_item_balance(&target, &collection, &item, 1)?;
 							minted_items.push(item);
 						},
 						Err(err) => return Err(err.into()),
@@ -59,13 +59,13 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 					return Err(Error::<T, I>::MintTooFast.into())
 				}
 			}
-			Self::sub_total_reserve(collection_id, amount)?;
+			Self::sub_total_reserve(collection, amount)?;
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
 			minter: who.clone(),
 			target: target.clone(),
-			collection_id: *collection_id,
+			collection: *collection,
 			minted_items,
 		});
 		Ok(())
@@ -73,21 +73,21 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 
 	fn do_burn(
 		who: &T::AccountId,
-		collection_id: &T::CollectionId,
-		item_id: &T::ItemId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		let item_balance = ItemBalanceOf::<T, I>::get((&who, collection_id, item_id));
+		let item_balance = ItemBalanceOf::<T, I>::get((&who, collection, item));
 		ensure!(
 			amount <= item_balance,
 			Error::<T, I>::InsufficientItemBalance
 		);
 
-		ItemBalanceOf::<T, I>::insert((&who, collection_id, item_id), item_balance - amount);
+		ItemBalanceOf::<T, I>::insert((&who, collection, item), item_balance - amount);
 
 		Self::deposit_event(Event::<T, I>::Burned {
-			collection_id: *collection_id,
-			item_id: *item_id,
+			collection: *collection,
+			item: *item,
 			amount,
 		});
 		Ok(())

@@ -77,8 +77,23 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(_);
 
-	pub type BalanceOf<T, I = ()> =
-		<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<GameId, TradeId> {
+		fn game(i: u32) -> GameId;
+
+		fn trade(i: u32) -> TradeId;
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl<GameId: From<u32>, TradeId: From<u32>> BenchmarkHelper<GameId, TradeId> for () {
+		fn game(i: u32) -> GameId {
+			i.into()
+		}
+
+		fn trade(i: u32) -> TradeId {
+			i.into()
+		}
+	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -145,6 +160,10 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		/// A set of helper functions for benchmarking.
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
 	}
 
 	/// Store basic game info
@@ -308,48 +327,48 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated {
-			game_id: T::GameId,
+			game: T::GameId,
 		},
 		CollectionCreated {
-			collection_id: T::CollectionId,
+			collection: T::CollectionId,
 		},
 		ItemCreated {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		ItemAdded {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		Minted {
 			minter: T::AccountId,
 			target: T::AccountId,
-			collection_id: T::CollectionId,
+			collection: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
 		Burned {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		Transferred {
 			from: T::AccountId,
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			dest: T::AccountId,
 			amount: u32,
 		},
 		Upgraded {
 			who: T::AccountId,
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		UpgradeSet {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			level: Level,
 		},
 		PriceSet {
@@ -430,21 +449,21 @@ pub mod pallet {
 		pub fn create_game(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(&sender, &game_id, &admin)?;
+			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+			Self::do_create_game(&sender, &game, &admin)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
 		#[pallet::weight(0)]
-		pub fn create_game_colletion(
+		pub fn create_game_collection(
 			origin: OriginFor<T>,
-			game_id: T::GameId,
+			game: T::GameId,
 			admin: T::AccountId,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game_id, &admin, &config)?;
+			Self::do_create_game_collection(&sender, &game, &admin, &config)?;
 			Ok(())
 		}
 

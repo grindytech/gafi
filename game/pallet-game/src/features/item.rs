@@ -45,17 +45,17 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
-	/// Withdraw an item in reserve which item_id depend on position.
+	/// Withdraw an item in reserve which item depend on position.
 	/// The position of item withdrawal in a sum up from left to right
 	/// Example array [(`item`: `amount`)]: [(1, 5), (2, 4), (3, 3)],
-	/// With position = 4, result item_id = 1.
-	/// With position = 7, result item_id = 2.
-	/// With position = 10, result item_id = 3.
+	/// With position = 4, result item = 1.
+	/// With position = 7, result item = 2.
+	/// With position = 10, result item = 3.
 	pub(crate) fn withdraw_reserve(
-		collection_id: &T::CollectionId,
+		collection: &T::CollectionId,
 		position: u32,
 	) -> Result<T::ItemId, Error<T, I>> {
-		ItemReserve::<T, I>::try_mutate(collection_id, |reserve_vec| {
+		ItemReserve::<T, I>::try_mutate(collection, |reserve_vec| {
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
 				if reserve.amount > 0 && reserve.amount + tmp >= position {

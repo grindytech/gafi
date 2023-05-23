@@ -7,36 +7,36 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 {
 	fn do_create_item(
 		who: &T::AccountId,
-		collection_id: &T::CollectionId,
-		item_id: &T::ItemId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
 		config: &ItemConfig,
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
-		if let Some(game_id) = GameOf::<T, I>::get(collection_id) {
+		if let Some(game) = GameOf::<T, I>::get(collection) {
 			ensure!(
-				GameRoleOf::<T, I>::get(game_id, &who) ==
+				GameRoleOf::<T, I>::get(game, &who) ==
 					Some(CollectionRoles(
 						CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
 					)),
 				Error::<T, I>::NoPermission
 			);
 
-			T::Nfts::mint_into(&collection_id, &item_id, &who, &config, false)?;
+			T::Nfts::mint_into(&collection, &item, &who, &config, false)?;
 
 			// issues new amount of item
 			{
-				ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
-					reserve_vec.try_push(Item::new(item_id.clone(), amount))
+				ItemReserve::<T, I>::try_mutate(&collection, |reserve_vec| {
+					reserve_vec.try_push(Item::new(item.clone(), amount))
 				})
 				.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
 
-				Self::add_total_reserve(collection_id, amount)?;
+				Self::add_total_reserve(collection, amount)?;
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
-				collection_id: *collection_id,
-				item_id: *item_id,
+				collection: *collection,
+				item: *item,
 				amount,
 			});
 			Ok(())
@@ -47,14 +47,14 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 	fn do_add_item(
 		who: &T::AccountId,
-		collection_id: &T::CollectionId,
-		item_id: &T::ItemId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
-		if let Some(game_id) = GameOf::<T, I>::get(collection_id) {
+		if let Some(game) = GameOf::<T, I>::get(collection) {
 			ensure!(
-				GameRoleOf::<T, I>::get(game_id, &who) ==
+				GameRoleOf::<T, I>::get(game, &who) ==
 					Some(CollectionRoles(
 						CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
 					)),
@@ -63,10 +63,10 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			// issues amount of item
 			{
-				ItemReserve::<T, I>::try_mutate(&collection_id, |reserve_vec| {
+				ItemReserve::<T, I>::try_mutate(&collection, |reserve_vec| {
 					let balances = reserve_vec.into_mut();
 					for balance in balances {
-						if balance.item == *item_id {
+						if balance.item == *item {
 							balance.amount += amount;
 							return Ok(balance.amount)
 						}
@@ -75,12 +75,12 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				})
 				.map_err(|err| err)?;
 
-				Self::add_total_reserve(collection_id, amount)?;
+				Self::add_total_reserve(collection, amount)?;
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
-				collection_id: *collection_id,
-				item_id: *item_id,
+				collection: *collection,
+				item: *item,
 				amount,
 			});
 		} else {

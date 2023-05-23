@@ -64,7 +64,7 @@ fn create_items(
 	who: &sr25519::Public,
 	collection_config: &CollectionConfigFor<Test>,
 	item_config: &ItemConfig,
-	item_id: u32,
+	item: u32,
 	amount: u32,
 ) {
 	assert_ok!(PalletGame::create_game(
@@ -72,7 +72,7 @@ fn create_items(
 		who.clone()
 	));
 
-	assert_ok!(PalletGame::create_game_colletion(
+	assert_ok!(PalletGame::create_game_collection(
 		RuntimeOrigin::signed(who.clone()),
 		0,
 		who.clone(),
@@ -82,7 +82,7 @@ fn create_items(
 	assert_ok!(PalletGame::create_item(
 		RuntimeOrigin::signed(who.clone()),
 		0,
-		item_id,
+		item,
 		*item_config,
 		amount
 	));
@@ -96,7 +96,7 @@ fn mint_items(miner: &sr25519::Public, amount: u32, count: u32) {
 		admin.clone()
 	));
 
-	assert_ok!(PalletGame::create_game_colletion(
+	assert_ok!(PalletGame::create_game_collection(
 		RuntimeOrigin::signed(admin.clone()),
 		0,
 		admin.clone(),
@@ -167,7 +167,7 @@ fn create_game_collection_should_works() {
 			admin.clone(),
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -177,7 +177,7 @@ fn create_game_collection_should_works() {
 		assert_eq!(CollectionsOf::<Test>::get(0)[0], 0);
 		assert_eq!(GameOf::<Test>::get(0), Some(0));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -205,7 +205,7 @@ fn create_game_collection_should_fails() {
 
 			// random acc should has no permission
 			assert_err!(
-				PalletGame::create_game_colletion(
+				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(acc.clone()),
 					0,
 					acc.clone(),
@@ -216,7 +216,7 @@ fn create_game_collection_should_fails() {
 
 			// game owner should has no permission
 			assert_err!(
-				PalletGame::create_game_colletion(
+				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(owner.clone()),
 					0,
 					owner.clone(),
@@ -297,7 +297,7 @@ fn create_item_should_works() {
 			admin.clone(),
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -330,7 +330,7 @@ fn add_item_should_works() {
 			admin.clone(),
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -394,7 +394,7 @@ fn mint_should_works() {
 			admin.clone(),
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -443,7 +443,7 @@ fn mint_should_fails() {
 			admin.clone(),
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			admin.clone(),
@@ -507,7 +507,7 @@ pub fn burn_items_should_works() {
 			owner.clone()
 		));
 
-		assert_ok!(PalletGame::create_game_colletion(
+		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(owner.clone()),
 			0,
 			owner.clone(),

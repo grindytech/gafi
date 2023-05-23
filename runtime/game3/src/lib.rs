@@ -412,6 +412,9 @@ impl pallet_game::Config for Runtime {
 	type MaxBundle = MaxBundle;
 
 	type BundleDeposit = BundleDeposit;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
