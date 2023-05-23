@@ -121,10 +121,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max Swapping Fee
-		#[pallet::constant]
-		type MaxSwapFee: Get<Percent>;
-
 		/// Max number of collections in a game
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
@@ -162,10 +158,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::GameId, OptionQuery>;
-
-	#[pallet::storage]
-	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -320,10 +312,6 @@ pub mod pallet {
 		GameCreated {
 			game_id: T::GameId,
 		},
-		SwapFeeSetted {
-			game_id: T::GameId,
-			fee: Percent,
-		},
 		CollectionCreated {
 			collection_id: T::CollectionId,
 		},
@@ -397,7 +385,6 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
 		UnknownGame,
-		SwapFeeTooHigh,
 		NoPermission,
 		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
@@ -447,19 +434,6 @@ pub mod pallet {
 
 			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(&sender, &game_id, &admin)?;
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
-		pub fn set_swap_fee(
-			origin: OriginFor<T>,
-			game_id: T::GameId,
-			fee: Percent,
-			start_block: BlockNumber<T>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_set_swap_fee(&sender, &game_id, fee, start_block)?;
 			Ok(())
 		}
 

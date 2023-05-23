@@ -371,7 +371,6 @@ where
 }
 
 parameter_types! {
-	pub MaxSwapFee: Percent = Percent::from_parts(30);
 	pub GameDeposit: u128 = 5_000_000_000;
 	pub UpgradeDeposit: u128 = 1_000_000_000;
 	pub MaxGameCollection: u32 = 5;
@@ -395,8 +394,6 @@ impl pallet_game::Config for Runtime {
 	type Randomness = RandomnessCollectiveFlip;
 
 	type GameId = u32;
-
-	type MaxSwapFee = MaxSwapFee;
 
 	type GameDeposit = GameDeposit;
 

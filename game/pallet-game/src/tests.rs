@@ -154,61 +154,6 @@ fn create_first_game_should_works() {
 }
 
 #[test]
-fn set_swap_fee_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let fee = Percent::from_parts(30);
-		let start_block = 100;
-
-		let owner = new_account(0, before_balance);
-		let admin = new_account(1, 3 * unit(GAKI));
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::set_swap_fee(
-			RuntimeOrigin::signed(admin),
-			0,
-			fee,
-			start_block
-		));
-		assert_eq!(SwapFee::<Test>::get(0).unwrap(), (fee, start_block));
-	})
-}
-
-#[test]
-fn set_swap_fee_should_fails() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let fee = Percent::from_parts(30);
-		let start_block = 100;
-
-		let owner = new_account(0, before_balance);
-		let admin = new_account(1, 3 * unit(GAKI));
-		let not_admin = new_account(2, 3 * unit(GAKI));
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_err!(
-			PalletGame::set_swap_fee(RuntimeOrigin::signed(not_admin), 0, fee, start_block),
-			<Error<Test>>::NoPermission
-		);
-
-		let invalid_fee = Percent::from_parts(31);
-		assert_err!(
-			PalletGame::set_swap_fee(RuntimeOrigin::signed(admin), 0, invalid_fee, start_block),
-			<Error<Test>>::SwapFeeTooHigh
-		);
-	})
-}
-
-#[test]
 fn create_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);

@@ -34,22 +34,4 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		Self::deposit_event(Event::GameCreated { game_id: *id });
 		Ok(())
 	}
-
-	fn do_set_swap_fee(
-		who: &T::AccountId,
-		id: &T::GameId,
-		fee: Percent,
-		start_block: BlockNumber<T>,
-	) -> DispatchResult {
-		ensure!(
-			Self::has_role(&id, &who, CollectionRole::Admin),
-			Error::<T, I>::NoPermission
-		);
-
-		ensure!(fee <= T::MaxSwapFee::get(), Error::<T, I>::SwapFeeTooHigh);
-
-		SwapFee::<T, I>::insert(id, (fee, start_block));
-		Self::deposit_event(Event::SwapFeeSetted { game_id: *id, fee });
-		Ok(())
-	}
 }
