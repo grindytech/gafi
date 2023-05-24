@@ -17,6 +17,10 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod weights;
+pub use weights::*;
+use crate::weights::WeightInfo;
+
 use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
@@ -25,6 +29,7 @@ use frame_support::{
 		Currency, Randomness, ReservableCurrency,
 	},
 	PalletId,
+	transactional,
 };
 use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
@@ -36,10 +41,7 @@ use gafi_support::game::{
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
-use sp_runtime::{
-	traits::{StaticLookup, TrailingZeroInput},
-	Percent,
-};
+use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 use sp_std::vec::Vec;
 use types::*;
 
@@ -80,8 +82,23 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(_);
 
-	pub type BalanceOf<T, I = ()> =
-		<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<GameId, TradeId> {
+		fn game(i: u32) -> GameId;
+
+		fn trade(i: u32) -> TradeId;
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl<GameId: From<u32>, TradeId: From<u32>> BenchmarkHelper<GameId, TradeId> for () {
+		fn game(i: u32) -> GameId {
+			i.into()
+		}
+
+		fn trade(i: u32) -> TradeId {
+			i.into()
+		}
+	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -95,6 +112,9 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -121,10 +141,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max Swapping Fee
-		#[pallet::constant]
-		type MaxSwapFee: Get<Percent>;
-
 		/// Max number of collections in a game
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
@@ -149,9 +165,13 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
 
-		/// The basic amount of funds that must be reserved for any bundle sale.
+		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		/// A set of helper functions for benchmarking.
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
 	}
 
 	/// Store basic game info
@@ -162,10 +182,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::GameId, OptionQuery>;
-
-	#[pallet::storage]
-	pub(super) type SwapFee<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::GameId, (Percent, BlockNumber<T>)>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -220,7 +236,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Item reserve created by the owner, random mining by player
+	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
 	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -305,6 +321,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing trade configuration
 	#[pallet::storage]
 	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -318,52 +335,48 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated {
-			game_id: T::GameId,
-		},
-		SwapFeeSetted {
-			game_id: T::GameId,
-			fee: Percent,
+			game: T::GameId,
 		},
 		CollectionCreated {
-			collection_id: T::CollectionId,
+			collection: T::CollectionId,
 		},
 		ItemCreated {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		ItemAdded {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		Minted {
-			minter: T::AccountId,
+			miner: T::AccountId,
 			target: T::AccountId,
-			collection_id: T::CollectionId,
+			collection: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
 		Burned {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		Transferred {
 			from: T::AccountId,
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			dest: T::AccountId,
 			amount: u32,
 		},
 		Upgraded {
 			who: T::AccountId,
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			amount: u32,
 		},
 		UpgradeSet {
-			collection_id: T::CollectionId,
-			item_id: T::ItemId,
+			collection: T::CollectionId,
+			item: T::ItemId,
 			level: Level,
 		},
 		PriceSet {
@@ -392,43 +405,58 @@ pub mod pallet {
 			buyer: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
+		TradeCanceled {
+			id: T::TradeId,
+			who: T::AccountId,
+		},
+		WishlistSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
+		WishlistFilled {
+			id: T::TradeId,
+			wisher: T::AccountId,
+			filler: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		UnknownGame,
-		SwapFeeTooHigh,
 		NoPermission,
-		/// Exceed the maximum allowed collection in a game
-		ExceedMaxCollection,
-		ExceedMaxBundle,
+		
+		UnknownGame,
 		UnknownCollection,
 		UnknownItem,
 		UnknownTrade,
+		UnknownUpgrade,
+		
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
 		ExceedTotalAmount,
 		/// The number minted items require exceeds the amount allowed per tx
 		ExceedAllowedAmount,
+		/// Exceed the maximum allowed collection in a game
+		ExceedMaxCollection,
+		/// Exceed max collections in a bundle
+		ExceedMaxBundle,
+		
 		SoldOut,
 		/// Too many attempts
 		WithdrawReserveFailed,
+		UpgradeExists,
+
 		InsufficientItemBalance,
 		InsufficientLockBalance,
-		NoCollectionConfig,
-		UpgradeExists,
-		UnknownUpgrade,
 		ItemLocked,
 		NotForSale,
-		/// Amount of items to buy is too low
-		AmountUnacceptable,
-		/// Buy all items only
-		BuyAllOnly,
 		BidTooLow,
 		AskTooHigh,
-		IdExists,
+		TradeIdInUse,
 		MintTooFast,
+		TooLow,
 	}
 
 	#[pallet::hooks]
@@ -441,38 +469,29 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
-		pub fn create_game(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game(1_u32))]
+		#[transactional]
+		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let admin = T::Lookup::lookup(admin)?;
 
-			let game_id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(&sender, &game_id, &admin)?;
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
-		pub fn set_swap_fee(
-			origin: OriginFor<T>,
-			game_id: T::GameId,
-			fee: Percent,
-			start_block: BlockNumber<T>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_set_swap_fee(&sender, &game_id, fee, start_block)?;
+			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+			Self::do_create_game(&sender, &game, &admin)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(0)]
-		pub fn create_game_colletion(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
+		#[transactional]
+		pub fn create_game_collection(
 			origin: OriginFor<T>,
-			game_id: T::GameId,
-			admin: T::AccountId,
+			game: T::GameId,
+			admin: AccountIdLookupOf<T>,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game_id, &admin, &config)?;
+			let admin = T::Lookup::lookup(admin)?;
+			Self::do_create_game_collection(&sender, &game, &admin, &config)?;
 			Ok(())
 		}
 
@@ -502,7 +521,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item(1_u32))]
+		#[transactional]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -518,7 +538,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_item(1_u32))]
+		#[transactional]
 		pub fn add_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -533,7 +554,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint(1_u32))]
+		#[transactional]
 		pub fn mint(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -565,7 +587,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer(1_u32))]
+		#[transactional]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -581,7 +604,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(11)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
+		#[transactional]
 		pub fn set_upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -594,15 +618,16 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
-			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
-
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
+
+			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
 
 			Ok(())
 		}
 
 		#[pallet::call_index(12)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item(1_u32))]
+		#[transactional]
 		pub fn upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -627,7 +652,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(14)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price(1_u32))]
+		#[transactional]
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -643,7 +669,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(15)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item(1_u32))]
+		#[transactional]
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			id: T::TradeId,
@@ -658,7 +685,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(16)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
+		#[transactional]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -673,7 +701,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(17)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
+		#[transactional]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,
@@ -686,7 +715,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(18)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_price(1_u32))]
+		#[transactional]
 		pub fn cancel_set_price(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_cancel_price(&trade_id, &sender)?;
@@ -694,7 +724,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(19)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_bundle(1_u32))]
+		#[transactional]
 		pub fn cancel_set_bundle(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_cancel_bundle(&trade_id, &sender)?;
@@ -702,12 +733,13 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(20)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
+		#[transactional]
 		pub fn set_wishlist(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
-		)-> DispatchResult {
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
@@ -715,7 +747,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(21)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::fill_wishlist(1_u32))]
+		#[transactional]
 		pub fn fill_wishlist(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,

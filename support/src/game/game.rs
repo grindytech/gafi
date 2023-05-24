@@ -1,8 +1,8 @@
 use frame_support::pallet_prelude::DispatchResult;
-use sp_runtime::{Percent, TokenError};
+use sp_runtime::{TokenError};
 use sp_std::vec::Vec;
 
-use super::{Package, Bundle};
+use super::{Bundle, Package};
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -13,25 +13,9 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	///
 	/// Parameters:
 	/// - `who`: signer and game owner
-	/// - `id`: new game id
+	/// - `game`: new game id
 	/// - `admin`: admin
 	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
-
-	/// Do set swap fee
-	///
-	///  Implementing the function set swap fee
-	///
-	/// Parameters:
-	/// - `who`: owner
-	/// - `game`: game id
-	/// - `fee`: percent of swapping volume
-	/// - `start_block`: block apply swap fee
-	fn do_set_swap_fee(
-		who: &AccountId,
-		game: &GameId,
-		fee: Percent,
-		start_block: BlockNumber,
-	) -> DispatchResult;
 }
 
 pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
@@ -123,7 +107,7 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	/// Parameters:
 	/// - `_who`: sender
 	/// - `_collection`: collection id
-	/// - `_target`: recipient account, default `minter`
+	/// - `_target`: recipient account, default `miner`
 	///
 	/// By default, this is not a supported operation.
 	fn do_mint(
@@ -192,7 +176,6 @@ pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, Stri
 }
 
 pub trait TransferItem<AccountId, CollectionId, ItemId> {
-
 	/// Do Transfer Item
 	///
 	/// Transfer amount of item from `who` to `distination`
@@ -215,7 +198,6 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 }
 
 pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
-
 	/// Do Set Price
 	///
 	/// Set item price for selling
@@ -233,9 +215,9 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	) -> DispatchResult;
 
 	/// Do Buy Item
-	/// 
+	///
 	/// Buy items from specific seller
-	/// 
+	///
 	/// Parameters:
 	/// - `who`: buyer
 	/// - `collection`: collection id
@@ -247,25 +229,22 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 		id: &TradeId,
 		who: &AccountId,
 		amount: Amount,
-		bid_price: Price
+		bid_price: Price,
 	) -> DispatchResult;
 
 	/// Do Cancel Price
-	/// 
+	///
 	/// Cancel the trade, unlock the locked items, and unreserve the deposit.
-	/// 
+	///
 	/// Parameters:
 	/// - `id`: trade id
 	/// - `who`: owner
-	fn do_cancel_price(
-		id: &TradeId,
-		who: &AccountId,
-	) -> DispatchResult;
+	fn do_cancel_price(id: &TradeId, who: &AccountId) -> DispatchResult;
 
 	/// Do Set Bundle
-	/// 
+	///
 	/// Bundling for sale
-	/// 
+	///
 	/// Parameters:
 	/// - `id`: trade id
 	/// - `who`: seller
@@ -279,34 +258,33 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	) -> DispatchResult;
 
 	/// Do Buy Bundle
-	/// 
+	///
 	/// Buy a bundle from bundle id
-	/// 
+	///
 	/// Parameters:
 	/// - `id`: trade id
 	/// - `who`: buyer
 	/// - `bid_price`: the bid price for the bundle
-	fn do_buy_bundle(
-		id: &TradeId,
-		who: &AccountId,
-		bid_price: Price,
-	) -> DispatchResult;
+	fn do_buy_bundle(id: &TradeId, who: &AccountId, bid_price: Price) -> DispatchResult;
 
 	/// Do Cancel Bundle
-	/// 
+	///
 	/// Cancel the bundle sale, unlock items, and unreserve the deposit.
 	/// - `id`: trade id
 	/// - `who`: owner
-	fn do_cancel_bundle(
-		id: &TradeId,
-		who: &AccountId,
-	) -> DispatchResult;
+	fn do_cancel_bundle(id: &TradeId, who: &AccountId) -> DispatchResult;
 }
-
 
 /// Trait for wishlist functionality
 pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
-
+	/// Do Set Wishlist
+	///
+	/// Set a wishlist with the price
+	///
+	/// - `id`: trade id
+	/// - `who`: buyer
+	/// - `bundle`: wishlist
+	/// - `price`: price
 	fn do_set_wishlist(
 		id: &TradeId,
 		who: &AccountId,
@@ -314,11 +292,15 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 		price: Price,
 	) -> DispatchResult;
 
-	fn do_fill_wishlist(
-		id: &TradeId,
-		who: &AccountId,
-		ask_price: Price,
-	) -> DispatchResult;
+	/// Do Set Wishlist
+	///
+	/// Fill the wishlist with the asking price.
+	/// The asking price must be no greater than the wishlist price.
+	///
+	/// - `id`: trade id
+	/// - `who`: seller
+	/// - `ask_price`: ask price
+	fn do_fill_wishlist(id: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
 }
 
 pub trait Destroy<E> {
