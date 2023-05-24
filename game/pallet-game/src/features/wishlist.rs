@@ -38,6 +38,12 @@ impl<T: Config<I>, I: 'static>
 			},
 		);
 
+		Self::deposit_event(Event::<T, I>::WishlistSet {
+			id: *id,
+			who: who.clone(),
+			price,
+		});
+
 		Ok(())
 	}
 
@@ -84,6 +90,12 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+			Self::deposit_event(Event::<T, I>::WishlistFilled {
+				id: *id,
+				wisher: config.owner,
+				filler: who.clone(),
+				price: config.price,
+			});
 			return Ok(())
 		}
 		return Err(Error::<T, I>::NotForSale.into())

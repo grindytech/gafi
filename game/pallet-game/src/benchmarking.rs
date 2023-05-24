@@ -28,13 +28,13 @@ fn string_to_static_str(s: String) -> &'static str {
 }
 
 fn new_funded_account<T: Config<I>, I: 'static>(
-	index: u32,
+	s: u32,
 	seed: u32,
 	amount: u128,
 ) -> T::AccountId {
 	let balance_amount = amount.try_into().ok().unwrap();
-	let name: String = format!("{}{}", index, seed);
-	let user = account(string_to_static_str(name), index, seed);
+	let name: String = format!("{}{}", s, seed);
+	let user = account(string_to_static_str(name), s, seed);
 	<T as pallet::Config<I>>::Currency::make_free_balance_be(&user, balance_amount);
 	return user
 }
@@ -65,8 +65,8 @@ fn assert_last_event<T: Config<I>, I: 'static>(generic_event: <T as Config<I>>::
 	assert_eq!(event, &system_event);
 }
 
-fn do_create_game<T: Config<I>, I: 'static>(index: u32) -> (T::AccountId, AccountIdLookupOf<T>) {
-	let caller = new_funded_account::<T, I>(index, index, 1000_000_000u128 * UNIT);
+fn do_create_game<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, AccountIdLookupOf<T>) {
+	let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
 	let admin = T::Lookup::unlookup(caller.clone());
 	assert_ok!(PalletGame::<T, I>::create_game(
 		RawOrigin::Signed(caller.clone()).into(),
@@ -76,9 +76,9 @@ fn do_create_game<T: Config<I>, I: 'static>(index: u32) -> (T::AccountId, Accoun
 }
 
 fn do_create_collection<T: Config<I>, I: 'static>(
-	index: u32,
+	s: u32,
 ) -> (T::AccountId, AccountIdLookupOf<T>) {
-	let (caller, admin) = do_create_game::<T, I>(index);
+	let (caller, admin) = do_create_game::<T, I>(s);
 
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
 		RawOrigin::Signed(caller.clone()).into(),
@@ -89,44 +89,114 @@ fn do_create_collection<T: Config<I>, I: 'static>(
 	(caller, admin)
 }
 
-fn do_create_item<T: Config<I>, I: 'static>(index: u32) -> (T::AccountId, AccountIdLookupOf<T>) {
-	let (caller, admin) = do_create_collection::<T, I>(index);
+fn do_create_item<T: Config<I>, I: 'static>(
+	s: u32,
+	item: u16,
+	amount: u32,
+) -> (T::AccountId, AccountIdLookupOf<T>) {
+	let (caller, admin) = do_create_collection::<T, I>(s);
 
 	assert_ok!(PalletGame::<T, I>::create_item(
 		RawOrigin::Signed(caller.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(0),
-		<T as pallet_nfts::Config>::Helper::item(0),
+		<T as pallet_nfts::Config>::Helper::item(item),
 		default_item_config(),
 		10,
 	));
 	(caller, admin)
 }
 
-fn do_mint_item<T: Config<I>, I: 'static>(index: u32) -> (T::AccountId, AccountIdLookupOf<T>) {
-	let (caller, mint_to) = do_create_item::<T, I>(index);
-
+fn do_mint_item<T: Config<I>, I: 'static>(s: u32, miner: &T::AccountId, amount: u32) {
 	assert_ok!(PalletGame::<T, I>::mint(
-		RawOrigin::Signed(caller.clone()).into(),
+		RawOrigin::Signed(miner.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(0),
-		mint_to.clone(),
-		10,
+		T::Lookup::unlookup(miner.clone()),
+		amount,
 	));
-	(caller, mint_to)
 }
 
-fn do_set_upgrade_item<T: Config<I>, I: 'static>(
-	index: u32,
-) -> T::AccountId {
-	let (caller, admin) = do_create_item::<T, I>(index);
-
+fn do_set_upgrade_item<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	assert_ok!(PalletGame::<T, I>::set_upgrade_item(
-		RawOrigin::Signed(caller.clone()).into(),
+		RawOrigin::Signed(who.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(0),
 		<T as pallet_nfts::Config>::Helper::item(0),
 		<T as pallet_nfts::Config>::Helper::item(100),
 		default_item_config(),
 		bvec![0u8; 50],
-		0,
+		1,
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+	));
+}
+
+fn do_set_price<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
+	let (_, _) = do_create_item::<T, I>(s, 0, 10);
+	let seller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+	do_mint_item::<T, I>(s, &seller, 10);
+
+	let package = Package {
+		collection: <T as pallet_nfts::Config>::Helper::collection(0),
+		item: <T as pallet_nfts::Config>::Helper::item(0),
+		amount: 10,
+	};
+
+	assert_ok!(PalletGame::<T, I>::set_price(
+		RawOrigin::Signed(seller.clone()).into(),
+		package,
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+	));
+	seller
+}
+
+fn do_set_bundle<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
+	let (_, _) = do_create_item::<T, I>(s, 0, 10);
+	let (_, _) = do_create_item::<T, I>(s, 1, 10);
+
+	let seller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+	do_mint_item::<T, I>(s, &seller, 10);
+	do_mint_item::<T, I>(s, &seller, 10);
+
+	let bundle = vec![
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		},
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(1),
+			amount: 10,
+		},
+	];
+
+	assert_ok!(PalletGame::<T, I>::set_bundle(
+		RawOrigin::Signed(seller.clone()).into(),
+		bundle,
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+	));
+
+	seller
+}
+
+fn do_set_wishlist<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
+	let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+	let bundle = vec![
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		},
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(1),
+			amount: 10,
+		},
+	];
+
+	assert_ok!(PalletGame::<T, I>::set_wishlist(
+		RawOrigin::Signed(caller.clone()).into(),
+		bundle,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 	));
 	caller
@@ -168,7 +238,7 @@ benchmarks_instance_pallet! {
 
 	add_item {
 		let s in 0 .. MAX as u32;
-		let (caller, admin) = do_create_item::<T, I>(s);
+		let (caller, admin) = do_create_item::<T, I>(s, 0, 10);
 		let call = Call::<T, I>::add_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
@@ -179,13 +249,13 @@ benchmarks_instance_pallet! {
 
 	mint {
 		let s in 0 .. MAX as u32;
-		let (caller, admin) = do_create_item::<T, I>(s);
+		let (caller, admin) = do_create_item::<T, I>(s, 0, 10);
 
 		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
 		let mint_to =   T::Lookup::unlookup(miner.clone());
 
 		let call = Call::<T, I>::mint { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			mint_to: mint_to.clone(), amount: 10 };
+			mint_to: mint_to.clone(), amount: 1 };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::Minted { miner: miner.clone(),
@@ -197,7 +267,10 @@ benchmarks_instance_pallet! {
 
 	transfer {
 		let s in 0 .. MAX as u32;
-		let (caller, mint_to) = do_mint_item::<T, I>(s);
+		let (owner, admin) = do_create_item::<T, I>(s, 0, 10);
+
+		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &miner, 10);
 
 		let dest =  T::Lookup::unlookup(new_funded_account::<T, I>(s + MAX, s + MAX, 1000_000_000u128 * UNIT));
 
@@ -205,10 +278,10 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			dest: dest.clone(),
 			amount: 10 };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(miner.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::Transferred {
-			from: caller.clone(),
+			from: miner.clone(),
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			dest:  T::Lookup::lookup(dest.clone()).unwrap(),
@@ -218,7 +291,7 @@ benchmarks_instance_pallet! {
 
 	set_upgrade_item {
 		let s in 0 .. MAX as u32;
-		let (caller, admin) = do_create_item::<T, I>(s);
+		let (caller, admin) = do_create_item::<T, I>(s, 0, 10);
 
 		let call = Call::<T, I>::set_upgrade_item {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -240,21 +313,217 @@ benchmarks_instance_pallet! {
 
 	upgrade_item {
 		let s in 0 .. MAX as u32;
-		let caller = do_set_upgrade_item::<T, I>(s);
 
+		let (owner, admin) = do_create_item::<T, I>(s, 0, 10);
+		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &miner, 10);
+
+		do_set_upgrade_item::<T, I>(s, &owner);
 
 		let call = Call::<T, I>::upgrade_item {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
 			};
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(miner.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::Upgraded {
+			who: miner.clone(),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(100),
+			amount: 10,
+		}.into() );
+	}
+
+	set_price {
+		let s in 0 .. MAX as u32;
+		let (owner, admin) = do_create_item::<T, I>(s, 0, 10);
+
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &caller, 10);
+
+		let package = Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		};
+
+		let call = Call::<T, I>::set_price {
+			package: package,
+			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::PriceSet {
 			who: caller.clone(),
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	buy_item {
+		let s in 0 .. MAX as u32;
+
+		let seller = do_set_price::<T, I>(s);
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let call = Call::<T, I>::buy_item {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			amount: 10,
+			bid_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::ItemBought {
+			seller: seller,
+			buyer: caller,
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	set_bundle {
+		let s in 0 .. MAX as u32;
+		let (_, _) = do_create_item::<T, I>(s, 0, 10);
+		let (_, _) = do_create_item::<T, I>(s, 1, 10);
+
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &caller, 10);
+		do_mint_item::<T, I>(s, &caller, 10);
+
+		let bundle = vec![
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		},
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(1),
+			amount: 10,
+		}];
+
+		let call = Call::<T, I>::set_bundle {
+			bundle: bundle,
+			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::BundleSet {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	buy_bundle {
+		let s in 0 .. MAX as u32;
+
+		let seller = do_set_bundle::<T, I>(s);
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let call = Call::<T, I>::buy_bundle {
+			trade_id: <T as pallet::Config<I>>::Helper::trade(0),
+			bid_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::BundleBought {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			buyer: caller,
+			seller: seller,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	cancel_set_price {
+		let s in 0 .. MAX as u32;
+
+		let caller = do_set_price::<T, I>(s);
+
+		let call = Call::<T, I>::cancel_set_price {
+			trade_id: <T as pallet::Config<I>>::Helper::trade(0),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::TradeCanceled {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+		}.into() );
+	}
+
+	cancel_set_bundle {
+		let s in 0 .. MAX as u32;
+
+		let caller = do_set_bundle::<T, I>(s);
+
+		let call = Call::<T, I>::cancel_set_bundle {
+			trade_id: <T as pallet::Config<I>>::Helper::trade(0),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::TradeCanceled {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+		}.into() );
+	}
+
+	set_wishlist {
+		let s in 0 .. MAX as u32;
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let bundle = vec![
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		},
+		Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(1),
+			amount: 10,
+		}];
+
+		let call = Call::<T, I>::set_wishlist {
+			bundle: bundle,
+			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::WishlistSet {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	fill_wishlist {
+		let s in 0 .. MAX as u32;
+		let (_, _) = do_create_item::<T, I>(s, 0, 10);
+		let (_, _) = do_create_item::<T, I>(s, 1, 10);
+
+		let wisher = do_set_wishlist::<T, I>(s);
+
+		let filler = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &filler, 10);
+		do_mint_item::<T, I>(s, &filler, 10);
+
+		let call = Call::<T, I>::fill_wishlist {
+			trade_id: <T as pallet::Config<I>>::Helper::trade(0),
+			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(filler.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::WishlistFilled {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
+			wisher: wisher,
+			filler: filler,
+			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
 

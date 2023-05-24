@@ -1,8 +1,5 @@
-use crate::{*};
-use frame_support::{
-	pallet_prelude::*,
-	traits::ExistenceRequirement,
-};
+use crate::*;
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, UpgradeItem};
 
 impl<T: Config<I>, I: 'static>
@@ -66,6 +63,8 @@ impl<T: Config<I>, I: 'static>
 		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
+		ensure!(amount > 0, Error::<T, I>::TooLow);
+
 		let next_level = LevelOf::<T, I>::get(collection, item) + 1;
 
 		// get origin item
@@ -91,10 +90,10 @@ impl<T: Config<I>, I: 'static>
 				collection: *collection,
 				item: config.item,
 				amount,
-			})
-		} else {
-			return Err(Error::<T, I>::UnknownUpgrade.into());
+			});
+
+			return Ok(())
 		}
-		Ok(())
+		return Err(Error::<T, I>::UnknownUpgrade.into())
 	}
 }

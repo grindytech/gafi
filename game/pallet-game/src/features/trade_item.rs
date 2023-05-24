@@ -256,6 +256,12 @@ impl<T: Config<I>, I: 'static>
 				// remove storage
 				PackageOf::<T, I>::remove(id);
 				TradeConfigOf::<T, I>::remove(id);
+
+				Self::deposit_event(Event::<T, I>::TradeCanceled {
+					id: *id,
+					who: who.clone(),
+				});
+
 				return Ok(())
 			}
 		}
@@ -279,6 +285,11 @@ impl<T: Config<I>, I: 'static>
 			// remove storage
 			BundleOf::<T, I>::remove(id);
 			TradeConfigOf::<T, I>::remove(id);
+
+			Self::deposit_event(Event::<T, I>::TradeCanceled {
+				id: *id,
+				who: who.clone(),
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownTrade.into())

@@ -405,6 +405,21 @@ pub mod pallet {
 			buyer: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
+		TradeCanceled {
+			id: T::TradeId,
+			who: T::AccountId,
+		},
+		WishlistSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
+		WishlistFilled {
+			id: T::TradeId,
+			wisher: T::AccountId,
+			filler: T::AccountId,
+			price: BalanceOf<T, I>,
+		},
 	}
 
 	#[pallet::error]
@@ -441,6 +456,7 @@ pub mod pallet {
 		AskTooHigh,
 		TradeIdInUse,
 		MintTooFast,
+		TooLow,
 	}
 
 	#[pallet::hooks]
@@ -597,9 +613,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
-			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
-
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
+
+			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
 
 			Ok(())
 		}
