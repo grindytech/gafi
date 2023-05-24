@@ -78,7 +78,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				Self::add_total_reserve(collection, amount)?;
 			}
 
-			Self::deposit_event(Event::<T, I>::ItemCreated {
+			Self::deposit_event(Event::<T, I>::ItemAdded {
 				collection: *collection,
 				item: *item,
 				amount,

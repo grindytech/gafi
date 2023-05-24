@@ -145,6 +145,8 @@ impl pallet_game::Config for Test {
 
 	type RuntimeEvent = RuntimeEvent;
 
+	type WeightInfo = ();
+
 	type Currency = Balances;
 
 	type Nfts = Nfts;

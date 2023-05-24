@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use pallet_game::GameWeightInfo;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -386,6 +387,8 @@ impl pallet_game::Config for Runtime {
 	type PalletId = PalletGameId;
 
 	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = GameWeightInfo<Runtime>;
 
 	type Currency = Balances;
 

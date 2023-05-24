@@ -63,7 +63,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
-			minter: who.clone(),
+			miner: who.clone(),
 			target: target.clone(),
 			collection: *collection,
 			minted_items,

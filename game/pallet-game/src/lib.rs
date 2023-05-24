@@ -17,6 +17,10 @@ mod types;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod weights;
+pub use weights::*;
+use crate::weights::WeightInfo;
+
 use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
@@ -25,6 +29,7 @@ use frame_support::{
 		Currency, Randomness, ReservableCurrency,
 	},
 	PalletId,
+	transactional,
 };
 use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
@@ -107,6 +112,9 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -343,7 +351,7 @@ pub mod pallet {
 			amount: u32,
 		},
 		Minted {
-			minter: T::AccountId,
+			miner: T::AccountId,
 			target: T::AccountId,
 			collection: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
@@ -445,9 +453,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
-		pub fn create_game(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game(1_u32))]
+		#[transactional]
+		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let admin = T::Lookup::lookup(admin)?;
 
 			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(&sender, &game, &admin)?;
@@ -455,14 +465,16 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
+		#[transactional]
 		pub fn create_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			admin: T::AccountId,
+			admin: AccountIdLookupOf<T>,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let admin = T::Lookup::lookup(admin)?;
 			Self::do_create_game_collection(&sender, &game, &admin, &config)?;
 			Ok(())
 		}

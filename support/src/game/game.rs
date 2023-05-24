@@ -107,7 +107,7 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	/// Parameters:
 	/// - `_who`: sender
 	/// - `_collection`: collection id
-	/// - `_target`: recipient account, default `minter`
+	/// - `_target`: recipient account, default `miner`
 	///
 	/// By default, this is not a supported operation.
 	fn do_mint(
