@@ -36,13 +36,13 @@ jobs:
 
       - name: Check Build Dev
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release --features with-dev
+          SKIP_WASM_BUILD=1 cargo check --release --features with-game3
 
       - name: Unit-Test
         run: |
-          cargo test --features with-dev
+          cargo test --features with-game3
 
       - name: Check Build for Benchmarking
         run: >
           pushd node &&
-          cargo check --release --features runtime-benchmarks --features with-dev
+          cargo check --release --features runtime-benchmarks --features with-game3
