@@ -12,9 +12,16 @@ use pallet_nfts::{
 	BenchmarkHelper, CollectionSetting, CollectionSettings, ItemSettings, MintSettings,
 };
 use scale_info::prelude::{format, string::String};
+use sp_std::vec;
 
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
 const MAX: u32 = 10_u32;
+
+macro_rules! bvec {
+	($( $x:tt )*) => {
+		vec![$( $x )*].try_into().unwrap()
+	}
+}
 
 fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
@@ -29,7 +36,6 @@ fn new_funded_account<T: Config<I>, I: 'static>(
 	let name: String = format!("{}{}", index, seed);
 	let user = account(string_to_static_str(name), index, seed);
 	<T as pallet::Config<I>>::Currency::make_free_balance_be(&user, balance_amount);
-	// <T as pallet::Config>::Currency::issue(balance_amount);
 	return user
 }
 
@@ -108,6 +114,23 @@ fn do_mint_item<T: Config<I>, I: 'static>(index: u32) -> (T::AccountId, AccountI
 	(caller, mint_to)
 }
 
+fn do_set_upgrade_item<T: Config<I>, I: 'static>(
+	index: u32,
+) -> T::AccountId {
+	let (caller, admin) = do_create_item::<T, I>(index);
+
+	assert_ok!(PalletGame::<T, I>::set_upgrade_item(
+		RawOrigin::Signed(caller.clone()).into(),
+		<T as pallet_nfts::Config>::Helper::collection(0),
+		<T as pallet_nfts::Config>::Helper::item(0),
+		<T as pallet_nfts::Config>::Helper::item(100),
+		default_item_config(),
+		bvec![0u8; 50],
+		0,
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+	));
+	caller
+}
 
 benchmarks_instance_pallet! {
 
@@ -171,5 +194,68 @@ benchmarks_instance_pallet! {
 			minted_items: vec![<T as pallet_nfts::Config>::Helper::item(0)] }.into());
 	}
 
+
+	transfer {
+		let s in 0 .. MAX as u32;
+		let (caller, mint_to) = do_mint_item::<T, I>(s);
+
+		let dest =  T::Lookup::unlookup(new_funded_account::<T, I>(s + MAX, s + MAX, 1000_000_000u128 * UNIT));
+
+		let call = Call::<T, I>::transfer { collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			dest: dest.clone(),
+			amount: 10 };
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::Transferred {
+			from: caller.clone(),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			dest:  T::Lookup::lookup(dest.clone()).unwrap(),
+			amount: 10,
+		}.into() );
+	}
+
+	set_upgrade_item {
+		let s in 0 .. MAX as u32;
+		let (caller, admin) = do_create_item::<T, I>(s);
+
+		let call = Call::<T, I>::set_upgrade_item {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			new_item: <T as pallet_nfts::Config>::Helper::item(100),
+			config: default_item_config(),
+			data: bvec![0u8; 50],
+			level: 0,
+			fee: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::UpgradeSet {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			level: 0,
+		}.into() );
+	}
+
+	upgrade_item {
+		let s in 0 .. MAX as u32;
+		let caller = do_set_upgrade_item::<T, I>(s);
+
+
+		let call = Call::<T, I>::upgrade_item {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+			};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::Upgraded {
+			who: caller.clone(),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		}.into() );
+	}
 
 }
