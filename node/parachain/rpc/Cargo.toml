@@ -19,7 +19,7 @@ derive_more = "0.99.2"
 futures = '0.3'
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 log = "0.4.16"
-serde = {version = "1.0.132", features = ["derive"]}
+serde = {version = "1.0.156", features = ["derive"]}
 
 # Local
 gafi-support = {path = "../../../support"}
