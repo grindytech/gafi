@@ -15,7 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 clap = {version = "4.0.9", features = ["derive"]}
-futures = {version = "0.3.21", features = ["thread-pool"]}
+futures = {version = "0.3.28", features = ["thread-pool"]}
 jsonrpsee = {version = "0.16.2", features = ["server"]}
 
 frame-system = {workspace = true}
