@@ -521,7 +521,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item(1_u32))]
+		#[transactional]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -537,7 +538,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_item(1_u32))]
+		#[transactional]
 		pub fn add_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -552,7 +554,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint(1_u32))]
+		#[transactional]
 		pub fn mint(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -584,7 +587,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer(1_u32))]
+		#[transactional]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -600,7 +604,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(11)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
+		#[transactional]
 		pub fn set_upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -621,7 +626,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(12)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item(1_u32))]
+		#[transactional]
 		pub fn upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -646,7 +652,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(14)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price(1_u32))]
+		#[transactional]
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -662,7 +669,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(15)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item(1_u32))]
+		#[transactional]
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			id: T::TradeId,
@@ -677,7 +685,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(16)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
+		#[transactional]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -692,7 +701,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(17)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
+		#[transactional]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,
@@ -705,7 +715,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(18)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_price(1_u32))]
+		#[transactional]
 		pub fn cancel_set_price(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_cancel_price(&trade_id, &sender)?;
@@ -713,7 +724,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(19)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_bundle(1_u32))]
+		#[transactional]
 		pub fn cancel_set_bundle(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_cancel_bundle(&trade_id, &sender)?;
@@ -721,7 +733,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(20)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
+		#[transactional]
 		pub fn set_wishlist(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -734,7 +747,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(21)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::fill_wishlist(1_u32))]
+		#[transactional]
 		pub fn fill_wishlist(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,
