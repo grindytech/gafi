@@ -12,7 +12,10 @@ impl<T: Config<I>, I: 'static>
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure available id
-		ensure!(!BundleOf::<T, I>::contains_key(id), Error::<T, I>::IdExists);
+		ensure!(
+			!BundleOf::<T, I>::contains_key(id),
+			Error::<T, I>::TradeIdInUse
+		);
 
 		// ensure balance
 		ensure!(
@@ -98,11 +101,16 @@ impl<T: Config<I>, I: 'static>
 				)?;
 				Self::unlock_item(who, &package.collection, &package.item, amount)?;
 
-				{
-					let mut new_package = package.clone();
-					new_package.amount -= amount;
-					PackageOf::<T, I>::insert(id, new_package);
-				}
+				// subtract the amount sold
+				PackageOf::<T, I>::try_mutate(id, |package| -> DispatchResult {
+					match package {
+						Some(pack) => {
+							pack.amount -= amount;
+							Ok(())
+						},
+						None => Err(Error::<T, I>::InsufficientItemBalance.into()),
+					}
+				})?;
 
 				Self::deposit_event(Event::<T, I>::ItemBought {
 					seller: config.owner,
@@ -112,12 +120,12 @@ impl<T: Config<I>, I: 'static>
 					amount,
 					price: config.price,
 				});
-				
-				return Ok(());
-			} 
+
+				return Ok(())
+			}
 		}
-		
-		return Err(Error::<T, I>::UnknownTrade.into());
+
+		return Err(Error::<T, I>::NotForSale.into())
 	}
 
 	fn do_set_bundle(
@@ -127,7 +135,10 @@ impl<T: Config<I>, I: 'static>
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure available id
-		ensure!(!BundleOf::<T, I>::contains_key(id), Error::<T, I>::IdExists,);
+		ensure!(
+			!BundleOf::<T, I>::contains_key(id),
+			Error::<T, I>::TradeIdInUse,
+		);
 
 		// ensure ownership
 		for package in bundle.clone() {
@@ -188,7 +199,10 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		if let Some(config) = TradeConfigOf::<T, I>::get(bundle_id) {
-			ensure!(config.trade == TradeType::Bundle, Error::<T, I>::UnknownTrade);
+			ensure!(
+				config.trade == TradeType::Bundle,
+				Error::<T, I>::UnknownTrade
+			);
 
 			// check price
 			ensure!(bid_price >= config.price, Error::<T, I>::BidTooLow);
@@ -213,10 +227,7 @@ impl<T: Config<I>, I: 'static>
 
 				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
-			<T as pallet::Config<I>>::Currency::unreserve(
-				&config.owner,
-				T::BundleDeposit::get(),
-			);
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
 
 			Self::deposit_event(Event::<T, I>::BundleBought {
 				id: *bundle_id,
@@ -224,11 +235,10 @@ impl<T: Config<I>, I: 'static>
 				buyer: who.clone(),
 				price: config.price,
 			});
-		} else {
-			return Err(Error::<T, I>::UnknownTrade.into())
-		}
 
-		Ok(())
+			return Ok(())
+		}
+		return Err(Error::<T, I>::NotForSale.into())
 	}
 
 	fn do_cancel_price(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
@@ -246,6 +256,12 @@ impl<T: Config<I>, I: 'static>
 				// remove storage
 				PackageOf::<T, I>::remove(id);
 				TradeConfigOf::<T, I>::remove(id);
+
+				Self::deposit_event(Event::<T, I>::TradeCanceled {
+					id: *id,
+					who: who.clone(),
+				});
+
 				return Ok(())
 			}
 		}
@@ -269,6 +285,11 @@ impl<T: Config<I>, I: 'static>
 			// remove storage
 			BundleOf::<T, I>::remove(id);
 			TradeConfigOf::<T, I>::remove(id);
+
+			Self::deposit_event(Event::<T, I>::TradeCanceled {
+				id: *id,
+				who: who.clone(),
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownTrade.into())

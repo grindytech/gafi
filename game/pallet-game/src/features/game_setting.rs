@@ -1,7 +1,6 @@
 use crate::*;
 use frame_support::pallet_prelude::*;
 use pallet_nfts::{CollectionRole, CollectionRoles};
-use sp_runtime::Percent;
 
 impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumber>
 	for Pallet<T, I>
@@ -31,25 +30,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumb
 		);
 
 		Game::<T, I>::insert(id, game);
-		Self::deposit_event(Event::GameCreated { game_id: *id });
-		Ok(())
-	}
-
-	fn do_set_swap_fee(
-		who: &T::AccountId,
-		id: &T::GameId,
-		fee: Percent,
-		start_block: BlockNumber<T>,
-	) -> DispatchResult {
-		ensure!(
-			Self::has_role(&id, &who, CollectionRole::Admin),
-			Error::<T, I>::NoPermission
-		);
-
-		ensure!(fee <= T::MaxSwapFee::get(), Error::<T, I>::SwapFeeTooHigh);
-
-		SwapFee::<T, I>::insert(id, (fee, start_block));
-		Self::deposit_event(Event::SwapFeeSetted { game_id: *id, fee });
+		Self::deposit_event(Event::GameCreated { game: *id });
 		Ok(())
 	}
 }

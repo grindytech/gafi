@@ -89,8 +89,6 @@ pub use upfront_pool;
 pub mod pallets;
 pub use balances::NativeTokenExistentialDeposit;
 
-use pallet_nfts::PalletFeatures;
-
 mod precompiles;
 
 /// Type of block number.
@@ -643,40 +641,6 @@ impl pallet_hotfix_sufficients::Config for Runtime {
 	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Runtime>;
 }
 
-parameter_types! {
-	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
-}
-
-impl pallet_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type CollectionId = u32;
-	type ItemId = u32;
-	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type Locker = ();
-	type CollectionDeposit = ConstU128<2>;
-	type ItemDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<1>;
-	type AttributeDepositBase = ConstU128<1>;
-	type DepositPerByte = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
-	type KeyLimit = ConstU32<50>;
-	type ValueLimit = ConstU32<50>;
-	type ApprovalsLimit = ConstU32<10>;
-	type ItemAttributesApprovalsLimit = ConstU32<2>;
-	type MaxTips = ConstU32<10>;
-	type MaxDeadlineDuration = ConstU32<10000>;
-	type Features = Features;
-	type WeightInfo = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
-}
-
-// impl game_nfts::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// }
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -711,8 +675,6 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PalletWhitelist: pallet_whitelist,
-		PalletNFTs: pallet_nfts,
-		// GameNFT: game_nfts,
 
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
