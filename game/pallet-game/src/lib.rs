@@ -583,7 +583,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
+		#[transactional]
 		pub fn burn(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,

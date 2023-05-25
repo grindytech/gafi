@@ -77,7 +77,6 @@ fn do_create_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, Acco
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
 		RawOrigin::Signed(caller.clone()).into(),
 		<T as pallet::Config<I>>::Helper::game(0),
-		admin.clone(),
 		default_collection_config::<T, I>(),
 	));
 	(caller, admin)
@@ -213,7 +212,7 @@ benchmarks_instance_pallet! {
 	create_game_collection {
 		let s in 0 .. MAX as u32;
 		let (caller, admin) = do_create_game::<T, I>(s);
-		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0), admin , config: default_collection_config::<T, I>() };
+		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0), config: default_collection_config::<T, I>() };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::CollectionCreated { who: caller.clone(), collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());
