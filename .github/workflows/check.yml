@@ -25,10 +25,14 @@ jobs:
       - name: Install linux dependencies
         run: sudo apt-get install -y clang libssl-dev llvm libudev-dev protobuf-compiler
 
-      - name: Install Rust
+      - name: Install Rustup
         run: |
-          rustup update stable --no-self-update
-          rustup target add wasm32-unknown-unknown
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          source ~/.cargo/env
+          rustup default stable
+          rustup update nightly
+          rustup update stable
+          rustup target add wasm32-unknown-unknown --toolchain nightly
 
       # Rust cache
       - uses: Swatinem/rust-cache@v2
