@@ -1,8 +1,5 @@
 use crate::*;
-use frame_support::{
-	pallet_prelude::*,
-	traits::tokens::nonfungibles_v2::{Create},
-};
+use frame_support::{pallet_prelude::*, traits::tokens::nonfungibles_v2::Create};
 use gafi_support::game::CreateCollection;
 use pallet_nfts::{CollectionRole, CollectionRoles};
 
@@ -61,14 +58,11 @@ impl<T: Config<I>, I: 'static>
 		game: &T::GameId,
 		collection: &T::CollectionId,
 	) -> DispatchResult {
-		// make sure signer is game admin
-		ensure!(
-			GameRoleOf::<T, I>::get(game, &who) ==
-				Some(CollectionRoles(
-					CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
-				)),
-			Error::<T, I>::NoPermission
-		);
+		// make sure signer is game owner
+		Self::ensure_game_owner(who, game)?;
+
+		// make sure signer is collection owner
+		Self::ensure_collection_owner(who, collection)?;
 
 		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
 			ensure!(
@@ -83,7 +77,6 @@ impl<T: Config<I>, I: 'static>
 		})?;
 
 		GameOf::<T, I>::insert(collection, game);
-
 		Ok(())
 	}
 }

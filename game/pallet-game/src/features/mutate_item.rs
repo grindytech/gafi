@@ -77,13 +77,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		let item_balance = ItemBalanceOf::<T, I>::get((&who, collection, item));
-		ensure!(
-			amount <= item_balance,
-			Error::<T, I>::InsufficientItemBalance
-		);
-
-		ItemBalanceOf::<T, I>::insert((&who, collection, item), item_balance - amount);
+		Self::sub_item_balance(who, collection, item, amount)?;
 
 		Self::deposit_event(Event::<T, I>::Burned {
 			collection: *collection,

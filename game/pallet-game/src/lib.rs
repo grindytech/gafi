@@ -18,8 +18,8 @@ mod types;
 mod benchmarking;
 
 mod weights;
-pub use weights::*;
 use crate::weights::WeightInfo;
+pub use weights::*;
 
 use codec::MaxEncodedLen;
 use frame_support::{
@@ -28,8 +28,7 @@ use frame_support::{
 		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
-	PalletId,
-	transactional,
+	transactional, PalletId,
 };
 use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
@@ -425,13 +424,13 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
 		NoPermission,
-		
+
 		UnknownGame,
 		UnknownCollection,
 		UnknownItem,
 		UnknownTrade,
 		UnknownUpgrade,
-		
+
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -442,7 +441,7 @@ pub mod pallet {
 		ExceedMaxCollection,
 		/// Exceed max collections in a bundle
 		ExceedMaxBundle,
-		
+
 		SoldOut,
 		/// Too many attempts
 		WithdrawReserveFailed,
@@ -811,5 +810,16 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			},
 			None => Err(Error::<T, I>::UnknownGame.into()),
 		}
+	}
+
+	pub fn ensure_collection_owner(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+	) -> Result<(), Error<T, I>> {
+		if let Some(owner) = T::Nfts::collection_owner(collection) {
+			ensure!(owner == who.clone(), Error::<T, I>::NoPermission);
+			return Ok(())
+		}
+		return Err(Error::<T, I>::UnknownCollection)
 	}
 }
