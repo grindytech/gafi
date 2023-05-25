@@ -448,8 +448,12 @@ pub mod pallet {
 		UpgradeExists,
 		/// Add the same collection into a game
 		CollectionExists,
+		
 		InsufficientItemBalance,
 		InsufficientLockBalance,
+		/// item amount = 0
+		InvalidAmount,
+
 		ItemLocked,
 		NotForSale,
 		BidTooLow,
