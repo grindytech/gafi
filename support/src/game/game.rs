@@ -21,17 +21,16 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	/// Do create game collection
 	///
-	/// Create collection for specific game
+	/// The game admin creates a collection.
+	/// Game and collection have the same owner and admin.
 	///
 	/// Parameters:
-	/// - `who`: signer and collection owner
+	/// - `who`: signer and game owner
 	/// - `game`: game id
-	/// - `admin`: if admin not provided, owner also an admin
 	/// - `config`: collection configuration
 	fn do_create_game_collection(
 		who: &AccountId,
 		game: &GameId,
-		admin: &AccountId,
 		config: &CollectionConfig,
 	) -> DispatchResult;
 
@@ -56,11 +55,11 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	/// Parameters:
 	/// - `who`: signer and collection owner
 	/// - `game`: game id
-	/// - `collection_ids`: collection ids
+	/// - `collection`: collection id
 	fn do_add_collection(
 		who: &AccountId,
 		game: &GameId,
-		collection_ids: &Vec<CollectionId>,
+		collection: &CollectionId,
 	) -> DispatchResult;
 }
 

@@ -56,14 +56,14 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 					total_item = total_item.saturating_sub(1);
 					maybe_position = Self::random_number(total_item, position);
 				} else {
-					return Err(Error::<T, I>::MintTooFast.into())
+					return Err(Error::<T, I>::SoldOut.into())
 				}
 			}
 			Self::sub_total_reserve(collection, amount)?;
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
-			miner: who.clone(),
+			who: who.clone(),
 			target: target.clone(),
 			collection: *collection,
 			minted_items,
@@ -77,15 +77,10 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		let item_balance = ItemBalanceOf::<T, I>::get((&who, collection, item));
-		ensure!(
-			amount <= item_balance,
-			Error::<T, I>::InsufficientItemBalance
-		);
-
-		ItemBalanceOf::<T, I>::insert((&who, collection, item), item_balance - amount);
+		Self::sub_item_balance(who, collection, item, amount)?;
 
 		Self::deposit_event(Event::<T, I>::Burned {
+			who: who.clone(),
 			collection: *collection,
 			item: *item,
 			amount,

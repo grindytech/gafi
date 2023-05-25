@@ -60,75 +60,121 @@ macro_rules! bvec {
 	}
 }
 
-fn create_items(
-	who: &sr25519::Public,
-	collection_config: &CollectionConfigFor<Test>,
-	item_config: &ItemConfig,
-	item: u32,
-	amount: u32,
-) {
+fn do_create_game() -> (sr25519::Public, sr25519::Public) {
+	let owner: sr25519::Public = new_account(0, 10_000 * unit(GAKI));
+	let admin = new_account(1, 10_000 * unit(GAKI));
 	assert_ok!(PalletGame::create_game(
-		RuntimeOrigin::signed(who.clone()),
-		who.clone()
+		RuntimeOrigin::signed(owner.clone()),
+		admin.clone()
 	));
+	(owner, admin)
+}
 
+fn do_create_collection(
+	game: u32,
+	collection_config: &CollectionConfigFor<Test>,
+	admin: &sr25519::Public,
+) {
 	assert_ok!(PalletGame::create_game_collection(
-		RuntimeOrigin::signed(who.clone()),
-		0,
-		who.clone(),
+		RuntimeOrigin::signed(admin.clone()),
+		game,
 		*collection_config,
 	));
+}
 
+fn do_create_item(
+	admin: &sr25519::Public,
+	collection: u32,
+	item: u32,
+	item_config: &ItemConfig,
+	amount: u32,
+) {
 	assert_ok!(PalletGame::create_item(
-		RuntimeOrigin::signed(who.clone()),
-		0,
+		RuntimeOrigin::signed(admin.clone()),
+		collection,
 		item,
 		*item_config,
 		amount
 	));
 }
 
-fn mint_items(miner: &sr25519::Public, amount: u32, count: u32) {
-	let admin = new_account(0, 1000 * unit(GAKI));
+const TEST_BUNDLE: [PackageFor<Test>; 3] = [
+	Package {
+		collection: 0,
+		item: 0,
+		amount: 10,
+	},
+	Package {
+		collection: 0,
+		item: 1,
+		amount: 10,
+	},
+	Package {
+		collection: 0,
+		item: 2,
+		amount: 10,
+	},
+];
 
-	assert_ok!(PalletGame::create_game(
-		RuntimeOrigin::signed(admin.clone()),
-		admin.clone()
+fn do_mint_item(collection: u32, amount: u32) -> sr25519::Public {
+	let player = new_account(10, 100_000 * unit(GAKI));
+	assert_ok!(PalletGame::mint(
+		RuntimeOrigin::signed(player.clone()),
+		collection,
+		player.clone(),
+		amount
 	));
+	player
+}
 
-	assert_ok!(PalletGame::create_game_collection(
-		RuntimeOrigin::signed(admin.clone()),
-		0,
-		admin.clone(),
-		default_collection_config(),
-	));
-
-	for i in 0..count {
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			i,
-			default_item_config(),
-			amount
-		));
-
+fn do_all_mint_item() -> sr25519::Public {
+	let (owner, admin) = do_create_game();
+	let mint_fee = 1 * unit(GAKI);
+	do_create_collection(0, &collection_config(mint_fee), &admin);
+	for pack in TEST_BUNDLE.clone() {
+		do_create_item(&admin, 0, pack.item, &default_item_config(), pack.amount);
+	}
+	let player = new_account(10, 100_000 * unit(GAKI));
+	for pack in TEST_BUNDLE.clone() {
 		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(miner.clone()),
-			0,
-			miner.clone(),
-			amount
+			RuntimeOrigin::signed(player.clone()),
+			pack.collection,
+			player.clone(),
+			pack.amount
 		));
 	}
+	player
+}
+
+fn do_all_set_price(package: PackageFor<Test>, price: u128) -> sr25519::Public {
+	let who = do_all_mint_item();
+
+	assert_ok!(PalletGame::set_price(
+		RuntimeOrigin::signed(who.clone()),
+		package.clone(),
+		price,
+	));
+	who
+}
+
+fn do_all_set_bundle(package: Vec<PackageFor<Test>>, price: u128) -> sr25519::Public {
+	let player = do_all_mint_item();
+
+	assert_ok!(PalletGame::set_bundle(
+		RuntimeOrigin::signed(player.clone()),
+		package,
+		price
+	));
+	player
 }
 
 #[test]
 fn create_first_game_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
+		let before_balance = 3_000 * unit(GAKI);
 		let owner = new_account(0, before_balance);
-
-		let admin = new_account(1, 3 * unit(GAKI));
+		let admin = new_account(1, 3_000 * unit(GAKI));
 
 		assert_ok!(PalletGame::create_game(
 			RuntimeOrigin::signed(owner.clone()),
@@ -157,20 +203,11 @@ fn create_first_game_should_works() {
 fn create_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
-
-		let admin = new_account(1, 3 * unit(GAKI));
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
+		let (owner, admin) = do_create_game();
 
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			admin.clone(),
 			default_collection_config(),
 		));
 
@@ -180,7 +217,6 @@ fn create_game_collection_should_works() {
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			admin.clone(),
 			default_collection_config(),
 		));
 		assert_eq!(CollectionsOf::<Test>::get(0)[1], 1);
@@ -193,33 +229,24 @@ fn create_game_collection_should_fails() {
 		// no permission
 		{
 			run_to_block(1);
-			let before_balance = 3 * unit(GAKI);
-			let owner = new_account(0, before_balance);
-			let admin = new_account(1, 3 * unit(GAKI));
+			let (owner, admin) = do_create_game();
+
 			let acc = new_account(3, 3 * unit(GAKI));
-
-			assert_ok!(PalletGame::create_game(
-				RuntimeOrigin::signed(owner.clone()),
-				admin.clone(),
-			));
-
 			// random acc should has no permission
 			assert_err!(
 				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(acc.clone()),
 					0,
-					acc.clone(),
 					default_collection_config(),
 				),
 				Error::<Test>::NoPermission
 			);
 
-			// game owner should has no permission
+			// game owner also should has no permission
 			assert_err!(
 				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(owner.clone()),
 					0,
-					owner.clone(),
 					default_collection_config(),
 				),
 				Error::<Test>::NoPermission
@@ -232,14 +259,11 @@ fn create_game_collection_should_fails() {
 fn create_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
-
-		let admin = new_account(1, 3 * unit(GAKI));
+		let who = new_account(0, 3_000 * unit(GAKI));
 
 		assert_ok!(PalletGame::create_collection(
-			RuntimeOrigin::signed(admin.clone()),
-			admin.clone(),
+			RuntimeOrigin::signed(who.clone()),
+			who.clone(),
 			default_collection_config(),
 		));
 	})
@@ -249,21 +273,10 @@ fn create_collection_should_works() {
 fn add_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
+		let (owner, admin) = do_create_game();
 
-		let admin = new_account(1, 3 * unit(GAKI));
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::create_collection(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-			default_collection_config(),
-		));
+		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &default_collection_config(), &admin);
 
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(owner.clone()),
@@ -274,12 +287,60 @@ fn add_game_collection_should_works() {
 		assert_ok!(PalletGame::add_game_collection(
 			RuntimeOrigin::signed(owner.clone()),
 			0,
-			[0, 1].to_vec()
+			2,
 		));
 
-		assert_eq!(CollectionsOf::<Test>::get(0), [0, 1].to_vec());
+		assert_eq!(CollectionsOf::<Test>::get(0), [0, 1, 2].to_vec());
 		assert_eq!(GameOf::<Test>::get(0).unwrap(), 0);
 		assert_eq!(GameOf::<Test>::get(1).unwrap(), 0);
+		assert_eq!(GameOf::<Test>::get(2).unwrap(), 0);
+	})
+}
+
+#[test]
+fn add_game_collection_should_fails() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let (owner, admin) = do_create_game();
+
+		for i in 0..(MAX_GAME_COLLECTION_VAL) {
+			assert_ok!(PalletGame::create_collection(
+				RuntimeOrigin::signed(owner.clone()),
+				admin.clone(),
+				default_collection_config(),
+			));
+
+			assert_ok!(PalletGame::add_game_collection(
+				RuntimeOrigin::signed(owner.clone()),
+				0,
+				i
+			));
+		}
+
+		assert_err!(
+			PalletGame::add_game_collection(RuntimeOrigin::signed(owner.clone()), 0, 0),
+			Error::<Test>::CollectionExists
+		);
+
+		assert_ok!(PalletGame::create_collection(
+			RuntimeOrigin::signed(owner.clone()),
+			admin.clone(),
+			default_collection_config(),
+		));
+
+		assert_err!(
+			PalletGame::add_game_collection(RuntimeOrigin::signed(admin.clone()), 0, 1),
+			Error::<Test>::NoPermission
+		);
+
+		assert_err!(
+			PalletGame::add_game_collection(
+				RuntimeOrigin::signed(owner.clone()),
+				0,
+				MAX_GAME_COLLECTION_VAL
+			),
+			Error::<Test>::ExceedMaxCollection
+		);
 	})
 }
 
@@ -287,22 +348,9 @@ fn add_game_collection_should_works() {
 fn create_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
 
-		let admin = new_account(1, 3 * unit(GAKI));
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::create_game_collection(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			admin.clone(),
-			default_collection_config(),
-		));
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &default_collection_config(), &admin);
 
 		assert_ok!(PalletGame::create_item(
 			RuntimeOrigin::signed(admin.clone()),
@@ -320,30 +368,10 @@ fn create_item_should_works() {
 fn add_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
-		let admin = new_account(1, 3 * unit(GAKI));
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::create_game_collection(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			admin.clone(),
-			default_collection_config(),
-		));
-
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			0,
-			default_item_config(),
-			1000
-		));
 		assert_ok!(PalletGame::add_item(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
@@ -383,48 +411,28 @@ fn withdraw_reserve_should_works() {
 fn mint_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let before_balance = 3 * unit(GAKI);
-		let owner = new_account(0, before_balance);
+		let (owner, admin) = do_create_game();
+		let mint_fee = 1 * unit(GAKI);
+		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
-		let admin = new_account(1, 3 * unit(GAKI));
-		let mint_fee: u128 = 3 * unit(GAKI);
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::create_game_collection(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			admin.clone(),
-			collection_config(mint_fee),
-		));
-
-		for i in 0..3 {
-			assert_ok!(PalletGame::create_item(
-				RuntimeOrigin::signed(admin.clone()),
-				0,
-				i,
-				default_item_config(),
-				1
-			));
-		}
-
-		let before_balance = 3000 * unit(GAKI);
-		let player = new_account(2, before_balance);
+		let before_player_balance = 3000 * unit(GAKI);
+		let before_owner_balance = Balances::free_balance(owner.clone());
+		let player = new_account(2, before_player_balance);
 		assert_ok!(PalletGame::mint(
 			RuntimeOrigin::signed(player.clone()),
 			0,
 			player.clone(),
 			3
 		));
-		for i in 0..3 {
-			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 1);
-		}
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 3);
 		assert_eq!(
 			Balances::free_balance(player.clone()),
-			before_balance - (mint_fee * 3)
+			before_player_balance - (mint_fee * 3)
+		);
+		assert_eq!(
+			Balances::free_balance(owner.clone()),
+			before_owner_balance + (mint_fee * 3)
 		);
 	})
 }
@@ -433,30 +441,11 @@ fn mint_should_works() {
 fn mint_should_fails() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let owner = new_account(0, 3 * unit(GAKI));
-
-		let admin = new_account(1, 3 * unit(GAKI));
-		let mint_fee: u128 = 3 * unit(GAKI);
-
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
-		));
-
-		assert_ok!(PalletGame::create_game_collection(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			admin.clone(),
-			collection_config(mint_fee),
-		));
-
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			0,
-			default_item_config(),
-			MAX_ITEM_MINT_VAL + 1
-		));
+		let (owner, admin) = do_create_game();
+		let mint_fee = 1 * unit(GAKI);
+		let total_item = MAX_ITEM_MINT_VAL + 3;
+		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), total_item);
 
 		let player = new_account(2, 3000 * unit(GAKI));
 		assert_err!(
@@ -476,7 +465,6 @@ fn mint_should_fails() {
 			MAX_ITEM_MINT_VAL,
 		));
 
-		// one left
 		assert_err!(
 			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 4),
 			Error::<Test>::ExceedTotalAmount
@@ -486,7 +474,7 @@ fn mint_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			0,
 			player.clone(),
-			1
+			3
 		));
 
 		assert_err!(
@@ -500,35 +488,8 @@ fn mint_should_fails() {
 pub fn burn_items_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let owner = new_account(0, 3 * unit(GAKI));
+		let player = do_all_mint_item();
 
-		assert_ok!(PalletGame::create_game(
-			RuntimeOrigin::signed(owner.clone()),
-			owner.clone()
-		));
-
-		assert_ok!(PalletGame::create_game_collection(
-			RuntimeOrigin::signed(owner.clone()),
-			0,
-			owner.clone(),
-			collection_config(0),
-		));
-
-		assert_ok!(PalletGame::create_item(
-			RuntimeOrigin::signed(owner.clone()),
-			0,
-			0,
-			default_item_config(),
-			100
-		));
-
-		let player = new_account(2, 3000 * unit(GAKI));
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			10
-		));
 		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
 
 		assert_ok!(PalletGame::burn(
@@ -550,26 +511,9 @@ pub fn burn_items_should_works() {
 pub fn transfer_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
+		let player = do_all_mint_item();
 
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
-		);
-
-		let player = new_account(2, 3000 * unit(GAKI));
 		let dest = new_account(3, 3000 * unit(GAKI));
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			10
-		));
-
 		assert_ok!(PalletGame::transfer(
 			RuntimeOrigin::signed(player.clone()),
 			0,
@@ -592,16 +536,10 @@ pub fn transfer_item_should_works() {
 pub fn set_upgrade_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
-		);
+		let (owner, admin) = do_create_game();
+		let mint_fee = 1 * unit(GAKI);
+		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
 		let byte = 50;
 
@@ -611,7 +549,6 @@ pub fn set_upgrade_item_should_works() {
 		};
 
 		let before_balance = Balances::free_balance(&owner);
-
 		assert_ok!(PalletGame::set_upgrade_item(
 			RuntimeOrigin::signed(owner.clone()),
 			0,
@@ -641,16 +578,11 @@ pub fn set_upgrade_item_should_works() {
 pub fn upgrade_item_shoud_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
-		);
+		let (owner, admin) = do_create_game();
+		let mint_fee = 1 * unit(GAKI);
+		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+		let player = do_mint_item(0, 10);
 
 		let byte = 50;
 
@@ -668,15 +600,6 @@ pub fn upgrade_item_shoud_works() {
 			bvec![0u8; byte],
 			1,
 			input.fee,
-		));
-
-		let player = new_account(3, 10000 * unit(GAKI));
-
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			10
 		));
 
 		let player_before_balance = Balances::free_balance(&player);
@@ -706,45 +629,20 @@ pub fn upgrade_item_shoud_works() {
 pub fn set_price_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
-		);
-
-		let player = new_account(3, 10000 * unit(GAKI));
-
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			10
-		));
-
-		let package = Package {
-			collection: 0,
-			item: 0,
-			amount: 9,
-		};
+		let player = do_all_mint_item();
 		let price = 3 * unit(GAKI);
-
+		
 		let before_balance = Balances::free_balance(&player);
-
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(player.clone()),
-			package.clone(),
+			TEST_BUNDLE[0].clone(),
 			price,
 		));
 		assert_eq!(
 			Balances::free_balance(&player),
 			before_balance - SALE_DEPOSIT_VAL
 		);
-		assert_eq!(PackageOf::<Test>::get(0).unwrap(), package);
+		assert_eq!(PackageOf::<Test>::get(0).unwrap(), TEST_BUNDLE[0].clone());
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
@@ -761,40 +659,40 @@ pub fn set_price_should_fails() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let owner = new_account(0, 10_000 * unit(GAKI));
+		let (owner, admin) = do_create_game();
+		let mint_fee = 1 * unit(GAKI);
+		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+		let player = do_mint_item(0, 10);
 
-		let mut item_config = ItemConfig::default();
-		item_config.disable_setting(pallet_nfts::ItemSetting::Transferable);
-
-		create_items(&owner, &default_collection_config(), &item_config, 0, 100);
-
-		let player = new_account(3, 10000 * unit(GAKI));
-
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			10
-		));
-
-		let mut package = Package {
-			collection: 0,
-			item: 0,
-			amount: 11,
-		};
 		let price = 3 * unit(GAKI);
+
+		let mut fail_bundle = TEST_BUNDLE[0].clone();
+		fail_bundle.amount += 10;
 		assert_err!(
 			PalletGame::set_price(
 				RuntimeOrigin::signed(player.clone()),
-				package.clone(),
+				fail_bundle.clone(),
 				price,
 			),
 			Error::<Test>::InsufficientItemBalance
 		);
 
-		package.amount = 1;
+		let mut item_config = ItemConfig::default();
+		item_config.disable_setting(pallet_nfts::ItemSetting::Transferable);
+
+		assert_ok!(pallet_nfts::pallet::Pallet::<Test>::lock_item_transfer(
+			RuntimeOrigin::signed(admin),
+			0,
+			0
+		));
+
 		assert_err!(
-			PalletGame::set_price(RuntimeOrigin::signed(player.clone()), package, price,),
+			PalletGame::set_price(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE[0].clone(),
+				price,
+			),
 			Error::<Test>::ItemLocked
 		);
 	})
@@ -805,37 +703,11 @@ pub fn buy_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
-		);
-
-		let seller = new_account(3, 10000 * unit(GAKI));
-
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(seller.clone()),
-			0,
-			seller.clone(),
-			10
-		));
-
-		let price = 3 * unit(GAKI);
-		let package = Package {
-			collection: 0,
-			item: 0,
-			amount: 8,
-		};
-
-		assert_ok!(PalletGame::set_price(
-			RuntimeOrigin::signed(seller.clone()),
-			package,
+		let price = 1 * unit(GAKI);
+		let seller = do_all_set_price(
+			TEST_BUNDLE[0].clone(),
 			price,
-		));
+		);
 
 		let buyer = new_account(4, 10000 * unit(GAKI));
 
@@ -845,21 +717,21 @@ pub fn buy_item_should_works() {
 		assert_ok!(PalletGame::buy_item(
 			RuntimeOrigin::signed(buyer.clone()),
 			0,
-			3,
+			5,
 			price,
 		));
 
-		assert_eq!(ItemBalanceOf::<Test>::get((&seller, 0, 0)), 2);
+		assert_eq!(ItemBalanceOf::<Test>::get((&seller, 0, 0)), 0);
 		assert_eq!(LockBalanceOf::<Test>::get((&seller, 0, 0)), 5);
-		assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, 0)), 3);
+		assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, 0)), 5);
 
 		assert_eq!(
 			Balances::free_balance(&seller),
-			seller_before_balance + (price * 3)
+			seller_before_balance + (price * 5)
 		);
 		assert_eq!(
 			Balances::free_balance(&buyer),
-			buyer_before_balance - (price * 3)
+			buyer_before_balance - (price * 5)
 		);
 	})
 }
@@ -869,40 +741,13 @@ pub fn buy_item_should_fails() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let owner = new_account(0, 10_000 * unit(GAKI));
-
-		create_items(
-			&owner,
-			&default_collection_config(),
-			&default_item_config(),
-			0,
-			100,
+		let price = 1 * unit(GAKI);
+		do_all_set_price(
+			TEST_BUNDLE[0].clone(),
+			price,
 		);
 
-		let seller = new_account(3, 10000 * unit(GAKI));
-
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(seller.clone()),
-			0,
-			seller.clone(),
-			10
-		));
-
-		let price = 3 * unit(GAKI);
-		let package = Package {
-			collection: 0,
-			item: 0,
-			amount: 10,
-		};
-
-		assert_ok!(PalletGame::set_price(
-			RuntimeOrigin::signed(seller.clone()),
-			package,
-			price,
-		));
-
 		let buyer = new_account(4, 10000 * unit(GAKI));
-
 		assert_err!(
 			PalletGame::buy_item(
 				RuntimeOrigin::signed(buyer.clone()),
@@ -921,7 +766,7 @@ pub fn buy_item_should_fails() {
 		));
 
 		assert_err!(
-			PalletGame::buy_item(RuntimeOrigin::signed(buyer.clone()), 0, 4, price,),
+			PalletGame::buy_item(RuntimeOrigin::signed(buyer.clone()), 0, 4, price),
 			Error::<Test>::SoldOut
 		);
 	})
@@ -932,31 +777,24 @@ pub fn set_bundle_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let count = 2_u32;
-		let seller = new_account(0, 10_000 * unit(GAKI));
-
-		mint_items(&seller, 10, count);
-
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 10));
-		}
+		let player = do_all_mint_item();
 
 		let price = 100 * unit(GAKI);
 
 		assert_ok!(PalletGame::set_bundle(
-			RuntimeOrigin::signed(seller.clone()),
-			packages.clone(),
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
 			price
 		));
 
-		assert_eq!(BundleOf::<Test>::get(0), packages);
+		assert_eq!(BundleOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
 	})
 }
 
 #[test]
 pub fn set_bundle_should_fails() {
 	new_test_ext().execute_with(|| {
+		run_to_block(1);
 		let seller = new_account(0, 10_000 * unit(GAKI));
 
 		for i in 0..(MAX_BUNDLE_VAL + 5) {
@@ -997,25 +835,8 @@ pub fn set_bundle_should_fails() {
 pub fn buy_bundle_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-
-		let count = 2_u32;
-		let seller = new_account(0, 10_000 * unit(GAKI));
-
-		mint_items(&seller, 10, count);
-
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 5));
-		}
-
-		let price = 100 * unit(GAKI);
-
-		assert_ok!(PalletGame::set_bundle(
-			RuntimeOrigin::signed(seller.clone()),
-			packages.clone(),
-			price
-		));
-
+		let price = 10 * unit(GAKI);
+		let seller = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
 		let buyer = new_account(1, 10_000 * unit(GAKI));
 
 		let seller_before_balance = Balances::free_balance(&seller);
@@ -1026,11 +847,11 @@ pub fn buy_bundle_should_works() {
 			0,
 			price
 		));
-		for i in 0..count {
-			assert_eq!(ItemBalanceOf::<Test>::get((buyer.clone(), 0, i)), 5);
+		for i in 0..TEST_BUNDLE.len() as u32 {
+			assert_eq!(ItemBalanceOf::<Test>::get((buyer.clone(), 0, i)), 10);
 		}
-		for i in 0..count {
-			assert_eq!(ItemBalanceOf::<Test>::get((seller.clone(), 0, i)), 5);
+		for i in 0..TEST_BUNDLE.len() as u32 {
+			assert_eq!(ItemBalanceOf::<Test>::get((seller.clone(), 0, i)), 0);
 		}
 		assert_eq!(
 			Balances::free_balance(&seller),
@@ -1045,23 +866,8 @@ pub fn buy_bundle_should_fails() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let count = 2_u32;
-		let seller = new_account(0, 10_000 * unit(GAKI));
-
-		mint_items(&seller, 10, count);
-
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 5));
-		}
-
 		let price = 100 * unit(GAKI);
-
-		assert_ok!(PalletGame::set_bundle(
-			RuntimeOrigin::signed(seller.clone()),
-			packages.clone(),
-			price
-		));
+		let seller = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
 
 		let buyer = new_account(1, 1 * unit(GAKI));
 		assert_err!(
@@ -1086,21 +892,7 @@ pub fn cancel_set_price_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let count = 2_u32;
-		let player = new_account(2, 10_000 * unit(GAKI));
-		mint_items(&player, 10, count);
-
-		let package = Package {
-			collection: 0,
-			item: 0,
-			amount: 10,
-		};
-
-		assert_ok!(PalletGame::set_price(
-			RuntimeOrigin::signed(player.clone()),
-			package,
-			3 * unit(GAKI),
-		));
+		let player = do_all_set_price(TEST_BUNDLE[0].clone(), unit(GAKI));
 
 		let before_balance = Balances::free_balance(&player);
 
@@ -1123,29 +915,15 @@ pub fn cancel_set_bundle_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 
-		let count = 2_u32;
-		let player = new_account(2, 10_000 * unit(GAKI));
-		mint_items(&player, 10, count);
-
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 5));
-		}
-
-		assert_ok!(PalletGame::set_bundle(
-			RuntimeOrigin::signed(player.clone()),
-			packages,
-			3 * unit(GAKI),
-		));
+		let player = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), unit(GAKI));
 
 		let before_balance = Balances::free_balance(&player);
-
 		assert_ok!(PalletGame::cancel_set_bundle(
 			RuntimeOrigin::signed(player.clone()),
 			0,
 		));
 
-		for i in 0..count {
+		for i in 0..TEST_BUNDLE.len() as u32 {
 			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 10);
 			assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
 		}
@@ -1160,22 +938,16 @@ pub fn cancel_set_bundle_should_works() {
 pub fn set_wishlist_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let count = 2_u32;
 		let buyer = new_account(3, 1000 * unit(GAKI));
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 5));
-		}
 		let price = 3 * unit(GAKI);
-
 		let before_balance = Balances::free_balance(&buyer);
 		assert_ok!(PalletGame::set_wishlist(
 			RuntimeOrigin::signed(buyer.clone()),
-			packages.clone(),
+			TEST_BUNDLE.clone().to_vec(),
 			price,
 		));
 
-		assert_eq!(BundleOf::<Test>::get(0), packages);
+		assert_eq!(BundleOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
@@ -1195,20 +967,13 @@ pub fn set_wishlist_should_works() {
 pub fn fill_wishlist_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let count = 2_u32;
-		let player = new_account(2, 10_000 * unit(GAKI));
-		mint_items(&player, 10, count);
-
-		let mut packages: Vec<PackageFor<Test>> = vec![];
-		for i in 0..count {
-			packages.push(Package::new(0, i, 5));
-		}
+		let player = do_all_mint_item();
 		let price = 3 * unit(GAKI);
 
 		let buyer = new_account(3, 1000 * unit(GAKI));
 		assert_ok!(PalletGame::set_wishlist(
 			RuntimeOrigin::signed(buyer.clone()),
-			packages.clone(),
+			TEST_BUNDLE.clone().to_vec(),
 			price,
 		));
 
@@ -1219,9 +984,9 @@ pub fn fill_wishlist_should_works() {
 			price
 		));
 
-		for i in 0..count {
-			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 5);
-			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 5);
+		for i in 0..TEST_BUNDLE.len() as u32 {
+			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 0);
+			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 10);
 		}
 		assert_eq!(Balances::reserved_balance(&buyer), 0);
 		assert_eq!(

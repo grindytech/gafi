@@ -73,8 +73,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let total = TotalReserveOf::<T, I>::get(collection);
-		TotalReserveOf::<T, I>::insert(collection, total + amount);
+		TotalReserveOf::<T, I>::insert(collection, total.saturating_add(amount));
 		Ok(())
 	}
 
@@ -82,9 +83,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let total = TotalReserveOf::<T, I>::get(collection);
 		ensure!(total >= amount, Error::<T, I>::SoldOut);
-		TotalReserveOf::<T, I>::insert(collection, total - amount);
+		TotalReserveOf::<T, I>::insert(collection, total.saturating_sub(amount));
 		Ok(())
 	}
 
@@ -118,6 +120,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
 		ItemBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_add(amount));
 		Ok(())
@@ -129,6 +132,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
 		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
 		ItemBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
@@ -141,6 +145,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = LockBalanceOf::<T, I>::get((&who, &collection, &item));
 		LockBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_add(amount));
 		Ok(())
@@ -152,6 +157,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = LockBalanceOf::<T, I>::get((who, collection, item));
 		ensure!(balance >= amount, Error::<T, I>::InsufficientLockBalance);
 		LockBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
@@ -192,17 +198,4 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		Ok(())
 	}
-
-	// pub(crate) fn get_bundle_id(
-	// 	bundle: &Bundle<T::CollectionId, T::ItemId>,
-	// 	who: &T::AccountId,
-	// ) -> ID {
-	// 	let payload = (
-	// 		bundle,
-	// 		who,
-	// 		<frame_system::Pallet<T>>::block_number(),
-	// 	);
-
-	// 	payload.using_encoded(blake2_256)
-	// }
 }

@@ -39,6 +39,7 @@ pub trait WeightInfo {
 	fn create_item(s: u32, ) -> Weight;
 	fn add_item(s: u32, ) -> Weight;
 	fn mint(s: u32, ) -> Weight;
+	fn burn(s: u32, ) -> Weight;
 	fn transfer(s: u32, ) -> Weight;
 	fn set_upgrade_item(s: u32, ) -> Weight;
 	fn upgrade_item(s: u32, ) -> Weight;
@@ -135,6 +136,16 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
+
+	// Storage: Game ItemBalanceOf (r:1 w:1)
+	/// The range of component `s` is `[0, 10]`.
+	fn burn(_s: u32, ) -> Weight {
+		// Minimum execution time: 16_000 nanoseconds.
+		Weight::from_ref_time(18_023_636)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
 	fn transfer(s: u32, ) -> Weight {
@@ -327,6 +338,13 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_ref_time(100_853).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(3))
+	}
+
+	fn burn(_s: u32, ) -> Weight {
+		// Minimum execution time: 16_000 nanoseconds.
+		Weight::from_ref_time(18_023_636)
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	 
 	fn transfer(s: u32, ) -> Weight {

@@ -18,8 +18,8 @@ mod types;
 mod benchmarking;
 
 mod weights;
-pub use weights::*;
 use crate::weights::WeightInfo;
+pub use weights::*;
 
 use codec::MaxEncodedLen;
 use frame_support::{
@@ -28,8 +28,7 @@ use frame_support::{
 		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
-	PalletId,
-	transactional,
+	transactional, PalletId,
 };
 use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
@@ -335,28 +334,33 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated {
+			who: T::AccountId,
 			game: T::GameId,
 		},
 		CollectionCreated {
+			who: T::AccountId,
 			collection: T::CollectionId,
 		},
 		ItemCreated {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		},
 		ItemAdded {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		},
 		Minted {
-			miner: T::AccountId,
+			who: T::AccountId,
 			target: T::AccountId,
 			collection: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
 		Burned {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
@@ -372,14 +376,18 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
+			new_item: T::ItemId,
 			amount: u32,
 		},
 		UpgradeSet {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
+			new_item: T::ItemId,
 			level: Level,
 		},
 		PriceSet {
+			id: T::TradeId,
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
@@ -387,6 +395,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		},
 		ItemBought {
+			id: T::TradeId,
 			seller: T::AccountId,
 			buyer: T::AccountId,
 			collection: T::CollectionId,
@@ -425,13 +434,13 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
 		NoPermission,
-		
+
 		UnknownGame,
 		UnknownCollection,
 		UnknownItem,
 		UnknownTrade,
 		UnknownUpgrade,
-		
+
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -442,20 +451,24 @@ pub mod pallet {
 		ExceedMaxCollection,
 		/// Exceed max collections in a bundle
 		ExceedMaxBundle,
-		
+
 		SoldOut,
 		/// Too many attempts
 		WithdrawReserveFailed,
 		UpgradeExists,
-
+		/// Add the same collection into a game
+		CollectionExists,
+		
 		InsufficientItemBalance,
 		InsufficientLockBalance,
+		/// item amount = 0
+		InvalidAmount,
+
 		ItemLocked,
 		NotForSale,
 		BidTooLow,
 		AskTooHigh,
 		TradeIdInUse,
-		MintTooFast,
 		TooLow,
 	}
 
@@ -486,12 +499,10 @@ pub mod pallet {
 		pub fn create_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			admin: AccountIdLookupOf<T>,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_game_collection(&sender, &game, &admin, &config)?;
+			Self::do_create_game_collection(&sender, &game, &config)?;
 			Ok(())
 		}
 
@@ -513,7 +524,7 @@ pub mod pallet {
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			collection: Vec<T::CollectionId>,
+			collection: T::CollectionId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_add_collection(&sender, &game, &collection)?;
@@ -572,7 +583,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
+		#[transactional]
 		pub fn burn(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -812,5 +824,16 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			},
 			None => Err(Error::<T, I>::UnknownGame.into()),
 		}
+	}
+
+	pub fn ensure_collection_owner(
+		who: &T::AccountId,
+		collection: &T::CollectionId,
+	) -> Result<(), Error<T, I>> {
+		if let Some(owner) = T::Nfts::collection_owner(collection) {
+			ensure!(owner == who.clone(), Error::<T, I>::NoPermission);
+			return Ok(())
+		}
+		return Err(Error::<T, I>::UnknownCollection)
 	}
 }

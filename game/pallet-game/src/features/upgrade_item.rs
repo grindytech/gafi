@@ -49,8 +49,10 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::UpgradeSet {
+			who: who.clone(),
 			collection: *collection,
 			item: *item,
+			new_item: *new_item,
 			level,
 		});
 
@@ -88,7 +90,8 @@ impl<T: Config<I>, I: 'static>
 			Self::deposit_event(Event::Upgraded {
 				who: who.clone(),
 				collection: *collection,
-				item: config.item,
+				item: *item,
+				new_item: config.item,
 				amount,
 			});
 
