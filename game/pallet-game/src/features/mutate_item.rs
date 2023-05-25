@@ -56,7 +56,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 					total_item = total_item.saturating_sub(1);
 					maybe_position = Self::random_number(total_item, position);
 				} else {
-					return Err(Error::<T, I>::MintTooFast.into())
+					return Err(Error::<T, I>::SoldOut.into())
 				}
 			}
 			Self::sub_total_reserve(collection, amount)?;

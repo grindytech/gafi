@@ -455,7 +455,6 @@ pub mod pallet {
 		BidTooLow,
 		AskTooHigh,
 		TradeIdInUse,
-		MintTooFast,
 		TooLow,
 	}
 
