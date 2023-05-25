@@ -42,6 +42,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::PriceSet {
+			id: *id,
 			who: who.clone(),
 			collection: package.collection,
 			item: package.item,
@@ -107,6 +108,7 @@ impl<T: Config<I>, I: 'static>
 				})?;
 
 				Self::deposit_event(Event::<T, I>::ItemBought {
+					id: *id,
 					seller: config.owner,
 					buyer: who.clone(),
 					collection: package.collection,

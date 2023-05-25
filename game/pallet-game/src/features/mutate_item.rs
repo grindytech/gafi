@@ -63,7 +63,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		}
 
 		Self::deposit_event(Event::<T, I>::Minted {
-			miner: who.clone(),
+			who: who.clone(),
 			target: target.clone(),
 			collection: *collection,
 			minted_items,
@@ -80,6 +80,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		Self::sub_item_balance(who, collection, item, amount)?;
 
 		Self::deposit_event(Event::<T, I>::Burned {
+			who: who.clone(),
 			collection: *collection,
 			item: *item,
 			amount,

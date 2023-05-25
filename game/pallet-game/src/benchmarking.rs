@@ -27,11 +27,7 @@ fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
 }
 
-fn new_funded_account<T: Config<I>, I: 'static>(
-	s: u32,
-	seed: u32,
-	amount: u128,
-) -> T::AccountId {
+fn new_funded_account<T: Config<I>, I: 'static>(s: u32, seed: u32, amount: u128) -> T::AccountId {
 	let balance_amount = amount.try_into().ok().unwrap();
 	let name: String = format!("{}{}", s, seed);
 	let user = account(string_to_static_str(name), s, seed);
@@ -75,9 +71,7 @@ fn do_create_game<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, AccountIdL
 	(caller, admin)
 }
 
-fn do_create_collection<T: Config<I>, I: 'static>(
-	s: u32,
-) -> (T::AccountId, AccountIdLookupOf<T>) {
+fn do_create_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, AccountIdLookupOf<T>) {
 	let (caller, admin) = do_create_game::<T, I>(s);
 
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
@@ -210,9 +204,9 @@ benchmarks_instance_pallet! {
 		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(s + MAX, MAX, 1000_000_000u128 * UNIT));
 
 		let call = Call::<T, I>::create_game { admin };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::GameCreated { game: <T as pallet::Config<I>>::Helper::game(0) }.into());
+		assert_last_event::<T, I>(Event::GameCreated { who: caller, game: <T as pallet::Config<I>>::Helper::game(0) }.into());
 	}
 
 
@@ -220,20 +214,22 @@ benchmarks_instance_pallet! {
 		let s in 0 .. MAX as u32;
 		let (caller, admin) = do_create_game::<T, I>(s);
 		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0), admin , config: default_collection_config::<T, I>() };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::CollectionCreated { collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());
+		assert_last_event::<T, I>(Event::CollectionCreated { who: caller.clone(), collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());
 	}
 
 	create_item {
 		let s in 0 .. MAX as u32;
 		let (caller, admin) = do_create_collection::<T, I>(s);
-		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0), item: <T as pallet_nfts::Config>::Helper::item(0),
+		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			 item: <T as pallet_nfts::Config>::Helper::item(0),
 			config: default_item_config(), amount: 10 };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::ItemCreated { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
+		assert_last_event::<T, I>(Event::ItemCreated { who: caller,
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
 	}
 
 	add_item {
@@ -241,10 +237,11 @@ benchmarks_instance_pallet! {
 		let (caller, admin) = do_create_item::<T, I>(s, 0, 10);
 		let call = Call::<T, I>::add_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::ItemAdded { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
+		assert_last_event::<T, I>(Event::ItemAdded { who: caller,
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
 	}
 
 	mint {
@@ -258,10 +255,28 @@ benchmarks_instance_pallet! {
 			mint_to: mint_to.clone(), amount: 1 };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::Minted { miner: miner.clone(),
+		assert_last_event::<T, I>(Event::Minted { who: miner.clone(),
 			target: T::Lookup::lookup(mint_to.clone()).unwrap(),
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			minted_items: vec![<T as pallet_nfts::Config>::Helper::item(0)] }.into());
+	}
+
+	burn {
+		let s in 0 .. MAX as u32;
+		let (owner, admin) = do_create_item::<T, I>(s, 0, 10);
+		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &miner, 10);
+
+		let call = Call::<T, I>::burn { collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 1 };
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(miner.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::Burned { who: miner.clone(),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 1,
+			}.into());
 	}
 
 
@@ -305,8 +320,10 @@ benchmarks_instance_pallet! {
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::UpgradeSet {
+			who: caller,
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
+			new_item: <T as pallet_nfts::Config>::Helper::item(100),
 			level: 0,
 		}.into() );
 	}
@@ -331,7 +348,8 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::Upgraded {
 			who: miner.clone(),
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(100),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			new_item: <T as pallet_nfts::Config>::Helper::item(100),
 			amount: 10,
 		}.into() );
 	}
@@ -356,6 +374,7 @@ benchmarks_instance_pallet! {
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::PriceSet {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
 			who: caller.clone(),
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -378,6 +397,7 @@ benchmarks_instance_pallet! {
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::ItemBought {
+			id: <T as pallet::Config<I>>::Helper::trade(0),
 			seller: seller,
 			buyer: caller,
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),

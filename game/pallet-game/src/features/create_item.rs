@@ -35,6 +35,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
+				who: who.clone(),
 				collection: *collection,
 				item: *item,
 				amount,
@@ -78,6 +79,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemAdded {
+				who: who.clone(),
 				collection: *collection,
 				item: *item,
 				amount,
