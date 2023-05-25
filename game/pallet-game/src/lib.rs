@@ -334,28 +334,33 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated {
+			who: T::AccountId,
 			game: T::GameId,
 		},
 		CollectionCreated {
+			who: T::AccountId,
 			collection: T::CollectionId,
 		},
 		ItemCreated {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		},
 		ItemAdded {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		},
 		Minted {
-			miner: T::AccountId,
+			who: T::AccountId,
 			target: T::AccountId,
 			collection: T::CollectionId,
 			minted_items: Vec<T::ItemId>,
 		},
 		Burned {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
@@ -371,14 +376,18 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
+			new_item: T::ItemId,
 			amount: u32,
 		},
 		UpgradeSet {
+			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
+			new_item: T::ItemId,
 			level: Level,
 		},
 		PriceSet {
+			id: T::TradeId,
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
@@ -386,6 +395,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		},
 		ItemBought {
+			id: T::TradeId,
 			seller: T::AccountId,
 			buyer: T::AccountId,
 			collection: T::CollectionId,
@@ -448,14 +458,17 @@ pub mod pallet {
 		UpgradeExists,
 		/// Add the same collection into a game
 		CollectionExists,
+		
 		InsufficientItemBalance,
 		InsufficientLockBalance,
+		/// item amount = 0
+		InvalidAmount,
+
 		ItemLocked,
 		NotForSale,
 		BidTooLow,
 		AskTooHigh,
 		TradeIdInUse,
-		MintTooFast,
 		TooLow,
 	}
 
@@ -570,7 +583,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
+		#[transactional]
 		pub fn burn(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,

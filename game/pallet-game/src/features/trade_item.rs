@@ -17,12 +17,6 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::TradeIdInUse
 		);
 
-		// ensure balance
-		ensure!(
-			ItemBalanceOf::<T, I>::get((who, package.collection, package.item)) >= package.amount,
-			Error::<T, I>::InsufficientItemBalance
-		);
-
 		// ensure transferable
 		ensure!(
 			T::Nfts::can_transfer(&package.collection, &package.item),
@@ -48,6 +42,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::PriceSet {
+			id: *id,
 			who: who.clone(),
 			collection: package.collection,
 			item: package.item,
@@ -113,6 +108,7 @@ impl<T: Config<I>, I: 'static>
 				})?;
 
 				Self::deposit_event(Event::<T, I>::ItemBought {
+					id: *id,
 					seller: config.owner,
 					buyer: who.clone(),
 					collection: package.collection,
@@ -139,15 +135,6 @@ impl<T: Config<I>, I: 'static>
 			!BundleOf::<T, I>::contains_key(id),
 			Error::<T, I>::TradeIdInUse,
 		);
-
-		// ensure ownership
-		for package in bundle.clone() {
-			ensure!(
-				ItemBalanceOf::<T, I>::get((who, package.collection, package.item)) >=
-					package.amount,
-				Error::<T, I>::InsufficientItemBalance,
-			);
-		}
 
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 

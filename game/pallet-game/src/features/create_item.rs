@@ -35,14 +35,14 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
+				who: who.clone(),
 				collection: *collection,
 				item: *item,
 				amount,
 			});
-			Ok(())
-		} else {
-			return Err(Error::<T, I>::UnknownCollection.into())
+			return Ok(())
 		}
+		return Err(Error::<T, I>::UnknownCollection.into())
 	}
 
 	fn do_add_item(
@@ -79,14 +79,13 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			}
 
 			Self::deposit_event(Event::<T, I>::ItemAdded {
+				who: who.clone(),
 				collection: *collection,
 				item: *item,
 				amount,
 			});
-		} else {
-			return Err(Error::<T, I>::UnknownCollection.into())
+			return Ok(())
 		}
-
-		Ok(())
+		return Err(Error::<T, I>::UnknownCollection.into())
 	}
 }
