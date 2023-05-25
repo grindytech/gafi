@@ -447,7 +447,8 @@ pub mod pallet {
 		/// Too many attempts
 		WithdrawReserveFailed,
 		UpgradeExists,
-
+		/// Add the same collection into a game
+		CollectionExists,
 		InsufficientItemBalance,
 		InsufficientLockBalance,
 		ItemLocked,
@@ -486,12 +487,10 @@ pub mod pallet {
 		pub fn create_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			admin: AccountIdLookupOf<T>,
 			config: CollectionConfigFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_game_collection(&sender, &game, &admin, &config)?;
+			Self::do_create_game_collection(&sender, &game, &config)?;
 			Ok(())
 		}
 
@@ -513,7 +512,7 @@ pub mod pallet {
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			collection: Vec<T::CollectionId>,
+			collection: T::CollectionId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_add_collection(&sender, &game, &collection)?;
