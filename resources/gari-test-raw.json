@@ -1,6 +1,6 @@
 {
-  "name": "Gafi Testnet",
-  "id": "gafi_testnet",
+  "name": "gafi-test",
+  "id": "gafi-test",
   "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
