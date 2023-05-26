@@ -1,6 +1,6 @@
 {
-  "name": "Gafi Testnet",
-  "id": "gafi_testnet",
+  "name": "gafi-test",
+  "id": "gafi-test",
   "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
@@ -15,7 +15,8 @@
       "aura": {
         "authorities": [
           "5FbfK2cdph7eM6YNmwyoNxq1hWhsCf8Gq4yet1yduexLCyTe",
-          "5GRQ2cn1yjWg4KeC386X6kNHwLkQnxf1acushGeurqKnpUWb"
+          "5GRQ2cn1yjWg4KeC386X6kNHwLkQnxf1acushGeurqKnpUWb",
+          "5G4fLPPHT8Z93jsSeagZywqx5d6KHxyHzisPwkcrDbC77dZB"
         ]
       },
       "grandpa": {
@@ -26,6 +27,10 @@
           ],
           [
             "5DnF5TZns1HnWXDpabajytXEcWWvHGrHKF71fT4TnYhJn4iC",
+            1
+          ],
+          [
+            "5E53BGUjF3n27CD8EuUJSceY4kawwTyoydF7K5v2MehFb4DR",
             1
           ]
         ]
@@ -38,6 +43,10 @@
           ],
           [
             "5GRQ2cn1yjWg4KeC386X6kNHwLkQnxf1acushGeurqKnpUWb",
+            500000000000000000000
+          ],
+          [
+            "5G4fLPPHT8Z93jsSeagZywqx5d6KHxyHzisPwkcrDbC77dZB",
             500000000000000000000
           ]
         ]
