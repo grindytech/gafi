@@ -3721,7 +3721,6 @@ name = "gafi-support"
 version = "4.0.0-dev"
 dependencies = [
  "frame-support",
- "pallet-nfts",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -3838,9 +3837,11 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "gafi-support",
  "log",
  "pallet-aura",
  "pallet-balances",
+ "pallet-cache",
  "pallet-faucet",
  "pallet-game",
  "pallet-grandpa",

@@ -77,14 +77,12 @@ impl pallet_cache::Config for Test {
 }
 
 parameter_types! {
-	pub MaxGenesisAccount: u32 = 5;
 	pub FaucetAmount: u64 = FAUCET_BALANCE;
 }
 
 impl pallet_faucet::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = ();
 	type Cache = PalletCache;
 	type FaucetAmount = FaucetAmount;
