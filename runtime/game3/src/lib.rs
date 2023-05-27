@@ -25,6 +25,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use gafi_support::common::{unit, NativeToken::GAFI};
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -420,6 +421,29 @@ impl pallet_game::Config for Runtime {
 	type Helper = ();
 }
 
+
+parameter_types! {
+	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
+	pub FaucetAmount: u128 = 1500 * unit(GAFI);
+}
+
+// cache for pallet faucet only for testnet
+impl pallet_cache::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Data = Balance;
+	type Action = AccountId;
+	type CleanTime = FaucetCleanTime;
+}
+
+// only for testnet
+impl pallet_faucet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
+	type Cache = PalletCache;
+	type FaucetAmount = FaucetAmount;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -439,6 +463,8 @@ construct_runtime!(
 		// Include the custom logic from the pallet-template in the runtime.
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
 		Game: pallet_game,
+		Faucet: pallet_faucet,
+		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
 	}
 );
 

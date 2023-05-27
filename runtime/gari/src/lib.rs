@@ -261,14 +261,12 @@ impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 }
 
 parameter_types! {
-	pub MaxGenesisAccount: u32 = 5;
 	pub FaucetAmount: u128 = 1500 * unit(GAFI);
 }
 
 impl pallet_faucet::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 	type Cache = PalletCacheFaucet;
 	type FaucetAmount = FaucetAmount;

@@ -1,7 +1,6 @@
 use devnet::{
 	pallets::timestamp::EnableManualSeal, AccountId, AuraConfig, BalancesConfig, CouncilConfig,
-	EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig, GrandpaConfig, PalletCacheConfig,
-	PalletCacheFaucetConfig, Signature, StakingPoolConfig, SudoConfig, SystemConfig,
+	EVMConfig, EthereumConfig, FaucetConfig, GenesisConfig, GrandpaConfig, Signature, StakingPoolConfig, SudoConfig, SystemConfig,
 	TxHandlerConfig, WASM_BINARY,
 };
 use gafi_support::common::{unit, GafiCurrency, NativeToken::GAKI, TokenInfo};
@@ -265,14 +264,6 @@ fn dev_genesis(
 		},
 		tx_handler: TxHandlerConfig {},
 		pool: Default::default(),
-		pallet_cache: PalletCacheConfig {
-			phantom: Default::default(),
-			phantom_i: Default::default(),
-		},
-		pallet_cache_faucet: PalletCacheFaucetConfig {
-			phantom: Default::default(),
-			phantom_i: Default::default(),
-		},
 		democracy: Default::default(),
 		treasury: Default::default(),
 		phragmen_election: Default::default(),

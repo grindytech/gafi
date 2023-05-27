@@ -298,18 +298,6 @@ impl gafi_tx::Config for Runtime {
 	type GasPrice = GasPrice;
 }
 
-parameter_types! {
-	pub MaxGenesisAccount: u32 = 5;
-	pub FaucetCleanTime: u128 = 24 * 60 * 60_000u128; // 24 hours
-}
-
-// cache for pallet faucet
-impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Data = Balance;
-	type Action = AccountId;
-	type CleanTime = FaucetCleanTime;
-}
 
 parameter_types! {
 	pub PoolCleanTime: u128 = 30 * 60_000u128; // 30 minutes;
@@ -324,13 +312,21 @@ impl pallet_cache::Config<pallet_cache::Instance2> for Runtime {
 }
 
 parameter_types! {
+	pub FaucetCleanTime: u128 = 24 * 60 * 60_000u128; // 24 hours
 	pub FaucetAmount: u128 = 1500 * unit(GAKI);
+}
+
+// cache for pallet faucet
+impl pallet_cache::Config<pallet_cache::Instance1> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Data = Balance;
+	type Action = AccountId;
+	type CleanTime = FaucetCleanTime;
 }
 
 impl pallet_faucet::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type MaxGenesisAccount = MaxGenesisAccount;
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 	type Cache = PalletCacheFaucet;
 	type FaucetAmount = FaucetAmount;
@@ -670,8 +666,8 @@ construct_runtime!(
 		FundingPool: funding_pool,
 		TxHandler: gafi_tx,
 		ProofAddressMapping: proof_address_mapping,
-		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		PalletCache: pallet_cache::<Instance2>::{Pallet, Call, Storage, Event<T>},
+		PalletCacheFaucet: pallet_cache::<Instance1>::{Pallet, Call, Storage, Event<T>},
 		Faucet: pallet_faucet,
 		GameCreator: game_creator,
 		PalletWhitelist: pallet_whitelist,
