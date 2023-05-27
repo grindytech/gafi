@@ -41,7 +41,7 @@ pub mod pallet {
 	/// Wrap data with the timestamp at the time when data insert into Cache
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-	pub(super) struct WrapData<Data> {
+	pub(crate) struct WrapData<Data> {
 		pub data: Data,
 		pub timestamp: u128,
 	}
@@ -52,17 +52,12 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Encode, Decode, Eq, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+	#[derive(Clone, Encode, Decode, Eq, Default, PartialEq, Copy, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub(super) enum Flag {
+	pub(crate) enum Flag {
+		#[default]
 		Left,
 		Right,
-	}
-
-	impl Default for Flag {
-		fn default() -> Self {
-			Flag::Left
-		}
 	}
 
 	#[pallet::config]
@@ -82,34 +77,6 @@ pub mod pallet {
 		type CleanTime: Get<u128>;
 	}
 
-	//** Genesis Conguration **//
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
-		pub phantom: PhantomData<T>,
-		pub phantom_i: PhantomData<I>,
-	}
-
-	#[cfg(feature = "std")]
-	impl<T: Config<I>, I: 'static> Default for GenesisConfig<T, I> {
-		fn default() -> Self {
-			Self {
-				phantom: Default::default(),
-				phantom_i: Default::default(),
-			}
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config<I>,  I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
-		fn build(&self) {
-			let _now: u128 = <timestamp::Pallet<T>>::get()
-				.try_into()
-				.ok()
-				.unwrap_or_default();
-			<MarkTime<T, I>>::put(_now);
-		}
-	}
-
 	//** STORAGE **//
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -118,7 +85,7 @@ pub mod pallet {
 	/// Holding the flag(Left or Right) to support Cache in insert and clean
 	#[pallet::type_value]
 	pub(super) fn DefaultDataFlag() -> Flag {
-		Flag::Left
+		Flag::default()
 	}
 	#[pallet::storage]
 	pub(super) type DataFlag<T: Config<I>,  I: 'static = ()> = StorageValue<_, Flag, ValueQuery, DefaultDataFlag>;
@@ -137,7 +104,7 @@ pub mod pallet {
 	/// The default value is at the time chain launched
 	#[pallet::type_value]
 	pub fn DefaultMarkTime<T: Config<I>, I: 'static>() -> u128 {
-		<timestamp::Pallet<T>>::get().try_into().ok().unwrap()
+		<timestamp::Pallet<T>>::get().try_into().ok().unwrap_or_default()
 	}
 	#[pallet::storage]
 	#[pallet::getter(fn mark_time)]
@@ -215,6 +182,7 @@ pub mod pallet {
 				} else if let Some(data) = DataRight::<T, I>::get(id, action.clone()) {
 					return Some(data);
 				}
+
 				None
 			};
 

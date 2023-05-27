@@ -3841,6 +3841,7 @@ dependencies = [
  "log",
  "pallet-aura",
  "pallet-balances",
+ "pallet-faucet",
  "pallet-game",
  "pallet-grandpa",
  "pallet-nfts",
