@@ -51,11 +51,15 @@
           ]
         ]
       },
-      "transactionPayment": {
-        "multiplier": "1000000000000000000"
-      },
       "sudo": {
         "key": "5FbfK2cdph7eM6YNmwyoNxq1hWhsCf8Gq4yet1yduexLCyTe"
+      },
+      "faucet": {
+        "genesisAccounts": [
+          "5FbfK2cdph7eM6YNmwyoNxq1hWhsCf8Gq4yet1yduexLCyTe",
+          "5GRQ2cn1yjWg4KeC386X6kNHwLkQnxf1acushGeurqKnpUWb",
+          "5G4fLPPHT8Z93jsSeagZywqx5d6KHxyHzisPwkcrDbC77dZB"
+        ]
       }
     }
   }
