@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use frame_support::traits::EqualPrivilegeOnly;
+use gafi_support::common::{deposit, unit, NativeToken::GAFI};
 use pallet_game::GameWeightInfo;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -25,9 +27,9 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use gafi_support::common::{unit, NativeToken::GAFI};
-
 // A few exports that help ease life for downstream crates.
+use codec::Encode;
+use frame_support::PalletId;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
@@ -42,10 +44,8 @@ pub use frame_support::{
 	},
 	StorageValue,
 };
-
-use codec::Encode;
-use frame_support::PalletId;
 pub use frame_system::Call as SystemCall;
+use frame_system::EnsureRoot;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_nfts::PalletFeatures;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -111,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 100,
+	spec_version: 101,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -285,6 +285,41 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = deposit(2, 64, GAFI);
+	pub PreimageByteDeposit: Balance = deposit(0, 1, GAFI);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
+		BlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+	pub const NoPreimagePostponement: Option<u32> = Some(10);
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
 	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
 }
 
@@ -421,7 +456,6 @@ impl pallet_game::Config for Runtime {
 	type Helper = ();
 }
 
-
 parameter_types! {
 	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
 	pub FaucetAmount: u128 = 1500 * unit(GAFI);
@@ -452,18 +486,20 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		Timestamp: pallet_timestamp,
-		Aura: pallet_aura,
-		Grandpa: pallet_grandpa,
-		Balances: pallet_balances,
-		TransactionPayment: pallet_transaction_payment,
-		Sudo: pallet_sudo,
-		// Include the custom logic from the pallet-template in the runtime.
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Aura: pallet_aura::{Pallet, Config<T>},
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
+		Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
+
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
-		Game: pallet_game,
-		Faucet: pallet_faucet,
+		Game: pallet_game::{Pallet, Call, Storage, Event<T>},
+		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
 	}
 );

@@ -25,7 +25,9 @@ pallet-aura = {workspace = true}
 pallet-balances = {workspace = true}
 pallet-grandpa = {workspace = true}
 pallet-nfts = {workspace = true, default-features = false}
+pallet-preimage = {workspace = true}
 pallet-randomness-collective-flip = {workspace = true}
+pallet-scheduler = {workspace = true}
 pallet-sudo = {workspace = true}
 pallet-timestamp = {workspace = true}
 pallet-transaction-payment = {workspace = true}
@@ -50,10 +52,10 @@ frame-benchmarking = {workspace = true, default-features = false, optional = tru
 frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
 
 # Local Dependencies
+gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
 pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
 pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
 pallet-game = {version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game"}
-gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
 
 [build-dependencies]
 substrate-wasm-builder = {workspace = true, optional = true}
@@ -109,7 +111,9 @@ std = [
   "pallet-game/std",
   "pallet-faucet/std",
   "pallet-cache/std",
+  "pallet-scheduler/std",
   "gafi-support/std",
+  "pallet-preimage/std",
 ]
 try-runtime = [
   "frame-try-runtime/try-runtime",
