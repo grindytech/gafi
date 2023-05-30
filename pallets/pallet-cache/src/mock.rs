@@ -2,12 +2,8 @@ use crate::{self as pallet_cache};
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 
-use frame_support::{
-	dispatch::Vec,
-	traits::{OnFinalize, OnInitialize},
-};
-pub use gafi_support::{pool::{TicketInfo, TicketType},
-};
+use frame_support::traits::{OnFinalize, OnInitialize};
+pub use gafi_support::pool::{TicketInfo, TicketType};
 pub use pallet_balances::Call as BalancesCall;
 use sp_core::H256;
 use sp_runtime::{
@@ -15,6 +11,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
+use sp_std::{vec, vec::Vec};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -113,10 +110,7 @@ impl system::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn _new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap()
-		.into()
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
 pub fn run_to_block(n: u64) {
@@ -140,31 +134,18 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			balances: vec![],
-		}
+		Self { balances: vec![] }
 	}
 }
 
 impl ExtBuilder {
 	fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		let _ = pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
 		}
 		.assimilate_storage(&mut storage);
-
-		GenesisBuild::<Test>::assimilate_storage(
-			&pallet_cache::GenesisConfig {
-				phantom: Default::default(),
-				phantom_i: Default::default()
-			},
-			&mut storage,
-		)
-		.unwrap();
 
 		let ext = sp_io::TestExternalities::from(storage);
 		ext

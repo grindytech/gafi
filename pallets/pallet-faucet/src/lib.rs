@@ -24,23 +24,21 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, BoundedVec};
 	use frame_system::pallet_prelude::*;
 
+	type MaxFundingAccount = ConstU32<3>;
+
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 	pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-				type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-
-		/// Number of accounts that will send the tokens for user.
-		#[pallet::constant]
-		type MaxGenesisAccount: Get<u32>;
 
 		/// Add Cache
 		type Cache: Cache<Self::AccountId,AccountOf<Self> ,u128> ;
@@ -56,7 +54,7 @@ pub mod pallet {
 	/// Holding all the accounts
 	#[pallet::storage]
 	pub(super) type GenesisAccounts<T: Config> =
-		StorageValue<_, BoundedVec<T::AccountId, T::MaxGenesisAccount>, ValueQuery>;
+		StorageValue<_, BoundedVec<T::AccountId, MaxFundingAccount>, ValueQuery>;
 
 	//** Genesis Conguration **//
 	#[pallet::genesis_config]
@@ -89,10 +87,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		TransferToSelf,
+		SelfTransfer,
 		NotEnoughBalance,
 		DontBeGreedy,
-		PleaseWait
+		PleaseWait,
+		OutOfFaucet,
 	}
 
 	#[pallet::call]
@@ -133,7 +132,7 @@ pub mod pallet {
 					Err(_) => continue,
 				}
 			}
-			Err(DispatchError::Other("Out of Faucet"))
+			Err(Error::<T>::OutOfFaucet.into())
 		}
 
 		/// donate
@@ -154,7 +153,7 @@ pub mod pallet {
 
 			ensure!(T::Currency::free_balance(&from) > amount, <Error<T>>::NotEnoughBalance);
 			let genesis_accounts = GenesisAccounts::<T>::get();
-		ensure!(genesis_accounts[0] != from, <Error<T>>::TransferToSelf);
+			ensure!(genesis_accounts[0] != from, <Error<T>>::SelfTransfer);
 
 			T::Currency::transfer(
 				&from,
