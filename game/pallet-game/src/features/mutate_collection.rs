@@ -1,10 +1,10 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::tokens::nonfungibles_v2::Create};
-use gafi_support::game::CreateCollection;
+use gafi_support::game::MutateCollection;
 use pallet_nfts::{CollectionRole, CollectionRoles};
 
 impl<T: Config<I>, I: 'static>
-	CreateCollection<T::AccountId, T::GameId, T::CollectionId, CollectionConfigFor<T, I>>
+	MutateCollection<T::AccountId, T::GameId, T::CollectionId, CollectionConfigFor<T, I>>
 	for Pallet<T, I>
 {
 	fn do_create_game_collection(
@@ -83,6 +83,30 @@ impl<T: Config<I>, I: 'static>
 		})?;
 
 		GameOf::<T, I>::insert(collection, game);
+		Ok(())
+	}
+
+	fn do_remove_collection(
+		who: &T::AccountId,
+		game: &T::GameId,
+		collection: &T::CollectionId,
+	) -> DispatchResult {
+		// make sure signer is game owner
+		Self::ensure_game_owner(who, game)?;
+		// make sure signer is collection owner
+		Self::ensure_collection_owner(who, collection)?;
+
+		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
+			let maybe_position = collection_vec.iter().position(|x| *x == *collection);
+			match maybe_position {
+				Some(position) => {
+					collection_vec.remove(position);
+					Ok(())
+				},
+				None => return Err(Error::<T, I>::UnknownCollection.into()),
+			}
+		})?;
+		GameOf::<T, I>::remove(collection);
 		Ok(())
 	}
 }

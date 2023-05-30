@@ -1,5 +1,5 @@
-pub mod create_collection;
-pub use create_collection::*;
+pub mod mutate_collection;
+pub use mutate_collection::*;
 
 pub mod game_setting;
 pub use game_setting::*;
