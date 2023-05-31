@@ -168,6 +168,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
+		/// Maximum number of bids per auction
+		#[pallet::constant]
+		type MaxNumBid: Get<u32>;
+
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
 		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
@@ -335,6 +339,30 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Storing bids of account
+	#[pallet::storage]
+	pub(super) type BidOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::TradeId,
+		BoundedVec<(T::BlockNumber, BalanceOf<T, I>), T::MaxNumBid>,
+		ValueQuery,
+	>;
+
+	/// Storing total bid of account
+	#[pallet::storage]
+	pub(super) type TotalBidOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::TradeId,
+		BalanceOf<T, I>,
+		OptionQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -445,6 +473,7 @@ pub mod pallet {
 		UnknownItem,
 		UnknownTrade,
 		UnknownUpgrade,
+		UnknownAuction,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -857,6 +886,18 @@ pub mod pallet {
 				start_block,
 				duration,
 			)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(28)]
+		#[pallet::weight(0)]
+		pub fn bid_auction(
+			origin: OriginFor<T>,
+			id: T::TradeId,
+			price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_bid_auction(&id, &sender, price)?;
 			Ok(())
 		}
 	}

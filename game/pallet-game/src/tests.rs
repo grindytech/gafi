@@ -1133,3 +1133,40 @@ pub fn set_auction_should_works() {
 		}
 	})
 }
+
+#[test]
+pub fn bid_auction_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_mint_item();
+		assert_ok!(PalletGame::set_auction(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			Some(100 * unit(GAKI)),
+			1,
+			1,
+		));
+
+		let bidder = new_account(1, 1000 * unit(GAKI));
+		let bid = 200 * unit(GAKI);
+		let bidder_balance = Balances::free_balance(&bidder);
+		assert_ok!(PalletGame::bid_auction(
+			RuntimeOrigin::signed(bidder.clone()),
+			0,
+			bid
+		));
+
+		run_to_block(2);
+
+		assert_ok!(PalletGame::bid_auction(
+			RuntimeOrigin::signed(bidder.clone()),
+			0,
+			bid
+		));
+
+		assert_eq!(BidOf::<Test>::get(bidder.clone(), 0), [(1, bid), (2, bid)].to_vec());
+		assert_eq!(TotalBidOf::<Test>::get(bidder.clone(), 0).unwrap(), bid * 2);
+		assert_eq!(Balances::free_balance(&bidder), bidder_balance - (bid * 2));
+	})
+}

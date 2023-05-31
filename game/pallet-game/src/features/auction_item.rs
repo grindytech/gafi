@@ -49,12 +49,28 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_bid_auction(
-		id: &T::TradeId,
-		who: &T::AccountId,
-		price: BalanceOf<T, I>,
-	) -> DispatchResult {
-		todo!()
+	fn do_bid_auction(id: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
+		if let Some(cofig) = AuctionConfigOf::<T, I>::get(id) {
+			let total_bid = TotalBidOf::<T, I>::get(who, id).unwrap_or_default();
+			
+			if let Some(price) = cofig.maybe_price {
+				ensure!(total_bid + bid >= price, Error::<T, I>::BidTooLow);
+			}
+
+			<T as Config<I>>::Currency::reserve(&who, bid)?;
+			let block_number = <frame_system::Pallet<T>>::block_number();
+
+			BidOf::<T, I>::try_mutate(who, id, |bid_vec| -> DispatchResult {
+				bid_vec
+					.try_push((block_number, bid))
+					.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+				Ok(())
+			})?;
+
+			TotalBidOf::<T, I>::insert(who, id, total_bid + bid);
+		}
+
+		Ok(())
 	}
 
 	fn do_set_candle_auction(
