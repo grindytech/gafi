@@ -256,6 +256,25 @@ fn create_game_collection_should_fails() {
 }
 
 #[test]
+fn remove_collection_should_works() {
+	new_test_ext().execute_with(|| {
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &default_collection_config(), &admin);
+
+		assert_ok!(PalletGame::remove_collection(
+			RuntimeOrigin::signed(owner.clone()),
+			0,
+			1
+		));
+
+		assert_eq!(GameOf::<Test>::get(1), None);
+		assert_eq!(CollectionsOf::<Test>::get(0), [0, 2].to_vec());
+	})
+}
+
+#[test]
 fn create_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
@@ -631,7 +650,7 @@ pub fn set_price_should_works() {
 		run_to_block(1);
 		let player = do_all_mint_item();
 		let price = 3 * unit(GAKI);
-		
+
 		let before_balance = Balances::free_balance(&player);
 		assert_ok!(PalletGame::set_price(
 			RuntimeOrigin::signed(player.clone()),
@@ -704,10 +723,7 @@ pub fn buy_item_should_works() {
 		run_to_block(1);
 
 		let price = 1 * unit(GAKI);
-		let seller = do_all_set_price(
-			TEST_BUNDLE[0].clone(),
-			price,
-		);
+		let seller = do_all_set_price(TEST_BUNDLE[0].clone(), price);
 
 		let buyer = new_account(4, 10000 * unit(GAKI));
 
@@ -742,10 +758,7 @@ pub fn buy_item_should_fails() {
 		run_to_block(1);
 
 		let price = 1 * unit(GAKI);
-		do_all_set_price(
-			TEST_BUNDLE[0].clone(),
-			price,
-		);
+		do_all_set_price(TEST_BUNDLE[0].clone(), price);
 
 		let buyer = new_account(4, 10000 * unit(GAKI));
 		assert_err!(

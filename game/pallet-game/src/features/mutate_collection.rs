@@ -21,21 +21,21 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::NoPermission
 		);
 		if let Some(game_details) = Game::<T, I>::get(game) {
-			let collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
-
-			if let Ok(id) = collection {
+			let maybe_collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
+			
+			if let Ok(collection) = maybe_collection {
 				// insert game collections
 				CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
-					collection_vec.try_push(id).map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
+					collection_vec.try_push(collection).map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
 					Ok(())
 				})?;
 
 				// insert collection game
-				GameOf::<T, I>::insert(id, game);
-				GameCollectionConfigOf::<T, I>::insert(id, config);
+				GameOf::<T, I>::insert(collection, game);
+				GameCollectionConfigOf::<T, I>::insert(collection, config);
 				Self::deposit_event(Event::<T, I>::CollectionCreated {
 					who: who.clone(),
-					collection: id,
+					collection,
 				});
 				return Ok(())
 			}
