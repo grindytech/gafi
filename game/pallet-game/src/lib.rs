@@ -35,7 +35,7 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
+	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
 	TransferItem, UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -312,13 +312,8 @@ pub mod pallet {
 
 	/// Storing bundle
 	#[pallet::storage]
-	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		BundleFor<T, I>,
-		ValueQuery,
-	>;
+	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::TradeId, BundleFor<T, I>, ValueQuery>;
 
 	/// Storing trade configuration
 	#[pallet::storage]
@@ -326,11 +321,17 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		TradeConfig<
-			T::AccountId,
-			BalanceOf<T, I>,
-			BundleFor<T, I>,
-		>,
+		TradeConfig<T::AccountId, BalanceOf<T, I>, BundleFor<T, I>>,
+		OptionQuery,
+	>;
+
+	/// Storing auction configuration
+	#[pallet::storage]
+	pub(super) type AuctionConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		AuctionConfig<T::AccountId, BalanceOf<T, I>, T::BlockNumber>,
 		OptionQuery,
 	>;
 
@@ -832,6 +833,30 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_claim_swap(&trade_id, &sender, maybe_bid_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(27)]
+		#[pallet::weight(0)]
+		pub fn set_auction(
+			origin: OriginFor<T>,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: T::BlockNumber,
+			duration: T::BlockNumber,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+
+			Self::do_set_auction(
+				&trade_id,
+				&sender,
+				bundle,
+				maybe_price,
+				start_block,
+				duration,
+			)?;
 			Ok(())
 		}
 	}

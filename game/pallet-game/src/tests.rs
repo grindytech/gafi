@@ -1104,3 +1104,32 @@ pub fn claim_swap_should_works() {
 		}
 	})
 }
+
+#[test]
+pub fn set_auction_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_mint_item();
+
+		let price = 100 * unit(GAKI);
+
+		let player_balance = Balances::free_balance(&player);
+
+		assert_ok!(PalletGame::set_auction(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			Some(price),
+			1,
+			1,
+		));
+		assert_eq!(
+			Balances::free_balance(&player),
+			player_balance - BUNDLE_DEPOSIT_VAL
+		);
+		for i in 0..TEST_BUNDLE.len() as u32 {
+			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 0);
+			assert_eq!(LockBalanceOf::<Test>::get((&player, 0, i)), 10);
+		}
+	})
+}
