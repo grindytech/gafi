@@ -789,6 +789,28 @@ pub mod pallet {
 			Self::do_remove_collection(&sender, &game, &collection)?;
 			Ok(())
 		}
+
+		#[pallet::call_index(23)]
+		#[pallet::weight(0)]
+		pub fn lock_item_transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::lock_item_transfer(origin, collection, item)
+		}
+
+		#[pallet::call_index(24)]
+		#[pallet::weight(0)]
+		pub fn unlock_item_transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::unlock_item_transfer(origin, collection, item)
+		}
+
+
 	}
 
 	#[pallet::validate_unsigned]
