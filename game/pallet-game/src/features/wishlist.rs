@@ -34,7 +34,8 @@ impl<T: Config<I>, I: 'static>
 			TradeConfig {
 				trade: TradeType::Wishlist,
 				owner: who.clone(),
-				price,
+				maybe_price: Some(price),
+				maybe_required: None,
 			},
 		);
 
@@ -63,19 +64,21 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+			let price = config.maybe_price.unwrap_or_default();
+
 			ensure!(
 				config.trade == TradeType::Wishlist,
 				Error::<T, I>::UnknownTrade
 			);
 
 			// check price
-			ensure!(ask_price <= config.price, Error::<T, I>::AskTooHigh);
+			ensure!(ask_price <= price, Error::<T, I>::AskTooHigh);
 
 			// make deposit
 			<T as pallet::Config<I>>::Currency::repatriate_reserved(
 				&config.owner,
 				&who,
-				config.price,
+				price,
 				BalanceStatus::Free,
 			)?;
 
@@ -94,7 +97,7 @@ impl<T: Config<I>, I: 'static>
 				id: *id,
 				wisher: config.owner,
 				filler: who.clone(),
-				price: config.price,
+				price: price,
 			});
 			return Ok(())
 		}

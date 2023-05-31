@@ -1,5 +1,5 @@
-pub mod create_collection;
-pub use create_collection::*;
+pub mod mutate_collection;
+pub use mutate_collection::*;
 
 pub mod game_setting;
 pub use game_setting::*;
@@ -27,3 +27,6 @@ pub use trade_item::*;
 
 pub mod wishlist;
 pub use wishlist::*;
+
+pub mod swap_item;
+pub use swap_item::*;

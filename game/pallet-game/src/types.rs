@@ -2,7 +2,7 @@ use crate::*;
 use codec::{Decode, Encode};
 use core::primitive::u32;
 use frame_support::{
-	pallet_prelude::{MaxEncodedLen},
+	pallet_prelude::{BoundedVec, MaxEncodedLen},
 	RuntimeDebug,
 };
 
@@ -25,6 +25,11 @@ pub type ItemUpgradeConfigFor<T, I = ()> =
 #[cfg(test)]
 pub(crate) type PackageFor<T> =
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
+
+pub(crate) type BundleFor<T, I = ()> = BoundedVec<
+	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
+	<T as pallet::Config<I>>::MaxBundle,
+>;
 
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -65,8 +70,8 @@ pub enum TradeType {
 	Bundle,
 	Wishlist,
 	Auction,
+	Swap,
 }
-
 
 /// Upgrade Item configuration.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -77,8 +82,9 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct TradeConfig<AccountId, Price> {
+pub struct TradeConfig<AccountId, Price, Bundle> {
 	pub trade: TradeType,
 	pub owner: AccountId,
-	pub price: Price,
+	pub maybe_price: Option<Price>,
+	pub maybe_required: Option<Bundle>,
 }

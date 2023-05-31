@@ -5,11 +5,11 @@ use super::*;
 use crate::Pallet as PalletGame;
 use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
 use enumflags2::{BitFlag, BitFlags};
-use frame_benchmarking::{account, benchmarks, benchmarks_instance_pallet, Box};
+use frame_benchmarking::{account, benchmarks_instance_pallet, Box};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
 use pallet_nfts::{
-	BenchmarkHelper, CollectionSetting, CollectionSettings, ItemSettings, MintSettings,
+	BenchmarkHelper,
 };
 use scale_info::prelude::{format, string::String};
 use sp_std::vec;
@@ -33,20 +33,6 @@ fn new_funded_account<T: Config<I>, I: 'static>(s: u32, seed: u32, amount: u128)
 	let user = account(string_to_static_str(name), s, seed);
 	<T as pallet::Config<I>>::Currency::make_free_balance_be(&user, balance_amount);
 	return user
-}
-
-fn make_collection_config<T: Config<I>, I: 'static>(
-	disable_settings: BitFlags<CollectionSetting>,
-) -> CollectionConfigFor<T, I> {
-	CollectionConfig {
-		settings: CollectionSettings::from_disabled(disable_settings),
-		max_supply: None,
-		mint_settings: MintSettings::default(),
-	}
-}
-
-fn default_collection_config<T: Config<I>, I: 'static>() -> CollectionConfigFor<T, I> {
-	make_collection_config::<T, I>(CollectionSetting::empty())
 }
 
 fn default_item_config() -> ItemConfig {
@@ -77,7 +63,7 @@ fn do_create_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, Acco
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
 		RawOrigin::Signed(caller.clone()).into(),
 		<T as pallet::Config<I>>::Helper::game(0),
-		default_collection_config::<T, I>(),
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
 	));
 	(caller, admin)
 }
@@ -212,7 +198,7 @@ benchmarks_instance_pallet! {
 	create_game_collection {
 		let s in 0 .. MAX as u32;
 		let (caller, admin) = do_create_game::<T, I>(s);
-		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0), config: default_collection_config::<T, I>() };
+		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0), fee: <T as pallet::Config<I>>::Currency::minimum_balance() };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::CollectionCreated { who: caller.clone(), collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());

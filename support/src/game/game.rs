@@ -1,7 +1,5 @@
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{TokenError};
-use sp_std::vec::Vec;
-
 use super::{Bundle, Package};
 
 pub type Amount = u32;
@@ -18,7 +16,7 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
 }
 
-pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
+pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fee> {
 	/// Do create game collection
 	///
 	/// The game admin creates a collection.
@@ -31,7 +29,8 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	fn do_create_game_collection(
 		who: &AccountId,
 		game: &GameId,
-		config: &CollectionConfig,
+		// config: &CollectionConfig,
+		fee: Fee, 
 	) -> DispatchResult;
 
 	/// Do create collection
@@ -45,7 +44,8 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	fn do_create_collection(
 		who: &AccountId,
 		admin: &AccountId,
-		config: &CollectionConfig,
+		// config: &CollectionConfig,
+		fee: Fee,
 	) -> DispatchResult;
 
 	/// Do add collection
@@ -61,6 +61,13 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 		game: &GameId,
 		collection: &CollectionId,
 	) -> DispatchResult;
+
+	fn do_remove_collection(
+		who: &AccountId,
+		game: &GameId,
+		collection: &CollectionId,
+	) -> DispatchResult;
+
 }
 
 pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
@@ -302,10 +309,41 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 	fn do_fill_wishlist(id: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
 }
 
+/// Trait for swap items
+pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price>{
+
+	/// Do Set Swap
+	/// 
+	/// Set a swap from a source bundle for a required bundle, maybe with price
+	/// 
+	/// - `id`: trade id
+	/// - `who`: who
+	/// - `source`: bundle in
+	/// - `required`: bundle out
+	/// - `maybe_price`: maybe price required
+	fn do_set_swap(
+		id: &TradeId,
+		who: &AccountId,
+		source: Bundle<CollectionId, ItemId>,
+		required: Bundle<CollectionId, ItemId>,
+		maybe_price: Option<Price>,
+	) -> DispatchResult;
+
+
+	/// Do Claim Swap
+	/// 
+	/// Make a swap with maybe bid price
+	/// 
+	/// - `id`: trade id
+	/// - `who`: who
+	/// - `maybe_bid_price`: maybe bid price
+	fn do_claim_swap(
+		id: &TradeId,
+		who: &AccountId,
+		maybe_bid_price: Option<Price>,
+	) -> DispatchResult;
+}
+
 pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
 }
-
-// pub trait Support {
-// 	fn gen_id() -> CollectionId;
-// }

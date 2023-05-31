@@ -35,8 +35,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TransferItem,
-	UpgradeItem, Wishlist,
+	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
+	TransferItem, UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -192,6 +192,11 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing Collection Minting Fee
+	#[pallet::storage]
+	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, BalanceOf<T, I>, OptionQuery>;
+
 	/// Collection belongs to
 	#[pallet::storage]
 	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
@@ -249,11 +254,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
-
-	/// Game collection config
-	#[pallet::storage]
-	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -316,7 +316,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		BundleFor<T, I>,
 		ValueQuery,
 	>;
 
@@ -326,7 +326,11 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		TradeConfig<T::AccountId, BalanceOf<T, I>>,
+		TradeConfig<
+			T::AccountId,
+			BalanceOf<T, I>,
+			BundleFor<T, I>,
+		>,
 		OptionQuery,
 	>;
 
@@ -458,7 +462,7 @@ pub mod pallet {
 		UpgradeExists,
 		/// Add the same collection into a game
 		CollectionExists,
-		
+
 		InsufficientItemBalance,
 		InsufficientLockBalance,
 		/// item amount = 0
@@ -499,10 +503,10 @@ pub mod pallet {
 		pub fn create_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			config: CollectionConfigFor<T, I>,
+			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game, &config)?;
+			Self::do_create_game_collection(&sender, &game, fee)?;
 			Ok(())
 		}
 
@@ -511,10 +515,11 @@ pub mod pallet {
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: T::AccountId,
-			config: CollectionConfigFor<T, I>,
+			// config: CollectionConfigFor<T, I>,
+			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(&sender, &admin, &config)?;
+			Self::do_create_collection(&sender, &admin, fee)?;
 
 			Ok(())
 		}
@@ -768,6 +773,65 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_fill_wishlist(&trade_id, &sender, ask_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(22)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn remove_collection(
+			origin: OriginFor<T>,
+			game: T::GameId,
+			collection: T::CollectionId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_remove_collection(&sender, &game, &collection)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(23)]
+		#[pallet::weight(0)]
+		pub fn lock_item_transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::lock_item_transfer(origin, collection, item)
+		}
+
+		#[pallet::call_index(24)]
+		#[pallet::weight(0)]
+		pub fn unlock_item_transfer(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::unlock_item_transfer(origin, collection, item)
+		}
+
+		#[pallet::call_index(25)]
+		#[pallet::weight(0)]
+		pub fn set_swap(
+			origin: OriginFor<T>,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			required: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			Self::do_set_swap(&trade_id, &sender, source, required, maybe_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(26)]
+		#[pallet::weight(0)]
+		pub fn claim_swap(
+			origin: OriginFor<T>,
+			trade_id: T::TradeId,
+			maybe_bid_price: Option<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_swap(&trade_id, &sender, maybe_bid_price)?;
 			Ok(())
 		}
 	}
