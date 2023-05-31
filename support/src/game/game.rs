@@ -18,7 +18,7 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
 }
 
-pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
+pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	/// Do create game collection
 	///
 	/// The game admin creates a collection.
@@ -61,6 +61,13 @@ pub trait CreateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 		game: &GameId,
 		collection: &CollectionId,
 	) -> DispatchResult;
+
+	fn do_remove_collection(
+		who: &AccountId,
+		game: &GameId,
+		collection: &CollectionId,
+	) -> DispatchResult;
+
 }
 
 pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {

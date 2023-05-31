@@ -35,7 +35,7 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateCollection, CreateItem, GameSetting, Level, MutateItem, Package, Trade, TransferItem,
+	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Trade, TransferItem,
 	UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -458,7 +458,7 @@ pub mod pallet {
 		UpgradeExists,
 		/// Add the same collection into a game
 		CollectionExists,
-		
+
 		InsufficientItemBalance,
 		InsufficientLockBalance,
 		/// item amount = 0
@@ -768,6 +768,19 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_fill_wishlist(&trade_id, &sender, ask_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(22)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn remove_collection(
+			origin: OriginFor<T>,
+			game: T::GameId,
+			collection: T::CollectionId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_remove_collection(&sender, &game, &collection)?;
 			Ok(())
 		}
 	}
