@@ -37,7 +37,8 @@ impl<T: Config<I>, I: 'static>
 			TradeConfig {
 				trade: TradeType::Normal,
 				owner: who.clone(),
-				price,
+				maybe_price: Some(price),
+				maybe_required: None,
 			},
 		);
 
@@ -76,13 +77,14 @@ impl<T: Config<I>, I: 'static>
 				ensure!(package.amount >= amount, Error::<T, I>::SoldOut);
 
 				// check price
-				ensure!(bid_price >= config.price, Error::<T, I>::BidTooLow);
+				let price = config.maybe_price.unwrap_or_default();
+				ensure!(bid_price >= price, Error::<T, I>::BidTooLow);
 
 				// make deposit
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,
 					&config.owner,
-					config.price * amount.into(),
+					price * amount.into(),
 					ExistenceRequirement::KeepAlive,
 				)?;
 
@@ -114,9 +116,8 @@ impl<T: Config<I>, I: 'static>
 					collection: package.collection,
 					item: package.item,
 					amount,
-					price: config.price,
+					price,
 				});
-
 				return Ok(())
 			}
 		}
@@ -157,7 +158,8 @@ impl<T: Config<I>, I: 'static>
 			TradeConfig {
 				trade: TradeType::Bundle,
 				owner: who.clone(),
-				price,
+				maybe_price: Some(price),
+				maybe_required: None,
 			},
 		);
 
@@ -191,14 +193,16 @@ impl<T: Config<I>, I: 'static>
 				Error::<T, I>::UnknownTrade
 			);
 
+			let price = config.maybe_price.unwrap_or_default();
+
 			// check price
-			ensure!(bid_price >= config.price, Error::<T, I>::BidTooLow);
+			ensure!(bid_price >= price, Error::<T, I>::BidTooLow);
 
 			// make deposit
 			<T as pallet::Config<I>>::Currency::transfer(
 				&who,
 				&config.owner,
-				config.price,
+				price,
 				ExistenceRequirement::KeepAlive,
 			)?;
 
@@ -220,7 +224,7 @@ impl<T: Config<I>, I: 'static>
 				id: *bundle_id,
 				seller: config.owner,
 				buyer: who.clone(),
-				price: config.price,
+				price: price,
 			});
 
 			return Ok(())

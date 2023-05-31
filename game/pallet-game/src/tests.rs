@@ -667,7 +667,8 @@ pub fn set_price_should_works() {
 			TradeConfig {
 				trade: TradeType::Normal,
 				owner: player.clone(),
-				price,
+				maybe_price: Some(price),
+				maybe_required: None,
 			}
 		);
 	})
@@ -966,7 +967,8 @@ pub fn set_wishlist_should_works() {
 			TradeConfig {
 				trade: TradeType::Wishlist,
 				owner: buyer.clone(),
-				price
+				maybe_price: Some(price),
+				maybe_required: None,
 			}
 		);
 		assert_eq!(
@@ -1007,4 +1009,26 @@ pub fn fill_wishlist_should_works() {
 			before_player_balance + price
 		);
 	})
+}
+
+#[test]
+pub fn set_swap_should_works() {
+	new_test_ext().execute_with( || {
+		run_to_block(1);
+
+		let player1 = do_all_mint_item();
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_swap(
+			RuntimeOrigin::signed(player1.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			TEST_BUNDLE.clone().to_vec(),
+			Some(price)
+		));
+
+		assert_eq!(BundleOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
+		// assert_eq!(TradeConfigOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
+	})
+
 }

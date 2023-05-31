@@ -320,13 +320,30 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing swap
+	#[pallet::storage]
+	pub(super) type SwapOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		(
+			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		),
+		OptionQuery,
+	>;
+
 	/// Storing trade configuration
 	#[pallet::storage]
 	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		TradeConfig<T::AccountId, BalanceOf<T, I>>,
+		TradeConfig<
+			T::AccountId,
+			BalanceOf<T, I>,
+			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		>,
 		OptionQuery,
 	>;
 

@@ -65,6 +65,7 @@ pub enum TradeType {
 	Bundle,
 	Wishlist,
 	Auction,
+	Swap,
 }
 
 
@@ -77,8 +78,9 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct TradeConfig<AccountId, Price> {
+pub struct TradeConfig<AccountId, Price, Bundle> {
 	pub trade: TradeType,
 	pub owner: AccountId,
-	pub price: Price,
+	pub maybe_price: Option<Price>,
+	pub maybe_required: Option<Bundle>
 }
