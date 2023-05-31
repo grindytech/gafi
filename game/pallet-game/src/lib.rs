@@ -316,21 +316,8 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+		BundleFor<T, I>,
 		ValueQuery,
-	>;
-
-	/// Storing swap
-	#[pallet::storage]
-	pub(super) type SwapOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		(
-			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
-			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
-		),
-		OptionQuery,
 	>;
 
 	/// Storing trade configuration
@@ -342,7 +329,7 @@ pub mod pallet {
 		TradeConfig<
 			T::AccountId,
 			BalanceOf<T, I>,
-			BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxBundle>,
+			BundleFor<T, I>,
 		>,
 		OptionQuery,
 	>;

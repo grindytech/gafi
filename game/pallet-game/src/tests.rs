@@ -1028,7 +1028,5 @@ pub fn set_swap_should_works() {
 		));
 
 		assert_eq!(BundleOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
-		// assert_eq!(TradeConfigOf::<Test>::get(0), TEST_BUNDLE.clone().to_vec());
 	})
-
 }
