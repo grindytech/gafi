@@ -309,10 +309,41 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 	fn do_fill_wishlist(id: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
 }
 
+/// Trait for swap items
+pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price>{
+
+	/// Do Set Swap
+	/// 
+	/// Set a swap from a source bundle for a required bundle, maybe with price
+	/// 
+	/// - `id`: trade id
+	/// - `who`: who
+	/// - `source`: bundle in
+	/// - `required`: bundle out
+	/// - `maybe_price`: maybe price required
+	fn do_set_swap(
+		id: &TradeId,
+		who: &AccountId,
+		source: Bundle<CollectionId, ItemId>,
+		required: Bundle<CollectionId, ItemId>,
+		maybe_price: Option<Price>,
+	) -> DispatchResult;
+
+
+	/// Do Claim Swap
+	/// 
+	/// Make a swap with maybe bid price
+	/// 
+	/// - `id`: trade id
+	/// - `who`: who
+	/// - `maybe_bid_price`: maybe bid price
+	fn do_claim_swap(
+		id: &TradeId,
+		who: &AccountId,
+		maybe_bid_price: Option<Price>,
+	) -> DispatchResult;
+}
+
 pub trait Destroy<E> {
 	fn destroy() -> Result<(), E>;
 }
-
-// pub trait Support {
-// 	fn gen_id() -> CollectionId;
-// }
