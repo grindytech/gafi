@@ -72,13 +72,13 @@ fn do_create_game() -> (sr25519::Public, sr25519::Public) {
 
 fn do_create_collection(
 	game: u32,
-	collection_config: &CollectionConfigFor<Test>,
 	admin: &sr25519::Public,
+	fee: u128,
 ) {
 	assert_ok!(PalletGame::create_game_collection(
 		RuntimeOrigin::signed(admin.clone()),
 		game,
-		*collection_config,
+		fee,
 	));
 }
 
@@ -130,7 +130,7 @@ fn do_mint_item(collection: u32, amount: u32) -> sr25519::Public {
 fn do_all_mint_item() -> sr25519::Public {
 	let (owner, admin) = do_create_game();
 	let mint_fee = 1 * unit(GAKI);
-	do_create_collection(0, &collection_config(mint_fee), &admin);
+	do_create_collection(0, &admin, mint_fee);
 	for pack in TEST_BUNDLE.clone() {
 		do_create_item(&admin, 0, pack.item, &default_item_config(), pack.amount);
 	}
@@ -208,7 +208,7 @@ fn create_game_collection_should_works() {
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			default_collection_config(),
+			0,
 		));
 
 		assert_eq!(CollectionsOf::<Test>::get(0)[0], 0);
@@ -217,7 +217,7 @@ fn create_game_collection_should_works() {
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
 			0,
-			default_collection_config(),
+			0,
 		));
 		assert_eq!(CollectionsOf::<Test>::get(0)[1], 1);
 	})
@@ -237,7 +237,7 @@ fn create_game_collection_should_fails() {
 				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(acc.clone()),
 					0,
-					default_collection_config(),
+					0,
 				),
 				Error::<Test>::NoPermission
 			);
@@ -247,7 +247,7 @@ fn create_game_collection_should_fails() {
 				PalletGame::create_game_collection(
 					RuntimeOrigin::signed(owner.clone()),
 					0,
-					default_collection_config(),
+					0,
 				),
 				Error::<Test>::NoPermission
 			);
@@ -259,9 +259,9 @@ fn create_game_collection_should_fails() {
 fn remove_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		let (owner, admin) = do_create_game();
-		do_create_collection(0, &default_collection_config(), &admin);
-		do_create_collection(0, &default_collection_config(), &admin);
-		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &admin, 0);
+		do_create_collection(0, &admin, 0);
+		do_create_collection(0, &admin, 0);
 
 		assert_ok!(PalletGame::remove_collection(
 			RuntimeOrigin::signed(owner.clone()),
@@ -283,7 +283,7 @@ fn create_collection_should_works() {
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(who.clone()),
 			who.clone(),
-			default_collection_config(),
+			0,
 		));
 	})
 }
@@ -294,13 +294,13 @@ fn add_game_collection_should_works() {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 
-		do_create_collection(0, &default_collection_config(), &admin);
-		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &admin, 0);
+		do_create_collection(0, &admin, 0);
 
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(owner.clone()),
 			admin.clone(),
-			default_collection_config(),
+			0,
 		));
 
 		assert_ok!(PalletGame::add_game_collection(
@@ -326,7 +326,7 @@ fn add_game_collection_should_fails() {
 			assert_ok!(PalletGame::create_collection(
 				RuntimeOrigin::signed(owner.clone()),
 				admin.clone(),
-				default_collection_config(),
+				0,
 			));
 
 			assert_ok!(PalletGame::add_game_collection(
@@ -344,7 +344,7 @@ fn add_game_collection_should_fails() {
 		assert_ok!(PalletGame::create_collection(
 			RuntimeOrigin::signed(owner.clone()),
 			admin.clone(),
-			default_collection_config(),
+			0,
 		));
 
 		assert_err!(
@@ -369,7 +369,7 @@ fn create_item_should_works() {
 		run_to_block(1);
 
 		let (owner, admin) = do_create_game();
-		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &admin, 0);
 
 		assert_ok!(PalletGame::create_item(
 			RuntimeOrigin::signed(admin.clone()),
@@ -388,7 +388,7 @@ fn add_item_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
-		do_create_collection(0, &default_collection_config(), &admin);
+		do_create_collection(0, &admin, 0);
 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
 		assert_ok!(PalletGame::add_item(
@@ -432,7 +432,7 @@ fn mint_should_works() {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 		let mint_fee = 1 * unit(GAKI);
-		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_collection(0, &admin, mint_fee);
 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
 		let before_player_balance = 3000 * unit(GAKI);
@@ -463,7 +463,7 @@ fn mint_should_fails() {
 		let (owner, admin) = do_create_game();
 		let mint_fee = 1 * unit(GAKI);
 		let total_item = MAX_ITEM_MINT_VAL + 3;
-		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_collection(0, &admin, mint_fee);
 		do_create_item(&admin, 0, 0, &default_item_config(), total_item);
 
 		let player = new_account(2, 3000 * unit(GAKI));
@@ -557,7 +557,7 @@ pub fn set_upgrade_item_should_works() {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 		let mint_fee = 1 * unit(GAKI);
-		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_collection(0, &admin, mint_fee);
 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
 		let byte = 50;
@@ -599,7 +599,7 @@ pub fn upgrade_item_shoud_works() {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 		let mint_fee = 1 * unit(GAKI);
-		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_collection(0, &admin, mint_fee);
 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 		let player = do_mint_item(0, 10);
 
@@ -680,7 +680,7 @@ pub fn set_price_should_fails() {
 
 		let (owner, admin) = do_create_game();
 		let mint_fee = 1 * unit(GAKI);
-		do_create_collection(0, &collection_config(mint_fee), &admin);
+		do_create_collection(0, &admin, mint_fee);
 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 		let player = do_mint_item(0, 10);
 

@@ -1,7 +1,5 @@
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{TokenError};
-use sp_std::vec::Vec;
-
 use super::{Bundle, Package};
 
 pub type Amount = u32;
@@ -18,7 +16,7 @@ pub trait GameSetting<AccountId, GameId, BlockNumber> {
 	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
 }
 
-pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
+pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fee> {
 	/// Do create game collection
 	///
 	/// The game admin creates a collection.
@@ -31,7 +29,8 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	fn do_create_game_collection(
 		who: &AccountId,
 		game: &GameId,
-		config: &CollectionConfig,
+		// config: &CollectionConfig,
+		fee: Fee, 
 	) -> DispatchResult;
 
 	/// Do create collection
@@ -45,7 +44,8 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig> {
 	fn do_create_collection(
 		who: &AccountId,
 		admin: &AccountId,
-		config: &CollectionConfig,
+		// config: &CollectionConfig,
+		fee: Fee,
 	) -> DispatchResult;
 
 	/// Do add collection

@@ -192,6 +192,16 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing Collection Minting Fee
+	#[pallet::storage]
+	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		BalanceOf<T, I>,
+		OptionQuery,
+	>;
+
 	/// Collection belongs to
 	#[pallet::storage]
 	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
@@ -249,11 +259,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
-
-	/// Game collection config
-	#[pallet::storage]
-	pub(super) type GameCollectionConfigOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionConfigFor<T, I>, OptionQuery>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -499,10 +504,10 @@ pub mod pallet {
 		pub fn create_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
-			config: CollectionConfigFor<T, I>,
+			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game, &config)?;
+			Self::do_create_game_collection(&sender, &game, fee)?;
 			Ok(())
 		}
 
@@ -511,10 +516,11 @@ pub mod pallet {
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: T::AccountId,
-			config: CollectionConfigFor<T, I>,
+			// config: CollectionConfigFor<T, I>,
+			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(&sender, &admin, &config)?;
+			Self::do_create_collection(&sender, &admin, fee)?;
 
 			Ok(())
 		}
