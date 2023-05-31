@@ -35,8 +35,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Trade, TransferItem,
-	UpgradeItem, Wishlist,
+	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
+	TransferItem, UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -194,13 +194,8 @@ pub mod pallet {
 
 	/// Storing Collection Minting Fee
 	#[pallet::storage]
-	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::CollectionId,
-		BalanceOf<T, I>,
-		OptionQuery,
-	>;
+	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, BalanceOf<T, I>, OptionQuery>;
 
 	/// Collection belongs to
 	#[pallet::storage]
@@ -810,7 +805,31 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::unlock_item_transfer(origin, collection, item)
 		}
 
+		#[pallet::call_index(25)]
+		#[pallet::weight(0)]
+		pub fn set_swap(
+			origin: OriginFor<T>,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			required: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			Self::do_set_swap(&trade_id, &sender, source, required, maybe_price)?;
+			Ok(())
+		}
 
+		#[pallet::call_index(26)]
+		#[pallet::weight(0)]
+		pub fn claim_swap(
+			origin: OriginFor<T>,
+			trade_id: T::TradeId,
+			maybe_bid_price: Option<BalanceOf<T, I>>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_swap(&trade_id, &sender, maybe_bid_price)?;
+			Ok(())
+		}
 	}
 
 	#[pallet::validate_unsigned]
