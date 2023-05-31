@@ -1,5 +1,5 @@
 use crate::*;
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Bundle, Swap};
 
 impl<T: Config<I>, I: 'static>
@@ -34,7 +34,8 @@ impl<T: Config<I>, I: 'static>
 
 		NextTradeId::<T, I>::set(Some(id.increment()));
 
-		let bundle_out: BundleFor<T, I> = BoundedVec::try_from(required).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+		let bundle_out: BundleFor<T, I> =
+			BoundedVec::try_from(required).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
 
 		TradeConfigOf::<T, I>::insert(
 			id,
@@ -54,6 +55,54 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		maybe_bid_price: Option<BalanceOf<T, I>>,
 	) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+			ensure!(config.trade == TradeType::Swap, Error::<T, I>::UnknownTrade);
+
+			if let Some(price) = config.maybe_price {
+				// check price
+				ensure!(
+					maybe_bid_price.unwrap_or_default() >= price,
+					Error::<T, I>::BidTooLow
+				);
+
+				// make deposit
+				<T as pallet::Config<I>>::Currency::transfer(
+					&who,
+					&config.owner,
+					price,
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
+
+			// transfer items
+			if let Some(required) = config.maybe_required {
+				for package in required.clone() {
+					Self::transfer_item(
+						&who,
+						&package.collection,
+						&package.item,
+						&config.owner,
+						package.amount,
+					)?;
+				}
+			}
+
+			for package in BundleOf::<T, I>::get(id).clone() {
+				Self::transfer_lock_item(
+					&config.owner,
+					&package.collection,
+					&package.item,
+					who,
+					package.amount,
+				)?;
+
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+			}
+
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			return Ok(())
+		}
 		Ok(())
 	}
 }
