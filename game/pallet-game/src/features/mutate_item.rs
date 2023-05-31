@@ -27,8 +27,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		// deposit mining fee
 		// if collection owner not found, skip deposit
 		if let Some(owner) = T::Nfts::collection_owner(&collection) {
-			if let Some(config) = GameCollectionConfigOf::<T, I>::get(collection) {
-				let fee = config.mint_settings.price.unwrap_or_default();
+			if let Some(fee) = MintingFeeOf::<T, I>::get(collection) {
 				// make a deposit
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,

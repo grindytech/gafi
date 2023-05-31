@@ -1,16 +1,21 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::tokens::nonfungibles_v2::Create};
 use gafi_support::game::MutateCollection;
-use pallet_nfts::{CollectionRole, CollectionRoles};
+use pallet_nfts::{CollectionRole, CollectionRoles, CollectionSettings, MintSettings};
 
 impl<T: Config<I>, I: 'static>
-	MutateCollection<T::AccountId, T::GameId, T::CollectionId, CollectionConfigFor<T, I>>
-	for Pallet<T, I>
+	MutateCollection<
+		T::AccountId,
+		T::GameId,
+		T::CollectionId,
+		CollectionConfigFor<T, I>,
+		BalanceOf<T, I>,
+	> for Pallet<T, I>
 {
 	fn do_create_game_collection(
 		who: &T::AccountId,
 		game: &T::GameId,
-		config: &CollectionConfigFor<T, I>,
+		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// verify create collection role
 		ensure!(
@@ -21,18 +26,28 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::NoPermission
 		);
 		if let Some(game_details) = Game::<T, I>::get(game) {
+			let config: CollectionConfigFor<T, I> = CollectionConfig {
+				settings: CollectionSettings::default(),
+				max_supply: None,
+				mint_settings: MintSettings::default(),
+			};
+
 			let maybe_collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
-			
+
 			if let Ok(collection) = maybe_collection {
+				// insert fee
+				MintingFeeOf::<T, I>::insert(collection, fee);
+
 				// insert game collections
 				CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
-					collection_vec.try_push(collection).map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
+					collection_vec
+						.try_push(collection)
+						.map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
 					Ok(())
 				})?;
 
 				// insert collection game
 				GameOf::<T, I>::insert(collection, game);
-				GameCollectionConfigOf::<T, I>::insert(collection, config);
 				Self::deposit_event(Event::<T, I>::CollectionCreated {
 					who: who.clone(),
 					collection,
@@ -46,15 +61,18 @@ impl<T: Config<I>, I: 'static>
 	fn do_create_collection(
 		who: &T::AccountId,
 		admin: &T::AccountId,
-		config: &CollectionConfigFor<T, I>,
+		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
-		let collection = T::Nfts::create_collection(&who, &admin, &config);
-		if let Ok(id) = collection {
-			GameCollectionConfigOf::<T, I>::insert(id, config);
-			Self::deposit_event(Event::<T, I>::CollectionCreated {
-				who: who.clone(),
-				collection: id,
-			});
+		let config: CollectionConfigFor<T, I> = CollectionConfig {
+			settings: CollectionSettings::default(),
+			max_supply: None,
+			mint_settings: MintSettings::default(),
+		};
+
+		let maybe_collection = T::Nfts::create_collection(&who, &admin, &config);
+		if let Ok(collection) = maybe_collection {
+				// insert fee
+				MintingFeeOf::<T, I>::insert(collection, fee);
 		}
 		Ok(())
 	}
