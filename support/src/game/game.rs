@@ -1,7 +1,5 @@
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::{TokenError};
-use sp_std::vec::Vec;
-
 use super::{Bundle, Package};
 
 pub type Amount = u32;

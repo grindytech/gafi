@@ -63,33 +63,33 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game GameRoleOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn create_game(s: u32, ) -> Weight {
-		// Minimum execution time: 19_000 nanoseconds.
-		Weight::from_ref_time(20_040_201)
-			// Standard Error: 115_949
-			.saturating_add(Weight::from_ref_time(246_623).saturating_mul(s.into()))
+		// Minimum execution time: 20_000 nanoseconds.
+		Weight::from_ref_time(21_313_009)
+			// Standard Error: 20_494
+			.saturating_add(Weight::from_ref_time(103_529).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}
 	// Storage: Game GameRoleOf (r:1 w:0)
+	// Storage: Game Game (r:1 w:0)
 	// Storage: Nfts NextCollectionId (r:1 w:1)
 	// Storage: Nfts Collection (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game CollectionsOf (r:1 w:1)
-	// Storage: Game GameCollectionConfigOf (r:0 w:1)
+	// Storage: Game MintingFeeOf (r:0 w:1)
 	// Storage: Game GameOf (r:0 w:1)
 	// Storage: Nfts CollectionRoleOf (r:0 w:1)
 	// Storage: Nfts CollectionConfigOf (r:0 w:1)
 	// Storage: Nfts CollectionAccount (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn create_game_collection(s: u32, ) -> Weight {
-		// Minimum execution time: 31_000 nanoseconds.
-		Weight::from_ref_time(33_968_845)
-			// Standard Error: 24_173
-			.saturating_add(Weight::from_ref_time(2_484).saturating_mul(s.into()))
-			.saturating_add(T::DbWeight::get().reads(5))
+		// Minimum execution time: 34_000 nanoseconds.
+		Weight::from_ref_time(36_019_367)
+			// Standard Error: 34_820
+			.saturating_add(Weight::from_ref_time(59_123).saturating_mul(s.into()))
+			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(9))
 	}
-
 	// Storage: Game GameOf (r:1 w:0)
 	// Storage: Game GameRoleOf (r:1 w:0)
 	// Storage: Nfts Item (r:1 w:1)
@@ -103,7 +103,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// The range of component `s` is `[0, 10]`.
 	fn create_item(_s: u32, ) -> Weight {
 		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(42_331_358)
+		Weight::from_ref_time(41_962_538)
 			.saturating_add(T::DbWeight::get().reads(9))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
@@ -112,47 +112,39 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game ItemReserve (r:1 w:1)
 	// Storage: Game TotalReserveOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
-	fn add_item(s: u32, ) -> Weight {
-		// Minimum execution time: 18_000 nanoseconds.
-		Weight::from_ref_time(19_612_831)
-			// Standard Error: 17_516
-			.saturating_add(Weight::from_ref_time(51_669).saturating_mul(s.into()))
+	fn add_item(_s: u32, ) -> Weight {
+		// Minimum execution time: 19_000 nanoseconds.
+		Weight::from_ref_time(20_095_502)
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: Game TotalReserveOf (r:1 w:1)
 	// Storage: Nfts Collection (r:1 w:0)
-	// Storage: Game GameCollectionConfigOf (r:1 w:0)
+	// Storage: Game MintingFeeOf (r:1 w:0)
 	// Storage: Game RandomSeed (r:1 w:0)
 	// Storage: RandomnessCollectiveFlip RandomMaterial (r:1 w:0)
 	// Storage: Game ItemReserve (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
-	fn mint(s: u32, ) -> Weight {
+	fn mint(_s: u32, ) -> Weight {
 		// Minimum execution time: 28_000 nanoseconds.
-		Weight::from_ref_time(30_090_150)
-			// Standard Error: 19_120
-			.saturating_add(Weight::from_ref_time(100_853).saturating_mul(s.into()))
+		Weight::from_ref_time(29_897_617)
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
-
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn burn(_s: u32, ) -> Weight {
-		// Minimum execution time: 16_000 nanoseconds.
-		Weight::from_ref_time(18_023_636)
+		// Minimum execution time: 17_000 nanoseconds.
+		Weight::from_ref_time(18_176_286)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
-
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
-	fn transfer(s: u32, ) -> Weight {
+	fn transfer(_s: u32, ) -> Weight {
 		// Minimum execution time: 20_000 nanoseconds.
-		Weight::from_ref_time(21_849_260)
-			// Standard Error: 22_052
-			.saturating_add(Weight::from_ref_time(11_340).saturating_mul(s.into()))
+		Weight::from_ref_time(21_816_577)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -168,10 +160,10 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Nfts Account (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_upgrade_item(s: u32, ) -> Weight {
-		// Minimum execution time: 55_000 nanoseconds.
-		Weight::from_ref_time(58_663_481)
-			// Standard Error: 31_868
-			.saturating_add(Weight::from_ref_time(97_731).saturating_mul(s.into()))
+		// Minimum execution time: 54_000 nanoseconds.
+		Weight::from_ref_time(56_607_161)
+			// Standard Error: 22_007
+			.saturating_add(Weight::from_ref_time(105_632).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(9))
 	}
@@ -181,25 +173,27 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Nfts Collection (r:1 w:0)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
-	fn upgrade_item(_s: u32, ) -> Weight {
-		// Minimum execution time: 32_000 nanoseconds.
-		Weight::from_ref_time(34_389_653)
+	fn upgrade_item(s: u32, ) -> Weight {
+		// Minimum execution time: 31_000 nanoseconds.
+		Weight::from_ref_time(32_638_188)
+			// Standard Error: 21_385
+			.saturating_add(Weight::from_ref_time(113_723).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: Game NextTradeId (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:0)
-	// Storage: Game ItemBalanceOf (r:1 w:1)
 	// Storage: Nfts CollectionConfigOf (r:1 w:0)
 	// Storage: Nfts ItemConfigOf (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
+	// Storage: Game ItemBalanceOf (r:1 w:1)
 	// Storage: Game LockBalanceOf (r:1 w:1)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	// Storage: Game PackageOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_price(_s: u32, ) -> Weight {
-		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(43_250_127)
+		// Minimum execution time: 39_000 nanoseconds.
+		Weight::from_ref_time(41_426_478)
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(6))
 	}
@@ -211,21 +205,21 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn buy_item(_s: u32, ) -> Weight {
-		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(42_768_157)
+		// Minimum execution time: 38_000 nanoseconds.
+		Weight::from_ref_time(41_411_442)
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
 	// Storage: Game NextTradeId (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game ItemBalanceOf (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
+	// Storage: Game ItemBalanceOf (r:2 w:2)
 	// Storage: Game LockBalanceOf (r:2 w:2)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_bundle(_s: u32, ) -> Weight {
-		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(47_681_001)
+		// Minimum execution time: 41_000 nanoseconds.
+		Weight::from_ref_time(44_412_525)
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(8))
 	}
@@ -239,7 +233,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// The range of component `s` is `[0, 10]`.
 	fn buy_bundle(_s: u32, ) -> Weight {
 		// Minimum execution time: 63_000 nanoseconds.
-		Weight::from_ref_time(67_790_711)
+		Weight::from_ref_time(65_382_963)
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -249,9 +243,11 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
-	fn cancel_set_price(_s: u32, ) -> Weight {
+	fn cancel_set_price(s: u32, ) -> Weight {
 		// Minimum execution time: 34_000 nanoseconds.
-		Weight::from_ref_time(36_898_891)
+		Weight::from_ref_time(36_021_151)
+			// Standard Error: 36_426
+			.saturating_add(Weight::from_ref_time(77_726).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -263,7 +259,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// The range of component `s` is `[0, 10]`.
 	fn cancel_set_bundle(_s: u32, ) -> Weight {
 		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(47_578_809)
+		Weight::from_ref_time(47_243_501)
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
@@ -272,11 +268,9 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
-	fn set_wishlist(s: u32, ) -> Weight {
-		// Minimum execution time: 25_000 nanoseconds.
-		Weight::from_ref_time(27_112_703)
-			// Standard Error: 40_432
-			.saturating_add(Weight::from_ref_time(62_245).saturating_mul(s.into()))
+	fn set_wishlist(_s: u32, ) -> Weight {
+		// Minimum execution time: 24_000 nanoseconds.
+		Weight::from_ref_time(26_368_565)
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}
@@ -288,8 +282,8 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
 	fn fill_wishlist(_s: u32, ) -> Weight {
-		// Minimum execution time: 53_000 nanoseconds.
-		Weight::from_ref_time(57_315_940)
+		// Minimum execution time: 51_000 nanoseconds.
+		Weight::from_ref_time(54_244_266)
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -298,134 +292,130 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 
 impl WeightInfo for () {
 	fn create_game(s: u32, ) -> Weight {
-		// Minimum execution time: 19_000 nanoseconds.
-		Weight::from_ref_time(20_040_201)
-			// Standard Error: 115_949
-			.saturating_add(Weight::from_ref_time(246_623).saturating_mul(s.into()))
+		// Minimum execution time: 20_000 nanoseconds.
+		Weight::from_ref_time(21_313_009)
+			// Standard Error: 20_494
+			.saturating_add(Weight::from_ref_time(103_529).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(2))
 			.saturating_add(RocksDbWeight::get().writes(4))
 	}
 
 	fn create_game_collection(s: u32, ) -> Weight {
-		// Minimum execution time: 31_000 nanoseconds.
-		Weight::from_ref_time(33_968_845)
-			// Standard Error: 24_173
-			.saturating_add(Weight::from_ref_time(2_484).saturating_mul(s.into()))
-			.saturating_add(RocksDbWeight::get().reads(5))
+		// Minimum execution time: 34_000 nanoseconds.
+		Weight::from_ref_time(36_019_367)
+			// Standard Error: 34_820
+			.saturating_add(Weight::from_ref_time(59_123).saturating_mul(s.into()))
+			.saturating_add(RocksDbWeight::get().reads(6))
 			.saturating_add(RocksDbWeight::get().writes(9))
 	}
-
+	
 	fn create_item(_s: u32, ) -> Weight {
 		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(42_331_358)
+		Weight::from_ref_time(41_962_538)
 			.saturating_add(RocksDbWeight::get().reads(9))
 			.saturating_add(RocksDbWeight::get().writes(7))
 	}
-	 
-	fn add_item(s: u32, ) -> Weight {
-		// Minimum execution time: 18_000 nanoseconds.
-		Weight::from_ref_time(19_612_831)
-			// Standard Error: 17_516
-			.saturating_add(Weight::from_ref_time(51_669).saturating_mul(s.into()))
+	
+	fn add_item(_s: u32, ) -> Weight {
+		// Minimum execution time: 19_000 nanoseconds.
+		Weight::from_ref_time(20_095_502)
 			.saturating_add(RocksDbWeight::get().reads(4))
 			.saturating_add(RocksDbWeight::get().writes(2))
 	}
- 
-	fn mint(s: u32, ) -> Weight {
+	
+	fn mint(_s: u32, ) -> Weight {
 		// Minimum execution time: 28_000 nanoseconds.
-		Weight::from_ref_time(30_090_150)
-			// Standard Error: 19_120
-			.saturating_add(Weight::from_ref_time(100_853).saturating_mul(s.into()))
+		Weight::from_ref_time(29_897_617)
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(3))
 	}
-
+	
 	fn burn(_s: u32, ) -> Weight {
-		// Minimum execution time: 16_000 nanoseconds.
-		Weight::from_ref_time(18_023_636)
+		// Minimum execution time: 17_000 nanoseconds.
+		Weight::from_ref_time(18_176_286)
 			.saturating_add(RocksDbWeight::get().reads(1))
 			.saturating_add(RocksDbWeight::get().writes(1))
 	}
-	 
-	fn transfer(s: u32, ) -> Weight {
+	
+	fn transfer(_s: u32, ) -> Weight {
 		// Minimum execution time: 20_000 nanoseconds.
-		Weight::from_ref_time(21_849_260)
-			// Standard Error: 22_052
-			.saturating_add(Weight::from_ref_time(11_340).saturating_mul(s.into()))
+		Weight::from_ref_time(21_816_577)
 			.saturating_add(RocksDbWeight::get().reads(2))
 			.saturating_add(RocksDbWeight::get().writes(2))
 	}
-	 
+	
 	fn set_upgrade_item(s: u32, ) -> Weight {
-		// Minimum execution time: 55_000 nanoseconds.
-		Weight::from_ref_time(58_663_481)
-			// Standard Error: 31_868
-			.saturating_add(Weight::from_ref_time(97_731).saturating_mul(s.into()))
+		// Minimum execution time: 54_000 nanoseconds.
+		Weight::from_ref_time(56_607_161)
+			// Standard Error: 22_007
+			.saturating_add(Weight::from_ref_time(105_632).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(8))
 			.saturating_add(RocksDbWeight::get().writes(9))
 	}
-	 
-	fn upgrade_item(_s: u32, ) -> Weight {
-		// Minimum execution time: 32_000 nanoseconds.
-		Weight::from_ref_time(34_389_653)
+	
+	fn upgrade_item(s: u32, ) -> Weight {
+		// Minimum execution time: 31_000 nanoseconds.
+		Weight::from_ref_time(32_638_188)
+			// Standard Error: 21_385
+			.saturating_add(Weight::from_ref_time(113_723).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(6))
 			.saturating_add(RocksDbWeight::get().writes(2))
 	}
-	 
+	
 	fn set_price(_s: u32, ) -> Weight {
-		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(43_250_127)
+		// Minimum execution time: 39_000 nanoseconds.
+		Weight::from_ref_time(41_426_478)
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(6))
 	}
-	 
+	
 	fn buy_item(_s: u32, ) -> Weight {
-		// Minimum execution time: 40_000 nanoseconds.
-		Weight::from_ref_time(42_768_157)
+		// Minimum execution time: 38_000 nanoseconds.
+		Weight::from_ref_time(41_411_442)
 			.saturating_add(RocksDbWeight::get().reads(6))
 			.saturating_add(RocksDbWeight::get().writes(3))
 	}
-	 
+	
 	fn set_bundle(_s: u32, ) -> Weight {
-		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(47_681_001)
+		// Minimum execution time: 41_000 nanoseconds.
+		Weight::from_ref_time(44_412_525)
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(8))
 	}
-	 
+	
 	fn buy_bundle(_s: u32, ) -> Weight {
 		// Minimum execution time: 63_000 nanoseconds.
-		Weight::from_ref_time(67_790_711)
+		Weight::from_ref_time(65_382_963)
 			.saturating_add(RocksDbWeight::get().reads(10))
 			.saturating_add(RocksDbWeight::get().writes(5))
 	}
-	 
-	fn cancel_set_price(_s: u32, ) -> Weight {
+	
+	fn cancel_set_price(s: u32, ) -> Weight {
 		// Minimum execution time: 34_000 nanoseconds.
-		Weight::from_ref_time(36_898_891)
+		Weight::from_ref_time(36_021_151)
+			// Standard Error: 36_426
+			.saturating_add(Weight::from_ref_time(77_726).saturating_mul(s.into()))
 			.saturating_add(RocksDbWeight::get().reads(5))
 			.saturating_add(RocksDbWeight::get().writes(5))
 	}
-	 
+	
 	fn cancel_set_bundle(_s: u32, ) -> Weight {
 		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(47_578_809)
+		Weight::from_ref_time(47_243_501)
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(7))
 	}
-	 
-	fn set_wishlist(s: u32, ) -> Weight {
-		// Minimum execution time: 25_000 nanoseconds.
-		Weight::from_ref_time(27_112_703)
-			// Standard Error: 40_432
-			.saturating_add(Weight::from_ref_time(62_245).saturating_mul(s.into()))
+	
+	fn set_wishlist(_s: u32, ) -> Weight {
+		// Minimum execution time: 24_000 nanoseconds.
+		Weight::from_ref_time(26_368_565)
 			.saturating_add(RocksDbWeight::get().reads(3))
 			.saturating_add(RocksDbWeight::get().writes(4))
 	}
-	 
+	
 	fn fill_wishlist(_s: u32, ) -> Weight {
-		// Minimum execution time: 53_000 nanoseconds.
-		Weight::from_ref_time(57_315_940)
+		// Minimum execution time: 51_000 nanoseconds.
+		Weight::from_ref_time(54_244_266)
 			.saturating_add(RocksDbWeight::get().reads(8))
 			.saturating_add(RocksDbWeight::get().writes(3))
 	}
