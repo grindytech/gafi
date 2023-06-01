@@ -136,22 +136,26 @@ impl<T: Config<I>, I: 'static>
 							ItemBalanceStatus::Free,
 						)?;
 					}
+
+					<T as Config<I>>::Currency::unreserve(&auction.owner, T::BundleDeposit::get());
 				}
 
 				BidPriceOf::<T, I>::remove(id, winner_bid.0);
 				BidderOf::<T, I>::remove(id, winner_bid.1);
 			}
 
+			// unreserve the rest of the bidders
 			for bidder in BidderOf::<T, I>::iter_prefix_values(id) {
 				if let Some(bid) = BidPriceOf::<T, I>::get(id, bidder.clone()) {
 					<T as pallet::Config<I>>::Currency::unreserve(&bidder, bid);
 				}
 			}
 
-			let _ = BidderOf::<T, I>::clear_prefix(id, 0 , None);
-			let _ = BidPriceOf::<T, I>::clear_prefix(id, 0 , None);
+			let _ = BidderOf::<T, I>::drain_prefix(id);
+			let _ = BidPriceOf::<T, I>::drain_prefix(id);
+			AuctionConfigOf::<T, I>::remove(id);
+			BundleOf::<T, I>::remove(id);
 
-			// make the trade
 			return Ok(())
 		}
 
