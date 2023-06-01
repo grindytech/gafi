@@ -1297,6 +1297,10 @@ pub fn claim_auction_should_works() {
 
 		assert_eq!(Balances::free_balance(&player), player_balance + winner.1);
 		assert_eq!(Balances::free_balance(&player), player_balance + winner.1);
+
+		for i in 0..(bids.len() - 1) {
+			assert_eq!(Balances::free_balance(&bids[i].0.clone()), 1000 * unit(GAKI));
+		}
 	})
 }
 
