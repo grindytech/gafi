@@ -60,49 +60,20 @@ impl<T: Config<I>, I: 'static>
 				Error::<T, I>::AuctionEnded
 			);
 
-			let total_bid = bid + BidPriceOf::<T, I>::get(id, who).unwrap_or_default();
-
 			if let Some(price) = config.maybe_price {
-				ensure!(total_bid >= price, Error::<T, I>::BidTooLow);
+				ensure!(bid >= price, Error::<T, I>::BidTooLow);
 			}
-
-			// check bid amount is exists
-			ensure!(
-				!BidderOf::<T, I>::contains_key(id, total_bid),
-				Error::<T, I>::BidExists
-			);
-
-			<T as Config<I>>::Currency::reserve(&who, bid)?;
-
 			// update winner
 			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
-				if total_bid > winner_bid.1 {
-					BidWinnerOf::<T, I>::insert(id, (who, total_bid));
-				}
-			} else {
-				BidWinnerOf::<T, I>::insert(id, (who, total_bid));
+				ensure!(bid > winner_bid.1, Error::<T, I>::BidTooLow);
+				<T as Config<I>>::Currency::unreserve(&winner_bid.0, winner_bid.1);
 			}
 
-			BidderOf::<T, I>::insert(id, total_bid, who.clone());
-			BidPriceOf::<T, I>::insert(id, who, total_bid);
+			BidWinnerOf::<T, I>::insert(id, (who, bid));
+			<T as Config<I>>::Currency::reserve(&who, bid)?;
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownAuction.into())
-	}
-
-	fn do_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		if let Some(bid) = BidPriceOf::<T, I>::get(id, who) {
-			// winner can not cancel
-			if let Some(selecting_bid) = BidWinnerOf::<T, I>::get(id) {
-				ensure!(!selecting_bid.0.eq(who), Error::<T, I>::BeingSelected);
-			}
-
-			<T as pallet::Config<I>>::Currency::unreserve(who, bid);
-			BidPriceOf::<T, I>::remove(id, who);
-			BidderOf::<T, I>::remove(id, bid);
-			return Ok(())
-		}
-		Err(Error::<T, I>::UnknownBid.into())
 	}
 
 	fn do_claim_auction(id: &T::TradeId) -> DispatchResult {
@@ -136,23 +107,9 @@ impl<T: Config<I>, I: 'static>
 
 					<T as Config<I>>::Currency::unreserve(&auction.owner, T::BundleDeposit::get());
 				}
-
-				BidPriceOf::<T, I>::remove(id, winner_bid.0);
-				BidderOf::<T, I>::remove(id, winner_bid.1);
 			}
-
-			// unreserve the rest of the bidders
-			for bidder in BidderOf::<T, I>::iter_prefix_values(id) {
-				if let Some(bid) = BidPriceOf::<T, I>::get(id, bidder.clone()) {
-					<T as pallet::Config<I>>::Currency::unreserve(&bidder, bid);
-				}
-			}
-
-			let _ = BidderOf::<T, I>::drain_prefix(id);
-			let _ = BidPriceOf::<T, I>::drain_prefix(id);
 			AuctionConfigOf::<T, I>::remove(id);
 			BundleOf::<T, I>::remove(id);
-
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownAuction.into())

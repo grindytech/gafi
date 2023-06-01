@@ -362,11 +362,6 @@ pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
 		price: Price,
 	) -> DispatchResult;
 	
-	fn do_cancel_bid(
-		id: &TradeId,
-		who: &AccountId,
-	) -> DispatchResult;
-	
 	fn do_claim_auction(
 		id: &TradeId,
 	) -> DispatchResult;

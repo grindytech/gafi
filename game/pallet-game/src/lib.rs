@@ -335,30 +335,6 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Storing bids of account
-	#[pallet::storage]
-	pub(super) type BidderOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Blake2_128Concat,
-		BalanceOf<T, I>,
-		T::AccountId,
-		OptionQuery,
-	>;
-
-	/// Storing total bid of account
-	#[pallet::storage]
-	pub(super) type BidPriceOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Blake2_128Concat,
-		T::AccountId,
-		BalanceOf<T, I>,
-		OptionQuery,
-	>;
-
 	#[pallet::storage]
 	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
@@ -508,9 +484,6 @@ pub mod pallet {
 
 		/// auction
 		AuctionInProgress,
-		UnkownAuction,
-		BidExists,
-		BeingSelected,
 		AuctionNotStarted,
 		AuctionEnded,
 	}
@@ -917,13 +890,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(30)]
-		#[pallet::weight(0)]
-		pub fn cancel_bid(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_cancel_bid(&id, &sender)?;
-			Ok(())
-		}
 	}
 
 	#[pallet::validate_unsigned]

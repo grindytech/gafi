@@ -1156,17 +1156,16 @@ pub fn bid_auction_should_works() {
 			0,
 			bid
 		));
+		assert_eq!(Balances::free_balance(&bidder), bidder_balance - bid);
 
 		run_to_block(2);
 
 		assert_ok!(PalletGame::bid_auction(
 			RuntimeOrigin::signed(bidder.clone()),
 			0,
-			bid
+			bid * 2
 		));
 
-		assert_eq!(BidPriceOf::<Test>::get(0, bidder.clone()).unwrap(), bid * 2);
-		assert_eq!(BidderOf::<Test>::get(0, bid * 2).unwrap(), bidder.clone());
 		assert_eq!(Balances::free_balance(&bidder), bidder_balance - (bid * 2));
 	})
 }
@@ -1206,92 +1205,13 @@ pub fn bid_auction_should_fails() {
 		let bidder1 = new_account(2, 1000 * unit(GAKI));
 		assert_err!(
 			PalletGame::bid_auction(RuntimeOrigin::signed(bidder1.clone()), 0, 200 * unit(GAKI)),
-			Error::<Test>::BidExists
+			Error::<Test>::BidTooLow
 		);
 
 		run_to_block(12);
 		assert_err!(
 			PalletGame::bid_auction(RuntimeOrigin::signed(bidder1.clone()), 0, 300 * unit(GAKI)),
 			Error::<Test>::AuctionEnded
-		);
-	})
-}
-
-#[test]
-pub fn cancel_bid_auction_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-
-		let player = do_all_mint_item();
-		assert_ok!(PalletGame::set_auction(
-			RuntimeOrigin::signed(player.clone()),
-			TEST_BUNDLE.clone().to_vec(),
-			Some(100 * unit(GAKI)),
-			1,
-			10,
-		));
-
-		run_to_block(2);
-		let bids = [
-			(new_account(1, 1000 * unit(GAKI)), 100 * unit(GAKI)),
-			(new_account(2, 1000 * unit(GAKI)), 200 * unit(GAKI)),
-			(new_account(3, 1000 * unit(GAKI)), 400 * unit(GAKI)),
-			(new_account(4, 1000 * unit(GAKI)), 500 * unit(GAKI)),
-		];
-
-		for i in 0..bids.len() {
-			run_to_block(2 + i as u64);
-			assert_ok!(PalletGame::bid_auction(
-				RuntimeOrigin::signed(bids[i].0.clone()),
-				0,
-				bids[i].1,
-			));
-		}
-
-		for i in 0..(bids.len() - 1) {
-			run_to_block(2 + i as u64);
-			let before_balance = Balances::free_balance(&bids[i].0.clone());
-			assert_ok!(PalletGame::cancel_bid(
-				RuntimeOrigin::signed(bids[i].0.clone()),
-				0,
-			));
-			assert_eq!(
-				Balances::free_balance(&bids[i].0.clone()),
-				before_balance + bids[i].1
-			);
-		}
-	})
-}
-
-#[test]
-pub fn cancel_bid_auction_should_fails() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-
-		let player = do_all_mint_item();
-		assert_ok!(PalletGame::set_auction(
-			RuntimeOrigin::signed(player.clone()),
-			TEST_BUNDLE.clone().to_vec(),
-			Some(100 * unit(GAKI)),
-			1,
-			10,
-		));
-
-		let bidder = new_account(1, 2000 * unit(GAKI));
-		assert_err!(
-			PalletGame::cancel_bid(RuntimeOrigin::signed(bidder), 0,),
-			Error::<Test>::UnknownBid
-		);
-
-		assert_ok!(PalletGame::bid_auction(
-			RuntimeOrigin::signed(bidder.clone()),
-			0,
-			100 * unit(GAKI),
-		));
-
-		assert_err!(
-			PalletGame::cancel_bid(RuntimeOrigin::signed(bidder), 0,),
-			Error::<Test>::BeingSelected
 		);
 	})
 }
