@@ -81,8 +81,19 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn fn_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		todo!()
+	fn do_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(bid) = BidPriceOf::<T, I>::get(id, who) {
+			// winner can not cancel
+			if let Some(selecting_bid) = BidWinnerOf::<T, I>::get(id) {
+				ensure!(!selecting_bid.0.eq(who), Error::<T, I>::BeingSelected);
+			}
+
+			<T as pallet::Config<I>>::Currency::unreserve(who, bid);
+			BidPriceOf::<T, I>::remove(id, who);
+			BidderOf::<T, I>::remove(id, bid);
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownBid.into())
 	}
 
 	fn do_set_candle_auction(
@@ -126,7 +137,20 @@ impl<T: Config<I>, I: 'static>
 						)?;
 					}
 				}
+
+				BidPriceOf::<T, I>::remove(id, winner_bid.0);
+				BidderOf::<T, I>::remove(id, winner_bid.1);
 			}
+
+			for bidder in BidderOf::<T, I>::iter_prefix_values(id) {
+				if let Some(bid) = BidPriceOf::<T, I>::get(id, bidder.clone()) {
+					<T as pallet::Config<I>>::Currency::unreserve(&bidder, bid);
+				}
+			}
+
+			let _ = BidderOf::<T, I>::clear_prefix(id, 0 , None);
+			let _ = BidPriceOf::<T, I>::clear_prefix(id, 0 , None);
+
 			// make the trade
 			return Ok(())
 		}

@@ -483,6 +483,7 @@ pub mod pallet {
 		UnknownTrade,
 		UnknownUpgrade,
 		UnknownAuction,
+		UnknownBid,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -518,7 +519,7 @@ pub mod pallet {
 		AuctionInProgress,
 		UnkownAuction,
 		BidExists,
-		
+		BeingSelected,
 	}
 
 	#[pallet::hooks]
@@ -921,6 +922,14 @@ pub mod pallet {
 		pub fn claim_auction(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&id)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(30)]
+		#[pallet::weight(0)]
+		pub fn cancel_bid(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_cancel_bid(&id, &sender)?;
 			Ok(())
 		}
 	}
