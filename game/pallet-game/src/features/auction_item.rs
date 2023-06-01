@@ -1,5 +1,5 @@
 use crate::*;
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::BalanceStatus};
 use gafi_support::game::{Auction, Bundle};
 
 impl<T: Config<I>, I: 'static>
@@ -51,26 +51,38 @@ impl<T: Config<I>, I: 'static>
 
 	fn do_bid_auction(id: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
 		if let Some(cofig) = AuctionConfigOf::<T, I>::get(id) {
-			let total_bid = TotalBidOf::<T, I>::get(who, id).unwrap_or_default();
-			
+			let total_bid = bid + BidPriceOf::<T, I>::get(id, who).unwrap_or_default();
+
 			if let Some(price) = cofig.maybe_price {
-				ensure!(total_bid + bid >= price, Error::<T, I>::BidTooLow);
+				ensure!(total_bid >= price, Error::<T, I>::BidTooLow);
 			}
 
+			// check bid amount is exists
+			ensure!(
+				!BidderOf::<T, I>::contains_key(id, total_bid),
+				Error::<T, I>::BidExists
+			);
+
 			<T as Config<I>>::Currency::reserve(&who, bid)?;
-			let block_number = <frame_system::Pallet<T>>::block_number();
 
-			BidOf::<T, I>::try_mutate(who, id, |bid_vec| -> DispatchResult {
-				bid_vec
-					.try_push((block_number, bid))
-					.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
-				Ok(())
-			})?;
+			// update winner
+			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
+				if total_bid > winner_bid.1 {
+					BidWinnerOf::<T, I>::insert(id, (who, total_bid));
+				}
+			} else {
+				BidWinnerOf::<T, I>::insert(id, (who, total_bid));
+			}
 
-			TotalBidOf::<T, I>::insert(who, id, total_bid + bid);
+			BidderOf::<T, I>::insert(id, total_bid, who.clone());
+			BidPriceOf::<T, I>::insert(id, who, total_bid);
 		}
 
 		Ok(())
+	}
+
+	fn fn_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		todo!()
 	}
 
 	fn do_set_candle_auction(
@@ -85,7 +97,40 @@ impl<T: Config<I>, I: 'static>
 		todo!()
 	}
 
-	fn fn_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		todo!()
+	fn do_claim_auction(id: &T::TradeId) -> DispatchResult {
+		if let Some(config) = AuctionConfigOf::<T, I>::get(id) {
+			let block_number = <frame_system::Pallet<T>>::block_number();
+
+			ensure!(
+				block_number >= (config.start_block + config.duration),
+				Error::<T, I>::AuctionInProgress
+			);
+
+			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
+				if let Some(auction) = AuctionConfigOf::<T, I>::get(id) {
+					<T as pallet::Config<I>>::Currency::repatriate_reserved(
+						&winner_bid.0,
+						&auction.owner,
+						winner_bid.1,
+						BalanceStatus::Free,
+					)?;
+
+					for package in BundleOf::<T, I>::get(id) {
+						Self::repatriate_lock_item(
+							&auction.owner,
+							&package.collection,
+							&package.item,
+							&winner_bid.0,
+							package.amount,
+							ItemBalanceStatus::Free,
+						)?;
+					}
+				}
+			}
+			// make the trade
+			return Ok(())
+		}
+
+		Err(Error::<T, I>::UnknownAuction.into())
 	}
 }

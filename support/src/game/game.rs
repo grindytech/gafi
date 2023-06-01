@@ -361,10 +361,14 @@ pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
 		who: &AccountId,
 		price: Price,
 	) -> DispatchResult;
-
+	
 	fn fn_cancel_bid(
 		id: &TradeId,
 		who: &AccountId,
+	) -> DispatchResult;
+	
+	fn do_claim_auction(
+		id: &TradeId,
 	) -> DispatchResult;
 
 	fn do_set_candle_auction(
@@ -376,6 +380,7 @@ pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
 		early_end: Block,
 		end_block: Block,
 	) -> DispatchResult;
+
 
 }
 

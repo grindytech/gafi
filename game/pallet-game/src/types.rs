@@ -95,3 +95,9 @@ pub struct AuctionConfig<AccountId, Price, BlockNumber> {
 	pub start_block: BlockNumber,
 	pub duration: BlockNumber,
 }
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum ItemBalanceStatus {
+	Reserved,
+	Free,
+}

@@ -198,4 +198,24 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		Ok(())
 	}
+
+	pub(crate) fn repatriate_lock_item(
+		slashed: &T::AccountId,
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		beneficiary: &T::AccountId,
+		amount: u32,
+		status: ItemBalanceStatus,
+	) -> Result<(), Error<T, I>> {
+		Self::sub_lock_balance(slashed, collection, item, amount)?;
+		match status {
+			ItemBalanceStatus::Reserved => {
+				Self::add_lock_balance(beneficiary, collection, item, amount)?;
+			},
+			ItemBalanceStatus::Free => {
+				Self::add_item_balance(beneficiary, collection, item, amount)?;
+			},
+		};
+		Ok(())
+	}
 }
