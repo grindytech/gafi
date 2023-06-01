@@ -35,7 +35,7 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
+	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
 	TransferItem, UpgradeItem, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -167,6 +167,10 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
+		/// Maximum number of bids per auction
+		#[pallet::constant]
+		type MaxNumBid: Get<u32>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -312,13 +316,8 @@ pub mod pallet {
 
 	/// Storing bundle
 	#[pallet::storage]
-	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		BundleFor<T, I>,
-		ValueQuery,
-	>;
+	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::TradeId, BundleFor<T, I>, ValueQuery>;
 
 	/// Storing trade configuration
 	#[pallet::storage]
@@ -326,11 +325,50 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		TradeConfig<
-			T::AccountId,
-			BalanceOf<T, I>,
-			BundleFor<T, I>,
-		>,
+		TradeConfig<T::AccountId, BalanceOf<T, I>, BundleFor<T, I>>,
+		OptionQuery,
+	>;
+
+	/// Storing auction configuration
+	#[pallet::storage]
+	pub(super) type AuctionConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		AuctionConfig<T::AccountId, BalanceOf<T, I>, T::BlockNumber>,
+		OptionQuery,
+	>;
+
+	/// Storing bids of account
+	#[pallet::storage]
+	pub(super) type BidderOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		Blake2_128Concat,
+		BalanceOf<T, I>,
+		T::AccountId,
+		OptionQuery,
+	>;
+
+	/// Storing total bid of account
+	#[pallet::storage]
+	pub(super) type BidPriceOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		Blake2_128Concat,
+		T::AccountId,
+		BalanceOf<T, I>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::TradeId,
+		(T::AccountId, BalanceOf<T, I>),
 		OptionQuery,
 	>;
 
@@ -444,6 +482,8 @@ pub mod pallet {
 		UnknownItem,
 		UnknownTrade,
 		UnknownUpgrade,
+		UnknownAuction,
+		UnknownBid,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -474,6 +514,12 @@ pub mod pallet {
 		AskTooHigh,
 		TradeIdInUse,
 		TooLow,
+
+		/// auction
+		AuctionInProgress,
+		UnkownAuction,
+		BidExists,
+		BeingSelected,
 	}
 
 	#[pallet::hooks]
@@ -832,6 +878,58 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_claim_swap(&trade_id, &sender, maybe_bid_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(27)]
+		#[pallet::weight(0)]
+		pub fn set_auction(
+			origin: OriginFor<T>,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: T::BlockNumber,
+			duration: T::BlockNumber,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+
+			Self::do_set_auction(
+				&trade_id,
+				&sender,
+				bundle,
+				maybe_price,
+				start_block,
+				duration,
+			)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(28)]
+		#[pallet::weight(0)]
+		pub fn bid_auction(
+			origin: OriginFor<T>,
+			id: T::TradeId,
+			price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_bid_auction(&id, &sender, price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(29)]
+		#[pallet::weight(0)]
+		pub fn claim_auction(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			Self::do_claim_auction(&id)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(30)]
+		#[pallet::weight(0)]
+		pub fn cancel_bid(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_cancel_bid(&id, &sender)?;
 			Ok(())
 		}
 	}

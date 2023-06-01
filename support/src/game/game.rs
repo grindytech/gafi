@@ -4,7 +4,7 @@ use super::{Bundle, Package};
 
 pub type Amount = u32;
 pub type Level = u32;
-pub trait GameSetting<AccountId, GameId, BlockNumber> {
+pub trait GameSetting<AccountId, GameId> {
 	/// Do create a new game
 	///
 	/// Implementing the function create game
@@ -342,6 +342,46 @@ pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price>{
 		who: &AccountId,
 		maybe_bid_price: Option<Price>,
 	) -> DispatchResult;
+}
+
+/// Trait for auction items
+pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
+
+	fn do_set_auction(
+		id: &TradeId,
+		who: &AccountId,
+		bundle: Bundle<CollectionId, ItemId>,
+		maybe_price: Option<Price>,
+		start_block: Block,
+		duration: Block,
+	)-> DispatchResult;
+
+	fn do_bid_auction(
+		id: &TradeId,
+		who: &AccountId,
+		price: Price,
+	) -> DispatchResult;
+	
+	fn do_cancel_bid(
+		id: &TradeId,
+		who: &AccountId,
+	) -> DispatchResult;
+	
+	fn do_claim_auction(
+		id: &TradeId,
+	) -> DispatchResult;
+
+	fn do_set_candle_auction(
+		id: &TradeId,
+		who: &AccountId,
+		bundle: Bundle<CollectionId, ItemId>,
+		maybe_price: Option<Price>,
+		start_block: Block,
+		early_end: Block,
+		end_block: Block,
+	) -> DispatchResult;
+
+
 }
 
 pub trait Destroy<E> {
