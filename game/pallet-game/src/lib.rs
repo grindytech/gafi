@@ -168,10 +168,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Maximum number of bids per auction
-		#[pallet::constant]
-		type MaxNumBid: Get<u32>;
-
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
 		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
@@ -364,13 +360,8 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		(T::AccountId, BalanceOf<T, I>),
-		OptionQuery,
-	>;
+	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -724,8 +715,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
-
+			let trade_id = Self::get_trade_id();
 			Self::do_set_price(&trade_id, &sender, package, price)?;
 
 			Ok(())
@@ -756,7 +746,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 
 			Self::do_set_bundle(&trade_id, &sender, bundle, price)?;
 
@@ -804,7 +794,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
 			Ok(())
 		}
@@ -864,7 +854,7 @@ pub mod pallet {
 			maybe_price: Option<BalanceOf<T, I>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 			Self::do_set_swap(&trade_id, &sender, source, required, maybe_price)?;
 			Ok(())
 		}
@@ -892,7 +882,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 
 			Self::do_set_auction(
 				&trade_id,

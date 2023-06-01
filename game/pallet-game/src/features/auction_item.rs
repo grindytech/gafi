@@ -34,8 +34,6 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
-		NextTradeId::<T, I>::set(Some(id.increment()));
-
 		AuctionConfigOf::<T, I>::insert(
 			id,
 			AuctionConfig {
@@ -94,18 +92,6 @@ impl<T: Config<I>, I: 'static>
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownBid.into())
-	}
-
-	fn do_set_candle_auction(
-		id: &T::TradeId,
-		who: &T::AccountId,
-		bundle: Bundle<T::CollectionId, T::ItemId>,
-		maybe_price: Option<BalanceOf<T, I>>,
-		start_block: T::BlockNumber,
-		early_end: T::BlockNumber,
-		end_block: T::BlockNumber,
-	) -> DispatchResult {
-		todo!()
 	}
 
 	fn do_claim_auction(id: &T::TradeId) -> DispatchResult {
