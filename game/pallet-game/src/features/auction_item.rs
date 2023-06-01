@@ -48,10 +48,21 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_bid_auction(id: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
-		if let Some(cofig) = AuctionConfigOf::<T, I>::get(id) {
+		if let Some(config) = AuctionConfigOf::<T, I>::get(id) {
+			// make sure the auction is not over
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			ensure!(
+				block_number >= config.start_block,
+				Error::<T, I>::AuctionNotStarted
+			);
+			ensure!(
+				block_number < config.start_block + config.duration,
+				Error::<T, I>::AuctionEnded
+			);
+
 			let total_bid = bid + BidPriceOf::<T, I>::get(id, who).unwrap_or_default();
 
-			if let Some(price) = cofig.maybe_price {
+			if let Some(price) = config.maybe_price {
 				ensure!(total_bid >= price, Error::<T, I>::BidTooLow);
 			}
 
@@ -74,9 +85,9 @@ impl<T: Config<I>, I: 'static>
 
 			BidderOf::<T, I>::insert(id, total_bid, who.clone());
 			BidPriceOf::<T, I>::insert(id, who, total_bid);
+			return Ok(())
 		}
-
-		Ok(())
+		Err(Error::<T, I>::UnknownAuction.into())
 	}
 
 	fn do_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
@@ -144,7 +155,6 @@ impl<T: Config<I>, I: 'static>
 
 			return Ok(())
 		}
-
 		Err(Error::<T, I>::UnknownAuction.into())
 	}
 }

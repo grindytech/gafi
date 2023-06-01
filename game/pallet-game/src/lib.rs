@@ -511,6 +511,8 @@ pub mod pallet {
 		UnkownAuction,
 		BidExists,
 		BeingSelected,
+		AuctionNotStarted,
+		AuctionEnded,
 	}
 
 	#[pallet::hooks]
