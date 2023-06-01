@@ -2,7 +2,7 @@ use crate::*;
 use frame_support::pallet_prelude::*;
 use pallet_nfts::{CollectionRole, CollectionRoles};
 
-impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::BlockNumber>
+impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 	for Pallet<T, I>
 {
 	fn do_create_game(

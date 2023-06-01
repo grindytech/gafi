@@ -77,7 +77,6 @@ pub enum TradeType {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct UpgradeItemConfig<ItemId, Price> {
 	pub item: ItemId,
-
 	pub fee: Price,
 }
 
@@ -87,4 +86,18 @@ pub struct TradeConfig<AccountId, Price, Bundle> {
 	pub owner: AccountId,
 	pub maybe_price: Option<Price>,
 	pub maybe_required: Option<Bundle>,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct AuctionConfig<AccountId, Price, BlockNumber> {
+	pub owner: AccountId,
+	pub maybe_price: Option<Price>,
+	pub start_block: BlockNumber,
+	pub duration: BlockNumber,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum ItemBalanceStatus {
+	Reserved,
+	Free,
 }
