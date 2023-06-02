@@ -64,15 +64,6 @@ impl<ItemId> Item<ItemId> {
 	}
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub enum TradeType {
-	Normal,
-	Bundle,
-	Wishlist,
-	Auction,
-	Swap,
-}
-
 /// Upgrade Item configuration.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct UpgradeItemConfig<ItemId, Price> {

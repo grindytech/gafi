@@ -6,29 +6,29 @@ impl<T: Config<I>, I: 'static>
 	Wishlist<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_wishlist(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
-		bundle: Bundle<T::CollectionId, T::ItemId>,
+		wishlist: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		// ensure available id
+		// ensure available trade
 		ensure!(
-			!BundleOf::<T, I>::contains_key(id),
+			!BundleOf::<T, I>::contains_key(trade),
 			Error::<T, I>::TradeIdInUse
 		);
 
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 		<T as Config<I>>::Currency::reserve(&who, price)?;
 
-		<BundleOf<T, I>>::try_mutate(id, |package_vec| -> DispatchResult {
+		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 			package_vec
-				.try_append(bundle.clone().into_mut())
+				.try_append(wishlist.clone().into_mut())
 				.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
 			Ok(())
 		})?;
 
 		TradeConfigOf::<T, I>::insert(
-			id,
+			trade,
 			TradeConfig {
 				trade: TradeType::Wishlist,
 				owner: who.clone(),
@@ -38,8 +38,9 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::WishlistSet {
-			id: *id,
+			trade: *trade,
 			who: who.clone(),
+			wishlist,
 			price,
 		});
 
@@ -47,11 +48,11 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_fill_wishlist(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		ask_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		let bundle = BundleOf::<T, I>::get(id);
+		let bundle = BundleOf::<T, I>::get(trade);
 
 		// ensure item can be transfer
 		for pack in bundle.clone() {
@@ -61,7 +62,7 @@ impl<T: Config<I>, I: 'static>
 			);
 		}
 
-		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			let price = config.maybe_price.unwrap_or_default();
 
 			ensure!(
@@ -92,13 +93,39 @@ impl<T: Config<I>, I: 'static>
 			}
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
 			Self::deposit_event(Event::<T, I>::WishlistFilled {
-				id: *id,
+				trade: *trade,
 				wisher: config.owner,
 				filler: who.clone(),
-				price: price,
+				price,
 			});
 			return Ok(())
 		}
 		return Err(Error::<T, I>::NotForSale.into())
+	}
+
+	fn do_cancel_wishlist(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(
+				config.trade == TradeType::Wishlist,
+				Error::<T, I>::UnknownTrade
+			);
+
+			// ensure owner
+			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+			// unreserve
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			// remove storage
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
+
+			Self::deposit_event(Event::<T, I>::TradeCanceled {
+				trade: *trade,
+				who: who.clone(),
+			});
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

@@ -36,7 +36,7 @@ use frame_system::{
 };
 use gafi_support::game::{
 	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
-	TransferItem, UpgradeItem, Wishlist,
+	TransferItem, UpgradeItem, Wishlist, TradeType,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -163,10 +163,6 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any upgrade.
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
-
-		/// The basic amount of funds that must be reserved for any sale.
-		#[pallet::constant]
-		type SaleDeposit: Get<BalanceOf<Self, I>>;
 
 		/// Maximum collection in a bundle
 		#[pallet::constant]
@@ -308,16 +304,6 @@ pub mod pallet {
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::TradeId, OptionQuery>;
 
-	/// Storing package
-	#[pallet::storage]
-	pub(super) type PackageOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Package<T::CollectionId, T::ItemId>,
-		OptionQuery,
-	>;
-
 	/// Storing bundle
 	#[pallet::storage]
 	pub(super) type BundleOf<T: Config<I>, I: 'static = ()> =
@@ -374,7 +360,7 @@ pub mod pallet {
 			who: T::AccountId,
 			target: T::AccountId,
 			collection: T::CollectionId,
-			minted_items: Vec<T::ItemId>,
+			items: Vec<T::ItemId>,
 		},
 		Burned {
 			who: T::AccountId,
@@ -389,13 +375,6 @@ pub mod pallet {
 			dest: T::AccountId,
 			amount: u32,
 		},
-		Upgraded {
-			who: T::AccountId,
-			collection: T::CollectionId,
-			item: T::ItemId,
-			new_item: T::ItemId,
-			amount: u32,
-		},
 		UpgradeSet {
 			who: T::AccountId,
 			collection: T::CollectionId,
@@ -403,8 +382,15 @@ pub mod pallet {
 			new_item: T::ItemId,
 			level: Level,
 		},
+		Upgraded {
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			new_item: T::ItemId,
+			amount: u32,
+		},
 		PriceSet {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
@@ -412,7 +398,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		},
 		ItemBought {
-			id: T::TradeId,
+			trade: T::TradeId,
 			seller: T::AccountId,
 			buyer: T::AccountId,
 			collection: T::CollectionId,
@@ -421,27 +407,29 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		},
 		BundleSet {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
 		},
 		BundleBought {
-			id: T::TradeId,
+			trade: T::TradeId,
 			seller: T::AccountId,
 			buyer: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
 		TradeCanceled {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 		},
 		WishlistSet {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
+			wishlist: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
 		},
 		WishlistFilled {
-			id: T::TradeId,
+			trade: T::TradeId,
 			wisher: T::AccountId,
 			filler: T::AccountId,
 			price: BalanceOf<T, I>,
@@ -452,18 +440,18 @@ pub mod pallet {
 			collection: T::CollectionId,
 		},
 		SwapSet {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
 		},
 		SwapClaimed {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 		},
 		AuctionSet {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
@@ -471,13 +459,13 @@ pub mod pallet {
 			duration: T::BlockNumber,
 		},
 		Bade {
-			id: T::TradeId,
+			trade: T::TradeId,
 			who: T::AccountId,
 			bid: BalanceOf<T, I>,
 		},
 		AuctionClaimed {
-			id: T::TradeId,
-			bid: Option<(T::AccountId, BalanceOf<T, I>)>,
+			trade: T::TradeId,
+			maybe_bid: Option<(T::AccountId, BalanceOf<T, I>)>,
 		},
 	}
 
@@ -492,7 +480,7 @@ pub mod pallet {
 		UnknownUpgrade,
 		UnknownAuction,
 		UnknownBid,
-
+		
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -734,8 +722,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = Self::get_trade_id();
-			Self::do_set_price(&trade_id, &sender, package, price)?;
+			let trade = Self::get_trade_id();
+			Self::do_set_price(&trade, &sender, package, price)?;
 
 			Ok(())
 		}
@@ -745,13 +733,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn buy_item(
 			origin: OriginFor<T>,
-			id: T::TradeId,
+			trade: T::TradeId,
 			amount: u32,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_buy_item(&id, &sender, amount, bid_price)?;
+			Self::do_buy_item(&trade, &sender, amount, bid_price)?;
 
 			Ok(())
 		}
@@ -765,9 +753,9 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = Self::get_trade_id();
+			let trade = Self::get_trade_id();
 
-			Self::do_set_bundle(&trade_id, &sender, bundle, price)?;
+			Self::do_set_bundle(&trade, &sender, bundle, price)?;
 
 			Ok(())
 		}
@@ -777,30 +765,26 @@ pub mod pallet {
 		#[transactional]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
-			trade_id: T::TradeId,
+			trade: T::TradeId,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::do_buy_bundle(&trade_id, &sender, bid_price)?;
+			Self::do_buy_bundle(&trade, &sender, bid_price)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(18)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_price(1_u32))]
+		#[pallet::weight(0)]
 		#[transactional]
-		pub fn cancel_set_price(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
+		pub fn cancel_trade(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			trade_type: TradeType,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_cancel_price(&trade_id, &sender)?;
-			Ok(())
-		}
 
-		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_bundle(1_u32))]
-		#[transactional]
-		pub fn cancel_set_bundle(origin: OriginFor<T>, trade_id: T::TradeId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_cancel_bundle(&trade_id, &sender)?;
+			Self::do_cancel_trade(&trade, &sender, trade_type)?;
 			Ok(())
 		}
 
@@ -813,8 +797,8 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = Self::get_trade_id();
-			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
+			let trade = Self::get_trade_id();
+			Self::do_set_wishlist(&trade, &sender, bundle, price)?;
 			Ok(())
 		}
 
@@ -823,11 +807,11 @@ pub mod pallet {
 		#[transactional]
 		pub fn fill_wishlist(
 			origin: OriginFor<T>,
-			trade_id: T::TradeId,
+			trade: T::TradeId,
 			ask_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_fill_wishlist(&trade_id, &sender, ask_price)?;
+			Self::do_fill_wishlist(&trade, &sender, ask_price)?;
 			Ok(())
 		}
 
@@ -876,8 +860,8 @@ pub mod pallet {
 			maybe_price: Option<BalanceOf<T, I>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = Self::get_trade_id();
-			Self::do_set_swap(&trade_id, &sender, source, required, maybe_price)?;
+			let trade = Self::get_trade_id();
+			Self::do_set_swap(&trade, &sender, source, required, maybe_price)?;
 			Ok(())
 		}
 
@@ -886,11 +870,11 @@ pub mod pallet {
 		#[transactional]
 		pub fn claim_swap(
 			origin: OriginFor<T>,
-			trade_id: T::TradeId,
+			trade: T::TradeId,
 			maybe_bid_price: Option<BalanceOf<T, I>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_claim_swap(&trade_id, &sender, maybe_bid_price)?;
+			Self::do_claim_swap(&trade, &sender, maybe_bid_price)?;
 			Ok(())
 		}
 
@@ -906,10 +890,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = Self::get_trade_id();
+			let trade = Self::get_trade_id();
 
 			Self::do_set_auction(
-				&trade_id,
+				&trade,
 				&sender,
 				source,
 				maybe_price,
@@ -924,20 +908,20 @@ pub mod pallet {
 		#[transactional]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
-			id: T::TradeId,
+			trade: T::TradeId,
 			bid: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_bid_auction(&id, &sender, bid)?;
+			Self::do_bid_auction(&trade, &sender, bid)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(29)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
 		#[transactional]
-		pub fn claim_auction(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
+		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			Self::do_claim_auction(&id)?;
+			Self::do_claim_auction(&trade)?;
 			Ok(())
 		}
 	}
