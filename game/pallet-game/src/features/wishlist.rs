@@ -27,8 +27,6 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
-		NextTradeId::<T, I>::set(Some(id.increment()));
-
 		TradeConfigOf::<T, I>::insert(
 			id,
 			TradeConfig {

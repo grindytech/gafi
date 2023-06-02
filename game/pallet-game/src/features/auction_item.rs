@@ -34,8 +34,6 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
-		NextTradeId::<T, I>::set(Some(id.increment()));
-
 		AuctionConfigOf::<T, I>::insert(
 			id,
 			AuctionConfig {
@@ -46,66 +44,51 @@ impl<T: Config<I>, I: 'static>
 			},
 		);
 
+		Self::deposit_event(Event::<T, I>::AuctionSet {
+			id: *id,
+			who: who.clone(),
+			source,
+			maybe_price,
+			start_block,
+			duration,
+		});
+
 		Ok(())
 	}
 
 	fn do_bid_auction(id: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
-		if let Some(cofig) = AuctionConfigOf::<T, I>::get(id) {
-			let total_bid = bid + BidPriceOf::<T, I>::get(id, who).unwrap_or_default();
-
-			if let Some(price) = cofig.maybe_price {
-				ensure!(total_bid >= price, Error::<T, I>::BidTooLow);
-			}
-
-			// check bid amount is exists
+		if let Some(config) = AuctionConfigOf::<T, I>::get(id) {
+			// make sure the auction is not over
+			let block_number = <frame_system::Pallet<T>>::block_number();
 			ensure!(
-				!BidderOf::<T, I>::contains_key(id, total_bid),
-				Error::<T, I>::BidExists
+				block_number >= config.start_block,
+				Error::<T, I>::AuctionNotStarted
+			);
+			ensure!(
+				block_number < config.start_block + config.duration,
+				Error::<T, I>::AuctionEnded
 			);
 
-			<T as Config<I>>::Currency::reserve(&who, bid)?;
-
+			if let Some(price) = config.maybe_price {
+				ensure!(bid >= price, Error::<T, I>::BidTooLow);
+			}
 			// update winner
 			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
-				if total_bid > winner_bid.1 {
-					BidWinnerOf::<T, I>::insert(id, (who, total_bid));
-				}
-			} else {
-				BidWinnerOf::<T, I>::insert(id, (who, total_bid));
+				ensure!(bid > winner_bid.1, Error::<T, I>::BidTooLow);
+				<T as Config<I>>::Currency::unreserve(&winner_bid.0, winner_bid.1);
 			}
 
-			BidderOf::<T, I>::insert(id, total_bid, who.clone());
-			BidPriceOf::<T, I>::insert(id, who, total_bid);
-		}
+			BidWinnerOf::<T, I>::insert(id, (who, bid));
+			<T as Config<I>>::Currency::reserve(&who, bid)?;
 
-		Ok(())
-	}
-
-	fn do_cancel_bid(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		if let Some(bid) = BidPriceOf::<T, I>::get(id, who) {
-			// winner can not cancel
-			if let Some(selecting_bid) = BidWinnerOf::<T, I>::get(id) {
-				ensure!(!selecting_bid.0.eq(who), Error::<T, I>::BeingSelected);
-			}
-
-			<T as pallet::Config<I>>::Currency::unreserve(who, bid);
-			BidPriceOf::<T, I>::remove(id, who);
-			BidderOf::<T, I>::remove(id, bid);
+			Self::deposit_event(Event::<T, I>::Bade {
+				id: *id,
+				who: who.clone(),
+				bid,
+			});
 			return Ok(())
 		}
-		Err(Error::<T, I>::UnknownBid.into())
-	}
-
-	fn do_set_candle_auction(
-		id: &T::TradeId,
-		who: &T::AccountId,
-		bundle: Bundle<T::CollectionId, T::ItemId>,
-		maybe_price: Option<BalanceOf<T, I>>,
-		start_block: T::BlockNumber,
-		early_end: T::BlockNumber,
-		end_block: T::BlockNumber,
-	) -> DispatchResult {
-		todo!()
+		Err(Error::<T, I>::UnknownAuction.into())
 	}
 
 	fn do_claim_auction(id: &T::TradeId) -> DispatchResult {
@@ -116,8 +99,8 @@ impl<T: Config<I>, I: 'static>
 				block_number >= (config.start_block + config.duration),
 				Error::<T, I>::AuctionInProgress
 			);
-
-			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
+			let maybe_bid = BidWinnerOf::<T, I>::get(id);
+			if let Some(winner_bid) = maybe_bid.clone() {
 				if let Some(auction) = AuctionConfigOf::<T, I>::get(id) {
 					<T as pallet::Config<I>>::Currency::repatriate_reserved(
 						&winner_bid.0,
@@ -136,25 +119,20 @@ impl<T: Config<I>, I: 'static>
 							ItemBalanceStatus::Free,
 						)?;
 					}
-				}
 
-				BidPriceOf::<T, I>::remove(id, winner_bid.0);
-				BidderOf::<T, I>::remove(id, winner_bid.1);
-			}
-
-			for bidder in BidderOf::<T, I>::iter_prefix_values(id) {
-				if let Some(bid) = BidPriceOf::<T, I>::get(id, bidder.clone()) {
-					<T as pallet::Config<I>>::Currency::unreserve(&bidder, bid);
+					<T as Config<I>>::Currency::unreserve(&auction.owner, T::BundleDeposit::get());
 				}
 			}
+			AuctionConfigOf::<T, I>::remove(id);
+			BundleOf::<T, I>::remove(id);
+			BidWinnerOf::<T, I>::remove(id);
 
-			let _ = BidderOf::<T, I>::clear_prefix(id, 0 , None);
-			let _ = BidPriceOf::<T, I>::clear_prefix(id, 0 , None);
-
-			// make the trade
+			Self::deposit_event(Event::<T, I>::AuctionClaimed {
+				id: *id,
+				bid: maybe_bid,
+			});
 			return Ok(())
 		}
-
 		Err(Error::<T, I>::UnknownAuction.into())
 	}
 }

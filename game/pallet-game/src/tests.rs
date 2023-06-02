@@ -28,28 +28,6 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 	return acc
 }
 
-fn default_collection_config() -> CollectionConfigFor<Test> {
-	CollectionConfig {
-		settings: CollectionSettings::all_enabled(),
-		max_supply: None,
-		mint_settings: MintSettings::default(),
-	}
-}
-
-fn collection_config(price: u128) -> CollectionConfigFor<Test> {
-	CollectionConfig {
-		settings: CollectionSettings::all_enabled(),
-		max_supply: None,
-		mint_settings: MintSettings {
-			mint_type: MintType::Issuer,
-			price: Some(price),
-			start_block: None,
-			end_block: None,
-			default_item_settings: ItemSettings::all_enabled(),
-		},
-	}
-}
-
 fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
 }
@@ -1145,7 +1123,7 @@ pub fn bid_auction_should_works() {
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
 			1,
-			1,
+			10,
 		));
 
 		let bidder = new_account(1, 1000 * unit(GAKI));
@@ -1156,17 +1134,16 @@ pub fn bid_auction_should_works() {
 			0,
 			bid
 		));
+		assert_eq!(Balances::free_balance(&bidder), bidder_balance - bid);
 
 		run_to_block(2);
 
 		assert_ok!(PalletGame::bid_auction(
 			RuntimeOrigin::signed(bidder.clone()),
 			0,
-			bid
+			bid * 2
 		));
 
-		assert_eq!(BidPriceOf::<Test>::get(0, bidder.clone()).unwrap(), bid * 2);
-		assert_eq!(BidderOf::<Test>::get(0, bid * 2).unwrap(), bidder.clone());
 		assert_eq!(Balances::free_balance(&bidder), bidder_balance - (bid * 2));
 	})
 }
@@ -1181,17 +1158,22 @@ pub fn bid_auction_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
-			1,
-			1,
+			2,
+			10,
 		));
 
 		let bidder = new_account(1, 1000 * unit(GAKI));
-		assert_err!(PalletGame::bid_auction(
-			RuntimeOrigin::signed(bidder.clone()),
-			0,
-			50,
-		), Error::<Test>::BidTooLow);
+		assert_err!(
+			PalletGame::bid_auction(RuntimeOrigin::signed(bidder.clone()), 0, 50,),
+			Error::<Test>::AuctionNotStarted
+		);
+		run_to_block(2);
+		assert_err!(
+			PalletGame::bid_auction(RuntimeOrigin::signed(bidder.clone()), 0, 50,),
+			Error::<Test>::BidTooLow
+		);
 
+		run_to_block(11);
 		assert_ok!(PalletGame::bid_auction(
 			RuntimeOrigin::signed(bidder.clone()),
 			0,
@@ -1199,55 +1181,16 @@ pub fn bid_auction_should_fails() {
 		));
 
 		let bidder1 = new_account(2, 1000 * unit(GAKI));
-		assert_err!(PalletGame::bid_auction(
-			RuntimeOrigin::signed(bidder1.clone()),
-			0,
-			200 * unit(GAKI)
-		), Error::<Test>::BidExists);
-	})
-}
+		assert_err!(
+			PalletGame::bid_auction(RuntimeOrigin::signed(bidder1.clone()), 0, 200 * unit(GAKI)),
+			Error::<Test>::BidTooLow
+		);
 
-#[test]
-pub fn cancel_bid_auction_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-
-		let player = do_all_mint_item();
-		assert_ok!(PalletGame::set_auction(
-			RuntimeOrigin::signed(player.clone()),
-			TEST_BUNDLE.clone().to_vec(),
-			Some(100 * unit(GAKI)),
-			1,
-			10,
-		));
-
-		run_to_block(2);
-		let bids = [
-			(new_account(1, 1000 * unit(GAKI)), 100 * unit(GAKI)),
-			(new_account(2, 1000 * unit(GAKI)), 200 * unit(GAKI)),
-			(new_account(3, 1000 * unit(GAKI)), 400 * unit(GAKI)),
-			(new_account(4, 1000 * unit(GAKI)), 500 * unit(GAKI)),
-		];
-
-		for i in 0..bids.len() {
-			run_to_block(2 + i as u64);
-			assert_ok!(PalletGame::bid_auction(
-				RuntimeOrigin::signed(bids[i].0.clone()),
-				0,
-				bids[i].1,
-			));
-		}
-
-		for i in 0..(bids.len() - 1) {
-			run_to_block(2 + i as u64);
-			let before_balance = Balances::free_balance(&bids[i].0.clone());
-			assert_ok!(PalletGame::cancel_bid(
-				RuntimeOrigin::signed(bids[i].0.clone()),
-				0,
-			));
-			assert_eq!(Balances::free_balance(&bids[i].0.clone()), before_balance + bids[i].1);
-		}
-
+		run_to_block(12);
+		assert_err!(
+			PalletGame::bid_auction(RuntimeOrigin::signed(bidder1.clone()), 0, 300 * unit(GAKI)),
+			Error::<Test>::AuctionEnded
+		);
 	})
 }
 
@@ -1295,12 +1238,43 @@ pub fn claim_auction_should_works() {
 			assert_eq!(ItemBalanceOf::<Test>::get((&winner.0.clone(), 0, i)), 10);
 		}
 
-		assert_eq!(Balances::free_balance(&player), player_balance + winner.1);
-		assert_eq!(Balances::free_balance(&player), player_balance + winner.1);
+		assert_eq!(
+			Balances::free_balance(&player),
+			player_balance + winner.1 + BUNDLE_DEPOSIT_VAL
+		);
 
 		for i in 0..(bids.len() - 1) {
-			assert_eq!(Balances::free_balance(&bids[i].0.clone()), 1000 * unit(GAKI));
+			assert_eq!(
+				Balances::free_balance(&bids[i].0.clone()),
+				1000 * unit(GAKI)
+			);
 		}
 	})
 }
 
+#[test]
+pub fn claim_auction_should_fails() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_mint_item();
+
+		assert_err!(
+			PalletGame::claim_auction(RuntimeOrigin::signed(player.clone()), 0),
+			Error::<Test>::UnknownAuction
+		);
+
+		assert_ok!(PalletGame::set_auction(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			Some(100 * unit(GAKI)),
+			1,
+			10,
+		));
+
+		assert_err!(
+			PalletGame::claim_auction(RuntimeOrigin::signed(player.clone()), 0),
+			Error::<Test>::AuctionInProgress
+		);
+	})
+}

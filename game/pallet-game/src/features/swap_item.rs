@@ -32,10 +32,8 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
-		NextTradeId::<T, I>::set(Some(id.increment()));
-
 		let bundle_out: BundleFor<T, I> =
-			BoundedVec::try_from(required).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+			BoundedVec::try_from(required.clone()).map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
 
 		TradeConfigOf::<T, I>::insert(
 			id,
@@ -46,6 +44,14 @@ impl<T: Config<I>, I: 'static>
 				maybe_required: Some(bundle_out),
 			},
 		);
+
+		Self::deposit_event(Event::<T, I>::SwapSet {
+			id: *id,
+			who: who.clone(),
+			source,
+			required,
+			maybe_price,
+		});
 
 		Ok(())
 	}
@@ -88,19 +94,18 @@ impl<T: Config<I>, I: 'static>
 			}
 
 			for package in BundleOf::<T, I>::get(id).clone() {
-				Self::transfer_lock_item(
+				Self::repatriate_lock_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
 					who,
 					package.amount,
+					ItemBalanceStatus::Free,
 				)?;
-
-				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
 
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-
+			Self::deposit_event(Event::<T, I>::SwapClaimed { id: *id, who: who.clone() });
 			return Ok(())
 		}
 		Ok(())

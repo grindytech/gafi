@@ -186,19 +186,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub(crate) fn transfer_lock_item(
-		from: &T::AccountId,
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-		to: &T::AccountId,
-		amount: u32,
-	) -> Result<(), Error<T, I>> {
-		Self::sub_lock_balance(from, collection, item, amount)?;
-		Self::add_lock_balance(to, collection, item, amount)?;
-
-		Ok(())
-	}
-
 	pub(crate) fn repatriate_lock_item(
 		slashed: &T::AccountId,
 		collection: &T::CollectionId,
@@ -217,5 +204,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			},
 		};
 		Ok(())
+	}
+
+	pub(crate) fn get_trade_id() -> T::TradeId {
+		let id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+		NextTradeId::<T, I>::set(Some(id.increment()));
+		id
 	}
 }

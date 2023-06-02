@@ -362,26 +362,19 @@ pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
 		price: Price,
 	) -> DispatchResult;
 	
-	fn do_cancel_bid(
-		id: &TradeId,
-		who: &AccountId,
-	) -> DispatchResult;
-	
 	fn do_claim_auction(
 		id: &TradeId,
 	) -> DispatchResult;
 
-	fn do_set_candle_auction(
-		id: &TradeId,
-		who: &AccountId,
-		bundle: Bundle<CollectionId, ItemId>,
-		maybe_price: Option<Price>,
-		start_block: Block,
-		early_end: Block,
-		end_block: Block,
-	) -> DispatchResult;
-
-
+	// fn do_set_candle_auction(
+	// 	id: &TradeId,
+	// 	who: &AccountId,
+	// 	bundle: Bundle<CollectionId, ItemId>,
+	// 	maybe_price: Option<Price>,
+	// 	start_block: Block,
+	// 	early_end: Block,
+	// 	end_block: Block,
+	// ) -> DispatchResult;
 }
 
 pub trait Destroy<E> {

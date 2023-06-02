@@ -29,8 +29,6 @@ impl<T: Config<I>, I: 'static>
 		// lock sale items
 		Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 
-		NextTradeId::<T, I>::set(Some(id.increment()));
-
 		PackageOf::<T, I>::insert(id, &package);
 		TradeConfigOf::<T, I>::insert(
 			id,
@@ -89,14 +87,14 @@ impl<T: Config<I>, I: 'static>
 				)?;
 
 				// transfer item
-				Self::transfer_lock_item(
+				Self::repatriate_lock_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
 					who,
 					amount,
+					ItemBalanceStatus::Free,
 				)?;
-				Self::unlock_item(who, &package.collection, &package.item, amount)?;
 
 				// subtract the amount sold
 				PackageOf::<T, I>::try_mutate(id, |package| -> DispatchResult {
@@ -150,8 +148,6 @@ impl<T: Config<I>, I: 'static>
 				.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
 			Ok(())
 		})?;
-
-		NextTradeId::<T, I>::set(Some(id.increment()));
 
 		TradeConfigOf::<T, I>::insert(
 			id,
@@ -208,15 +204,14 @@ impl<T: Config<I>, I: 'static>
 
 			// transfer items
 			for package in bundle.clone() {
-				Self::transfer_lock_item(
+				Self::repatriate_lock_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
 					who,
 					package.amount,
+					ItemBalanceStatus::Free,
 				)?;
-
-				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
 
