@@ -28,28 +28,6 @@ fn new_account(account: u32, balance: u128) -> sr25519::Public {
 	return acc
 }
 
-fn default_collection_config() -> CollectionConfigFor<Test> {
-	CollectionConfig {
-		settings: CollectionSettings::all_enabled(),
-		max_supply: None,
-		mint_settings: MintSettings::default(),
-	}
-}
-
-fn collection_config(price: u128) -> CollectionConfigFor<Test> {
-	CollectionConfig {
-		settings: CollectionSettings::all_enabled(),
-		max_supply: None,
-		mint_settings: MintSettings {
-			mint_type: MintType::Issuer,
-			price: Some(price),
-			start_block: None,
-			end_block: None,
-			default_item_settings: ItemSettings::all_enabled(),
-		},
-	}
-}
-
 fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
 }

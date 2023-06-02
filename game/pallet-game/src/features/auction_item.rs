@@ -44,6 +44,15 @@ impl<T: Config<I>, I: 'static>
 			},
 		);
 
+		Self::deposit_event(Event::<T, I>::AuctionSet {
+			id: *id,
+			who: who.clone(),
+			source,
+			maybe_price,
+			start_block,
+			duration,
+		});
+
 		Ok(())
 	}
 
@@ -71,6 +80,12 @@ impl<T: Config<I>, I: 'static>
 
 			BidWinnerOf::<T, I>::insert(id, (who, bid));
 			<T as Config<I>>::Currency::reserve(&who, bid)?;
+
+			Self::deposit_event(Event::<T, I>::Bade {
+				id: *id,
+				who: who.clone(),
+				bid,
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownAuction.into())
@@ -84,8 +99,8 @@ impl<T: Config<I>, I: 'static>
 				block_number >= (config.start_block + config.duration),
 				Error::<T, I>::AuctionInProgress
 			);
-
-			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
+			let maybe_bid = BidWinnerOf::<T, I>::get(id);
+			if let Some(winner_bid) = maybe_bid.clone() {
 				if let Some(auction) = AuctionConfigOf::<T, I>::get(id) {
 					<T as pallet::Config<I>>::Currency::repatriate_reserved(
 						&winner_bid.0,
@@ -110,6 +125,12 @@ impl<T: Config<I>, I: 'static>
 			}
 			AuctionConfigOf::<T, I>::remove(id);
 			BundleOf::<T, I>::remove(id);
+			BidWinnerOf::<T, I>::remove(id);
+
+			Self::deposit_event(Event::<T, I>::AuctionClaimed {
+				id: *id,
+				bid: maybe_bid,
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownAuction.into())

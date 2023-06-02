@@ -82,19 +82,27 @@ pub mod pallet {
 	pub struct Pallet<T, I = ()>(_);
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BenchmarkHelper<GameId, TradeId> {
-		fn game(i: u32) -> GameId;
+	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber> {
+		fn game(i: u16) -> GameId;
 
-		fn trade(i: u32) -> TradeId;
+		fn trade(i: u16) -> TradeId;
+
+		fn block(i: u16) -> BlockNumber;
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl<GameId: From<u32>, TradeId: From<u32>> BenchmarkHelper<GameId, TradeId> for () {
-		fn game(i: u32) -> GameId {
+	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>>
+		BenchmarkHelper<GameId, TradeId, BlockNumber> for ()
+	{
+		fn game(i: u16) -> GameId {
 			i.into()
 		}
 
-		fn trade(i: u32) -> TradeId {
+		fn trade(i: u16) -> TradeId {
+			i.into()
+		}
+
+		fn block(i: u16) -> BlockNumber {
 			i.into()
 		}
 	}
@@ -170,7 +178,7 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber>;
 	}
 
 	/// Store basic game info
@@ -437,6 +445,39 @@ pub mod pallet {
 			wisher: T::AccountId,
 			filler: T::AccountId,
 			price: BalanceOf<T, I>,
+		},
+		CollectionRemoved {
+			who: T::AccountId,
+			game: T::GameId,
+			collection: T::CollectionId,
+		},
+		SwapSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			required: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+		},
+		SwapClaimed {
+			id: T::TradeId,
+			who: T::AccountId,
+		},
+		AuctionSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: T::BlockNumber,
+			duration: T::BlockNumber,
+		},
+		Bade {
+			id: T::TradeId,
+			who: T::AccountId,
+			bid: BalanceOf<T, I>,
+		},
+		AuctionClaimed {
+			id: T::TradeId,
+			bid: Option<(T::AccountId, BalanceOf<T, I>)>,
 		},
 	}
 
@@ -850,7 +891,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn set_auction(
 			origin: OriginFor<T>,
-			bundle: Bundle<T::CollectionId, T::ItemId>,
+			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
 			start_block: T::BlockNumber,
 			duration: T::BlockNumber,
@@ -862,7 +903,7 @@ pub mod pallet {
 			Self::do_set_auction(
 				&trade_id,
 				&sender,
-				bundle,
+				source,
 				maybe_price,
 				start_block,
 				duration,
@@ -875,10 +916,10 @@ pub mod pallet {
 		pub fn bid_auction(
 			origin: OriginFor<T>,
 			id: T::TradeId,
-			price: BalanceOf<T, I>,
+			bid: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_bid_auction(&id, &sender, price)?;
+			Self::do_bid_auction(&id, &sender, bid)?;
 			Ok(())
 		}
 
@@ -889,7 +930,6 @@ pub mod pallet {
 			Self::do_claim_auction(&id)?;
 			Ok(())
 		}
-
 	}
 
 	#[pallet::validate_unsigned]
