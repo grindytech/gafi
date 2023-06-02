@@ -19,8 +19,8 @@ pub use transfer_item::*;
 pub mod upgrade_item;
 pub use upgrade_item::*;
 
-pub mod item;
-pub use item::*;
+pub mod common;
+pub use common::*;
 
 pub mod trade_item;
 pub use trade_item::*;

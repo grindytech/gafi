@@ -82,19 +82,27 @@ pub mod pallet {
 	pub struct Pallet<T, I = ()>(_);
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BenchmarkHelper<GameId, TradeId> {
-		fn game(i: u32) -> GameId;
+	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber> {
+		fn game(i: u16) -> GameId;
 
-		fn trade(i: u32) -> TradeId;
+		fn trade(i: u16) -> TradeId;
+
+		fn block(i: u16) -> BlockNumber;
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl<GameId: From<u32>, TradeId: From<u32>> BenchmarkHelper<GameId, TradeId> for () {
-		fn game(i: u32) -> GameId {
+	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>>
+		BenchmarkHelper<GameId, TradeId, BlockNumber> for ()
+	{
+		fn game(i: u16) -> GameId {
 			i.into()
 		}
 
-		fn trade(i: u32) -> TradeId {
+		fn trade(i: u16) -> TradeId {
+			i.into()
+		}
+
+		fn block(i: u16) -> BlockNumber {
 			i.into()
 		}
 	}
@@ -168,13 +176,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Maximum number of bids per auction
-		#[pallet::constant]
-		type MaxNumBid: Get<u32>;
-
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber>;
 	}
 
 	/// Store basic game info
@@ -339,38 +343,9 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Storing bids of account
 	#[pallet::storage]
-	pub(super) type BidderOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Blake2_128Concat,
-		BalanceOf<T, I>,
-		T::AccountId,
-		OptionQuery,
-	>;
-
-	/// Storing total bid of account
-	#[pallet::storage]
-	pub(super) type BidPriceOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Blake2_128Concat,
-		T::AccountId,
-		BalanceOf<T, I>,
-		OptionQuery,
-	>;
-
-	#[pallet::storage]
-	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		(T::AccountId, BalanceOf<T, I>),
-		OptionQuery,
-	>;
+	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -471,6 +446,39 @@ pub mod pallet {
 			filler: T::AccountId,
 			price: BalanceOf<T, I>,
 		},
+		CollectionRemoved {
+			who: T::AccountId,
+			game: T::GameId,
+			collection: T::CollectionId,
+		},
+		SwapSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			required: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+		},
+		SwapClaimed {
+			id: T::TradeId,
+			who: T::AccountId,
+		},
+		AuctionSet {
+			id: T::TradeId,
+			who: T::AccountId,
+			source: Bundle<T::CollectionId, T::ItemId>,
+			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: T::BlockNumber,
+			duration: T::BlockNumber,
+		},
+		Bade {
+			id: T::TradeId,
+			who: T::AccountId,
+			bid: BalanceOf<T, I>,
+		},
+		AuctionClaimed {
+			id: T::TradeId,
+			bid: Option<(T::AccountId, BalanceOf<T, I>)>,
+		},
 	}
 
 	#[pallet::error]
@@ -517,9 +525,8 @@ pub mod pallet {
 
 		/// auction
 		AuctionInProgress,
-		UnkownAuction,
-		BidExists,
-		BeingSelected,
+		AuctionNotStarted,
+		AuctionEnded,
 	}
 
 	#[pallet::hooks]
@@ -558,6 +565,7 @@ pub mod pallet {
 
 		#[pallet::call_index(4)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: T::AccountId,
@@ -572,6 +580,7 @@ pub mod pallet {
 
 		#[pallet::call_index(5)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -706,6 +715,7 @@ pub mod pallet {
 
 		#[pallet::call_index(13)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
 
@@ -724,8 +734,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
-
+			let trade_id = Self::get_trade_id();
 			Self::do_set_price(&trade_id, &sender, package, price)?;
 
 			Ok(())
@@ -756,7 +765,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 
 			Self::do_set_bundle(&trade_id, &sender, bundle, price)?;
 
@@ -804,7 +813,7 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 			Self::do_set_wishlist(&trade_id, &sender, bundle, price)?;
 			Ok(())
 		}
@@ -823,7 +832,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(22)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection(1_u32))]
 		#[transactional]
 		pub fn remove_collection(
 			origin: OriginFor<T>,
@@ -836,7 +845,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(23)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::lock_item_transfer(1_u32))]
+		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -846,7 +856,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(24)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::unlock_item_transfer(1_u32))]
+		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -856,7 +867,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(25)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
+		#[transactional]
 		pub fn set_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -864,13 +876,14 @@ pub mod pallet {
 			maybe_price: Option<BalanceOf<T, I>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 			Self::do_set_swap(&trade_id, &sender, source, required, maybe_price)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(26)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap(1_u32))]
+		#[transactional]
 		pub fn claim_swap(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,
@@ -882,22 +895,23 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(27)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
+		#[transactional]
 		pub fn set_auction(
 			origin: OriginFor<T>,
-			bundle: Bundle<T::CollectionId, T::ItemId>,
+			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
 			start_block: T::BlockNumber,
 			duration: T::BlockNumber,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let trade_id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
+			let trade_id = Self::get_trade_id();
 
 			Self::do_set_auction(
 				&trade_id,
 				&sender,
-				bundle,
+				source,
 				maybe_price,
 				start_block,
 				duration,
@@ -906,30 +920,24 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(28)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction(1_u32))]
+		#[transactional]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
 			id: T::TradeId,
-			price: BalanceOf<T, I>,
+			bid: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_bid_auction(&id, &sender, price)?;
+			Self::do_bid_auction(&id, &sender, bid)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(29)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
+		#[transactional]
 		pub fn claim_auction(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&id)?;
-			Ok(())
-		}
-
-		#[pallet::call_index(30)]
-		#[pallet::weight(0)]
-		pub fn cancel_bid(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_cancel_bid(&id, &sender)?;
 			Ok(())
 		}
 	}

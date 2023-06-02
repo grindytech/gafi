@@ -125,6 +125,11 @@ impl<T: Config<I>, I: 'static>
 			}
 		})?;
 		GameOf::<T, I>::remove(collection);
+		Self::deposit_event(Event::<T,I>::CollectionRemoved {
+			who: who.clone(),
+			game: *game,
+			collection: *collection,
+		});
 		Ok(())
 	}
 }
