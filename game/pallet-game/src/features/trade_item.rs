@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, Bundle, Package, Trade};
+use gafi_support::game::{Amount, Bundle, Package, Trade, TradeType};
 
 impl<T: Config<I>, I: 'static>
 	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
@@ -220,7 +220,7 @@ impl<T: Config<I>, I: 'static>
 				trade: *bundle_id,
 				seller: config.owner,
 				buyer: who.clone(),
-				price: price,
+				price,
 			});
 
 			return Ok(())
@@ -229,8 +229,10 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_cancel_price(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		if let Some(package) = PackageOf::<T, I>::get(trade) {
-			if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(config.trade == TradeType::Normal, Error::<T, I>::UnknownTrade);
+
+			if let Some(package) = PackageOf::<T, I>::get(trade) {
 				// ensure owner
 				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
@@ -257,6 +259,11 @@ impl<T: Config<I>, I: 'static>
 
 	fn do_cancel_bundle(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(
+				config.trade == TradeType::Bundle,
+				Error::<T, I>::UnknownTrade
+			);
+
 			// ensure owner
 			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
@@ -279,6 +286,31 @@ impl<T: Config<I>, I: 'static>
 			});
 			return Ok(())
 		}
+		Err(Error::<T, I>::UnknownTrade.into())
+	}
+
+	fn do_cancel_trade(
+		trade: &T::TradeId,
+		who: &T::AccountId,
+		trade_type: TradeType,
+	) -> DispatchResult {
+		match trade_type {
+			TradeType::Normal => {
+				Self::do_cancel_price(trade, who)?;
+			},
+			TradeType::Bundle => {
+				Self::do_cancel_bundle(trade, who)?;
+			},
+			TradeType::Wishlist => {
+				Self::do_cancel_wishlist(trade, who)?;
+			},
+			TradeType::Auction => {
+				Self::do_claim_auction(trade)?;
+			},
+			TradeType::Swap => {
+				Self::do_cancel_swap(trade, who)?;
+			},
+		};
 		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

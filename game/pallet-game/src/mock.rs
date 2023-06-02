@@ -6,7 +6,6 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use gafi_support::common::{unit, NativeToken::GAKI};
 use pallet_nfts::PalletFeatures;
 use sp_core::{
 	sr25519::{self, Signature},
@@ -15,9 +14,8 @@ use sp_core::{
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	AccountId32, Percent, Permill,
 };
-use system::{mocking, EnsureRoot};
+use system::{mocking};
 
 pub type Extrinsic = TestXt<RuntimeCall, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;

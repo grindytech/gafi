@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, Swap};
+use gafi_support::game::{Bundle, Swap, TradeType};
 
 impl<T: Config<I>, I: 'static>
 	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
@@ -105,9 +105,44 @@ impl<T: Config<I>, I: 'static>
 			}
 
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-			Self::deposit_event(Event::<T, I>::SwapClaimed { trade: *trade, who: who.clone() });
+			Self::deposit_event(Event::<T, I>::SwapClaimed {
+				trade: *trade,
+				who: who.clone(),
+			});
 			return Ok(())
 		}
 		Ok(())
+	}
+
+	fn do_cancel_swap(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(
+				config.trade == TradeType::Swap,
+				Error::<T, I>::UnknownTrade
+			);
+
+			// ensure owner
+			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+			let bundle = BundleOf::<T, I>::get(trade);
+			// unlock items
+			for package in bundle.clone() {
+				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+			}
+
+			// unreserve
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			// remove storage
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
+
+			Self::deposit_event(Event::<T, I>::TradeCanceled {
+				trade: *trade,
+				who: who.clone(),
+			});
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

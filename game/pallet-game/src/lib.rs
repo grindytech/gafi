@@ -36,7 +36,7 @@ use frame_system::{
 };
 use gafi_support::game::{
 	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
-	TransferItem, UpgradeItem, Wishlist,
+	TransferItem, UpgradeItem, Wishlist, TradeType,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;

@@ -96,10 +96,36 @@ impl<T: Config<I>, I: 'static>
 				trade: *trade,
 				wisher: config.owner,
 				filler: who.clone(),
-				price: price,
+				price,
 			});
 			return Ok(())
 		}
 		return Err(Error::<T, I>::NotForSale.into())
+	}
+
+	fn do_cancel_wishlist(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(
+				config.trade == TradeType::Bundle,
+				Error::<T, I>::UnknownTrade
+			);
+
+			// ensure owner
+			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+			// unreserve
+			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+
+			// remove storage
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
+
+			Self::deposit_event(Event::<T, I>::TradeCanceled {
+				trade: *trade,
+				who: who.clone(),
+			});
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 }
