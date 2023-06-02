@@ -123,7 +123,6 @@ pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const MAX_ITEM_MINT_VAL: u32 = 10;
 pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
-pub const SALE_DEPOSIT_VAL: u128 = 2_000_000_000;
 pub const MAX_BUNDLE_VAL: u32 = 5;
 pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const MAX_NUM_BID_VAL: u32 = 10;
@@ -135,7 +134,6 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
-	pub SaleDeposit: u128 = SALE_DEPOSIT_VAL;
 	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 	pub BundleDeposit: u128 = BUNDLE_DEPOSIT_VAL;
 }
@@ -167,11 +165,9 @@ impl pallet_game::Config for Test {
 
 	type UpgradeDeposit = UpgradeDeposit;
 
-	type SaleDeposit = SaleDeposit;
+	type BundleDeposit = BundleDeposit;
 
 	type MaxBundle = MaxBundle;
-
-	type BundleDeposit = BundleDeposit;
 }
 
 parameter_types! {

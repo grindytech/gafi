@@ -650,9 +650,9 @@ pub fn set_price_should_works() {
 		));
 		assert_eq!(
 			Balances::free_balance(&player),
-			before_balance - SALE_DEPOSIT_VAL
+			before_balance - BUNDLE_DEPOSIT_VAL
 		);
-		assert_eq!(PackageOf::<Test>::get(0).unwrap(), TEST_BUNDLE[0].clone());
+		assert_eq!(BundleOf::<Test>::get(0), [TEST_BUNDLE[0].clone()].to_vec());
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
@@ -892,6 +892,107 @@ pub fn buy_bundle_should_fails() {
 	})
 }
 
+#[test]
+pub fn do_cancel_set_price_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_set_price(TEST_BUNDLE[0].clone(), unit(GAKI));
+
+		let before_balance = Balances::free_balance(&player);
+
+		assert_ok!(PalletGame::do_cancel_price(&0, &player.clone(),));
+
+		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
+		assert_eq!(TradeConfigOf::<Test>::get(0), None);
+
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
+		assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, 0)), 0);
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + BUNDLE_DEPOSIT_VAL
+		);
+	});
+}
+
+#[test]
+pub fn do_cancel_set_bundle_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), unit(GAKI));
+
+		let before_balance = Balances::free_balance(&player);
+		assert_ok!(PalletGame::do_cancel_bundle(&0, &player.clone(),));
+		
+		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
+		assert_eq!(TradeConfigOf::<Test>::get(0), None);
+
+		for i in 0..TEST_BUNDLE.len() as u32 {
+			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 10);
+			assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
+		}
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + BUNDLE_DEPOSIT_VAL
+		);
+	});
+}
+
+#[test]
+pub fn cancel_set_wishlist_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_mint_item();
+		let price = 3 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_wishlist(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			price,
+		));
+		
+		let before_balance = Balances::free_balance(&player);
+		assert_ok!(PalletGame::do_cancel_wishlist(&0, &player.clone(),));
+		
+		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
+		assert_eq!(TradeConfigOf::<Test>::get(0), None);
+
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + BUNDLE_DEPOSIT_VAL
+		);
+	});
+}
+
+#[test]
+pub fn do_cancel_set_swap_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_mint_item();
+
+		let price = 100 * unit(GAKI);
+
+		assert_ok!(PalletGame::set_swap(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE.clone().to_vec(),
+			TEST_BUNDLE1.clone().to_vec(),
+			Some(price)
+		));
+
+		let before_balance = Balances::free_balance(&player);
+		assert_ok!(PalletGame::do_cancel_swap(&0, &player.clone(),));
+		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
+		assert_eq!(TradeConfigOf::<Test>::get(0), None);
+
+		assert_eq!(
+			Balances::free_balance(&player),
+			before_balance + BUNDLE_DEPOSIT_VAL
+		);
+	});
+}
 
 #[test]
 pub fn set_wishlist_should_works() {

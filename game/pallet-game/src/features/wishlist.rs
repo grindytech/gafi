@@ -106,7 +106,7 @@ impl<T: Config<I>, I: 'static>
 	fn do_cancel_wishlist(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(
-				config.trade == TradeType::Bundle,
+				config.trade == TradeType::Wishlist,
 				Error::<T, I>::UnknownTrade
 			);
 

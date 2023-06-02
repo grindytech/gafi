@@ -164,10 +164,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
 
-		/// The basic amount of funds that must be reserved for any sale.
-		#[pallet::constant]
-		type SaleDeposit: Get<BalanceOf<Self, I>>;
-
 		/// Maximum collection in a bundle
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
@@ -307,16 +303,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::TradeId, OptionQuery>;
-
-	/// Storing package
-	#[pallet::storage]
-	pub(super) type PackageOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		Package<T::CollectionId, T::ItemId>,
-		OptionQuery,
-	>;
 
 	/// Storing bundle
 	#[pallet::storage]
@@ -494,7 +480,7 @@ pub mod pallet {
 		UnknownUpgrade,
 		UnknownAuction,
 		UnknownBid,
-
+		
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -785,6 +771,20 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::do_buy_bundle(&trade, &sender, bid_price)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(18)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn cancel_trade(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			trade_type: TradeType,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_cancel_trade(&trade, &sender, trade_type)?;
 			Ok(())
 		}
 
