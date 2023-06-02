@@ -788,24 +788,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(18)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_price(1_u32))]
-		#[transactional]
-		pub fn cancel_set_price(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_cancel_price(&trade, &sender)?;
-			Ok(())
-		}
-
-		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_set_bundle(1_u32))]
-		#[transactional]
-		pub fn cancel_set_bundle(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_cancel_bundle(&trade, &sender)?;
-			Ok(())
-		}
-
 		#[pallet::call_index(20)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
 		#[transactional]

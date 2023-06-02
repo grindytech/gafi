@@ -490,38 +490,6 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	cancel_set_price {
-		let s in 0 .. MAX as u32;
-
-		let caller = do_set_price::<T, I>(s);
-
-		let call = Call::<T, I>::cancel_set_price {
-			trade: <T as pallet::Config<I>>::Helper::trade(0),
-		};
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
-	verify {
-		assert_last_event::<T, I>(Event::TradeCanceled {
-			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			who: caller,
-		}.into() );
-	}
-
-	cancel_set_bundle {
-		let s in 0 .. MAX as u32;
-
-		let (caller, bundle) = do_set_bundle::<T, I>(s);
-
-		let call = Call::<T, I>::cancel_set_bundle {
-			trade: <T as pallet::Config<I>>::Helper::trade(0),
-		};
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
-	verify {
-		assert_last_event::<T, I>(Event::TradeCanceled {
-			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			who: caller,
-		}.into() );
-	}
-
 	set_wishlist {
 		let s in 0 .. MAX as u32;
 		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
