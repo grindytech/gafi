@@ -162,6 +162,7 @@ impl<T: Config<I>, I: 'static>
 		Self::deposit_event(Event::<T, I>::BundleSet {
 			trade: *trade,
 			who: who.clone(),
+			bundle,
 			price,
 		});
 

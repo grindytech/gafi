@@ -129,7 +129,7 @@ impl<T: Config<I>, I: 'static>
 
 			Self::deposit_event(Event::<T, I>::AuctionClaimed {
 				trade: *trade,
-				bid: maybe_bid,
+				maybe_bid,
 			});
 			return Ok(())
 		}

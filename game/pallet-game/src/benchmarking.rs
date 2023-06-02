@@ -8,6 +8,7 @@ use enumflags2::{BitFlag, BitFlags};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
+use gafi_support::game::Bundle;
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_std::vec;
@@ -135,7 +136,9 @@ fn do_set_price<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
 	seller
 }
 
-fn do_set_bundle<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
+fn do_set_bundle<T: Config<I>, I: 'static>(
+	s: u32,
+) -> (T::AccountId, Bundle<T::CollectionId, T::ItemId>) {
 	let (_, _) = do_create_item::<T, I>(s, 0, 0, 0, 10);
 	let (_, _) = do_create_item::<T, I>(s, 0, 0, 1, 10);
 
@@ -158,11 +161,11 @@ fn do_set_bundle<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
 
 	assert_ok!(PalletGame::<T, I>::set_bundle(
 		RawOrigin::Signed(seller.clone()).into(),
-		bundle,
+		bundle.clone(),
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 	));
 
-	seller
+	(seller, bundle)
 }
 
 fn do_set_wishlist<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
@@ -454,7 +457,7 @@ benchmarks_instance_pallet! {
 		}];
 
 		let call = Call::<T, I>::set_bundle {
-			bundle: bundle,
+			bundle: bundle.clone(),
 			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
@@ -462,6 +465,7 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::BundleSet {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			who: caller,
+			bundle,
 			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
@@ -469,7 +473,7 @@ benchmarks_instance_pallet! {
 	buy_bundle {
 		let s in 0 .. MAX as u32;
 
-		let seller = do_set_bundle::<T, I>(s);
+		let (seller, bundle) = do_set_bundle::<T, I>(s);
 		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
 
 		let call = Call::<T, I>::buy_bundle {
@@ -505,7 +509,7 @@ benchmarks_instance_pallet! {
 	cancel_set_bundle {
 		let s in 0 .. MAX as u32;
 
-		let caller = do_set_bundle::<T, I>(s);
+		let (caller, bundle) = do_set_bundle::<T, I>(s);
 
 		let call = Call::<T, I>::cancel_set_bundle {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -789,9 +793,9 @@ benchmarks_instance_pallet! {
 		));
 
 		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-		
+
 		frame_system::Pallet::<T>::set_block_number(<T as pallet::Config<I>>::Helper::block(10));
-		
+
 		let call = Call::<T, I>::claim_auction {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 		};
@@ -799,7 +803,7 @@ benchmarks_instance_pallet! {
 	verify {
 		assert_last_event::<T, I>(Event::AuctionClaimed {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			bid: Some((bidder, <T as pallet::Config<I>>::Currency::minimum_balance())),
+			maybe_bid: Some((bidder, <T as pallet::Config<I>>::Currency::minimum_balance())),
 		}.into() );
 	}
 

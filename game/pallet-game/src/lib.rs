@@ -423,6 +423,7 @@ pub mod pallet {
 		BundleSet {
 			trade: T::TradeId,
 			who: T::AccountId,
+			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
 		},
 		BundleBought {
@@ -478,7 +479,7 @@ pub mod pallet {
 		},
 		AuctionClaimed {
 			trade: T::TradeId,
-			bid: Option<(T::AccountId, BalanceOf<T, I>)>,
+			maybe_bid: Option<(T::AccountId, BalanceOf<T, I>)>,
 		},
 	}
 
