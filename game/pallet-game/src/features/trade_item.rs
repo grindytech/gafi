@@ -6,14 +6,14 @@ impl<T: Config<I>, I: 'static>
 	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_price(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		// ensure available id
+		// ensure available trade
 		ensure!(
-			!BundleOf::<T, I>::contains_key(id),
+			!BundleOf::<T, I>::contains_key(trade),
 			Error::<T, I>::TradeIdInUse
 		);
 
@@ -29,9 +29,9 @@ impl<T: Config<I>, I: 'static>
 		// lock sale items
 		Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 
-		PackageOf::<T, I>::insert(id, &package);
+		PackageOf::<T, I>::insert(trade, &package);
 		TradeConfigOf::<T, I>::insert(
-			id,
+			trade,
 			TradeConfig {
 				trade: TradeType::Normal,
 				owner: who.clone(),
@@ -41,7 +41,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::PriceSet {
-			id: *id,
+			trade: *trade,
 			who: who.clone(),
 			collection: package.collection,
 			item: package.item,
@@ -53,13 +53,13 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_buy_item(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		amount: Amount,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		if let Some(package) = PackageOf::<T, I>::get(id) {
-			if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+		if let Some(package) = PackageOf::<T, I>::get(trade) {
+			if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 				ensure!(
 					config.trade == TradeType::Normal,
 					Error::<T, I>::UnknownTrade
@@ -97,7 +97,7 @@ impl<T: Config<I>, I: 'static>
 				)?;
 
 				// subtract the amount sold
-				PackageOf::<T, I>::try_mutate(id, |package| -> DispatchResult {
+				PackageOf::<T, I>::try_mutate(trade, |package| -> DispatchResult {
 					match package {
 						Some(pack) => {
 							pack.amount -= amount;
@@ -108,7 +108,7 @@ impl<T: Config<I>, I: 'static>
 				})?;
 
 				Self::deposit_event(Event::<T, I>::ItemBought {
-					id: *id,
+					trade: *trade,
 					seller: config.owner,
 					buyer: who.clone(),
 					collection: package.collection,
@@ -124,14 +124,14 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_set_bundle(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		bundle: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		// ensure available id
+		// ensure available trade
 		ensure!(
-			!BundleOf::<T, I>::contains_key(id),
+			!BundleOf::<T, I>::contains_key(trade),
 			Error::<T, I>::TradeIdInUse,
 		);
 
@@ -142,7 +142,7 @@ impl<T: Config<I>, I: 'static>
 			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 		}
 
-		<BundleOf<T, I>>::try_mutate(id, |package_vec| -> DispatchResult {
+		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 			package_vec
 				.try_append(bundle.clone().into_mut())
 				.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
@@ -150,7 +150,7 @@ impl<T: Config<I>, I: 'static>
 		})?;
 
 		TradeConfigOf::<T, I>::insert(
-			id,
+			trade,
 			TradeConfig {
 				trade: TradeType::Bundle,
 				owner: who.clone(),
@@ -160,7 +160,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::BundleSet {
-			id: *id,
+			trade: *trade,
 			who: who.clone(),
 			price,
 		});
@@ -216,7 +216,7 @@ impl<T: Config<I>, I: 'static>
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
 
 			Self::deposit_event(Event::<T, I>::BundleBought {
-				id: *bundle_id,
+				trade: *bundle_id,
 				seller: config.owner,
 				buyer: who.clone(),
 				price: price,
@@ -227,9 +227,9 @@ impl<T: Config<I>, I: 'static>
 		return Err(Error::<T, I>::NotForSale.into())
 	}
 
-	fn do_cancel_price(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		if let Some(package) = PackageOf::<T, I>::get(id) {
-			if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+	fn do_cancel_price(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(package) = PackageOf::<T, I>::get(trade) {
+			if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 				// ensure owner
 				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
@@ -240,11 +240,11 @@ impl<T: Config<I>, I: 'static>
 				<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::SaleDeposit::get());
 
 				// remove storage
-				PackageOf::<T, I>::remove(id);
-				TradeConfigOf::<T, I>::remove(id);
+				PackageOf::<T, I>::remove(trade);
+				TradeConfigOf::<T, I>::remove(trade);
 
 				Self::deposit_event(Event::<T, I>::TradeCanceled {
-					id: *id,
+					trade: *trade,
 					who: who.clone(),
 				});
 
@@ -254,12 +254,12 @@ impl<T: Config<I>, I: 'static>
 		Err(Error::<T, I>::UnknownTrade.into())
 	}
 
-	fn do_cancel_bundle(id: &T::TradeId, who: &T::AccountId) -> DispatchResult {
-		if let Some(config) = TradeConfigOf::<T, I>::get(id) {
+	fn do_cancel_bundle(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			// ensure owner
 			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
-			let bundle = BundleOf::<T, I>::get(id);
+			let bundle = BundleOf::<T, I>::get(trade);
 			// unlock items
 			for package in bundle.clone() {
 				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
@@ -269,11 +269,11 @@ impl<T: Config<I>, I: 'static>
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
 
 			// remove storage
-			BundleOf::<T, I>::remove(id);
-			TradeConfigOf::<T, I>::remove(id);
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
 
 			Self::deposit_event(Event::<T, I>::TradeCanceled {
-				id: *id,
+				trade: *trade,
 				who: who.clone(),
 			});
 			return Ok(())

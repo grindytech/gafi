@@ -7,16 +7,16 @@ impl<T: Config<I>, I: 'static>
 	for Pallet<T, I>
 {
 	fn do_set_auction(
-		id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		source: Bundle<T::CollectionId, T::ItemId>,
 		maybe_price: Option<BalanceOf<T, I>>,
 		start_block: T::BlockNumber,
 		duration: T::BlockNumber,
 	) -> DispatchResult {
-		// ensure available id
+		// ensure available trade
 		ensure!(
-			!BundleOf::<T, I>::contains_key(id),
+			!BundleOf::<T, I>::contains_key(trade),
 			Error::<T, I>::TradeIdInUse,
 		);
 
@@ -27,7 +27,7 @@ impl<T: Config<I>, I: 'static>
 			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
 		}
 
-		<BundleOf<T, I>>::try_mutate(id, |package_vec| -> DispatchResult {
+		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 			package_vec
 				.try_append(source.clone().into_mut())
 				.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
@@ -35,7 +35,7 @@ impl<T: Config<I>, I: 'static>
 		})?;
 
 		AuctionConfigOf::<T, I>::insert(
-			id,
+			trade,
 			AuctionConfig {
 				owner: who.clone(),
 				maybe_price,
@@ -45,7 +45,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		Self::deposit_event(Event::<T, I>::AuctionSet {
-			id: *id,
+			trade: *trade,
 			who: who.clone(),
 			source,
 			maybe_price,
@@ -56,8 +56,8 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_bid_auction(id: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
-		if let Some(config) = AuctionConfigOf::<T, I>::get(id) {
+	fn do_bid_auction(trade: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
+		if let Some(config) = AuctionConfigOf::<T, I>::get(trade) {
 			// make sure the auction is not over
 			let block_number = <frame_system::Pallet<T>>::block_number();
 			ensure!(
@@ -73,16 +73,16 @@ impl<T: Config<I>, I: 'static>
 				ensure!(bid >= price, Error::<T, I>::BidTooLow);
 			}
 			// update winner
-			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(id) {
+			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(trade) {
 				ensure!(bid > winner_bid.1, Error::<T, I>::BidTooLow);
 				<T as Config<I>>::Currency::unreserve(&winner_bid.0, winner_bid.1);
 			}
 
-			BidWinnerOf::<T, I>::insert(id, (who, bid));
+			BidWinnerOf::<T, I>::insert(trade, (who, bid));
 			<T as Config<I>>::Currency::reserve(&who, bid)?;
 
 			Self::deposit_event(Event::<T, I>::Bade {
-				id: *id,
+				trade: *trade,
 				who: who.clone(),
 				bid,
 			});
@@ -91,17 +91,17 @@ impl<T: Config<I>, I: 'static>
 		Err(Error::<T, I>::UnknownAuction.into())
 	}
 
-	fn do_claim_auction(id: &T::TradeId) -> DispatchResult {
-		if let Some(config) = AuctionConfigOf::<T, I>::get(id) {
+	fn do_claim_auction(trade: &T::TradeId) -> DispatchResult {
+		if let Some(config) = AuctionConfigOf::<T, I>::get(trade) {
 			let block_number = <frame_system::Pallet<T>>::block_number();
 
 			ensure!(
 				block_number >= (config.start_block + config.duration),
 				Error::<T, I>::AuctionInProgress
 			);
-			let maybe_bid = BidWinnerOf::<T, I>::get(id);
+			let maybe_bid = BidWinnerOf::<T, I>::get(trade);
 			if let Some(winner_bid) = maybe_bid.clone() {
-				if let Some(auction) = AuctionConfigOf::<T, I>::get(id) {
+				if let Some(auction) = AuctionConfigOf::<T, I>::get(trade) {
 					<T as pallet::Config<I>>::Currency::repatriate_reserved(
 						&winner_bid.0,
 						&auction.owner,
@@ -109,7 +109,7 @@ impl<T: Config<I>, I: 'static>
 						BalanceStatus::Free,
 					)?;
 
-					for package in BundleOf::<T, I>::get(id) {
+					for package in BundleOf::<T, I>::get(trade) {
 						Self::repatriate_lock_item(
 							&auction.owner,
 							&package.collection,
@@ -123,12 +123,12 @@ impl<T: Config<I>, I: 'static>
 					<T as Config<I>>::Currency::unreserve(&auction.owner, T::BundleDeposit::get());
 				}
 			}
-			AuctionConfigOf::<T, I>::remove(id);
-			BundleOf::<T, I>::remove(id);
-			BidWinnerOf::<T, I>::remove(id);
+			AuctionConfigOf::<T, I>::remove(trade);
+			BundleOf::<T, I>::remove(trade);
+			BidWinnerOf::<T, I>::remove(trade);
 
 			Self::deposit_event(Event::<T, I>::AuctionClaimed {
-				id: *id,
+				trade: *trade,
 				bid: maybe_bid,
 			});
 			return Ok(())
