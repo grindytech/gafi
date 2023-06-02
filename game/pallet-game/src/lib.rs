@@ -565,6 +565,7 @@ pub mod pallet {
 
 		#[pallet::call_index(4)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: T::AccountId,
@@ -579,6 +580,7 @@ pub mod pallet {
 
 		#[pallet::call_index(5)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -713,6 +715,7 @@ pub mod pallet {
 
 		#[pallet::call_index(13)]
 		#[pallet::weight(0)]
+		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
 
@@ -829,7 +832,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(22)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection(1_u32))]
 		#[transactional]
 		pub fn remove_collection(
 			origin: OriginFor<T>,
@@ -842,7 +845,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(23)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::lock_item_transfer(1_u32))]
+		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -852,7 +856,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(24)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::unlock_item_transfer(1_u32))]
+		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -862,7 +867,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(25)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
+		#[transactional]
 		pub fn set_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -876,7 +882,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(26)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap(1_u32))]
+		#[transactional]
 		pub fn claim_swap(
 			origin: OriginFor<T>,
 			trade_id: T::TradeId,
@@ -888,7 +895,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(27)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
+		#[transactional]
 		pub fn set_auction(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -912,7 +920,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(28)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction(1_u32))]
+		#[transactional]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
 			id: T::TradeId,
@@ -924,7 +933,8 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(29)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
+		#[transactional]
 		pub fn claim_auction(origin: OriginFor<T>, id: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&id)?;
