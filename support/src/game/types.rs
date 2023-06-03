@@ -27,7 +27,8 @@ impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum TradeType {
-	Normal,
+	SetPrice,
+	SetBuy,
 	Bundle,
 	Wishlist,
 	Auction,
