@@ -1045,6 +1045,9 @@ pub fn fill_wishlist_should_works() {
 			price
 		));
 
+		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
+		assert_eq!(TradeConfigOf::<Test>::get(0), None);
+		
 		for i in 0..TEST_BUNDLE.len() as u32 {
 			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 0);
 			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 10);

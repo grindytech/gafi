@@ -67,7 +67,7 @@ impl<T: Config<I>, I: 'static>
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(
 				config.trade == TradeType::Normal,
-				Error::<T, I>::UnknownTrade
+				Error::<T, I>::NotSetPrice
 			);
 
 			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
@@ -124,7 +124,7 @@ impl<T: Config<I>, I: 'static>
 			}
 		}
 
-		return Err(Error::<T, I>::NotForSale.into())
+		return Err(Error::<T, I>::UnknownTrade.into())
 	}
 
 	fn do_set_bundle(
@@ -174,25 +174,21 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_buy_bundle(
-		bundle_id: &T::TradeId,
+		trade: &T::TradeId,
 		who: &T::AccountId,
 		bid_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		let bundle = BundleOf::<T, I>::get(bundle_id);
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(config.trade == TradeType::Bundle, Error::<T, I>::NotBundle);
 
-		// ensure item can be transfer
-		for pack in bundle.clone() {
-			ensure!(
-				T::Nfts::can_transfer(&pack.collection, &pack.item),
-				Error::<T, I>::ItemLocked
-			);
-		}
-
-		if let Some(config) = TradeConfigOf::<T, I>::get(bundle_id) {
-			ensure!(
-				config.trade == TradeType::Bundle,
-				Error::<T, I>::UnknownTrade
-			);
+			let bundle = BundleOf::<T, I>::get(trade);
+			// ensure item can be transfer
+			for pack in bundle.clone() {
+				ensure!(
+					T::Nfts::can_transfer(&pack.collection, &pack.item),
+					Error::<T, I>::ItemLocked
+				);
+			}
 
 			let price = config.maybe_price.unwrap_or_default();
 
@@ -218,10 +214,14 @@ impl<T: Config<I>, I: 'static>
 					ItemBalanceStatus::Free,
 				)?;
 			}
+
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
 
 			Self::deposit_event(Event::<T, I>::BundleBought {
-				trade: *bundle_id,
+				trade: *trade,
 				seller: config.owner,
 				buyer: who.clone(),
 				price,
@@ -229,14 +229,14 @@ impl<T: Config<I>, I: 'static>
 
 			return Ok(())
 		}
-		return Err(Error::<T, I>::NotForSale.into())
+		return Err(Error::<T, I>::UnknownTrade.into())
 	}
 
 	fn do_cancel_price(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(
 				config.trade == TradeType::Normal,
-				Error::<T, I>::UnknownTrade
+				Error::<T, I>::NotSetPrice
 			);
 
 			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
@@ -246,13 +246,11 @@ impl<T: Config<I>, I: 'static>
 				// unlock items
 				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 
-				// unreserve
+				// end trade
 				<T as pallet::Config<I>>::Currency::unreserve(
 					&config.owner,
 					T::BundleDeposit::get(),
 				);
-
-				// remove storage
 				BundleOf::<T, I>::remove(trade);
 				TradeConfigOf::<T, I>::remove(trade);
 
@@ -269,10 +267,7 @@ impl<T: Config<I>, I: 'static>
 
 	fn do_cancel_bundle(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-			ensure!(
-				config.trade == TradeType::Bundle,
-				Error::<T, I>::UnknownTrade
-			);
+			ensure!(config.trade == TradeType::Bundle, Error::<T, I>::NotBundle);
 
 			// ensure owner
 			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
@@ -283,10 +278,8 @@ impl<T: Config<I>, I: 'static>
 				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
 
-			// unreserve
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-
-			// remove storage
 			BundleOf::<T, I>::remove(trade);
 			TradeConfigOf::<T, I>::remove(trade);
 

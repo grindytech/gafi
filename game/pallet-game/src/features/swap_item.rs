@@ -62,7 +62,7 @@ impl<T: Config<I>, I: 'static>
 		maybe_bid_price: Option<BalanceOf<T, I>>,
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-			ensure!(config.trade == TradeType::Swap, Error::<T, I>::UnknownTrade);
+			ensure!(config.trade == TradeType::Swap, Error::<T, I>::NotSwap);
 
 			if let Some(price) = config.maybe_price {
 				// check price
@@ -104,22 +104,23 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
+
 			Self::deposit_event(Event::<T, I>::SwapClaimed {
 				trade: *trade,
 				who: who.clone(),
 			});
 			return Ok(())
 		}
-		Ok(())
+		Err(Error::<T, I>::UnknownTrade.into())
 	}
 
 	fn do_cancel_swap(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-			ensure!(
-				config.trade == TradeType::Swap,
-				Error::<T, I>::UnknownTrade
-			);
+			ensure!(config.trade == TradeType::Swap, Error::<T, I>::NotSwap);
 
 			// ensure owner
 			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
@@ -130,10 +131,8 @@ impl<T: Config<I>, I: 'static>
 				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
 			}
 
-			// unreserve
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-
-			// remove storage
 			BundleOf::<T, I>::remove(trade);
 			TradeConfigOf::<T, I>::remove(trade);
 

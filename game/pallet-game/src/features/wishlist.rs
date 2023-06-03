@@ -52,23 +52,22 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		ask_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		let bundle = BundleOf::<T, I>::get(trade);
-
-		// ensure item can be transfer
-		for pack in bundle.clone() {
-			ensure!(
-				T::Nfts::can_transfer(&pack.collection, &pack.item),
-				Error::<T, I>::ItemLocked
-			);
-		}
-
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-			let price = config.maybe_price.unwrap_or_default();
-
 			ensure!(
 				config.trade == TradeType::Wishlist,
-				Error::<T, I>::UnknownTrade
+				Error::<T, I>::NotWishlist
 			);
+
+			let bundle = BundleOf::<T, I>::get(trade);
+			// ensure item can be transfer
+			for pack in bundle.clone() {
+				ensure!(
+					T::Nfts::can_transfer(&pack.collection, &pack.item),
+					Error::<T, I>::ItemLocked
+				);
+			}
+
+			let price = config.maybe_price.unwrap_or_default();
 
 			// check price
 			ensure!(ask_price <= price, Error::<T, I>::AskTooHigh);
@@ -91,7 +90,12 @@ impl<T: Config<I>, I: 'static>
 					package.amount,
 				)?;
 			}
+
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
+			BundleOf::<T, I>::remove(trade);
+			TradeConfigOf::<T, I>::remove(trade);
+
 			Self::deposit_event(Event::<T, I>::WishlistFilled {
 				trade: *trade,
 				wisher: config.owner,
@@ -100,23 +104,21 @@ impl<T: Config<I>, I: 'static>
 			});
 			return Ok(())
 		}
-		return Err(Error::<T, I>::NotForSale.into())
+		return Err(Error::<T, I>::UnknownTrade.into())
 	}
 
 	fn do_cancel_wishlist(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(
 				config.trade == TradeType::Wishlist,
-				Error::<T, I>::UnknownTrade
+				Error::<T, I>::NotWishlist
 			);
 
 			// ensure owner
 			ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
-			// unreserve
+			// end trade
 			<T as pallet::Config<I>>::Currency::unreserve(&config.owner, T::BundleDeposit::get());
-
-			// remove storage
 			BundleOf::<T, I>::remove(trade);
 			TradeConfigOf::<T, I>::remove(trade);
 
