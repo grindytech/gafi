@@ -12,7 +12,7 @@ use gafi_support::{
 	game::Package,
 };
 use pallet_nfts::{
-	CollectionRole, CollectionRoles, CollectionSettings, ItemSettings, MintSettings, MintType,
+	CollectionRole, CollectionRoles,
 };
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {

@@ -36,8 +36,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Retail,
-	TransferItem, UpgradeItem, Wishlist, TradeType,
+	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Retail, Swap,
+	Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
@@ -481,7 +481,7 @@ pub mod pallet {
 		UnknownUpgrade,
 		UnknownAuction,
 		UnknownBid,
-		
+
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
 		/// The number minted items require exceeds the available items in the reserve
@@ -899,14 +899,7 @@ pub mod pallet {
 
 			let trade = Self::get_trade_id();
 
-			Self::do_set_auction(
-				&trade,
-				&sender,
-				source,
-				maybe_price,
-				start_block,
-				duration,
-			)?;
+			Self::do_set_auction(&trade, &sender, source, maybe_price, start_block, duration)?;
 			Ok(())
 		}
 
