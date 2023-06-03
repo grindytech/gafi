@@ -39,7 +39,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		}
 
 		// random minting
-		let mut minted_items: Vec<T::ItemId> = [].to_vec();
+		let mut items: Vec<T::ItemId> = [].to_vec();
 		{
 			let mut total_item = TotalReserveOf::<T, I>::get(collection);
 			let mut maybe_position = Self::random_number(total_item, Self::gen_random());
@@ -48,7 +48,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 					match Self::withdraw_reserve(collection, position) {
 						Ok(item) => {
 							Self::add_item_balance(&target, &collection, &item, 1)?;
-							minted_items.push(item);
+							items.push(item);
 						},
 						Err(err) => return Err(err.into()),
 					};
@@ -65,7 +65,7 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 			who: who.clone(),
 			target: target.clone(),
 			collection: *collection,
-			minted_items,
+			items,
 		});
 		Ok(())
 	}

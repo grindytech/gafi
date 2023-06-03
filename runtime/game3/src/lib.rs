@@ -414,7 +414,6 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
-	pub SaleDeposit: u128 = 1_000_000_000;
 	pub MaxBundle: u32 = 10;
 	pub BundleDeposit: u128 = 2_000_000_000;
 }
@@ -444,13 +443,11 @@ impl pallet_game::Config for Runtime {
 
 	type UpgradeDeposit = UpgradeDeposit;
 
-	type SaleDeposit = SaleDeposit;
+	type BundleDeposit = BundleDeposit;
 
 	type TradeId = u32;
 
 	type MaxBundle = MaxBundle;
-
-	type BundleDeposit = BundleDeposit;
 
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();

@@ -46,8 +46,6 @@ pub trait WeightInfo {
 	fn buy_item(s: u32, ) -> Weight;
 	fn set_bundle(s: u32, ) -> Weight;
 	fn buy_bundle(s: u32, ) -> Weight;
-	fn cancel_set_price(s: u32, ) -> Weight;
-	fn cancel_set_bundle(s: u32, ) -> Weight;
 	fn set_wishlist(s: u32, ) -> Weight;
 	fn fill_wishlist(s: u32, ) -> Weight;
 	fn remove_collection(s: u32) -> Weight;
@@ -240,34 +238,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
-	// Storage: Game PackageOf (r:1 w:1)
-	// Storage: Game TradeConfigOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:1 w:1)
-	// Storage: Game ItemBalanceOf (r:1 w:1)
-	// Storage: System Account (r:1 w:1)
-	/// The range of component `s` is `[0, 10]`.
-	fn cancel_set_price(s: u32, ) -> Weight {
-		// Minimum execution time: 34_000 nanoseconds.
-		Weight::from_ref_time(35_935_588)
-			// Standard Error: 29_720
-			.saturating_add(Weight::from_ref_time(96_139).saturating_mul(s.into()))
-			.saturating_add(T::DbWeight::get().reads(5))
-			.saturating_add(T::DbWeight::get().writes(5))
-	}
-	// Storage: Game TradeConfigOf (r:1 w:1)
-	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
-	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
-	/// The range of component `s` is `[0, 10]`.
-	fn cancel_set_bundle(s: u32, ) -> Weight {
-		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(45_909_276)
-			// Standard Error: 49_811
-			.saturating_add(Weight::from_ref_time(196_738).saturating_mul(s.into()))
-			.saturating_add(T::DbWeight::get().reads(7))
-			.saturating_add(T::DbWeight::get().writes(7))
-	}
+	
 	// Storage: Game NextTradeId (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
@@ -570,34 +541,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(10))
 			.saturating_add(RocksDbWeight::get().writes(5))
 	}
-	// Storage: Game PackageOf (r:1 w:1)
-	// Storage: Game TradeConfigOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:1 w:1)
-	// Storage: Game ItemBalanceOf (r:1 w:1)
-	// Storage: System Account (r:1 w:1)
-	/// The range of component `s` is `[0, 10]`.
-	fn cancel_set_price(s: u32, ) -> Weight {
-		// Minimum execution time: 34_000 nanoseconds.
-		Weight::from_ref_time(35_935_588)
-			// Standard Error: 29_720
-			.saturating_add(Weight::from_ref_time(96_139).saturating_mul(s.into()))
-			.saturating_add(RocksDbWeight::get().reads(5))
-			.saturating_add(RocksDbWeight::get().writes(5))
-	}
-	// Storage: Game TradeConfigOf (r:1 w:1)
-	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
-	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
-	/// The range of component `s` is `[0, 10]`.
-	fn cancel_set_bundle(s: u32, ) -> Weight {
-		// Minimum execution time: 44_000 nanoseconds.
-		Weight::from_ref_time(45_909_276)
-			// Standard Error: 49_811
-			.saturating_add(Weight::from_ref_time(196_738).saturating_mul(s.into()))
-			.saturating_add(RocksDbWeight::get().reads(7))
-			.saturating_add(RocksDbWeight::get().writes(7))
-	}
+	
 	// Storage: Game NextTradeId (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)

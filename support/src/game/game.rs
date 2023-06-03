@@ -1,6 +1,6 @@
+use super::{Bundle, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
-use sp_runtime::{TokenError};
-use super::{Bundle, Package};
+use sp_runtime::TokenError;
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -30,7 +30,7 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 		who: &AccountId,
 		game: &GameId,
 		// config: &CollectionConfig,
-		fee: Fee, 
+		fee: Fee,
 	) -> DispatchResult;
 
 	/// Do create collection
@@ -67,7 +67,6 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 		game: &GameId,
 		collection: &CollectionId,
 	) -> DispatchResult;
-
 }
 
 pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
@@ -203,7 +202,17 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	fn swap() -> DispatchResult;
 }
 
-pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Trade<AccountId, TradeId> {
+	/// Do Cancel Trade
+	///
+	/// Cancel for any trade.
+	///
+	/// - `trade`: trade id
+	/// - `who`: owner
+	fn do_cancel_trade(trade: &TradeId, who: &AccountId, trade_type: TradeType) -> DispatchResult;
+}
+
+pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Do Set Price
 	///
 	/// Set item price for selling
@@ -212,9 +221,9 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `who`: seller
 	/// - `collection`: collection id
 	/// - `item`: item id
-	/// - `config`: trade config
+	/// - `price`: price of a item
 	fn do_set_price(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		package: Package<CollectionId, ItemId>,
 		price: Price,
@@ -232,10 +241,24 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `amount`: amount
 	/// - `bid_price`: price of each item
 	fn do_buy_item(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		amount: Amount,
 		bid_price: Price,
+	) -> DispatchResult;
+
+	/// Do Set Price
+	///
+	/// Set item price for selling
+	///
+	/// Parameters:
+	/// - `who`: seller
+	/// - `collection`: collection id
+	/// - `item`: item id
+	fn do_add_retail_supply(
+		trade: &TradeId,
+		who: &AccountId,
+		supply: Package<CollectionId, ItemId>,
 	) -> DispatchResult;
 
 	/// Do Cancel Price
@@ -243,21 +266,59 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Cancel the trade, unlock the locked items, and unreserve the deposit.
 	///
 	/// Parameters:
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: owner
-	fn do_cancel_price(id: &TradeId, who: &AccountId) -> DispatchResult;
+	fn do_cancel_price(trade: &TradeId, who: &AccountId) -> DispatchResult;
 
+	/// Do Set Buy
+	///
+	/// Set item want to buy.
+	///
+	/// Parameters:
+	/// - `trade`: trade id
+	/// - `who`: who
+	/// - `package`: item want to buy
+	/// - `price`: price of each
+	fn do_set_buy(
+		trade: &TradeId,
+		who: &AccountId,
+		package: Package<CollectionId, ItemId>,
+		price: Price,
+	) -> DispatchResult;
+
+	/// Do Claim Set Buy
+	///
+	/// Sell item to buyer
+	///
+	/// Parameters:
+	/// - `trade`: trade id
+	/// - `who`: who
+	/// - `amount`: amount item to sell
+	/// - `bid_price`: bid_price of each
+	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, amount: Amount, ask_price: Price) -> DispatchResult;
+
+	/// Do Cancel Set Buy
+	///
+	/// Cancel set buy, unreserve deposit
+	///
+	/// Parameters:
+	/// - `trade`: trade id
+	/// - `who`: who
+	fn do_cancel_set_buy(trade: &TradeId, who: &AccountId) -> DispatchResult;
+}
+
+pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Do Set Bundle
 	///
 	/// Bundling for sale
 	///
 	/// Parameters:
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: seller
 	/// - `bundle`: bundle
 	/// - `price`: price of bundle
 	fn do_set_bundle(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
@@ -268,17 +329,17 @@ pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Buy a bundle from bundle id
 	///
 	/// Parameters:
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: buyer
 	/// - `bid_price`: the bid price for the bundle
-	fn do_buy_bundle(id: &TradeId, who: &AccountId, bid_price: Price) -> DispatchResult;
+	fn do_buy_bundle(trade: &TradeId, who: &AccountId, bid_price: Price) -> DispatchResult;
 
 	/// Do Cancel Bundle
 	///
 	/// Cancel the bundle sale, unlock items, and unreserve the deposit.
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: owner
-	fn do_cancel_bundle(id: &TradeId, who: &AccountId) -> DispatchResult;
+	fn do_cancel_bundle(trade: &TradeId, who: &AccountId) -> DispatchResult;
 }
 
 /// Trait for wishlist functionality
@@ -287,12 +348,12 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 	///
 	/// Set a wishlist with the price
 	///
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: buyer
 	/// - `bundle`: wishlist
 	/// - `price`: price
 	fn do_set_wishlist(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
@@ -303,71 +364,99 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Fill the wishlist with the asking price.
 	/// The asking price must be no greater than the wishlist price.
 	///
-	/// - `id`: trade id
+	/// - `trade`: trade id
 	/// - `who`: seller
 	/// - `ask_price`: ask price
-	fn do_fill_wishlist(id: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
+	fn do_fill_wishlist(trade: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
+
+	/// Do Cancel Wishlist
+	///
+	/// Cancel the wishlist
+	/// - `trade`: wishlist id
+	/// - `who`: who
+	fn do_cancel_wishlist(trade: &TradeId, who: &AccountId) -> DispatchResult;
 }
 
 /// Trait for swap items
-pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price>{
-
+pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Do Set Swap
-	/// 
+	///
 	/// Set a swap from a source bundle for a required bundle, maybe with price
-	/// 
-	/// - `id`: trade id
+	///
+	/// - `trade`: trade id
 	/// - `who`: who
 	/// - `source`: bundle in
 	/// - `required`: bundle out
 	/// - `maybe_price`: maybe price required
 	fn do_set_swap(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		source: Bundle<CollectionId, ItemId>,
 		required: Bundle<CollectionId, ItemId>,
 		maybe_price: Option<Price>,
 	) -> DispatchResult;
 
-
 	/// Do Claim Swap
-	/// 
+	///
 	/// Make a swap with maybe bid price
-	/// 
-	/// - `id`: trade id
+	///
+	/// - `trade`: trade id
 	/// - `who`: who
 	/// - `maybe_bid_price`: maybe bid price
 	fn do_claim_swap(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		maybe_bid_price: Option<Price>,
 	) -> DispatchResult;
+
+	/// Do Cancel Swap
+	///
+	/// Cancel swap
+	/// - `trade`: swap id
+	/// - `who`: who
+	fn do_cancel_swap(trade: &TradeId, who: &AccountId) -> DispatchResult;
 }
 
 /// Trait for auction items
 pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
-
+	/// Do Set Auction
+	///
+	/// Set auction for a bundle may with minimum bid `maybe_price`.
+	/// The one that has the highest bid when the auction ended wins.
+	///
+	/// - `trade`: auction id
+	/// - `who`: who
+	/// - `bundle`: bundle for auction
+	/// - `maybe_price`: maybe minimum bid
+	/// - `start_block`: the block when auction start
+	/// - `duration`: duration
 	fn do_set_auction(
-		id: &TradeId,
+		trade: &TradeId,
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		maybe_price: Option<Price>,
 		start_block: Block,
 		duration: Block,
-	)-> DispatchResult;
+	) -> DispatchResult;
 
-	fn do_bid_auction(
-		id: &TradeId,
-		who: &AccountId,
-		price: Price,
-	) -> DispatchResult;
-	
-	fn do_claim_auction(
-		id: &TradeId,
-	) -> DispatchResult;
+	/// Do Bid Auction
+	///
+	/// Make a bid with price, the price must be higher than all bids before.
+	///
+	/// - `trade`: auction id
+	/// - `who`: who
+	/// - `price`: price
+	fn do_bid_auction(trade: &TradeId, who: &AccountId, price: Price) -> DispatchResult;
+
+	/// Do Claim Auction
+	///
+	/// Trigger end auction, any account can call.
+	///
+	/// - `trade`: auction id
+	fn do_claim_auction(trade: &TradeId) -> DispatchResult;
 
 	// fn do_set_candle_auction(
-	// 	id: &TradeId,
+	// 	trade: &TradeId,
 	// 	who: &AccountId,
 	// 	bundle: Bundle<CollectionId, ItemId>,
 	// 	maybe_price: Option<Price>,
