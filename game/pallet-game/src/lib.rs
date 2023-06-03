@@ -12,6 +12,7 @@ mod mock;
 mod tests;
 
 mod features;
+mod trades;
 mod types;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -35,7 +36,7 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Trade,
+	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Swap, Retail,
 	TransferItem, UpgradeItem, Wishlist, TradeType,
 };
 use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
@@ -564,7 +565,6 @@ pub mod pallet {
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: T::AccountId,
-			// config: CollectionConfigFor<T, I>,
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

@@ -203,7 +203,7 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 	fn swap() -> DispatchResult;
 }
 
-pub trait Trade<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// Do Set Price
 	///
 	/// Set item price for selling

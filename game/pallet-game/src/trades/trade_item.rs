@@ -1,9 +1,9 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, Bundle, Package, Trade, TradeType};
+use gafi_support::game::{Amount, Bundle, Package, Retail, TradeType};
 
 impl<T: Config<I>, I: 'static>
-	Trade<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
+	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
 {
 	fn do_set_price(
 		trade: &T::TradeId,
