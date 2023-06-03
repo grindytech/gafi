@@ -295,7 +295,7 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `who`: who
 	/// - `amount`: amount item to sell
 	/// - `bid_price`: bid_price of each
-	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, bid_price: Price) -> DispatchResult;
+	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, amount: Amount, ask_price: Price) -> DispatchResult;
 }
 
 pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {

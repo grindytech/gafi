@@ -1,5 +1,8 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
+use frame_support::{
+	pallet_prelude::*,
+	traits::{BalanceStatus, ExistenceRequirement},
+};
 use gafi_support::game::{Amount, Package, Retail, TradeType};
 
 impl<T: Config<I>, I: 'static>
@@ -258,8 +261,53 @@ impl<T: Config<I>, I: 'static>
 	fn do_claim_set_buy(
 		trade: &T::TradeId,
 		who: &T::AccountId,
-		bid_price: BalanceOf<T, I>,
+		amount: Amount,
+		ask_price: BalanceOf<T, I>,
 	) -> DispatchResult {
-		todo!()
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(config.trade == TradeType::SetBuy, Error::<T, I>::NotSetBuy);
+
+			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
+				// ensure item can be transfer
+				ensure!(
+					T::Nfts::can_transfer(&package.collection, &package.item),
+					Error::<T, I>::ItemLocked
+				);
+
+				ensure!(package.amount >= amount, Error::<T, I>::SoldOut);
+
+				// check price
+				let price = config.maybe_price.unwrap_or_default();
+				ensure!(ask_price <= price, Error::<T, I>::AskTooHigh);
+
+				// transfer item
+				Self::transfer_item(
+					who,
+					&package.collection,
+					&package.item,
+					&config.owner,
+					amount,
+				)?;
+
+				// make deposit
+				<T as pallet::Config<I>>::Currency::repatriate_reserved(
+					&config.owner,
+					&who,
+					price * amount.into(),
+					BalanceStatus::Free,
+				)?;
+
+				let new_package =
+					Package::new(package.collection, package.item, package.amount - amount);
+
+				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
+					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
+						.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+					Ok(())
+				})?;
+				return Ok(())
+			}
+		}
+		return Err(Error::<T, I>::UnknownTrade.into())
 	}
 }

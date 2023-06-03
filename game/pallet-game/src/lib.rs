@@ -508,6 +508,7 @@ pub mod pallet {
 		ItemLocked,
 		NotForSale,
 		BidTooLow,
+		BidTooHigh,
 		AskTooHigh,
 		TradeIdInUse,
 		TooLow,
@@ -526,6 +527,7 @@ pub mod pallet {
 		NotWishlist,
 		NotSwap,
 		NotAuction,
+		NotSetBuy,
 	}
 
 	#[pallet::hooks]
@@ -945,6 +947,22 @@ pub mod pallet {
 			Self::do_set_buy(&trade, &sender, package, retail_price)?;
 			Ok(())
 		}
+
+		#[pallet::call_index(31)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn claim_set_buy(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			amount: u32,
+			ask_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
+			Ok(())
+		}
+
 	}
 
 	#[pallet::validate_unsigned]
