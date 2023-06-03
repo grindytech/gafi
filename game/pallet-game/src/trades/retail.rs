@@ -310,4 +310,36 @@ impl<T: Config<I>, I: 'static>
 		}
 		return Err(Error::<T, I>::UnknownTrade.into())
 	}
+
+	fn do_cancel_set_buy(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			ensure!(
+				config.trade == TradeType::SetBuy,
+				Error::<T, I>::NotSetBuy
+			);
+
+			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
+				// ensure owner
+				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
+
+				// unreserve deposit
+				let price = config.maybe_price.unwrap_or_default();
+				<T as pallet::Config<I>>::Currency::unreserve(
+					&config.owner,
+					price * package.amount.into(),
+				);
+
+				// end trade
+				<T as pallet::Config<I>>::Currency::unreserve(
+					&config.owner,
+					T::BundleDeposit::get(),
+				);
+				BundleOf::<T, I>::remove(trade);
+				TradeConfigOf::<T, I>::remove(trade);
+
+				return Ok(())
+			}
+		}
+		Err(Error::<T, I>::UnknownTrade.into())
+	}
 }
