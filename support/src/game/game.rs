@@ -269,6 +269,33 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `trade`: trade id
 	/// - `who`: owner
 	fn do_cancel_price(trade: &TradeId, who: &AccountId) -> DispatchResult;
+
+	/// Do Set Buy
+	///
+	/// Set item want to buy.
+	///
+	/// Parameters:
+	/// - `trade`: trade id
+	/// - `who`: who
+	/// - `package`: item want to buy
+	/// - `price`: price of each
+	fn do_set_buy(
+		trade: &TradeId,
+		who: &AccountId,
+		package: Package<CollectionId, ItemId>,
+		price: Price,
+	) -> DispatchResult;
+
+	/// Do Claim Set Buy
+	///
+	/// Sell item to buyer
+	///
+	/// Parameters:
+	/// - `trade`: trade id
+	/// - `who`: who
+	/// - `amount`: amount item to sell
+	/// - `bid_price`: bid_price of each
+	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, bid_price: Price) -> DispatchResult;
 }
 
 pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {

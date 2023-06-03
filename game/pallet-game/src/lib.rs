@@ -930,6 +930,21 @@ pub mod pallet {
 			Self::do_claim_auction(&trade)?;
 			Ok(())
 		}
+
+		#[pallet::call_index(30)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_buy(
+			origin: OriginFor<T>,
+			package: Package<T::CollectionId, T::ItemId>,
+			retail_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade = Self::get_trade_id();
+
+			Self::do_set_buy(&trade, &sender, package, retail_price)?;
+			Ok(())
+		}
 	}
 
 	#[pallet::validate_unsigned]

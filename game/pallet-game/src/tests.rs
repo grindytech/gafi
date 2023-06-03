@@ -654,7 +654,7 @@ pub fn set_price_should_works() {
 		assert_eq!(
 			TradeConfigOf::<Test>::get(0).unwrap(),
 			TradeConfig {
-				trade: TradeType::Normal,
+				trade: TradeType::SetPrice,
 				owner: player.clone(),
 				maybe_price: Some(price),
 				maybe_required: None,
@@ -812,22 +812,38 @@ pub fn add_retail_supply_should_failss() {
 		let player1 = new_account(1, 1000 * unit(GAKI));
 
 		assert_err!(
-			PalletGame::add_retail_supply(RuntimeOrigin::signed(player1.clone()), 0, TEST_BUNDLE[0].clone()),
+			PalletGame::add_retail_supply(
+				RuntimeOrigin::signed(player1.clone()),
+				0,
+				TEST_BUNDLE[0].clone()
+			),
 			Error::<Test>::NoPermission
 		);
-		
+
 		assert_err!(
-			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE1[1].clone()),
+			PalletGame::add_retail_supply(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				TEST_BUNDLE1[1].clone()
+			),
 			Error::<Test>::IncorrectCollection
 		);
 
 		assert_err!(
-			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE[1].clone()),
+			PalletGame::add_retail_supply(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				TEST_BUNDLE[1].clone()
+			),
 			Error::<Test>::IncorrectItem
 		);
 
 		assert_err!(
-			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE[0].clone()),
+			PalletGame::add_retail_supply(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				TEST_BUNDLE[0].clone()
+			),
 			Error::<Test>::InsufficientItemBalance
 		);
 	})
@@ -1389,6 +1405,28 @@ pub fn claim_auction_should_fails() {
 		assert_err!(
 			PalletGame::claim_auction(RuntimeOrigin::signed(player.clone()), 0),
 			Error::<Test>::AuctionInProgress
+		);
+	})
+}
+
+#[test]
+pub fn set_buy_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = new_account(0, 1000 * unit(GAKI));
+		let player_balance = Balances::free_balance(&player);
+
+		let retail_price = 5 * unit(GAKI);
+		assert_ok!(PalletGame::set_buy(
+			RuntimeOrigin::signed(player.clone()),
+			TEST_BUNDLE[0].clone(),
+			retail_price
+		));
+
+		assert_eq!(
+			Balances::free_balance(&player),
+			player_balance - BUNDLE_DEPOSIT_VAL - (retail_price * TEST_BUNDLE[0].clone().amount as u128)
 		);
 	})
 }

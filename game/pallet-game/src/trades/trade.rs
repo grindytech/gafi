@@ -1,17 +1,15 @@
 use crate::*;
-use frame_support::{pallet_prelude::*};
-use gafi_support::game::{Trade, Retail, TradeType};
+use frame_support::pallet_prelude::*;
+use gafi_support::game::{Retail, Trade, TradeType};
 
-impl<T: Config<I>, I: 'static>
-	Trade<T::AccountId, T::TradeId> for Pallet<T, I>
-{
+impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::TradeId> for Pallet<T, I> {
 	fn do_cancel_trade(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		trade_type: TradeType,
 	) -> DispatchResult {
 		match trade_type {
-			TradeType::Normal => {
+			TradeType::SetPrice => {
 				Self::do_cancel_price(trade, who)?;
 			},
 			TradeType::Bundle => {
@@ -26,6 +24,7 @@ impl<T: Config<I>, I: 'static>
 			TradeType::Swap => {
 				Self::do_cancel_swap(trade, who)?;
 			},
+			_ => return Err(Error::<T, I>::UnknownTrade.into()),
 		};
 		Err(Error::<T, I>::UnknownTrade.into())
 	}
