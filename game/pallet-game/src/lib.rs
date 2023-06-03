@@ -512,6 +512,9 @@ pub mod pallet {
 		TradeIdInUse,
 		TooLow,
 
+		IncorrectCollection,
+		IncorrectItem,
+
 		// auction
 		AuctionInProgress,
 		AuctionNotStarted,
@@ -728,10 +731,8 @@ pub mod pallet {
 			price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			let trade = Self::get_trade_id();
 			Self::do_set_price(&trade, &sender, package, price)?;
-
 			Ok(())
 		}
 
@@ -745,13 +746,24 @@ pub mod pallet {
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_buy_item(&trade, &sender, amount, bid_price)?;
-
 			Ok(())
 		}
 
 		#[pallet::call_index(16)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn add_retail_supply(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			supply: Package<T::CollectionId, T::ItemId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_add_retail_supply(&trade, &sender, supply)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(17)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
 		#[transactional]
 		pub fn set_bundle(
@@ -761,13 +773,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-
 			Self::do_set_bundle(&trade, &sender, bundle, price)?;
-
 			Ok(())
 		}
 
-		#[pallet::call_index(17)]
+		#[pallet::call_index(18)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
 		#[transactional]
 		pub fn buy_bundle(
@@ -776,12 +786,11 @@ pub mod pallet {
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_buy_bundle(&trade, &sender, bid_price)?;
 			Ok(())
 		}
 
-		#[pallet::call_index(18)]
+		#[pallet::call_index(19)]
 		#[pallet::weight(0)]
 		#[transactional]
 		pub fn cancel_trade(
@@ -790,7 +799,6 @@ pub mod pallet {
 			trade_type: TradeType,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_cancel_trade(&trade, &sender, trade_type)?;
 			Ok(())
 		}
@@ -896,9 +904,7 @@ pub mod pallet {
 			duration: T::BlockNumber,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			let trade = Self::get_trade_id();
-
 			Self::do_set_auction(&trade, &sender, source, maybe_price, start_block, duration)?;
 			Ok(())
 		}

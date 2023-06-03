@@ -159,4 +159,55 @@ impl<T: Config<I>, I: 'static>
 		}
 		Err(Error::<T, I>::UnknownTrade.into())
 	}
+
+	fn do_add_retail_supply(
+		trade: &T::TradeId,
+		who: &T::AccountId,
+		supply: Package<T::CollectionId, T::ItemId>,
+	) -> DispatchResult {
+		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
+			// check owner
+			ensure!(config.owner.eq(who), Error::<T, I>::NoPermission);
+
+			ensure!(
+				config.trade == TradeType::Normal,
+				Error::<T, I>::NotSetPrice
+			);
+
+			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
+				ensure!(
+					package.collection == supply.collection,
+					Error::<T, I>::IncorrectCollection
+				);
+				ensure!(
+					package.item == supply.item,
+					Error::<T, I>::IncorrectItem
+				);
+
+				// ensure transferable
+				ensure!(
+					T::Nfts::can_transfer(&package.collection, &package.item),
+					Error::<T, I>::ItemLocked
+				);
+
+				// lock sale items
+				Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+
+				let new_package = Package::new(
+					package.collection,
+					package.item,
+					package.amount + supply.amount,
+				);
+
+				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
+					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
+						.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
+					Ok(())
+				})?;
+
+				return Ok(())
+			}
+		}
+		return Err(Error::<T, I>::UnknownTrade.into())
+	}
 }

@@ -11,9 +11,7 @@ use gafi_support::{
 	common::{unit, NativeToken::GAKI},
 	game::Package,
 };
-use pallet_nfts::{
-	CollectionRole, CollectionRoles,
-};
+use pallet_nfts::{CollectionRole, CollectionRoles};
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -778,6 +776,64 @@ pub fn buy_item_should_fails() {
 }
 
 #[test]
+pub fn add_retail_supply_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let total = TEST_BUNDLE[0].clone();
+		let supply = Package {
+			collection: total.collection,
+			item: total.item,
+			amount: (total.amount / 2),
+		};
+		let player = do_all_set_price(supply.clone(), 10 * unit(GAKI));
+		assert_eq!(
+			LockBalanceOf::<Test>::get((player.clone(), supply.collection, supply.item)),
+			supply.amount
+		);
+		assert_ok!(PalletGame::add_retail_supply(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			supply
+		));
+		assert_eq!(
+			LockBalanceOf::<Test>::get((player.clone(), total.collection, total.item)),
+			total.amount
+		);
+	})
+}
+
+#[test]
+pub fn add_retail_supply_should_failss() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		let player = do_all_set_price(TEST_BUNDLE[0].clone(), 10 * unit(GAKI));
+		let player1 = new_account(1, 1000 * unit(GAKI));
+
+		assert_err!(
+			PalletGame::add_retail_supply(RuntimeOrigin::signed(player1.clone()), 0, TEST_BUNDLE[0].clone()),
+			Error::<Test>::NoPermission
+		);
+		
+		assert_err!(
+			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE1[1].clone()),
+			Error::<Test>::IncorrectCollection
+		);
+
+		assert_err!(
+			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE[1].clone()),
+			Error::<Test>::IncorrectItem
+		);
+
+		assert_err!(
+			PalletGame::add_retail_supply(RuntimeOrigin::signed(player.clone()), 0, TEST_BUNDLE[0].clone()),
+			Error::<Test>::InsufficientItemBalance
+		);
+	})
+}
+
+#[test]
 pub fn set_bundle_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
@@ -924,7 +980,7 @@ pub fn do_cancel_set_bundle_should_works() {
 
 		let before_balance = Balances::free_balance(&player);
 		assert_ok!(PalletGame::do_cancel_bundle(&0, &player.clone(),));
-		
+
 		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
 		assert_eq!(TradeConfigOf::<Test>::get(0), None);
 
@@ -952,10 +1008,10 @@ pub fn cancel_set_wishlist_should_works() {
 			TEST_BUNDLE.clone().to_vec(),
 			price,
 		));
-		
+
 		let before_balance = Balances::free_balance(&player);
 		assert_ok!(PalletGame::do_cancel_wishlist(&0, &player.clone(),));
-		
+
 		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
 		assert_eq!(TradeConfigOf::<Test>::get(0), None);
 
@@ -1047,7 +1103,7 @@ pub fn fill_wishlist_should_works() {
 
 		assert_eq!(BundleOf::<Test>::get(0), [].to_vec());
 		assert_eq!(TradeConfigOf::<Test>::get(0), None);
-		
+
 		for i in 0..TEST_BUNDLE.len() as u32 {
 			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 0);
 			assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, i)), 10);

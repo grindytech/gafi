@@ -221,7 +221,7 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `who`: seller
 	/// - `collection`: collection id
 	/// - `item`: item id
-	/// - `config`: trade config
+	/// - `price`: price of a item
 	fn do_set_price(
 		trade: &TradeId,
 		who: &AccountId,
@@ -245,6 +245,20 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 		who: &AccountId,
 		amount: Amount,
 		bid_price: Price,
+	) -> DispatchResult;
+
+	/// Do Set Price
+	///
+	/// Set item price for selling
+	///
+	/// Parameters:
+	/// - `who`: seller
+	/// - `collection`: collection id
+	/// - `item`: item id
+	fn do_add_retail_supply(
+		trade: &TradeId,
+		who: &AccountId,
+		supply: Package<CollectionId, ItemId>,
 	) -> DispatchResult;
 
 	/// Do Cancel Price
