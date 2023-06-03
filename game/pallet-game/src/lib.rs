@@ -511,10 +511,17 @@ pub mod pallet {
 		TradeIdInUse,
 		TooLow,
 
-		/// auction
+		// auction
 		AuctionInProgress,
 		AuctionNotStarted,
 		AuctionEnded,
+
+		// trade type
+		NotSetPrice,
+		NotBundle,
+		NotWishlist,
+		NotSwap,
+		NotAuction,
 	}
 
 	#[pallet::hooks]
