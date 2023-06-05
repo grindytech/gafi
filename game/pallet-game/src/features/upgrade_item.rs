@@ -65,7 +65,7 @@ impl<T: Config<I>, I: 'static>
 		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		ensure!(amount > 0, Error::<T, I>::TooLow);
+		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 
 		let next_level = LevelOf::<T, I>::get(collection, item) + 1;
 

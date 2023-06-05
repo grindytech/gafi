@@ -27,7 +27,6 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::TradeId> for Pallet<T, I> 
 			TradeType::SetBuy => {
 				Self::do_cancel_set_buy(trade, who)?;
 			},
-			_ => return Err(Error::<T, I>::UnknownTrade.into()),
 		};
 		Err(Error::<T, I>::UnknownTrade.into())
 	}

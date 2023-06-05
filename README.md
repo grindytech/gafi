@@ -26,14 +26,14 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
 ### Build
 
 ```sh
-make build-dev
+make build
 ```
-or visit [build wiki](https://wiki.gafi.network/build/how-to-run-gafi-node) for more detail
+or visit [build wiki](https://wiki.gafi.network/build/run-gafi-node) for more detail
 
 ### Run
 
 ```sh
-make run-dev
+make run
 ```
 
 
@@ -69,7 +69,7 @@ Then run the following command to start a single node development chain.
 
 This command will firstly compile your code, and then start a local development network. You can
 also replace the default command
-(`cargo build --release --features with-dev && ./target/release/gafi-node --dev --ws-external`)
+(`cargo build --release --features with-game3 && ./target/release/gafi-node --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
