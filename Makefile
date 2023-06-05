@@ -10,8 +10,8 @@ test:
 check:
 	cargo check --release --features with-game3
 
-.PHONY: run-dev
-run-dev:
+.PHONY: run
+run:
 	./target/release/gafi-node \
     --tmp \
     --dev \

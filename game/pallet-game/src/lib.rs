@@ -553,7 +553,6 @@ pub mod pallet {
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
-
 			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(&sender, &game, &admin)?;
 			Ok(())
@@ -582,7 +581,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(&sender, &admin, fee)?;
-
 			Ok(())
 		}
 
@@ -610,9 +608,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
-
 			Ok(())
 		}
 
@@ -642,11 +638,8 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			let target = T::Lookup::lookup(mint_to)?;
-
 			Self::do_mint(&sender, &collection, &target, amount)?;
-
 			Ok(())
 		}
 
@@ -660,9 +653,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_burn(&sender, &collection, &item, amount)?;
-
 			Ok(())
 		}
 
@@ -697,11 +688,8 @@ pub mod pallet {
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
-
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
-
 			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
-
 			Ok(())
 		}
 
@@ -715,9 +703,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_upgrade_item(&sender, &collection, &item, amount)?;
-
 			Ok(())
 		}
 
@@ -726,9 +712,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
-
 			RandomSeed::<T, I>::set(seed);
-
 			Ok(())
 		}
 
@@ -951,7 +935,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-
 			Self::do_set_buy(&trade, &sender, package, retail_price)?;
 			Ok(())
 		}
@@ -966,7 +949,6 @@ pub mod pallet {
 			ask_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
