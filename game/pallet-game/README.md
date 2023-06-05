@@ -2,23 +2,13 @@
 # Pallet-Game
 
 ### Goals
-The pallet game is designed to make it possible for developers (blockchain or non-blockchain) to use blockchain technologies to improve in-game finance.
-
-## Introduction
-The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
-Pallet-game is coupled with [pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts), where pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
+A pallet designed to make it possible for developers (both blockchain and non-blockchain developers) to integrate Web3 technologies to improve in-game finance in minutes at a cost equal to zero.
+The studio can publish NFTs and get the rewards from mining fees, upgrading fees, and might be from trading fees in Gafi Marketplace.
 
 ## Overview
+The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
+Pallet-game is coupled with [pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts), and pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
 
-Key functions on pallet-game:
-Create collections and NFTs
-Allow NFTs can be transferred with/without transfer fees
-Allow swap NFT with/without swap fees
-Allow NFTs can upgrade their attribute with/without upgrade fees
-Set Upgrade Rules
-Allow Auto Mint NFTs with/without mining fees
-
-All NFT's function fees transfer directly to the collection owner. 
 
 ### Terminology
 * **NFTs:** a certain amount of NFT.
