@@ -26,7 +26,10 @@ use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+		tokens::{
+			nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+			AttributeNamespace,
+		},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -963,6 +966,80 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(32)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_attribute(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			maybe_item: Option<T::ItemId>,
+			namespace: AttributeNamespace<T::AccountId>,
+			key: BoundedVec<u8, T::KeyLimit>,
+			value: BoundedVec<u8, T::ValueLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_attribute(
+				origin, collection, maybe_item, namespace, key, value,
+			)
+		}
+
+		#[pallet::call_index(33)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_attribute(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			maybe_item: Option<T::ItemId>,
+			namespace: AttributeNamespace<T::AccountId>,
+			key: BoundedVec<u8, T::KeyLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_attribute(
+				origin, collection, maybe_item, namespace, key,
+			)
+		}
+
+		#[pallet::call_index(34)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)
+		}
+
+		#[pallet::call_index(35)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_metadata(origin, collection, item)
+		}
+
+		#[pallet::call_index(36)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_collection_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(origin, collection, data)
+		}
+
+		#[pallet::call_index(37)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_collection_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
+		}
 	}
 
 	#[pallet::validate_unsigned]
