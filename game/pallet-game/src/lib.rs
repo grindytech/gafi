@@ -333,8 +333,9 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Storing the highest bid of auction
 	#[pallet::storage]
-	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> =
+	pub(super) type HighestBidOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
 	#[pallet::event]
@@ -505,17 +506,21 @@ pub mod pallet {
 
 		InsufficientItemBalance,
 		InsufficientLockBalance,
+
 		/// item amount = 0
 		InvalidAmount,
 
+		/// Transfer is locked for any trade
 		ItemLocked,
-		NotForSale,
+
+		/// The bid is lower than the set price.
 		BidTooLow,
-		BidTooHigh,
+
+		/// The asking price is higher than the set price.
 		AskTooHigh,
 		TradeIdInUse,
-		TooLow,
 
+		// Retail trade
 		IncorrectCollection,
 		IncorrectItem,
 
