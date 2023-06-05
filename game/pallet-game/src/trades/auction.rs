@@ -73,12 +73,12 @@ impl<T: Config<I>, I: 'static>
 				ensure!(bid >= price, Error::<T, I>::BidTooLow);
 			}
 			// update winner
-			if let Some(winner_bid) = BidWinnerOf::<T, I>::get(trade) {
-				ensure!(bid > winner_bid.1, Error::<T, I>::BidTooLow);
-				<T as Config<I>>::Currency::unreserve(&winner_bid.0, winner_bid.1);
+			if let Some(highest_bid) = HighestBidOf::<T, I>::get(trade) {
+				ensure!(bid > highest_bid.1, Error::<T, I>::BidTooLow);
+				<T as Config<I>>::Currency::unreserve(&highest_bid.0, highest_bid.1);
 			}
 
-			BidWinnerOf::<T, I>::insert(trade, (who, bid));
+			HighestBidOf::<T, I>::insert(trade, (who, bid));
 			<T as Config<I>>::Currency::reserve(&who, bid)?;
 
 			Self::deposit_event(Event::<T, I>::Bade {
@@ -99,13 +99,13 @@ impl<T: Config<I>, I: 'static>
 				block_number >= (config.start_block + config.duration),
 				Error::<T, I>::AuctionInProgress
 			);
-			let maybe_bid = BidWinnerOf::<T, I>::get(trade);
-			if let Some(winner_bid) = maybe_bid.clone() {
+			let maybe_bid = HighestBidOf::<T, I>::get(trade);
+			if let Some(highest_bid) = maybe_bid.clone() {
 				if let Some(auction) = AuctionConfigOf::<T, I>::get(trade) {
 					<T as pallet::Config<I>>::Currency::repatriate_reserved(
-						&winner_bid.0,
+						&highest_bid.0,
 						&auction.owner,
-						winner_bid.1,
+						highest_bid.1,
 						BalanceStatus::Free,
 					)?;
 
@@ -114,7 +114,7 @@ impl<T: Config<I>, I: 'static>
 							&auction.owner,
 							&package.collection,
 							&package.item,
-							&winner_bid.0,
+							&highest_bid.0,
 							package.amount,
 							ItemBalanceStatus::Free,
 						)?;
@@ -125,7 +125,7 @@ impl<T: Config<I>, I: 'static>
 			}
 			AuctionConfigOf::<T, I>::remove(trade);
 			BundleOf::<T, I>::remove(trade);
-			BidWinnerOf::<T, I>::remove(trade);
+			HighestBidOf::<T, I>::remove(trade);
 
 			Self::deposit_event(Event::<T, I>::AuctionClaimed {
 				trade: *trade,

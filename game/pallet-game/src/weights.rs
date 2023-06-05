@@ -335,7 +335,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(8))
 	}
 	// Storage: Game AuctionConfigOf (r:1 w:0)
-	// Storage: Game BidWinnerOf (r:1 w:1)
+	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn bid_auction(s: u32, ) -> Weight {
@@ -347,7 +347,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: Game AuctionConfigOf (r:1 w:1)
-	// Storage: Game BidWinnerOf (r:1 w:1)
+	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Game LockBalanceOf (r:2 w:2)
@@ -638,7 +638,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(8))
 	}
 	// Storage: Game AuctionConfigOf (r:1 w:0)
-	// Storage: Game BidWinnerOf (r:1 w:1)
+	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn bid_auction(s: u32, ) -> Weight {
@@ -650,7 +650,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(2))
 	}
 	// Storage: Game AuctionConfigOf (r:1 w:1)
-	// Storage: Game BidWinnerOf (r:1 w:1)
+	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Game LockBalanceOf (r:2 w:2)

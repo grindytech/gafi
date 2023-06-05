@@ -198,8 +198,6 @@ pub trait TransferItem<AccountId, CollectionId, ItemId> {
 		destination: &AccountId,
 		amount: Amount,
 	) -> DispatchResult;
-
-	fn swap() -> DispatchResult;
 }
 
 pub trait Trade<AccountId, TradeId> {

@@ -26,7 +26,10 @@ use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+		tokens::{
+			nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+			AttributeNamespace,
+		},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -330,8 +333,9 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Storing the highest bid of auction
 	#[pallet::storage]
-	pub(super) type BidWinnerOf<T: Config<I>, I: 'static = ()> =
+	pub(super) type HighestBidOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
 	#[pallet::event]
@@ -502,17 +506,21 @@ pub mod pallet {
 
 		InsufficientItemBalance,
 		InsufficientLockBalance,
+
 		/// item amount = 0
 		InvalidAmount,
 
+		/// Transfer is locked for any trade
 		ItemLocked,
-		NotForSale,
+
+		/// The bid is lower than the set price.
 		BidTooLow,
-		BidTooHigh,
+
+		/// The asking price is higher than the set price.
 		AskTooHigh,
 		TradeIdInUse,
-		TooLow,
 
+		// Retail trade
 		IncorrectCollection,
 		IncorrectItem,
 
@@ -545,7 +553,6 @@ pub mod pallet {
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
-
 			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
 			Self::do_create_game(&sender, &game, &admin)?;
 			Ok(())
@@ -574,7 +581,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(&sender, &admin, fee)?;
-
 			Ok(())
 		}
 
@@ -602,9 +608,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
-
 			Ok(())
 		}
 
@@ -634,11 +638,8 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			let target = T::Lookup::lookup(mint_to)?;
-
 			Self::do_mint(&sender, &collection, &target, amount)?;
-
 			Ok(())
 		}
 
@@ -652,9 +653,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_burn(&sender, &collection, &item, amount)?;
-
 			Ok(())
 		}
 
@@ -689,11 +688,8 @@ pub mod pallet {
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
-
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
-
 			Self::do_set_upgrade_item(&sender, &collection, &item, &new_item, &config, level, fee)?;
-
 			Ok(())
 		}
 
@@ -707,9 +703,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_upgrade_item(&sender, &collection, &item, amount)?;
-
 			Ok(())
 		}
 
@@ -718,9 +712,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
-
 			RandomSeed::<T, I>::set(seed);
-
 			Ok(())
 		}
 
@@ -943,7 +935,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-
 			Self::do_set_buy(&trade, &sender, package, retail_price)?;
 			Ok(())
 		}
@@ -958,11 +949,84 @@ pub mod pallet {
 			ask_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
 
+		#[pallet::call_index(32)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_attribute(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			maybe_item: Option<T::ItemId>,
+			namespace: AttributeNamespace<T::AccountId>,
+			key: BoundedVec<u8, T::KeyLimit>,
+			value: BoundedVec<u8, T::ValueLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_attribute(
+				origin, collection, maybe_item, namespace, key, value,
+			)
+		}
+
+		#[pallet::call_index(33)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_attribute(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			maybe_item: Option<T::ItemId>,
+			namespace: AttributeNamespace<T::AccountId>,
+			key: BoundedVec<u8, T::KeyLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_attribute(
+				origin, collection, maybe_item, namespace, key,
+			)
+		}
+
+		#[pallet::call_index(34)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)
+		}
+
+		#[pallet::call_index(35)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_metadata(origin, collection, item)
+		}
+
+		#[pallet::call_index(36)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_collection_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(origin, collection, data)
+		}
+
+		#[pallet::call_index(37)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn clear_collection_metadata(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
+		}
 	}
 
 	#[pallet::validate_unsigned]

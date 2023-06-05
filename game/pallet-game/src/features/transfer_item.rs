@@ -24,8 +24,4 @@ impl<T: Config<I>, I: 'static> TransferItem<T::AccountId, T::CollectionId, T::It
 		});
 		Ok(())
 	}
-
-	fn swap() -> DispatchResult {
-		todo!()
-	}
 }

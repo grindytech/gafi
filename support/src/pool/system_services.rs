@@ -10,17 +10,7 @@ use crate::common::ID;
 use super::{pool::Service, ticket::Ticket};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(
-	Eq,
-	PartialEq,
-	Clone,
-	Copy,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct SystemService {
 	pub id: ID,
 	pub service: Service,
