@@ -30,7 +30,7 @@ impl<T: Config<I>, I: 'static>
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 
 		// lock sale items
-		Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+		Self::reserved_item(who, &package.collection, &package.item, package.amount)?;
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 			package_vec
@@ -96,7 +96,7 @@ impl<T: Config<I>, I: 'static>
 				)?;
 
 				// transfer item
-				Self::repatriate_lock_item(
+				Self::repatriate_reserved_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
@@ -139,7 +139,7 @@ impl<T: Config<I>, I: 'static>
 				ensure!(who.eq(&config.owner), Error::<T, I>::NoPermission);
 
 				// unlock items
-				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+				Self::unreserved_item(who, &package.collection, &package.item, package.amount)?;
 
 				// end trade
 				<T as pallet::Config<I>>::Currency::unreserve(
@@ -188,7 +188,7 @@ impl<T: Config<I>, I: 'static>
 				);
 
 				// lock sale items
-				Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+				Self::reserved_item(who, &package.collection, &package.item, package.amount)?;
 
 				let new_package = Package::new(
 					package.collection,

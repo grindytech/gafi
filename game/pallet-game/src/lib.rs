@@ -257,9 +257,9 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing lock balance
+	/// Storing reserved balance
 	#[pallet::storage]
-	pub(super) type LockBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+	pub(super) type ReservedBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
@@ -537,7 +537,7 @@ pub mod pallet {
 		CollectionExists,
 
 		InsufficientItemBalance,
-		InsufficientLockBalance,
+		InsufficientReservedBalance,
 
 		/// item amount = 0
 		InvalidAmount,

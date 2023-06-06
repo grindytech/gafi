@@ -192,7 +192,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Nfts ItemConfigOf (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:1 w:1)
+	// Storage: Game ReservedBalanceOf (r:1 w:1)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_price(_s: u32, ) -> Weight {
@@ -205,7 +205,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Nfts CollectionConfigOf (r:1 w:0)
 	// Storage: Nfts ItemConfigOf (r:1 w:0)
-	// Storage: Game LockBalanceOf (r:1 w:1)
+	// Storage: Game ReservedBalanceOf (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn buy_item(s: u32, ) -> Weight {
@@ -220,7 +220,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_bundle(_s: u32, ) -> Weight {
@@ -233,7 +233,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Nfts CollectionConfigOf (r:1 w:0)
 	// Storage: Nfts ItemConfigOf (r:2 w:0)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
@@ -304,7 +304,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_swap(s: u32, ) -> Weight {
@@ -318,7 +318,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game TradeConfigOf (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:4 w:4)
 	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn claim_swap(_s: u32, ) -> Weight {
@@ -331,7 +331,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game AuctionConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_auction(_s: u32, ) -> Weight {
@@ -354,7 +354,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
 	fn claim_auction(_s: u32, ) -> Weight {
@@ -519,7 +519,7 @@ impl WeightInfo for () {
 	// Storage: Nfts ItemConfigOf (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:1 w:1)
+	// Storage: Game ReservedBalanceOf (r:1 w:1)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_price(_s: u32, ) -> Weight {
@@ -532,7 +532,7 @@ impl WeightInfo for () {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Nfts CollectionConfigOf (r:1 w:0)
 	// Storage: Nfts ItemConfigOf (r:1 w:0)
-	// Storage: Game LockBalanceOf (r:1 w:1)
+	// Storage: Game ReservedBalanceOf (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn buy_item(s: u32, ) -> Weight {
@@ -547,7 +547,7 @@ impl WeightInfo for () {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_bundle(_s: u32, ) -> Weight {
@@ -560,7 +560,7 @@ impl WeightInfo for () {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: Nfts CollectionConfigOf (r:1 w:0)
 	// Storage: Nfts ItemConfigOf (r:2 w:0)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
@@ -631,7 +631,7 @@ impl WeightInfo for () {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game TradeConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_swap(s: u32, ) -> Weight {
@@ -645,7 +645,7 @@ impl WeightInfo for () {
 	// Storage: Game TradeConfigOf (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:4 w:4)
 	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn claim_swap(_s: u32, ) -> Weight {
@@ -658,7 +658,7 @@ impl WeightInfo for () {
 	// Storage: Game BundleOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game AuctionConfigOf (r:0 w:1)
 	/// The range of component `s` is `[0, 10]`.
 	fn set_auction(_s: u32, ) -> Weight {
@@ -681,7 +681,7 @@ impl WeightInfo for () {
 	// Storage: Game HighestBidOf (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Game BundleOf (r:1 w:1)
-	// Storage: Game LockBalanceOf (r:2 w:2)
+	// Storage: Game ReservedBalanceOf (r:2 w:2)
 	// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// The range of component `s` is `[0, 10]`.
 	fn claim_auction(_s: u32, ) -> Weight {

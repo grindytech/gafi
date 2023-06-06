@@ -139,54 +139,55 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	fn add_lock_balance(
+	fn add_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let balance = LockBalanceOf::<T, I>::get((&who, &collection, &item));
-		LockBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_add(amount));
+		let balance = ReservedBalanceOf::<T, I>::get((&who, &collection, &item));
+		ReservedBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_add(amount));
 		Ok(())
 	}
 
-	fn sub_lock_balance(
+	fn sub_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let balance = LockBalanceOf::<T, I>::get((who, collection, item));
-		ensure!(balance >= amount, Error::<T, I>::InsufficientLockBalance);
-		LockBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
+		let balance = ReservedBalanceOf::<T, I>::get((who, collection, item));
+		ensure!(balance >= amount, Error::<T, I>::InsufficientReservedBalance);
+		ReservedBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
 		Ok(())
 	}
 
-	pub(crate) fn lock_item(
+	pub(crate) fn reserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_item_balance(who, collection, item, amount)?;
-		Self::add_lock_balance(who, collection, item, amount)?;
+		Self::add_reserved_balance(who, collection, item, amount)?;
 		Ok(())
 	}
 
-	pub(crate) fn unlock_item(
+	pub(crate) fn unreserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: u32,
 	) -> Result<(), Error<T, I>> {
-		Self::sub_lock_balance(who, collection, item, amount)?;
+		Self::sub_reserved_balance(who, collection, item, amount)?;
 		Self::add_item_balance(who, collection, item, amount)?;
 		Ok(())
 	}
 
-	pub(crate) fn repatriate_lock_item(
+	///  Move the item reserved item balance of one account into the item balance of another, according to `status`.
+	pub(crate) fn repatriate_reserved_item(
 		slashed: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
@@ -194,10 +195,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		amount: u32,
 		status: ItemBalanceStatus,
 	) -> Result<(), Error<T, I>> {
-		Self::sub_lock_balance(slashed, collection, item, amount)?;
+		Self::sub_reserved_balance(slashed, collection, item, amount)?;
 		match status {
 			ItemBalanceStatus::Reserved => {
-				Self::add_lock_balance(beneficiary, collection, item, amount)?;
+				Self::add_reserved_balance(beneficiary, collection, item, amount)?;
 			},
 			ItemBalanceStatus::Free => {
 				Self::add_item_balance(beneficiary, collection, item, amount)?;

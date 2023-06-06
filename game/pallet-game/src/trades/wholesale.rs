@@ -21,7 +21,7 @@ impl<T: Config<I>, I: 'static>
 
 		// lock bundle
 		for package in bundle.clone() {
-			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+			Self::reserved_item(who, &package.collection, &package.item, package.amount)?;
 		}
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -83,7 +83,7 @@ impl<T: Config<I>, I: 'static>
 
 			// transfer items
 			for package in bundle.clone() {
-				Self::repatriate_lock_item(
+				Self::repatriate_reserved_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
@@ -119,7 +119,7 @@ impl<T: Config<I>, I: 'static>
 			let bundle = BundleOf::<T, I>::get(trade);
 			// unlock items
 			for package in bundle.clone() {
-				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+				Self::unreserved_item(who, &package.collection, &package.item, package.amount)?;
 			}
 
 			// end trade
