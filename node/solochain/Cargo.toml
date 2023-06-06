@@ -2,8 +2,8 @@
 authors = ["Anonymous"]
 description = "A new Cumulus FRAME-based Substrate Node, ready for hacking together a parachain."
 edition = "2021"
-homepage = "https://substrate.io"
-license = "Unlicense"
+homepage = "https://gafi.network"
+license = "Apache-2.0"
 name = "solochain"
 repository = "https://github.com/grindytech/cumulus/"
 version = "0.1.0"

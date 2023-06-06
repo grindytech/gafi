@@ -1,5 +1,5 @@
 [workspace.package]
-authors = ["Grindy Technologies <hellp@grindy.io>"]
+authors = ["Grindy Technologies <hello@grindy.io>"]
 edition = "2021"
 repository = "https://github.com/grindytech/gafi/"
 
