@@ -807,6 +807,12 @@ benchmarks_instance_pallet! {
 			amount: 10,
 		};
 
+		assert_ok!(PalletGame::<T, I>::set_buy(
+			RawOrigin::Signed(player.clone()).into(),
+			package.clone(),
+			<T as pallet::Config<I>>::Currency::minimum_balance()
+		));
+
 		let (_, _) = do_create_item::<T, I>(s, 0, 0, 0, 10);
 		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
 		do_mint_item::<T, I>(s, &caller, 0, 10);

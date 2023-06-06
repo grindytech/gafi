@@ -936,7 +936,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(30)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy(1_u32))]
 		#[transactional]
 		pub fn set_buy(
 			origin: OriginFor<T>,
@@ -950,7 +950,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(31)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy(1_u32))]
 		#[transactional]
 		pub fn claim_set_buy(
 			origin: OriginFor<T>,

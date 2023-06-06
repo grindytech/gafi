@@ -243,7 +243,7 @@ impl<T: Config<I>, I: 'static>
 			},
 		);
 
-		Self::deposit_event(Event::<T, I>::PriceSet {
+		Self::deposit_event(Event::<T, I>::BuySet {
 			trade: *trade,
 			who: who.clone(),
 			collection: package.collection,
