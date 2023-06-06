@@ -1,8 +1,30 @@
+// This file is part of Gafi Network.
+
+// Copyright (C) 2021-2022 Grindy Technologies.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//! # Game Module
+//!
+//! A simple, secure module for dealing with in-game finances.
+//!
+
+#![recursion_limit = "256"]
+
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
 
 #[cfg(test)]
@@ -235,9 +257,9 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing lock balance
+	/// Storing reserved balance
 	#[pallet::storage]
-	pub(super) type LockBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
+	pub(super) type ReservedBalanceOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
@@ -400,16 +422,13 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
-			price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		},
 		ItemBought {
 			trade: T::TradeId,
-			seller: T::AccountId,
-			buyer: T::AccountId,
-			collection: T::CollectionId,
-			item: T::ItemId,
+			who: T::AccountId,
 			amount: u32,
-			price: BalanceOf<T, I>,
+			bid_unit_price: BalanceOf<T, I>,
 		},
 		BundleSet {
 			trade: T::TradeId,
@@ -419,9 +438,8 @@ pub mod pallet {
 		},
 		BundleBought {
 			trade: T::TradeId,
-			seller: T::AccountId,
-			buyer: T::AccountId,
-			price: BalanceOf<T, I>,
+			who: T::AccountId,
+			bid_price: BalanceOf<T, I>,
 		},
 		TradeCanceled {
 			trade: T::TradeId,
@@ -435,9 +453,8 @@ pub mod pallet {
 		},
 		WishlistFilled {
 			trade: T::TradeId,
-			wisher: T::AccountId,
-			filler: T::AccountId,
-			price: BalanceOf<T, I>,
+			who: T::AccountId,
+			ask_price: BalanceOf<T, I>,
 		},
 		CollectionRemoved {
 			who: T::AccountId,
@@ -454,6 +471,7 @@ pub mod pallet {
 		SwapClaimed {
 			trade: T::TradeId,
 			who: T::AccountId,
+			maybe_bid_price: Option<BalanceOf<T, I>>,
 		},
 		AuctionSet {
 			trade: T::TradeId,
@@ -463,7 +481,7 @@ pub mod pallet {
 			start_block: T::BlockNumber,
 			duration: T::BlockNumber,
 		},
-		Bade {
+		Bid {
 			trade: T::TradeId,
 			who: T::AccountId,
 			bid: BalanceOf<T, I>,
@@ -471,6 +489,20 @@ pub mod pallet {
 		AuctionClaimed {
 			trade: T::TradeId,
 			maybe_bid: Option<(T::AccountId, BalanceOf<T, I>)>,
+		},
+		BuySet {
+			trade: T::TradeId,
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			unit_price: BalanceOf<T, I>,
+		},
+		SetBuyClaimed {
+			trade: T::TradeId,
+			who: T::AccountId,
+			amount: u32,
+			ask_unit_price: BalanceOf<T, I>,
 		},
 	}
 
@@ -505,7 +537,7 @@ pub mod pallet {
 		CollectionExists,
 
 		InsufficientItemBalance,
-		InsufficientLockBalance,
+		InsufficientReservedBalance,
 
 		/// item amount = 0
 		InvalidAmount,
@@ -722,11 +754,11 @@ pub mod pallet {
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
-			price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_price(&trade, &sender, package, price)?;
+			Self::do_set_price(&trade, &sender, package, unit_price)?;
 			Ok(())
 		}
 
@@ -926,21 +958,21 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(30)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy(1_u32))]
 		#[transactional]
 		pub fn set_buy(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
-			retail_price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_buy(&trade, &sender, package, retail_price)?;
+			Self::do_set_buy(&trade, &sender, package, unit_price)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(31)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy(1_u32))]
 		#[transactional]
 		pub fn claim_set_buy(
 			origin: OriginFor<T>,

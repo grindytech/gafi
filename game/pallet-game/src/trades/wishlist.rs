@@ -98,9 +98,8 @@ impl<T: Config<I>, I: 'static>
 
 			Self::deposit_event(Event::<T, I>::WishlistFilled {
 				trade: *trade,
-				wisher: config.owner,
-				filler: who.clone(),
-				price,
+				who: who.clone(),
+				ask_price,
 			});
 			return Ok(())
 		}
