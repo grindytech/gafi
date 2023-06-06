@@ -81,7 +81,7 @@ impl<T: Config<I>, I: 'static>
 			HighestBidOf::<T, I>::insert(trade, (who, bid));
 			<T as Config<I>>::Currency::reserve(&who, bid)?;
 
-			Self::deposit_event(Event::<T, I>::Bade {
+			Self::deposit_event(Event::<T, I>::Bid {
 				trade: *trade,
 				who: who.clone(),
 				bid,

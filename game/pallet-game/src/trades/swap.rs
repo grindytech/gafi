@@ -112,6 +112,7 @@ impl<T: Config<I>, I: 'static>
 			Self::deposit_event(Event::<T, I>::SwapClaimed {
 				trade: *trade,
 				who: who.clone(),
+				maybe_bid_price,
 			});
 			return Ok(())
 		}

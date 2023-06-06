@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, Wholesale, TradeType};
+use gafi_support::game::{Bundle, TradeType, Wholesale};
 
 impl<T: Config<I>, I: 'static>
 	Wholesale<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
@@ -100,9 +100,8 @@ impl<T: Config<I>, I: 'static>
 
 			Self::deposit_event(Event::<T, I>::BundleBought {
 				trade: *trade,
-				seller: config.owner,
-				buyer: who.clone(),
-				price,
+				who: who.clone(),
+				bid_price,
 			});
 
 			return Ok(())

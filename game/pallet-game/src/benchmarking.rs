@@ -397,7 +397,7 @@ benchmarks_instance_pallet! {
 
 		let call = Call::<T, I>::set_price {
 			package: package,
-			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			unit_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
@@ -407,7 +407,7 @@ benchmarks_instance_pallet! {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
-			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
 
@@ -426,12 +426,9 @@ benchmarks_instance_pallet! {
 	verify {
 		assert_last_event::<T, I>(Event::ItemBought {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			seller: seller,
-			buyer: caller,
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(0),
+			who: caller,
 			amount: 10,
-			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			bid_unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
 
@@ -484,9 +481,8 @@ benchmarks_instance_pallet! {
 	verify {
 		assert_last_event::<T, I>(Event::BundleBought {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			buyer: caller,
-			seller: seller,
-			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			who: caller,
+			bid_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
 
@@ -539,9 +535,8 @@ benchmarks_instance_pallet! {
 	verify {
 		assert_last_event::<T, I>(Event::WishlistFilled {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			wisher: wisher,
-			filler: filler,
-			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			who: filler,
+			ask_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
 
@@ -687,6 +682,7 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::SwapClaimed {
 			trade:  <T as pallet::Config<I>>::Helper::trade(0),
 			who: player2.clone(),
+			maybe_bid_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
 		}.into() );
 	}
 
@@ -742,7 +738,7 @@ benchmarks_instance_pallet! {
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::Bade {
+		assert_last_event::<T, I>(Event::Bid {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			who: caller,
 			bid:<T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -775,4 +771,58 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	set_buy {
+		let s in 0 .. MAX as u32;
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let package = Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		};
+
+		let call = Call::<T, I>::set_buy {
+			package: package.clone(),
+			unit_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::BuySet {
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+			collection: package.collection,
+			item: package.item,
+			amount: package.amount,
+			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	claim_set_buy {
+		let s in 0 .. MAX as u32;
+		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let package = Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 10,
+		};
+
+		let (_, _) = do_create_item::<T, I>(s, 0, 0, 0, 10);
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_mint_item::<T, I>(s, &caller, 0, 10);
+
+		let call = Call::<T, I>::claim_set_buy {
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
+			amount: 10,
+			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::SetBuyClaimed {
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
+			who: caller,
+			amount: 10,
+			ask_unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
 }

@@ -400,16 +400,13 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
-			price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		},
 		ItemBought {
 			trade: T::TradeId,
-			seller: T::AccountId,
-			buyer: T::AccountId,
-			collection: T::CollectionId,
-			item: T::ItemId,
+			who: T::AccountId,
 			amount: u32,
-			price: BalanceOf<T, I>,
+			bid_unit_price: BalanceOf<T, I>,
 		},
 		BundleSet {
 			trade: T::TradeId,
@@ -419,9 +416,8 @@ pub mod pallet {
 		},
 		BundleBought {
 			trade: T::TradeId,
-			seller: T::AccountId,
-			buyer: T::AccountId,
-			price: BalanceOf<T, I>,
+			who: T::AccountId,
+			bid_price: BalanceOf<T, I>,
 		},
 		TradeCanceled {
 			trade: T::TradeId,
@@ -435,9 +431,8 @@ pub mod pallet {
 		},
 		WishlistFilled {
 			trade: T::TradeId,
-			wisher: T::AccountId,
-			filler: T::AccountId,
-			price: BalanceOf<T, I>,
+			who: T::AccountId,
+			ask_price: BalanceOf<T, I>,
 		},
 		CollectionRemoved {
 			who: T::AccountId,
@@ -454,6 +449,7 @@ pub mod pallet {
 		SwapClaimed {
 			trade: T::TradeId,
 			who: T::AccountId,
+			maybe_bid_price: Option<BalanceOf<T, I>>,
 		},
 		AuctionSet {
 			trade: T::TradeId,
@@ -463,7 +459,7 @@ pub mod pallet {
 			start_block: T::BlockNumber,
 			duration: T::BlockNumber,
 		},
-		Bade {
+		Bid {
 			trade: T::TradeId,
 			who: T::AccountId,
 			bid: BalanceOf<T, I>,
@@ -471,6 +467,20 @@ pub mod pallet {
 		AuctionClaimed {
 			trade: T::TradeId,
 			maybe_bid: Option<(T::AccountId, BalanceOf<T, I>)>,
+		},
+		BuySet {
+			trade: T::TradeId,
+			who: T::AccountId,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			amount: u32,
+			unit_price: BalanceOf<T, I>,
+		},
+		SetBuyClaimed {
+			trade: T::TradeId,
+			who: T::AccountId,
+			amount: u32,
+			ask_unit_price: BalanceOf<T, I>,
 		},
 	}
 
@@ -722,11 +732,11 @@ pub mod pallet {
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
-			price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_price(&trade, &sender, package, price)?;
+			Self::do_set_price(&trade, &sender, package, unit_price)?;
 			Ok(())
 		}
 
@@ -931,11 +941,11 @@ pub mod pallet {
 		pub fn set_buy(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
-			retail_price: BalanceOf<T, I>,
+			unit_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_buy(&trade, &sender, package, retail_price)?;
+			Self::do_set_buy(&trade, &sender, package, unit_price)?;
 			Ok(())
 		}
 

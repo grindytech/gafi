@@ -12,7 +12,7 @@ impl<T: Config<I>, I: 'static>
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
-		price: BalanceOf<T, I>,
+		unit_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -44,7 +44,7 @@ impl<T: Config<I>, I: 'static>
 			TradeConfig {
 				trade: TradeType::SetPrice,
 				owner: who.clone(),
-				maybe_price: Some(price),
+				maybe_price: Some(unit_price),
 				maybe_required: None,
 			},
 		);
@@ -55,7 +55,7 @@ impl<T: Config<I>, I: 'static>
 			collection: package.collection,
 			item: package.item,
 			amount: package.amount,
-			price,
+			unit_price,
 		});
 
 		Ok(())
@@ -65,7 +65,7 @@ impl<T: Config<I>, I: 'static>
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		amount: Amount,
-		bid_price: BalanceOf<T, I>,
+		bid_unit_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(
@@ -85,7 +85,7 @@ impl<T: Config<I>, I: 'static>
 
 				// check price
 				let price = config.maybe_price.unwrap_or_default();
-				ensure!(bid_price >= price, Error::<T, I>::BidTooLow);
+				ensure!(bid_unit_price >= price, Error::<T, I>::BidTooLow);
 
 				// make deposit
 				<T as pallet::Config<I>>::Currency::transfer(
@@ -116,12 +116,9 @@ impl<T: Config<I>, I: 'static>
 
 				Self::deposit_event(Event::<T, I>::ItemBought {
 					trade: *trade,
-					seller: config.owner,
-					buyer: who.clone(),
-					collection: package.collection,
-					item: package.item,
+					who: who.clone(),
 					amount,
-					price,
+					bid_unit_price,
 				});
 				return Ok(())
 			}
@@ -215,7 +212,7 @@ impl<T: Config<I>, I: 'static>
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
-		price: BalanceOf<T, I>,
+		unit_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -226,7 +223,7 @@ impl<T: Config<I>, I: 'static>
 		// ensure reserve deposit
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 
-		let deposit = price * package.amount.into();
+		let deposit = unit_price * package.amount.into();
 		<T as Config<I>>::Currency::reserve(&who, deposit)?;
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -241,7 +238,7 @@ impl<T: Config<I>, I: 'static>
 			TradeConfig {
 				trade: TradeType::SetBuy,
 				owner: who.clone(),
-				maybe_price: Some(price),
+				maybe_price: Some(unit_price),
 				maybe_required: None,
 			},
 		);
@@ -252,7 +249,7 @@ impl<T: Config<I>, I: 'static>
 			collection: package.collection,
 			item: package.item,
 			amount: package.amount,
-			price,
+			unit_price,
 		});
 
 		Ok(())
@@ -262,7 +259,7 @@ impl<T: Config<I>, I: 'static>
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		amount: Amount,
-		ask_price: BalanceOf<T, I>,
+		ask_unit_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(config.trade == TradeType::SetBuy, Error::<T, I>::NotSetBuy);
@@ -278,7 +275,7 @@ impl<T: Config<I>, I: 'static>
 
 				// check price
 				let price = config.maybe_price.unwrap_or_default();
-				ensure!(ask_price <= price, Error::<T, I>::AskTooHigh);
+				ensure!(ask_unit_price <= price, Error::<T, I>::AskTooHigh);
 
 				// transfer item
 				Self::transfer_item(
@@ -305,6 +302,13 @@ impl<T: Config<I>, I: 'static>
 						.map_err(|_| Error::<T, I>::ExceedMaxBundle)?;
 					Ok(())
 				})?;
+
+				Self::deposit_event(Event::<T, I>::SetBuyClaimed {
+					trade: *trade,
+					who: who.clone(),					
+					amount: package.amount,
+					ask_unit_price,
+				});
 				return Ok(())
 			}
 		}
@@ -313,10 +317,7 @@ impl<T: Config<I>, I: 'static>
 
 	fn do_cancel_set_buy(trade: &T::TradeId, who: &T::AccountId) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-			ensure!(
-				config.trade == TradeType::SetBuy,
-				Error::<T, I>::NotSetBuy
-			);
+			ensure!(config.trade == TradeType::SetBuy, Error::<T, I>::NotSetBuy);
 
 			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
 				// ensure owner
