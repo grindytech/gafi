@@ -62,6 +62,13 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 		collection: &CollectionId,
 	) -> DispatchResult;
 
+	/// Do remove collection
+	/// 
+	/// Remove a colleciton from a game
+	/// 
+	/// - `who`: signer and collection owner
+	/// - `game`: game id
+	/// - `collection`: collection id
 	fn do_remove_collection(
 		who: &AccountId,
 		game: &GameId,
@@ -78,6 +85,7 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `who`: signer
 	/// - `collection`: collection id
 	/// - `item`: item id
+	/// - `config`: item config
 	/// - `amount`: amount
 	fn do_create_item(
 		who: &AccountId,

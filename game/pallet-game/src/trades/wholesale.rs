@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, Wholesale, TradeType};
+use gafi_support::game::{Bundle, TradeType, Wholesale};
 
 impl<T: Config<I>, I: 'static>
 	Wholesale<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
@@ -21,7 +21,7 @@ impl<T: Config<I>, I: 'static>
 
 		// lock bundle
 		for package in bundle.clone() {
-			Self::lock_item(who, &package.collection, &package.item, package.amount)?;
+			Self::reserved_item(who, &package.collection, &package.item, package.amount)?;
 		}
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -83,7 +83,7 @@ impl<T: Config<I>, I: 'static>
 
 			// transfer items
 			for package in bundle.clone() {
-				Self::repatriate_lock_item(
+				Self::repatriate_reserved_item(
 					&config.owner,
 					&package.collection,
 					&package.item,
@@ -100,9 +100,8 @@ impl<T: Config<I>, I: 'static>
 
 			Self::deposit_event(Event::<T, I>::BundleBought {
 				trade: *trade,
-				seller: config.owner,
-				buyer: who.clone(),
-				price,
+				who: who.clone(),
+				bid_price,
 			});
 
 			return Ok(())
@@ -120,7 +119,7 @@ impl<T: Config<I>, I: 'static>
 			let bundle = BundleOf::<T, I>::get(trade);
 			// unlock items
 			for package in bundle.clone() {
-				Self::unlock_item(who, &package.collection, &package.item, package.amount)?;
+				Self::unreserved_item(who, &package.collection, &package.item, package.amount)?;
 			}
 
 			// end trade

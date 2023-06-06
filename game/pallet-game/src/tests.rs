@@ -728,7 +728,7 @@ pub fn buy_item_should_works() {
 		));
 
 		assert_eq!(ItemBalanceOf::<Test>::get((&seller, 0, 0)), 0);
-		assert_eq!(LockBalanceOf::<Test>::get((&seller, 0, 0)), 5);
+		assert_eq!(ReservedBalanceOf::<Test>::get((&seller, 0, 0)), 5);
 		assert_eq!(ItemBalanceOf::<Test>::get((&buyer, 0, 0)), 5);
 
 		assert_eq!(
@@ -788,7 +788,7 @@ pub fn add_retail_supply_should_works() {
 		};
 		let player = do_all_set_price(supply.clone(), 10 * unit(GAKI));
 		assert_eq!(
-			LockBalanceOf::<Test>::get((player.clone(), supply.collection, supply.item)),
+			ReservedBalanceOf::<Test>::get((player.clone(), supply.collection, supply.item)),
 			supply.amount
 		);
 		assert_ok!(PalletGame::add_retail_supply(
@@ -797,7 +797,7 @@ pub fn add_retail_supply_should_works() {
 			supply
 		));
 		assert_eq!(
-			LockBalanceOf::<Test>::get((player.clone(), total.collection, total.item)),
+			ReservedBalanceOf::<Test>::get((player.clone(), total.collection, total.item)),
 			total.amount
 		);
 	})
@@ -979,7 +979,7 @@ pub fn do_cancel_set_price_should_works() {
 		assert_eq!(TradeConfigOf::<Test>::get(0), None);
 
 		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
-		assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, 0)), 0);
+		assert_eq!(ReservedBalanceOf::<Test>::get((player.clone(), 0, 0)), 0);
 		assert_eq!(
 			Balances::free_balance(&player),
 			before_balance + BUNDLE_DEPOSIT_VAL
@@ -1002,7 +1002,7 @@ pub fn do_cancel_set_bundle_should_works() {
 
 		for i in 0..TEST_BUNDLE.len() as u32 {
 			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, i)), 10);
-			assert_eq!(LockBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
+			assert_eq!(ReservedBalanceOf::<Test>::get((player.clone(), 0, i)), 0);
 		}
 		assert_eq!(
 			Balances::free_balance(&player),
@@ -1237,7 +1237,7 @@ pub fn set_auction_should_works() {
 		);
 		for i in 0..TEST_BUNDLE.len() as u32 {
 			assert_eq!(ItemBalanceOf::<Test>::get((&player, 0, i)), 0);
-			assert_eq!(LockBalanceOf::<Test>::get((&player, 0, i)), 10);
+			assert_eq!(ReservedBalanceOf::<Test>::get((&player, 0, i)), 10);
 		}
 	})
 }
@@ -1417,18 +1417,18 @@ pub fn set_buy_should_works() {
 		let player = new_account(0, 1000 * unit(GAKI));
 		let player_balance = Balances::free_balance(&player);
 
-		let retail_price = 5 * unit(GAKI);
+		let unit_price = 5 * unit(GAKI);
 		assert_ok!(PalletGame::set_buy(
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE[0].clone(),
-			retail_price
+			unit_price
 		));
 
 		assert_eq!(
 			Balances::free_balance(&player),
 			player_balance -
 				BUNDLE_DEPOSIT_VAL -
-				(retail_price * TEST_BUNDLE[0].clone().amount as u128)
+				(unit_price * TEST_BUNDLE[0].clone().amount as u128)
 		);
 	})
 }
@@ -1439,11 +1439,11 @@ pub fn claim_set_buy_should_works() {
 		run_to_block(1);
 		let player = new_account(0, 1000 * unit(GAKI));
 
-		let retail_price = 5 * unit(GAKI);
+		let unit_price = 5 * unit(GAKI);
 		assert_ok!(PalletGame::set_buy(
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE[0].clone(),
-			retail_price
+			unit_price
 		));
 
 		let seller = do_all_mint_item();
@@ -1454,13 +1454,13 @@ pub fn claim_set_buy_should_works() {
 			RuntimeOrigin::signed(seller.clone()),
 			0,
 			amount,
-			retail_price
+			unit_price
 		));
 
 
 		assert_eq!(
 			Balances::free_balance(&seller),
-			seller_balance + (retail_price * amount as u128)
+			seller_balance + (unit_price * amount as u128)
 		);
 		assert_eq!(
 			ItemBalanceOf::<Test>::get((
