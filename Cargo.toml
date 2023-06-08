@@ -6,32 +6,17 @@ repository = "https://github.com/grindytech/gafi/"
 [workspace]
 members = [
   'node', # 'node/chain_spec',
-  'node/parachain/rpc',
-  'node/parachain/cli', # 'node/service',
-  'node/solochain',
   'node/game3',
-  'runtime/gari',
   'runtime/game3',
   'utils/ethereum',
   'utils/convertor',
   'utils/currency',
   'utils/dummy',
-  'runtime/devnet',
   'pallets/template',
-  'pallets/player',
-  'pallets/upfront-pool',
-  'pallets/pool',
-  'pallets/staking-pool',
-  'pallets/gafi-tx',
-  'pallets/address-mapping',
   'pallets/pallet-faucet',
-  'pallets/funding-pool',
   'pallets/pallet-cache',
-  'pallets/game-creator',
-  'pallets/whitelist',
   'game/pallet-game',
   'support',
-  'tests',
 ]
 [profile.release]
 panic = 'unwind'
