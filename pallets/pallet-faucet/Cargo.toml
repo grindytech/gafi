@@ -3,7 +3,7 @@ authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
 description = "FRAME pallet template for defining custom runtime logic."
 edition = "2021"
 homepage = "https://substrate.io/"
-license = "Apache-2.0"
+license = "Unlicense"
 name = "pallet-faucet"
 publish = false
 repository = "https://github.com/grindytech/gafi"
@@ -13,13 +13,11 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-]}
+codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
 frame-benchmarking = {workspace = true, optional = true}
 frame-support = {workspace = true}
 frame-system = {workspace = true}
-scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 

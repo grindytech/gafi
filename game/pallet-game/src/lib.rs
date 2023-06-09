@@ -18,10 +18,8 @@
 //! # Game Module
 //!
 //! A simple, secure module for dealing with in-game finances.
-//!
 
 #![recursion_limit = "256"]
-
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -48,10 +46,7 @@ use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::{
-			nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
-			AttributeNamespace,
-		},
+		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -64,7 +59,7 @@ use gafi_support::game::{
 	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Retail, Swap,
 	Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
-use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
+use pallet_nfts::{AttributeNamespace, CollectionConfig, Incrementable, ItemConfig};
 use sp_core::offchain::KeyTypeId;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 use sp_std::vec::Vec;

@@ -15,9 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 
 [dev-dependencies]
-codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-]}
+codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
 
 hex = {version = "0.4"}
 hex-literal = {version = "0.3.4"}
@@ -39,7 +37,7 @@ pallet-randomness-collective-flip = {default-features = false, workspace = true}
 pallet-timestamp = {default-features = false, workspace = true}
 pallet-transaction-payment = {default-features = false, workspace = true}
 sp-core = {default-features = false, workspace = true}
-sp-io = {default-features = false, workspace = true}
+sp-io = { workspace = true}
 sp-runtime = {default-features = false, workspace = true}
 
 frame-system = {default-features = false, workspace = true}
@@ -63,7 +61,6 @@ upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../pall
 [features]
 default = ["std"]
 std = [
-  'sp-io/std',
   'sp-core/std',
   'sp-std/std',
   'sp-runtime/std',
@@ -88,4 +85,5 @@ std = [
   'game-creator/std',
   'pallet-player/std',
   'pallet-nicks/std',
+  'sp-io/std',
 ]

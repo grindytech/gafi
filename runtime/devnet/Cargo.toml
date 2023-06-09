@@ -13,9 +13,7 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-]}
+codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
 log = {version = "0.4.17", default-features = false}
 scale-info = {version = "2.1.0", default-features = false, features = [
   "derive",
@@ -97,7 +95,7 @@ upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../p
 sp-io = {workspace = true}
 
 [build-dependencies]
-substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
 
 [features]
 aura = []
@@ -181,6 +179,7 @@ std = [
   "pallet-whitelist/std",
   "log/std",
   "pallet-nicks/std",
+  "sp-io/std",
 ]
 with-dev = []
 with-rocksdb-weights = []

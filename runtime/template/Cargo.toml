@@ -3,8 +3,8 @@ authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
 description = "A fresh FRAME-based Substrate node, ready for hacking."
 edition = "2021"
 homepage = "https://substrate.io/"
-license = "Apache-2.0"
-name = "game3-runtime"
+license = "MIT-0"
+name = "node-template-runtime"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
 version = "4.0.0-dev"
@@ -48,12 +48,6 @@ frame-benchmarking = {workspace = true, default-features = false, optional = tru
 frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
 
 # Local Dependencies
-pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
-pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
-gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
-pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
-
-# pallet-game = {version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game"}
 
 [build-dependencies]
 substrate-wasm-builder = {workspace = true, optional = true}
@@ -69,8 +63,6 @@ runtime-benchmarks = [
   "pallet-grandpa/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
-  "pallet-cache/runtime-benchmarks",
-  "pallet-faucet/runtime-benchmarks",
 ]
 std = [
   "frame-try-runtime?/std",
@@ -103,10 +95,6 @@ std = [
   "sp-transaction-pool/std",
   "sp-version/std",
   "substrate-wasm-builder",
-  "pallet-faucet/std",
-  "pallet-cache/std",
-  "gafi-support/std",
-  "pallet-template/std",
 ]
 try-runtime = [
   "frame-try-runtime/try-runtime",
@@ -119,10 +107,4 @@ try-runtime = [
   "pallet-sudo/try-runtime",
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
-  "gafi-support/try-runtime",
-  "pallet-template/try-runtime",
-  "pallet-cache/try-runtime",
-  "pallet-faucet/try-runtime",
 ]
-
-with-game3 = []

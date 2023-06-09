@@ -6,12 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::traits::EqualPrivilegeOnly;
-use gafi_support::common::{deposit, unit, NativeToken::GAFI};
-// use pallet_game::GameWeightInfo;
-use pallet_grandpa::{
-	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
-};
+use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -27,14 +22,12 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
 // A few exports that help ease life for downstream crates.
-use codec::Encode;
-use frame_support::PalletId;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem,
-		Randomness, StorageInfo,
+		ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{
@@ -45,16 +38,14 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
 pub use pallet_balances::Call as BalancesCall;
-// use pallet_nfts::PalletFeatures;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{generic::Era, MultiAddress, SaturatedConversion};
-
 pub use sp_runtime::{Perbill, Permill};
+
+/// Import the template pallet.
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -103,15 +94,15 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("game3"),
-	impl_name: create_runtime_str!("game3"),
+	spec_name: create_runtime_str!("node-template"),
+	impl_name: create_runtime_str!("node-template"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 101,
+	spec_version: 100,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -138,10 +129,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -214,8 +202,6 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-// impl pallet_randomness_collective_flip::Config for Runtime {}
-
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
@@ -280,197 +266,6 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-// parameter_types! {
-// 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-// 	pub PreimageBaseDeposit: Balance = deposit(2, 64, GAFI);
-// 	pub PreimageByteDeposit: Balance = deposit(0, 1, GAFI);
-// }
-
-// impl pallet_preimage::Config for Runtime {
-// 	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type Currency = Balances;
-// 	type ManagerOrigin = EnsureRoot<AccountId>;
-// 	type BaseDeposit = PreimageBaseDeposit;
-// 	type ByteDeposit = PreimageByteDeposit;
-// }
-
-// parameter_types! {
-// 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
-// 		BlockWeights::get().max_block;
-// 	pub const MaxScheduledPerBlock: u32 = 50;
-// 	pub const NoPreimagePostponement: Option<u32> = Some(10);
-// }
-
-// impl pallet_scheduler::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type RuntimeOrigin = RuntimeOrigin;
-// 	type PalletsOrigin = OriginCaller;
-// 	type RuntimeCall = RuntimeCall;
-// 	type MaximumWeight = MaximumSchedulerWeight;
-// 	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
-// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-// 	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
-// 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
-// 	type Preimages = Preimage;
-// }
-
-// parameter_types! {
-// 	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
-// }
-
-// impl pallet_nfts::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type CollectionId = u32;
-// 	type ItemId = u32;
-// 	type Currency = Balances;
-// 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-// 	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-// 	type Locker = ();
-// 	type CollectionDeposit = ConstU128<2>;
-// 	type ItemDeposit = ConstU128<1>;
-// 	type MetadataDepositBase = ConstU128<1>;
-// 	type AttributeDepositBase = ConstU128<1>;
-// 	type DepositPerByte = ConstU128<1>;
-// 	type StringLimit = ConstU32<50>;
-// 	type KeyLimit = ConstU32<50>;
-// 	type ValueLimit = ConstU32<50>;
-// 	type ApprovalsLimit = ConstU32<10>;
-// 	type ItemAttributesApprovalsLimit = ConstU32<2>;
-// 	type MaxTips = ConstU32<10>;
-// 	type MaxDeadlineDuration = ConstU32<10000>;
-// 	type Features = Features;
-// 	type WeightInfo = ();
-// 	#[cfg(feature = "runtime-benchmarks")]
-// 	type Helper = ();
-// }
-
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-	RuntimeCall: From<LocalCall>,
-{
-	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: RuntimeCall,
-		public: <Signature as sp_runtime::traits::Verify>::Signer,
-		account: AccountId,
-		nonce: Index,
-	) -> Option<(
-		RuntimeCall,
-		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-	)> {
-		let tip = 0;
-		// take the biggest period possible.
-		let period =
-			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
-		let current_block = System::block_number()
-			.saturated_into::<u64>()
-			// The `System::block_number` is initialized with `n+1`,
-			// so the actual block number is `n`.
-			.saturating_sub(1);
-		let era = Era::mortal(period, current_block);
-		let extra = (
-			frame_system::CheckNonZeroSender::<Runtime>::new(),
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(era),
-			frame_system::CheckNonce::<Runtime>::from(nonce),
-			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-		);
-		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|e| {
-				// log::warn!("Unable to create signed payload: {:?}", e);
-			})
-			.ok()?;
-		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-		let address: MultiAddress<sp_runtime::AccountId32, ()> = MultiAddress::Id(account);
-		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (address, signature, extra)))
-	}
-}
-
-impl frame_system::offchain::SigningTypes for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	RuntimeCall: From<C>,
-{
-	type OverarchingCall = RuntimeCall;
-	type Extrinsic = UncheckedExtrinsic;
-}
-
-// parameter_types! {
-// 	pub GameDeposit: u128 = 5_000_000_000;
-// 	pub UpgradeDeposit: u128 = 1_000_000_000;
-// 	pub MaxGameCollection: u32 = 5;
-// 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-// 	pub MaxMintItem: u32 = 10;
-// 	pub MaxItem: u32 = 20;
-// 	pub MaxBundle: u32 = 10;
-// 	pub BundleDeposit: u128 = 2_000_000_000;
-// }
-
-// impl pallet_game::Config for Runtime {
-// 	type PalletId = PalletGameId;
-
-// 	type RuntimeEvent = RuntimeEvent;
-
-// 	type WeightInfo = GameWeightInfo<Runtime>;
-
-// 	type Currency = Balances;
-
-// 	type Nfts = Nfts;
-
-// 	type Randomness = RandomnessCollectiveFlip;
-
-// 	type GameId = u32;
-
-// 	type GameDeposit = GameDeposit;
-
-// 	type MaxGameCollection = MaxGameCollection;
-
-// 	type MaxMintItem = MaxMintItem;
-
-// 	type MaxItem = MaxItem;
-
-// 	type UpgradeDeposit = UpgradeDeposit;
-
-// 	type BundleDeposit = BundleDeposit;
-
-// 	type TradeId = u32;
-
-// 	type MaxBundle = MaxBundle;
-
-// 	#[cfg(feature = "runtime-benchmarks")]
-// 	type Helper = ();
-// }
-
-parameter_types! {
-	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
-	pub FaucetAmount: u128 = 1500 * unit(GAFI);
-}
-
-// cache for pallet faucet only for testnet
-impl pallet_cache::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Data = Balance;
-	type Action = AccountId;
-	type CleanTime = FaucetCleanTime;
-}
-
-// only for testnet
-impl pallet_faucet::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
-	type Cache = PalletCache;
-	type FaucetAmount = FaucetAmount;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -479,22 +274,14 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		// RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Aura: pallet_aura::{Pallet, Config<T>},
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
-		Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		// Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
-
-		// Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		// Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
-
-		// Game: pallet_game::{Pallet, Call, Storage, Event<T>},
-		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
-		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Aura: pallet_aura,
+		Grandpa: pallet_grandpa,
+		Balances: pallet_balances,
+		TransactionPayment: pallet_transaction_payment,
+		Sudo: pallet_sudo,
+		// Include the custom logic from the pallet-template in the runtime.
 	}
 );
 
@@ -541,6 +328,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
+		[pallet_template, TemplateModule]
 	);
 }
 
@@ -632,29 +420,29 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl fg_primitives::GrandpaApi<Block> for Runtime {
-		fn grandpa_authorities() -> GrandpaAuthorityList {
+	impl sp_consensus_grandpa::GrandpaApi<Block> for Runtime {
+		fn grandpa_authorities() -> sp_consensus_grandpa::AuthorityList {
 			Grandpa::grandpa_authorities()
 		}
 
-		fn current_set_id() -> fg_primitives::SetId {
+		fn current_set_id() -> sp_consensus_grandpa::SetId {
 			Grandpa::current_set_id()
 		}
 
 		fn submit_report_equivocation_unsigned_extrinsic(
-			_equivocation_proof: fg_primitives::EquivocationProof<
+			_equivocation_proof: sp_consensus_grandpa::EquivocationProof<
 				<Block as BlockT>::Hash,
 				NumberFor<Block>,
 			>,
-			_key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
+			_key_owner_proof: sp_consensus_grandpa::OpaqueKeyOwnershipProof,
 		) -> Option<()> {
 			None
 		}
 
 		fn generate_key_ownership_proof(
-			_set_id: fg_primitives::SetId,
+			_set_id: sp_consensus_grandpa::SetId,
 			_authority_id: GrandpaId,
-		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+		) -> Option<sp_consensus_grandpa::OpaqueKeyOwnershipProof> {
 			// NOTE: this is the only implementation possible since we've
 			// defined our key owner proof type as a bottom type (i.e. a type
 			// with no values).
@@ -722,11 +510,9 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
-			use pallet_game::Pallet as GameBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
-			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -747,12 +533,9 @@ impl_runtime_apis! {
 			use frame_support::traits::WhitelistedStorageKeys;
 			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
-			use pallet_game::Pallet as GameBench;
-
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
-			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 
 			Ok(batches)
 		}
