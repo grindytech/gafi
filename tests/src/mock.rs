@@ -48,14 +48,14 @@ frame_support::construct_runtime!(
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 		GameCreator: game_creator::{Pallet, Call, Storage, Event<T>},
 		Players: pallet_player::{Pallet, Call, Storage, Event<T>},
 		PalletNicks: pallet_nicks,
 	}
 );
 
-impl pallet_randomness_collective_flip::Config for Test {}
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 parameter_types! {
 	pub MaxContractOwned: u32 = 1000;

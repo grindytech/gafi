@@ -33,11 +33,11 @@ pallet-evm = {workspace = true}
 frame-support = {default-features = false, workspace = true}
 pallet-balances = {default-features = false, workspace = true}
 pallet-nicks = {workspace = true}
-pallet-randomness-collective-flip = {default-features = false, workspace = true}
+pallet-insecure-randomness-collective-flip = {default-features = false, workspace = true}
 pallet-timestamp = {default-features = false, workspace = true}
 pallet-transaction-payment = {default-features = false, workspace = true}
 sp-core = {default-features = false, workspace = true}
-sp-io = { workspace = true}
+sp-io = { workspace = true, default-features = false}
 sp-runtime = {default-features = false, workspace = true}
 
 frame-system = {default-features = false, workspace = true}
@@ -72,7 +72,7 @@ std = [
   'pallet-ethereum/std',
   'fp-self-contained/std',
   'pallet-transaction-payment/std',
-  'pallet-randomness-collective-flip/std',
+  'pallet-insecure-randomness-collective-flip/std',
   'proof-address-mapping/std',
   'upfront-pool/std',
   'pallet-pool/std',

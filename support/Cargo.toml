@@ -48,7 +48,7 @@ try-runtime = ["frame-support/try-runtime"]
 # scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 
 # frame-support = {workspace = true, default-features = false}
-# sp-io = {workspace = true}
+# sp-io = {workspace = true, default-features = false}
 
 # [features]
 # default = ["std"]

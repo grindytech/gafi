@@ -65,7 +65,7 @@ pallet-collective = {workspace = true}
 pallet-elections-phragmen = {workspace = true}
 pallet-nicks = {workspace = true}
 pallet-preimage = {workspace = true}
-pallet-randomness-collective-flip = {workspace = true}
+pallet-insecure-randomness-collective-flip = {workspace = true}
 pallet-scheduler = {workspace = true}
 pallet-session = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42"}
 pallet-sudo = {workspace = true}
@@ -77,7 +77,7 @@ sp-block-builder = {workspace = true}
 sp-consensus-aura = {workspace = true}
 sp-core = {workspace = true}
 sp-inherents = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-offchain = {workspace = true}
 sp-runtime = {workspace = true}
 sp-session = {workspace = true}

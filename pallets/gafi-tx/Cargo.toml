@@ -28,7 +28,7 @@ frame-system = {workspace = true}
 pallet-balances = {workspace = true}
 scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 
@@ -46,7 +46,7 @@ pallet-ethereum = { workspace = true }
 pallet-timestamp = {workspace = true}
 parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 
 # Local

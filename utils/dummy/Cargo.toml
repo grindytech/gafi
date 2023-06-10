@@ -24,7 +24,7 @@ frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "h
 [dev-dependencies]
 pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
 sp-core = {version = "7.0.0",  default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 # Local

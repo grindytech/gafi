@@ -24,7 +24,7 @@ frame-benchmarking = {workspace = true, optional = true}
 frame-support = {workspace = true}
 frame-system = {workspace = true}
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 
@@ -34,7 +34,7 @@ gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../s
 [dev-dependencies]
 pallet-balances = {workspace = true}
 pallet-nicks = {workspace = true}
-pallet-randomness-collective-flip = {workspace = true}
+pallet-insecure-randomness-collective-flip = {workspace = true}
 pallet-timestamp = {workspace = true}
 sp-keystore = {workspace = true}
 
@@ -60,7 +60,7 @@ std = [
   "pallet-balances/std",
   "sp-keystore/std",
   "funding-pool/std",
-  "pallet-randomness-collective-flip/std",
+  "pallet-insecure-randomness-collective-flip/std",
   "pallet-pool/std",
   "pallet-timestamp/std",
 ]

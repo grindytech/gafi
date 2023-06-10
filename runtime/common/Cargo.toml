@@ -13,7 +13,7 @@ scale-info = {version = "2.1.2", default-features = false, features = ["derive"]
 static_assertions = "1.1.0"
 
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 sp-std = {package = "sp-std", workspace = true}
 

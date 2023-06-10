@@ -4,7 +4,6 @@ use super::*;
 #[allow(unused)]
 use crate::Pallet as PalletGame;
 use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
-use enumflags2::{BitFlag, BitFlags};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
