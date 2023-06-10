@@ -13,7 +13,7 @@ scale-info = {version = "2.1.2", default-features = false, features = ["derive"]
 static_assertions = "1.1.0"
 
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 sp-std = {package = "sp-std", workspace = true}
 
@@ -27,7 +27,7 @@ frame-benchmarking = {version = "4.0.0-dev", workspace = true, optional = true}
 
 [dev-dependencies]
 pallet-treasury = {workspace = true}
-sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
+sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
 trie-db = "0.23.1"
 
 [features]

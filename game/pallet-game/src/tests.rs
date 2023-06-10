@@ -4,7 +4,6 @@ use crate::{
 	Error, *,
 };
 use sp_core::sr25519;
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
@@ -12,13 +11,14 @@ use gafi_support::{
 	game::Package,
 };
 use pallet_nfts::{CollectionRole, CollectionRoles};
+use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
 }
 
 fn new_account(account: u32, balance: u128) -> sr25519::Public {
-	let keystore = KeyStore::new();
+	let keystore = KeystoreExt::new(MemoryKeystore::new());
 	let acc: sr25519::Public = keystore
 		.sr25519_generate_new(sp_runtime::KeyTypeId::from(account), None)
 		.unwrap();

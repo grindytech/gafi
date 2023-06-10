@@ -26,7 +26,6 @@ sc-client-api = {workspace = true}
 sc-consensus = {workspace = true}
 sc-consensus-aura = {workspace = true}
 sc-executor = {workspace = true}
-sc-finality-grandpa = {workspace = true}
 sc-keystore = {workspace = true}
 sc-service = {workspace = true}
 sc-telemetry = {workspace = true}
@@ -35,12 +34,13 @@ sc-transaction-pool-api = {workspace = true}
 sp-consensus = {workspace = true}
 sp-consensus-aura = {workspace = true}
 sp-core = {workspace = true}
-sp-finality-grandpa = {workspace = true}
 sp-inherents = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-keyring = {workspace = true}
 sp-runtime = {workspace = true}
 sp-timestamp = {workspace = true}
+sc-consensus-grandpa = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-consensus-grandpa = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # These dependencies are used for the node template's RPCs
 pallet-transaction-payment-rpc = {workspace = true}
@@ -61,10 +61,10 @@ game3-runtime = {version = "4.0.0-dev", path = "../../runtime/game3"}
 gafi-support = {path = "../../support"}
 
 # CLI-specific dependencies
-try-runtime-cli = {version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37"}
+try-runtime-cli = {version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42"}
 
 [build-dependencies]
-substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37"}
+substrate-build-script-utils = {version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42"}
 
 [features]
 default = []

@@ -238,7 +238,7 @@ impl pallet_base_fee::Config for Runtime {
 
 impl parachain_info::Config for Runtime {}
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 impl pallet_player::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -393,7 +393,7 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 4,
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage} = 4,
 		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Nicks: pallet_nicks,

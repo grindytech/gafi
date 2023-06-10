@@ -49,7 +49,7 @@ frame_support::construct_runtime!(
 		StakingPool: staking_pool::{Pallet, Storage, Event<T>},
 		UpfrontPool: upfront_pool::{Pallet, Call, Storage, Event<T>},
 		FundingPool: funding_pool::{Pallet, Call, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 		PalletCache: pallet_cache::{Pallet, Storage, Event<T>},
 		PalletNicks: pallet_nicks,
 	}
@@ -57,22 +57,25 @@ frame_support::construct_runtime!(
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
-impl pallet_randomness_collective_flip::Config for Test {}
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
-parameter_types! {
-	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
-}
 
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
 	type Balance = u128;
+	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+	type FreezeIdentifier = ();
+	type MaxFreezes = ();
+	type HoldIdentifier = ();
+	type MaxHolds = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

@@ -13,16 +13,14 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-]}
-scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
+codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
+scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 serde = {version = "1.0.101", optional = true}
 
 frame-benchmarking = {workspace = true, optional = true}
 frame-support = {workspace = true}
 frame-system = {workspace = true}
-sp-io = { workspace = true}
+sp-io = { workspace = true, default-features = false}
 pallet-timestamp = { workspace = true }
 sp-runtime = { workspace = true }
 
@@ -30,10 +28,10 @@ sp-runtime = { workspace = true }
 gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 [dev-dependencies]
-pallet-randomness-collective-flip = {workspace = true}
+pallet-insecure-randomness-collective-flip = {workspace = true}
 pallet-balances = {workspace = true}
 sp-core = {workspace = true}
-sp-io = { workspace = true}
+sp-io = { workspace = true, default-features = false}
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 gu-mock = { version = "4.0.0-dev", default-features = false, path = "../../utils/mock" }
