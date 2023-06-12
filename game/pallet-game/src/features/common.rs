@@ -213,3 +213,31 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		id
 	}
 }
+
+
+#[cfg(test)]
+#[test]
+fn withdraw_reserve_should_works() {
+    use crate::mock::{new_test_ext, run_to_block, Test, PalletGame};
+
+	new_test_ext().execute_with(|| {
+		run_to_block(2);
+
+		let _ = ItemReserve::<Test>::try_mutate(0, |reserve_vec| {
+			let _ = reserve_vec.try_push(Item::new(1, 9));
+			let _ = reserve_vec.try_push(Item::new(2, 5));
+			let _ = reserve_vec.try_push(Item::new(3, 1));
+			Ok(())
+		})
+		.map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
+
+		let item = PalletGame::withdraw_reserve(&0, 0);
+		assert_eq!(item.unwrap(), 1);
+
+		let item = PalletGame::withdraw_reserve(&0, 9);
+		assert_eq!(item.unwrap(), 2);
+
+		let item = PalletGame::withdraw_reserve(&0, 13);
+		assert_eq!(item.unwrap(), 3);
+	})
+}

@@ -463,56 +463,69 @@ fn add_item_should_works() {
 }
 
 #[test]
-fn withdraw_reserve_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(2);
-
-		let _ = ItemReserve::<Test>::try_mutate(0, |reserve_vec| {
-			let _ = reserve_vec.try_push(Item::new(1, 9));
-			let _ = reserve_vec.try_push(Item::new(2, 5));
-			let _ = reserve_vec.try_push(Item::new(3, 1));
-			Ok(())
-		})
-		.map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
-
-		let item = PalletGame::withdraw_reserve(&0, 0);
-		assert_eq!(item.unwrap(), 1);
-
-		let item = PalletGame::withdraw_reserve(&0, 9);
-		assert_eq!(item.unwrap(), 2);
-
-		let item = PalletGame::withdraw_reserve(&0, 13);
-		assert_eq!(item.unwrap(), 3);
-	})
-}
-
-#[test]
 fn mint_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let (owner, admin) = do_create_game();
+		
 		let mint_fee = 1 * unit(GAKI);
-		do_create_collection(0, &admin, mint_fee);
-		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
-
-		let before_player_balance = 3000 * unit(GAKI);
-		let before_owner_balance = Balances::free_balance(owner.clone());
-		let player = new_account(2, before_player_balance);
-		assert_ok!(PalletGame::mint(
-			RuntimeOrigin::signed(player.clone()),
-			0,
-			player.clone(),
-			3
+		let collection_owner = new_account(1, 1000 * unit(GAKI));
+		let collection_admin = new_account(1, 1000 * unit(GAKI));
+		assert_ok!(PalletGame::create_collection(
+			RuntimeOrigin::signed(collection_owner.clone()),
+			collection_admin,
+			mint_fee,
 		));
-		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 3);
-		assert_eq!(
-			Balances::free_balance(player.clone()),
-			before_player_balance - (mint_fee * 3)
-		);
-		assert_eq!(
-			Balances::free_balance(owner.clone()),
-			before_owner_balance + (mint_fee * 3)
-		);
+		
+		let player = new_account(2, 1000_000 * unit(GAKI));
+		// Independent collection
+		{
+			
+			do_create_item(&collection_admin, 0, 0, &default_item_config(), 1000);
+			let owner_balance = Balances::free_balance(collection_owner.clone());
+			let player_balance = Balances::free_balance(player.clone());
+
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				3
+			));
+			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 3);
+			assert_eq!(
+				Balances::free_balance(player.clone()),
+				player_balance - (mint_fee * 3)
+			);
+			assert_eq!(
+				Balances::free_balance(collection_owner.clone()),
+				owner_balance + (mint_fee * 3)
+			);
+		}
+
+		// add collection to a game
+		{
+			let (owner, admin) = do_create_game();
+
+			assert_ok!(PalletGame::set_accept_adding(RuntimeOrigin::signed(collection_admin.clone()), 0, 0));
+			assert_ok!(PalletGame::add_game_collection(RuntimeOrigin::signed(admin), 0, 0));
+
+			let owner_balance = Balances::free_balance(collection_owner.clone());
+			let player_balance = Balances::free_balance(player.clone());
+
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				3
+			));
+			assert_eq!(
+				Balances::free_balance(player.clone()),
+				player_balance - (mint_fee * 3)
+			);
+			assert_eq!(
+				Balances::free_balance(collection_owner.clone()),
+				owner_balance + (mint_fee * 3)
+			);
+		}
 	})
 }
 
