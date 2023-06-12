@@ -108,10 +108,10 @@ impl pallet_nfts::Config for Test {
 	type ForceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ConstU128<2>;
-	type ItemDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<1>;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
 	type AttributeDepositBase = ConstU128<1>;
-	type DepositPerByte = ConstU128<1>;
+	type DepositPerByte = DepositPerByte;
 	type StringLimit = ConstU32<50>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;

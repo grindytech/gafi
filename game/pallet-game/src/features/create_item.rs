@@ -1,7 +1,6 @@
 use crate::{types::Item, *};
 use frame_support::pallet_prelude::*;
 use gafi_support::game::{Amount, CreateItem};
-use pallet_nfts::{CollectionRole, CollectionRoles};
 impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::ItemId, ItemConfig>
 	for Pallet<T, I>
 {
@@ -12,17 +11,13 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		config: &ItemConfig,
 		amount: Amount,
 	) -> DispatchResult {
-		// ensure permission
-		if let Some(game) = GameOf::<T, I>::get(collection) {
+		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
 			ensure!(
-				GameRoleOf::<T, I>::get(game, &who) ==
-					Some(CollectionRoles(
-						CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
-					)),
+				T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
 				Error::<T, I>::NoPermission
 			);
 
-			T::Nfts::mint_into(&collection, &item, &who, &config, false)?;
+			T::Nfts::mint_into(&collection, &item, &collection_owner, &config, false)?;
 
 			// issues new amount of item
 			{
@@ -52,40 +47,34 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		amount: Amount,
 	) -> DispatchResult {
 		// ensure permission
-		if let Some(game) = GameOf::<T, I>::get(collection) {
-			ensure!(
-				GameRoleOf::<T, I>::get(game, &who) ==
-					Some(CollectionRoles(
-						CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
-					)),
-				Error::<T, I>::NoPermission
-			);
+		ensure!(
+			T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
+			Error::<T, I>::NoPermission
+		);
 
-			// issues amount of item
-			{
-				ItemReserve::<T, I>::try_mutate(&collection, |reserve_vec| {
-					let balances = reserve_vec.into_mut();
-					for balance in balances {
-						if balance.item == *item {
-							balance.amount += amount;
-							return Ok(balance.amount)
-						}
+		// issues amount of item
+		{
+			ItemReserve::<T, I>::try_mutate(&collection, |reserve_vec| {
+				let balances = reserve_vec.into_mut();
+				for balance in balances {
+					if balance.item == *item {
+						balance.amount += amount;
+						return Ok(balance.amount)
 					}
-					return Err(Error::<T, I>::UnknownItem)
-				})
-				.map_err(|err| err)?;
+				}
+				return Err(Error::<T, I>::UnknownItem)
+			})
+			.map_err(|err| err)?;
 
-				Self::add_total_reserve(collection, amount)?;
-			}
-
-			Self::deposit_event(Event::<T, I>::ItemAdded {
-				who: who.clone(),
-				collection: *collection,
-				item: *item,
-				amount,
-			});
-			return Ok(())
+			Self::add_total_reserve(collection, amount)?;
 		}
-		return Err(Error::<T, I>::UnknownCollection.into())
+
+		Self::deposit_event(Event::<T, I>::ItemAdded {
+			who: who.clone(),
+			collection: *collection,
+			item: *item,
+			amount,
+		});
+		return Ok(())
 	}
 }

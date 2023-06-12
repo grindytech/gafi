@@ -12,6 +12,7 @@ use gafi_support::{
 };
 use pallet_nfts::{CollectionRole, CollectionRoles};
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
+use sp_runtime::TokenError;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -557,8 +558,9 @@ pub fn set_upgrade_item_should_works() {
 		};
 
 		let before_balance = Balances::free_balance(&owner);
+
 		assert_ok!(PalletGame::set_upgrade_item(
-			RuntimeOrigin::signed(owner.clone()),
+			RuntimeOrigin::signed(admin.clone()),
 			0,
 			0,
 			input.item,
@@ -600,7 +602,7 @@ pub fn upgrade_item_shoud_works() {
 		};
 
 		assert_ok!(PalletGame::set_upgrade_item(
-			RuntimeOrigin::signed(owner.clone()),
+			RuntimeOrigin::signed(admin.clone()),
 			0,
 			0,
 			input.item,
@@ -947,9 +949,10 @@ pub fn buy_bundle_should_fails() {
 		let seller = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
 
 		let buyer = new_account(1, 1 * unit(GAKI));
+		
 		assert_err!(
 			PalletGame::buy_bundle(RuntimeOrigin::signed(buyer.clone()), 0, price * unit(GAKI)),
-			pallet_balances::Error::<Test>::InsufficientBalance
+			TokenError::FundsUnavailable,
 		);
 
 		let buyer = new_account(1, 1000 * unit(GAKI));

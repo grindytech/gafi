@@ -46,7 +46,7 @@ use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
+		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer, InspectRole},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -88,12 +88,13 @@ pub mod crypto {
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::Item;
-
-	use super::*;
 	use frame_support::{
 		pallet_prelude::{OptionQuery, ValueQuery, *},
+		traits::tokens::nonfungibles_v2::InspectRole,
 		Blake2_128Concat, Twox64Concat,
 	};
+
+	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use gafi_support::game::Bundle;
 	use pallet_nfts::CollectionRoles;
@@ -154,7 +155,8 @@ pub mod pallet {
 				Self::AccountId,
 				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
 			> + Inspect<Self::AccountId>
-			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
+			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>
+			+ InspectRole<Self::AccountId>;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
