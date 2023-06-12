@@ -138,7 +138,6 @@ pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
 pub const MAX_GAME_SHARE_VAL: u32 = 10;
 pub const MAX_BUNDLE_VAL: u32 = 5;
 pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
-pub const MAX_NUM_BID_VAL: u32 = 10;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
@@ -154,35 +153,21 @@ parameter_types! {
 
 impl pallet_game::Config for Test {
 	type PalletId = PalletGameId;
-
 	type RuntimeEvent = RuntimeEvent;
-
 	type WeightInfo = ();
-
+	type NftsWeightInfo = ();
 	type Currency = Balances;
-
 	type Nfts = Nfts;
-
 	type Randomness = RandomnessCollectiveFlip;
-
 	type GameId = u32;
-
 	type TradeId = u32;
-
 	type GameDeposit = GameDeposit;
-
 	type MaxGameCollection = MaxGameCollection;
-
 	type MaxGameShare = MaxGameShare;
-
 	type MaxItem = MaxItem;
-
 	type MaxMintItem = MaxMintItem;
-
 	type UpgradeDeposit = UpgradeDeposit;
-
 	type BundleDeposit = BundleDeposit;
-
 	type MaxBundle = MaxBundle;
 }
 

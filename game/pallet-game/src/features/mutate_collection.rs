@@ -77,6 +77,11 @@ impl<T: Config<I>, I: 'static>
 		if let Ok(collection) = maybe_collection {
 			// insert fee
 			MintingFeeOf::<T, I>::insert(collection, fee);
+
+			Self::deposit_event(Event::<T, I>::CollectionCreated {
+				who: who.clone(),
+				collection,
+			});
 		}
 		Ok(())
 	}
@@ -93,6 +98,12 @@ impl<T: Config<I>, I: 'static>
 			);
 			<T as Config<I>>::Currency::reserve(&collection_owner, T::GameDeposit::get())?;
 			AddingAcceptance::<T, I>::insert(collection, game);
+
+			Self::deposit_event(Event::<T, I>::AddingAcceptanceSet {
+				who: who.clone(),
+				game: *game,
+				collection: *collection,
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownCollection.into())
@@ -133,6 +144,12 @@ impl<T: Config<I>, I: 'static>
 			game_vec.try_push(*game).map_err(|_| Error::<T, I>::ExceedMaxGameShare)?;
 			Ok(())
 		})?;
+
+		Self::deposit_event(Event::<T, I>::CollectionAdded {
+			who: who.clone(),
+			game: *game,
+			collection: *collection,
+		});
 
 		Ok(())
 	}

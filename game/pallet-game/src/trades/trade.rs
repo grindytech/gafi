@@ -28,6 +28,8 @@ impl<T: Config<I>, I: 'static> Trade<T::AccountId, T::TradeId> for Pallet<T, I> 
 				Self::do_cancel_set_buy(trade, who)?;
 			},
 		};
-		Err(Error::<T, I>::UnknownTrade.into())
+
+		Self::deposit_event(Event::<T, I>::TradeCanceled { trade: *trade, who: who.clone() });
+		Ok(())
 	}
 }

@@ -124,7 +124,7 @@ fn do_set_price<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
 	let package = Package {
 		collection: <T as pallet_nfts::Config>::Helper::collection(0),
 		item: <T as pallet_nfts::Config>::Helper::item(0),
-		amount: 10,
+		amount: 5,
 	};
 
 	assert_ok!(PalletGame::<T, I>::set_price(
@@ -418,7 +418,7 @@ benchmarks_instance_pallet! {
 
 		let call = Call::<T, I>::buy_item {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
-			amount: 10,
+			amount: 5,
 			bid_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
@@ -426,7 +426,7 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::ItemBought {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			who: caller,
-			amount: 10,
+			amount: 5,
 			bid_unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
 		}.into() );
 	}
@@ -828,6 +828,108 @@ benchmarks_instance_pallet! {
 			who: caller,
 			amount: 10,
 			ask_unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		}.into() );
+	}
+
+	create_collection{
+		let s in 0 .. MAX as u32;
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		let call = Call::<T, I>::create_collection {
+			admin: caller.clone(),
+			fee: <T as pallet::Config<I>>::Currency::minimum_balance(),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::CollectionCreated {
+			who: caller,
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+		}.into() );
+	}
+
+	set_accept_adding {
+		let s in 0 .. MAX as u32;
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		assert_ok!(PalletGame::<T, I>::create_collection(RawOrigin::Signed(caller.clone()).into(),
+		caller.clone(),
+		<T as pallet::Config<I>>::Currency::minimum_balance()));
+
+		let call = Call::<T, I>::set_accept_adding {
+			game: <T as pallet::Config<I>>::Helper::game(0),
+			collection:<T as pallet_nfts::Config>::Helper::collection(0),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::AddingAcceptanceSet {
+			who: caller,
+			game: <T as pallet::Config<I>>::Helper::game(0),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+		}.into() );
+	}
+
+	add_game_collection {
+		let s in 0 .. MAX as u32;
+
+		let (owner, admin) = do_create_game::<T, I>(s);
+		let admin = T::Lookup::lookup(admin).unwrap();
+
+		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+
+		assert_ok!(PalletGame::<T, I>::create_collection(
+			RawOrigin::Signed(caller.clone()).into(),
+			caller.clone(),
+			<T as pallet::Config<I>>::Currency::minimum_balance())
+		);
+
+		assert_ok!(PalletGame::<T, I>::set_accept_adding(
+			RawOrigin::Signed(caller.clone()).into(),
+			<T as pallet::Config<I>>::Helper::game(0),
+			<T as pallet_nfts::Config>::Helper::collection(0),
+		));
+
+		let call = Call::<T, I>::add_game_collection {
+			game: <T as pallet::Config<I>>::Helper::game(0),
+			collection:<T as pallet_nfts::Config>::Helper::collection(0),
+		};
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::CollectionAdded {
+			who: admin,
+			game: <T as pallet::Config<I>>::Helper::game(0),
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+		}.into() );
+	}
+
+	add_retail_supply {
+		let s in 0 .. MAX as u32;
+		let caller = do_set_price::<T, I>(s);
+
+		let package = Package {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 5,
+		};
+
+		let call = Call::<T, I>::add_retail_supply {
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
+			supply: package,
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+
+	cancel_trade {
+		let s in 0 .. MAX as u32;
+		let (caller, _) = do_set_bundle::<T, I>(s);
+
+		let call = Call::<T, I>::cancel_trade {
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
+			trade_type: TradeType::Bundle
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::TradeCanceled {
+			who: caller,
+			trade: <T as pallet::Config<I>>::Helper::trade(0),
 		}.into() );
 	}
 }
