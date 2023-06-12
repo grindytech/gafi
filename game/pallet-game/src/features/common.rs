@@ -8,7 +8,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// You should call this function with different seed values until the random
 	/// number lies within `u32::MAX - u32::MAX % n`.
 	/// TODO: deal with randomness freshness
-	/// https://github.com/paritytech/substrate/issues/8311
+	/// https://github.com/grindytech/substrate/issues/8311
 	fn generate_random_number(seed: u32) -> u32 {
 		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
 		let random_number = <u32>::decode(&mut random_seed.as_ref())

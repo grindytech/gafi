@@ -95,7 +95,7 @@ upfront-pool = {version = "4.0.0-dev", default-features = false, path = "../../p
 sp-io = {workspace = true, default-features = false}
 
 [build-dependencies]
-substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+substrate-wasm-builder = {version = "5.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 
 [features]
 aura = []

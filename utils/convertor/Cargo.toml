@@ -13,11 +13,11 @@ serde = { version = "1.0.137", features = ["derive"] }
 sha3 = {version = "0.10", default-features = false}
 
 # Substrate
-frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
-sp-core = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+frame-support = {default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-core = {version = "7.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 sp-io = {workspace = true, default-features = false}
-sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
-sp-std = {version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-std = {version = "5.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 
 # Local
 gafi-support = {default-features = false, version = "4.0.0-dev", path = "../../support"}
@@ -25,7 +25,7 @@ gafi-support = {default-features = false, version = "4.0.0-dev", path = "../../s
 [dev-dependencies]
 hex-literal = "0.2.1"
 parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 
 [features]
 default = ["std"]
