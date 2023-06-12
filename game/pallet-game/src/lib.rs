@@ -55,10 +55,12 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Retail, Swap,
-	Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
+	Auction, CreateItem, GameSetting, Level, Mining, MutateCollection, MutateItem, Package, Retail,
+	Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
-use pallet_nfts::{AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo};
+use pallet_nfts::{
+	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
+};
 use sp_core::offchain::KeyTypeId;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 use sp_std::vec::Vec;
@@ -95,7 +97,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::Bundle;
+	use gafi_support::game::{Bundle, Distribution};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -368,13 +370,8 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
 	#[pallet::storage]
-	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::CollectionId,
-		T::GameId,
-		OptionQuery,
-	>;
+	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -1112,6 +1109,32 @@ pub mod pallet {
 			freezer: Option<AccountIdLookupOf<T>>,
 		) -> DispatchResult {
 			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
+		}
+
+		#[pallet::call_index(39)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn create_dynamic_pool(
+			origin: OriginFor<T>,
+			pool: Bundle<T::CollectionId, T::ItemId>,
+			fee: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_create_dynamic_pool(&sender, pool, fee)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(40)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn create_stable_pool(
+			origin: OriginFor<T>,
+			distribution: Distribution<T::CollectionId, T::ItemId>,
+			fee: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_create_stable_pool(&sender, distribution, fee)?;
+			Ok(())
 		}
 	}
 

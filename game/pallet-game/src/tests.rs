@@ -1566,3 +1566,17 @@ pub fn claim_set_buy_should_works() {
 		);
 	})
 }
+
+#[test]
+fn create_dynamic_pool_should_works() {
+	new_test_ext().execute_with(|| {
+
+	})
+}
+
+#[test]
+fn create_stable_pool_should_works() {
+	new_test_ext().execute_with(|| {
+		
+	})
+}

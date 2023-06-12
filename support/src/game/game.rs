@@ -1,4 +1,4 @@
-use super::{Bundle, Package, TradeType};
+use super::{Bundle, Package, TradeType, Distribution};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::TokenError;
 
@@ -123,6 +123,23 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 		item: &ItemId,
 		amount: Amount,
 	) -> DispatchResult;
+}
+
+///Trait to provide an interface for NFTs mining
+pub trait Mining<AccountId, Price, CollectionId, ItemId> {
+
+	fn do_create_dynamic_pool(
+		who: &AccountId,
+		pool: Bundle<CollectionId, ItemId>,
+		fee: Price,
+	) -> DispatchResult;
+
+	fn do_create_stable_pool(
+		who: &AccountId,
+		distribution: Distribution<CollectionId, ItemId>,
+		fee: Price,
+	)-> DispatchResult;
+
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
