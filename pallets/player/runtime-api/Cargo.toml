@@ -17,7 +17,7 @@ codec = {package = "parity-scale-codec", version = "3.2.2", default-features = f
 
 pallet-player = { version = "4.0.0-dev", default-features = false, path = "../../player" }
 sp-runtime = { workspace = true }
-sp-api = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+sp-api = {default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 
 [features]
 default = ["std"]

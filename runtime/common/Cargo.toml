@@ -27,7 +27,7 @@ frame-benchmarking = {version = "4.0.0-dev", workspace = true, optional = true}
 
 [dev-dependencies]
 pallet-treasury = {workspace = true}
-sp-keystore = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42"}
+sp-keystore = {git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
 trie-db = "0.23.1"
 
 [features]

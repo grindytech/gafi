@@ -7,7 +7,7 @@ The studio can publish NFTs and get the rewards from mining fees, upgrading fees
 
 ## Overview
 The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
-Pallet-game is coupled with [pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts), and pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
+Pallet-game is coupled with [pallet-nfts](https://github.com/grindytech/substrate/tree/master/frame/nfts), and pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
 
 
 ### Terminology
@@ -118,7 +118,7 @@ Please visit the [unittest](https://github.com/grindytech/gafi/blob/master/game/
 `$ cargo test -p pallet-game`
 
 ### Prerequisites
-[pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts)
+[pallet-nfts](https://github.com/grindytech/substrate/tree/master/frame/nfts)
 [offchain-worker](https://docs.substrate.io/reference/how-to-guides/offchain-workers/)
 
 License: Apache-2.0
