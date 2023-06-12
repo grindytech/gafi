@@ -210,7 +210,7 @@ fn create_game_collection_should_works() {
 		));
 
 		assert_eq!(CollectionsOf::<Test>::get(0)[0], 0);
-		assert_eq!(GameOf::<Test>::get(0), Some(0));
+		assert_eq!(GamesOf::<Test>::get(0), [0].to_vec());
 
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
@@ -249,18 +249,50 @@ fn create_game_collection_should_fails() {
 fn remove_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		let (owner, admin) = do_create_game();
+
 		do_create_collection(0, &admin, 0);
 		do_create_collection(0, &admin, 0);
 		do_create_collection(0, &admin, 0);
 
 		assert_ok!(PalletGame::remove_collection(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0
+		));
+
+		let new_admin = new_account(3, 1000);
+		assert_ok!(PalletGame::set_team(
 			RuntimeOrigin::signed(owner.clone()),
+			1,
+			None,
+			Some(new_admin),
+			None
+		));
+
+		assert_ok!(PalletGame::remove_collection(
+			RuntimeOrigin::signed(new_admin.clone()),
 			0,
 			1
 		));
 
-		assert_eq!(GameOf::<Test>::get(1), None);
-		assert_eq!(CollectionsOf::<Test>::get(0), [0, 2].to_vec());
+		assert_eq!(GamesOf::<Test>::get(0), [].to_vec());
+		assert_eq!(GamesOf::<Test>::get(1), [].to_vec());
+		assert_eq!(CollectionsOf::<Test>::get(0), [2].to_vec());
+	})
+}
+
+#[test]
+fn remove_collection_should_fails() {
+	new_test_ext().execute_with(|| {
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &admin, 0);
+		do_create_collection(0, &admin, 0);
+		do_create_collection(0, &admin, 0);
+
+		assert_err!(
+			PalletGame::remove_collection(RuntimeOrigin::signed(owner.clone()), 0, 1),
+			Error::<Test>::NoPermission
+		);
 	})
 }
 
@@ -279,30 +311,56 @@ fn create_collection_should_works() {
 }
 
 #[test]
+fn set_accept_adding_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let who = new_account(0, 3_000 * unit(GAKI));
+		assert_ok!(PalletGame::create_collection(
+			RuntimeOrigin::signed(who.clone()),
+			who.clone(),
+			0,
+		));
+
+		assert_ok!(PalletGame::set_accept_adding(
+			RuntimeOrigin::signed(who.clone()),
+			0,
+			0
+		));
+		assert_err!(
+			PalletGame::set_accept_adding(RuntimeOrigin::signed(who.clone()), 0, 1),
+			Error::<Test>::UnknownCollection
+		);
+	})
+}
+
+#[test]
 fn add_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 
-		do_create_collection(0, &admin, 0);
-		do_create_collection(0, &admin, 0);
+		let who = new_account(1, 1000 * unit(GAKI));
 
 		assert_ok!(PalletGame::create_collection(
-			RuntimeOrigin::signed(owner.clone()),
-			admin.clone(),
+			RuntimeOrigin::signed(who.clone()),
+			who.clone(),
 			0,
+		));
+
+		assert_ok!(PalletGame::set_accept_adding(
+			RuntimeOrigin::signed(who.clone()),
+			0,
+			0
 		));
 
 		assert_ok!(PalletGame::add_game_collection(
-			RuntimeOrigin::signed(owner.clone()),
+			RuntimeOrigin::signed(admin.clone()),
 			0,
-			2,
+			0,
 		));
 
-		assert_eq!(CollectionsOf::<Test>::get(0), [0, 1, 2].to_vec());
-		assert_eq!(GameOf::<Test>::get(0).unwrap(), 0);
-		assert_eq!(GameOf::<Test>::get(1).unwrap(), 0);
-		assert_eq!(GameOf::<Test>::get(2).unwrap(), 0);
+		assert_eq!(CollectionsOf::<Test>::get(0), [0].to_vec());
+		assert_eq!(GamesOf::<Test>::get(0), [0].to_vec());
 	})
 }
 
@@ -319,32 +377,44 @@ fn add_game_collection_should_fails() {
 				0,
 			));
 
+			assert_ok!(PalletGame::set_accept_adding(
+				RuntimeOrigin::signed(admin),
+				0,
+				i
+			));
+
 			assert_ok!(PalletGame::add_game_collection(
-				RuntimeOrigin::signed(owner.clone()),
+				RuntimeOrigin::signed(admin.clone()),
 				0,
 				i
 			));
 		}
 
 		assert_err!(
-			PalletGame::add_game_collection(RuntimeOrigin::signed(owner.clone()), 0, 0),
+			PalletGame::add_game_collection(RuntimeOrigin::signed(admin.clone()), 0, 0),
 			Error::<Test>::CollectionExists
 		);
 
 		assert_ok!(PalletGame::create_collection(
-			RuntimeOrigin::signed(owner.clone()),
+			RuntimeOrigin::signed(admin.clone()),
 			admin.clone(),
 			0,
 		));
 
 		assert_err!(
-			PalletGame::add_game_collection(RuntimeOrigin::signed(admin.clone()), 0, 1),
+			PalletGame::add_game_collection(RuntimeOrigin::signed(owner.clone()), 0, 1),
 			Error::<Test>::NoPermission
 		);
 
+		assert_ok!(PalletGame::set_accept_adding(
+			RuntimeOrigin::signed(admin),
+			0,
+			MAX_GAME_COLLECTION_VAL
+		));
+
 		assert_err!(
 			PalletGame::add_game_collection(
-				RuntimeOrigin::signed(owner.clone()),
+				RuntimeOrigin::signed(admin.clone()),
 				0,
 				MAX_GAME_COLLECTION_VAL
 			),
@@ -949,7 +1019,7 @@ pub fn buy_bundle_should_fails() {
 		let seller = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
 
 		let buyer = new_account(1, 1 * unit(GAKI));
-		
+
 		assert_err!(
 			PalletGame::buy_bundle(RuntimeOrigin::signed(buyer.clone()), 0, price * unit(GAKI)),
 			TokenError::FundsUnavailable,
@@ -1452,14 +1522,13 @@ pub fn claim_set_buy_should_works() {
 		let seller = do_all_mint_item();
 		let amount = TEST_BUNDLE[0].clone().amount / 2;
 		let seller_balance = Balances::free_balance(&seller);
-		
+
 		assert_ok!(PalletGame::claim_set_buy(
 			RuntimeOrigin::signed(seller.clone()),
 			0,
 			amount,
 			unit_price
 		));
-
 
 		assert_eq!(
 			Balances::free_balance(&seller),

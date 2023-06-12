@@ -42,11 +42,10 @@ mod weights;
 use crate::weights::WeightInfo;
 pub use weights::*;
 
-use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::nonfungibles_v2::{Create, Inspect, Mutate, Transfer, InspectRole},
+		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -171,9 +170,13 @@ pub mod pallet {
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max number of collections in a game
+		/// Maximum number of collections in a  game.
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
+
+		/// Maximum number of games a collection can share.
+		#[pallet::constant]
+		type MaxGameShare: Get<u32>;
 
 		/// Maximum number of item that a collection could has
 		#[pallet::constant]
@@ -219,15 +222,20 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Collection belongs to
+	#[pallet::storage]
+	pub(super) type GamesOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::CollectionId,
+		BoundedVec<T::GameId, T::MaxGameShare>,
+		ValueQuery,
+	>;
+
 	/// Storing Collection Minting Fee
 	#[pallet::storage]
 	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, BalanceOf<T, I>, OptionQuery>;
-
-	/// Collection belongs to
-	#[pallet::storage]
-	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
 
 	/// Game roles
 	#[pallet::storage]
@@ -356,6 +364,15 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type HighestBidOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
+
+	#[pallet::storage]
+	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		T::GameId,
+		OptionQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -514,6 +531,7 @@ pub mod pallet {
 		UnknownUpgrade,
 		UnknownAuction,
 		UnknownBid,
+		UnknownAcceptance,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -523,6 +541,8 @@ pub mod pallet {
 		ExceedAllowedAmount,
 		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
+		/// Exceeded the maximum number of games that can be shared between collections
+		ExceedMaxGameShare,
 		/// Exceed max collections in a bundle
 		ExceedMaxBundle,
 
@@ -1055,6 +1075,31 @@ pub mod pallet {
 			collection: T::CollectionId,
 		) -> DispatchResult {
 			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
+		}
+
+		#[pallet::call_index(38)]
+		#[pallet::weight(0)]
+		pub fn set_team(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			issuer: Option<AccountIdLookupOf<T>>,
+			admin: Option<AccountIdLookupOf<T>>,
+			freezer: Option<AccountIdLookupOf<T>>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
+		}
+
+		#[pallet::call_index(39)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn set_accept_adding(
+			origin: OriginFor<T>,
+			game: T::GameId,
+			collection: T::CollectionId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_set_accept_adding(&sender, &game, &collection)?;
+			Ok(())
 		}
 	}
 

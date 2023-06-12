@@ -102,8 +102,8 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// Proof: Game CollectionsOf (max_values: None, max_size: Some(33), added: 2508, mode: MaxEncodedLen)
 	/// Storage: Game MintingFeeOf (r:0 w:1)
 	/// Proof: Game MintingFeeOf (max_values: None, max_size: Some(36), added: 2511, mode: MaxEncodedLen)
-	/// Storage: Game GameOf (r:0 w:1)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:0 w:1)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Nfts CollectionRoleOf (r:0 w:1)
 	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Nfts CollectionConfigOf (r:0 w:1)
@@ -123,8 +123,8 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(9))
 	}
-	/// Storage: Game GameOf (r:1 w:0)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:1 w:0)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Game GameRoleOf (r:1 w:0)
 	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Nfts Item (r:1 w:1)
@@ -154,8 +154,8 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
-	/// Storage: Game GameOf (r:1 w:0)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:1 w:0)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Game GameRoleOf (r:1 w:0)
 	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Game ItemReserve (r:1 w:1)
@@ -432,8 +432,8 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game CollectionsOf (r:1 w:1)
 	/// Proof: Game CollectionsOf (max_values: None, max_size: Some(33), added: 2508, mode: MaxEncodedLen)
-	/// Storage: Game GameOf (r:0 w:1)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:0 w:1)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
 	fn remove_collection(_s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
@@ -667,8 +667,8 @@ impl WeightInfo for () {
 	/// Proof: Game CollectionsOf (max_values: None, max_size: Some(33), added: 2508, mode: MaxEncodedLen)
 	/// Storage: Game MintingFeeOf (r:0 w:1)
 	/// Proof: Game MintingFeeOf (max_values: None, max_size: Some(36), added: 2511, mode: MaxEncodedLen)
-	/// Storage: Game GameOf (r:0 w:1)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:0 w:1)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Nfts CollectionRoleOf (r:0 w:1)
 	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Nfts CollectionConfigOf (r:0 w:1)
@@ -688,8 +688,8 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(6))
 			.saturating_add(RocksDbWeight::get().writes(9))
 	}
-	/// Storage: Game GameOf (r:1 w:0)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:1 w:0)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Game GameRoleOf (r:1 w:0)
 	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Nfts Item (r:1 w:1)
@@ -719,8 +719,8 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(9))
 			.saturating_add(RocksDbWeight::get().writes(7))
 	}
-	/// Storage: Game GameOf (r:1 w:0)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:1 w:0)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// Storage: Game GameRoleOf (r:1 w:0)
 	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
 	/// Storage: Game ItemReserve (r:1 w:1)
@@ -997,8 +997,8 @@ impl WeightInfo for () {
 	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game CollectionsOf (r:1 w:1)
 	/// Proof: Game CollectionsOf (max_values: None, max_size: Some(33), added: 2508, mode: MaxEncodedLen)
-	/// Storage: Game GameOf (r:0 w:1)
-	/// Proof: Game GameOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
+	/// Storage: Game GamesOf (r:0 w:1)
+	/// Proof: Game GamesOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
 	fn remove_collection(_s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
