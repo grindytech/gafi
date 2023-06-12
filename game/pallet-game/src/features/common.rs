@@ -8,7 +8,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// You should call this function with different seed values until the random
 	/// number lies within `u32::MAX - u32::MAX % n`.
 	/// TODO: deal with randomness freshness
-	/// https://github.com/paritytech/substrate/issues/8311
+	/// https://github.com/grindytech/substrate/issues/8311
 	fn generate_random_number(seed: u32) -> u32 {
 		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
 		let random_number = <u32>::decode(&mut random_seed.as_ref())
@@ -212,4 +212,32 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		NextTradeId::<T, I>::set(Some(id.increment()));
 		id
 	}
+}
+
+
+#[cfg(test)]
+#[test]
+fn withdraw_reserve_should_works() {
+    use crate::mock::{new_test_ext, run_to_block, Test, PalletGame};
+
+	new_test_ext().execute_with(|| {
+		run_to_block(2);
+
+		let _ = ItemReserve::<Test>::try_mutate(0, |reserve_vec| {
+			let _ = reserve_vec.try_push(Item::new(1, 9));
+			let _ = reserve_vec.try_push(Item::new(2, 5));
+			let _ = reserve_vec.try_push(Item::new(3, 1));
+			Ok(())
+		})
+		.map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
+
+		let item = PalletGame::withdraw_reserve(&0, 0);
+		assert_eq!(item.unwrap(), 1);
+
+		let item = PalletGame::withdraw_reserve(&0, 9);
+		assert_eq!(item.unwrap(), 2);
+
+		let item = PalletGame::withdraw_reserve(&0, 13);
+		assert_eq!(item.unwrap(), 3);
+	})
 }

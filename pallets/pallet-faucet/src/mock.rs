@@ -5,7 +5,7 @@ use frame_system as system;
 use frame_support::{
 	dispatch::Vec,
 };
-use sp_core::H256;
+use sp_core::{H256, ConstU32, ConstU128, ConstU64};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -33,20 +33,22 @@ frame_support::construct_runtime!(
 
 pub const EXISTENTIAL_DEPOSIT: u64 = 1000;
 
-parameter_types! {
-	pub ExistentialDeposit: u64 = EXISTENTIAL_DEPOSIT;
-}
-
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
 	type Balance = u64;
+	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+	type FreezeIdentifier = ();
+	type MaxFreezes = ();
+	type HoldIdentifier = ();
+	type MaxHolds = ();
 }
 
 pub const FAUCET_BALANCE: u64 = 1_000_000;

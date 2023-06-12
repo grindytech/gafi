@@ -79,7 +79,6 @@ pub mod pallet {
 
 	//** STORAGE **//
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(_);
 
 	/// Holding the flag(Left or Right) to support Cache in insert and clean
@@ -130,7 +129,9 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config<I>,  I: 'static = ()> {}
+	pub enum Event<T: Config<I>,  I: 'static = ()> {
+		
+	}
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {}

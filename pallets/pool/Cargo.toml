@@ -20,14 +20,14 @@ log = { version = "0.4.16" }
 scale-info = { version = "2.1.0", default-features = false, features = [
   "derive",
 ] }
-serde = { version = "1.0.119" }
+serde = { version = "1.0.137", features = ["derive"] }
 
 # Substrate
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-timestamp = { workspace = true }
-sp-io = { workspace = true }
+sp-io = { workspace = true, default-features = false }
 sp-core = { workspace = true }
 sp-std = { workspace = true }
 sp-runtime = { workspace = true }
@@ -37,9 +37,9 @@ gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../
 
 [dev-dependencies]
 sp-core = { workspace = true }
-sp-io = { workspace = true }
+sp-io = { workspace = true, default-features = false }
 pallet-balances = { workspace = true }
-pallet-randomness-collective-flip = { workspace = true }
+pallet-insecure-randomness-collective-flip = { workspace = true }
 pallet-nicks = {workspace = true}
 staking-pool = { version = "4.0.0-dev", default-features = false, path = "../staking-pool" }
 upfront-pool = { version = "4.0.0-dev", default-features = false, path = "../upfront-pool" }
@@ -65,7 +65,7 @@ std = [
   "upfront-pool/std",
   "staking-pool/std",
   "funding-pool/std",
-  "pallet-randomness-collective-flip/std",
+  "pallet-insecure-randomness-collective-flip/std",
 ]
 
 runtime-benchmarks = [

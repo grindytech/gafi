@@ -6,8 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::traits::EqualPrivilegeOnly;
-use gafi_support::common::{deposit, unit, NativeToken::GAFI};
+use gafi_support::common::{unit, NativeToken::GAFI};
 use pallet_game::GameWeightInfo;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -45,9 +44,8 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_nfts::PalletFeatures;
+use pallet_nfts::{PalletFeatures, weights::SubstrateWeight as NftsWeight};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
@@ -74,6 +72,8 @@ pub type Index = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
+
+type AccountPublic = <Signature as Verify>::Signer;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -214,7 +214,7 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
@@ -225,20 +225,12 @@ impl pallet_aura::Config for Runtime {
 impl pallet_grandpa::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
-	type KeyOwnerProofSystem = ();
-
-	type KeyOwnerProof =
-		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-
-	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-		KeyTypeId,
-		GrandpaId,
-	)>>::IdentificationTuple;
-
-	type HandleEquivocation = ();
-
 	type WeightInfo = ();
 	type MaxAuthorities = ConstU32<32>;
+	type MaxSetIdSessionEntries = ConstU64<0>;
+
+	type KeyOwnerProof = sp_core::Void;
+	type EquivocationReportSystem = ();
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -264,6 +256,10 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+	type FreezeIdentifier = ();
+	type MaxFreezes = ();
+	type HoldIdentifier = ();
+	type MaxHolds = ();
 }
 
 parameter_types! {
@@ -285,41 +281,6 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = deposit(2, 64, GAFI);
-	pub PreimageByteDeposit: Balance = deposit(0, 1, GAFI);
-}
-
-impl pallet_preimage::Config for Runtime {
-	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
-}
-
-parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
-		BlockWeights::get().max_block;
-	pub const MaxScheduledPerBlock: u32 = 50;
-	pub const NoPreimagePostponement: Option<u32> = Some(10);
-}
-
-impl pallet_scheduler::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeOrigin = RuntimeOrigin;
-	type PalletsOrigin = OriginCaller;
-	type RuntimeCall = RuntimeCall;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
-	type OriginPrivilegeCmp = EqualPrivilegeOnly;
-	type Preimages = Preimage;
-}
-
-parameter_types! {
 	pub storage Features: PalletFeatures = PalletFeatures::all_enabled();
 }
 
@@ -328,8 +289,8 @@ impl pallet_nfts::Config for Runtime {
 	type CollectionId = u32;
 	type ItemId = u32;
 	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<Self::AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ConstU128<2>;
 	type ItemDeposit = ConstU128<1>;
@@ -343,7 +304,13 @@ impl pallet_nfts::Config for Runtime {
 	type ItemAttributesApprovalsLimit = ConstU32<2>;
 	type MaxTips = ConstU32<10>;
 	type MaxDeadlineDuration = ConstU32<10000>;
+	type MaxAttributesPerCall = ConstU32<2>;
 	type Features = Features;
+	/// Off-chain = signature On-chain - therefore no conversion needed.
+	/// It needs to be From<MultiSignature> for benchmarking.
+	type OffchainSignature = Signature;
+	/// Using `AccountPublic` here makes it trivial to convert to `AccountId` via `into_account()`.
+	type OffchainPublic = AccountPublic;
 	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
@@ -411,6 +378,7 @@ parameter_types! {
 	pub GameDeposit: u128 = 5_000_000_000;
 	pub UpgradeDeposit: u128 = 1_000_000_000;
 	pub MaxGameCollection: u32 = 5;
+	pub MaxGameShare: u32 = 5;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
@@ -420,35 +388,22 @@ parameter_types! {
 
 impl pallet_game::Config for Runtime {
 	type PalletId = PalletGameId;
-
 	type RuntimeEvent = RuntimeEvent;
-
 	type WeightInfo = GameWeightInfo<Runtime>;
-
+	type NftsWeightInfo = NftsWeight<Runtime>;
 	type Currency = Balances;
-
 	type Nfts = Nfts;
-
 	type Randomness = RandomnessCollectiveFlip;
-
 	type GameId = u32;
-
 	type GameDeposit = GameDeposit;
-
 	type MaxGameCollection = MaxGameCollection;
-
+	type MaxGameShare = MaxGameShare;
 	type MaxMintItem = MaxMintItem;
-
 	type MaxItem = MaxItem;
-
 	type UpgradeDeposit = UpgradeDeposit;
-
 	type BundleDeposit = BundleDeposit;
-
 	type TradeId = u32;
-
 	type MaxBundle = MaxBundle;
-
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
@@ -484,17 +439,15 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
-
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
+
 		Game: pallet_game::{Pallet, Call, Storage, Event<T>},
 		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
@@ -565,6 +518,14 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 
@@ -676,6 +637,12 @@ impl_runtime_apis! {
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
+		}
 	}
 
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
@@ -693,6 +660,12 @@ impl_runtime_apis! {
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_call_fee_details(call, len)
 		}
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
+		}
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -706,10 +679,12 @@ impl_runtime_apis! {
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 			use pallet_game::Pallet as GameBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -731,11 +706,13 @@ impl_runtime_apis! {
 			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
 			use pallet_game::Pallet as GameBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			Ok(batches)
 		}

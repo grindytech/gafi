@@ -48,6 +48,19 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 		fee: Fee,
 	) -> DispatchResult;
 
+	/// Do Set Accept Adding
+	/// 
+	/// Accept to add collections to the game
+	/// 
+	/// - `who`: collection admin must be signed
+	/// - `game`: game id
+	/// - `ollection`: collection id to add to the game.
+	fn do_set_accept_adding(
+		who: &AccountId,
+		game: &GameId,
+		collection: &CollectionId,
+	) -> DispatchResult;
+
 	/// Do add collection
 	///
 	/// Add more amount on an existing game

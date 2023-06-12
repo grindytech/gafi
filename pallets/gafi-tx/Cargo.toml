@@ -13,9 +13,7 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-]}
+codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
 
 log = {version = "0.4.14", default-features = false}
 
@@ -28,9 +26,9 @@ frame-benchmarking = {workspace = true, optional = true}
 frame-support = {workspace = true}
 frame-system = {workspace = true}
 pallet-balances = {workspace = true}
-scale-info = {version = "2.1.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 sp-std = {workspace = true}
 
@@ -48,7 +46,7 @@ pallet-ethereum = { workspace = true }
 pallet-timestamp = {workspace = true}
 parity-secp256k1 = {default-features = false, version = "0.7.0", git = "https://github.com/paritytech/rust-secp256k1"}
 sp-core = {workspace = true}
-sp-io = {workspace = true}
+sp-io = {workspace = true, default-features = false}
 sp-runtime = {workspace = true}
 
 # Local
@@ -62,7 +60,6 @@ upfront-pool = {default-features = false, version = "4.0.0-dev", path = "../upfr
 default = ["std"]
 std = [
   'codec/std',
-  'sp-io/std',
   'sp-core/std',
   'sp-std/std',
   'sp-runtime/std',
