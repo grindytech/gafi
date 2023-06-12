@@ -47,7 +47,11 @@ impl<T: Config<I>, I: 'static>
 				})?;
 
 				// insert collection game
-				GameOf::<T, I>::insert(collection, game);
+				GamesOf::<T, I>::try_mutate(collection, |game_vec| -> DispatchResult {
+					game_vec.try_push(*game).map_err(|_| Error::<T, I>::ExceedMaxGameShare)?;
+					Ok(())
+				})?;
+
 				Self::deposit_event(Event::<T, I>::CollectionCreated {
 					who: who.clone(),
 					collection,
@@ -71,10 +75,38 @@ impl<T: Config<I>, I: 'static>
 
 		let maybe_collection = T::Nfts::create_collection(&who, &admin, &config);
 		if let Ok(collection) = maybe_collection {
-				// insert fee
-				MintingFeeOf::<T, I>::insert(collection, fee);
+			// insert fee
+			MintingFeeOf::<T, I>::insert(collection, fee);
+
+			Self::deposit_event(Event::<T, I>::CollectionCreated {
+				who: who.clone(),
+				collection,
+			});
 		}
 		Ok(())
+	}
+
+	fn do_set_accept_adding(
+		who: &T::AccountId,
+		game: &T::GameId,
+		collection: &T::CollectionId,
+	) -> DispatchResult {
+		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
+			ensure!(
+				T::Nfts::is_admin(collection, who),
+				Error::<T, I>::NoPermission
+			);
+			<T as Config<I>>::Currency::reserve(&collection_owner, T::GameDeposit::get())?;
+			AddingAcceptance::<T, I>::insert(collection, game);
+
+			Self::deposit_event(Event::<T, I>::AddingAcceptanceSet {
+				who: who.clone(),
+				game: *game,
+				collection: *collection,
+			});
+			return Ok(())
+		}
+		Err(Error::<T, I>::UnknownCollection.into())
 	}
 
 	fn do_add_collection(
@@ -83,10 +115,17 @@ impl<T: Config<I>, I: 'static>
 		collection: &T::CollectionId,
 	) -> DispatchResult {
 		// make sure signer is game owner
-		Self::ensure_game_owner(who, game)?;
+		ensure!(
+			Self::has_role(game, who, CollectionRole::Admin),
+			Error::<T, I>::NoPermission
+		);
 
-		// make sure signer is collection owner
-		Self::ensure_collection_owner(who, collection)?;
+		match AddingAcceptance::<T, I>::get(collection) {
+			Some(id) => {
+				ensure!(id == *game, Error::<T, I>::UnknownAcceptance);
+			},
+			None => return Err(Error::<T, I>::UnknownAcceptance.into()),
+		};
 
 		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
 			ensure!(
@@ -100,7 +139,18 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
-		GameOf::<T, I>::insert(collection, game);
+		// insert collection game
+		GamesOf::<T, I>::try_mutate(collection, |game_vec| -> DispatchResult {
+			game_vec.try_push(*game).map_err(|_| Error::<T, I>::ExceedMaxGameShare)?;
+			Ok(())
+		})?;
+
+		Self::deposit_event(Event::<T, I>::CollectionAdded {
+			who: who.clone(),
+			game: *game,
+			collection: *collection,
+		});
+
 		Ok(())
 	}
 
@@ -109,10 +159,10 @@ impl<T: Config<I>, I: 'static>
 		game: &T::GameId,
 		collection: &T::CollectionId,
 	) -> DispatchResult {
-		// make sure signer is game owner
-		Self::ensure_game_owner(who, game)?;
-		// make sure signer is collection owner
-		Self::ensure_collection_owner(who, collection)?;
+		ensure!(
+			T::Nfts::is_admin(collection, who) | Self::has_role(game, who, CollectionRole::Admin),
+			Error::<T, I>::NoPermission
+		);
 
 		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
 			let maybe_position = collection_vec.iter().position(|x| *x == *collection);
@@ -124,8 +174,8 @@ impl<T: Config<I>, I: 'static>
 				None => return Err(Error::<T, I>::UnknownCollection.into()),
 			}
 		})?;
-		GameOf::<T, I>::remove(collection);
-		Self::deposit_event(Event::<T,I>::CollectionRemoved {
+		GamesOf::<T, I>::remove(collection);
+		Self::deposit_event(Event::<T, I>::CollectionRemoved {
 			who: who.clone(),
 			game: *game,
 			collection: *collection,

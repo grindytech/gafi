@@ -6,8 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::traits::EqualPrivilegeOnly;
-use gafi_support::common::{deposit, unit, NativeToken::GAFI};
+use gafi_support::common::{unit, NativeToken::GAFI};
 use pallet_game::GameWeightInfo;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -45,9 +44,8 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_nfts::PalletFeatures;
+use pallet_nfts::{PalletFeatures, weights::SubstrateWeight as NftsWeight};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
@@ -353,7 +351,7 @@ where
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
-				// log::warn!("Unable to create signed payload: {:?}", e);
+				log::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
@@ -380,6 +378,7 @@ parameter_types! {
 	pub GameDeposit: u128 = 5_000_000_000;
 	pub UpgradeDeposit: u128 = 1_000_000_000;
 	pub MaxGameCollection: u32 = 5;
+	pub MaxGameShare: u32 = 5;
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
@@ -389,35 +388,22 @@ parameter_types! {
 
 impl pallet_game::Config for Runtime {
 	type PalletId = PalletGameId;
-
 	type RuntimeEvent = RuntimeEvent;
-
 	type WeightInfo = GameWeightInfo<Runtime>;
-
+	type NftsWeightInfo = NftsWeight<Runtime>;
 	type Currency = Balances;
-
 	type Nfts = Nfts;
-
 	type Randomness = RandomnessCollectiveFlip;
-
 	type GameId = u32;
-
 	type GameDeposit = GameDeposit;
-
 	type MaxGameCollection = MaxGameCollection;
-
+	type MaxGameShare = MaxGameShare;
 	type MaxMintItem = MaxMintItem;
-
 	type MaxItem = MaxItem;
-
 	type UpgradeDeposit = UpgradeDeposit;
-
 	type BundleDeposit = BundleDeposit;
-
 	type TradeId = u32;
-
 	type MaxBundle = MaxBundle;
-
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
@@ -693,10 +679,12 @@ impl_runtime_apis! {
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 			use pallet_game::Pallet as GameBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -718,11 +706,13 @@ impl_runtime_apis! {
 			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
 			use pallet_game::Pallet as GameBench;
+			use pallet_faucet::Pallet as FaucetBench;
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 
 			Ok(batches)
 		}

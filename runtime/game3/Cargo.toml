@@ -13,6 +13,7 @@ version = "4.0.0-dev"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+log = {version = "0.4.17", default-features = false}
 codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
 scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 
@@ -71,7 +72,6 @@ runtime-benchmarks = [
   "pallet-grandpa/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
-  "pallet-cache/runtime-benchmarks",
   "pallet-faucet/runtime-benchmarks",
   "pallet-nfts/runtime-benchmarks",
   "pallet-game/runtime-benchmarks"
