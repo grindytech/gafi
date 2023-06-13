@@ -7,6 +7,7 @@ use sp_std::vec::Vec;
 use super::Amount;
 
 pub type Bundle<CollectionId, ItemId> = Vec<Package<CollectionId, ItemId>>;
+pub type Distribution<CollectionId, ItemId> = Vec<Fraction<CollectionId, ItemId>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Package<CollectionId, ItemId> {
@@ -23,6 +24,19 @@ impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 			amount,
 		}
 	}
+
+
+	pub fn sub(mut self, amount: u32) -> Self {
+		self.amount -= amount;
+		self
+	}
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+pub struct Fraction<CollectionId, ItemId> {
+	pub collection: CollectionId,
+	pub item: ItemId,
+	pub permil: u32,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -33,4 +47,10 @@ pub enum TradeType {
 	Wishlist,
 	Auction,
 	Swap,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum PoolType {
+	Dynamic,
+ 	Fixed,
 }

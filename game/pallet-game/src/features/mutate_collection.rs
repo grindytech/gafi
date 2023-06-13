@@ -15,7 +15,6 @@ impl<T: Config<I>, I: 'static>
 	fn do_create_game_collection(
 		who: &T::AccountId,
 		game: &T::GameId,
-		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// verify create collection role
 		ensure!(
@@ -35,9 +34,6 @@ impl<T: Config<I>, I: 'static>
 			let maybe_collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
 
 			if let Ok(collection) = maybe_collection {
-				// insert fee
-				MintingFeeOf::<T, I>::insert(collection, fee);
-
 				// insert game collections
 				CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
 					collection_vec
@@ -65,7 +61,6 @@ impl<T: Config<I>, I: 'static>
 	fn do_create_collection(
 		who: &T::AccountId,
 		admin: &T::AccountId,
-		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
 		let config: CollectionConfigFor<T, I> = CollectionConfig {
 			settings: CollectionSettings::default(),
@@ -75,15 +70,13 @@ impl<T: Config<I>, I: 'static>
 
 		let maybe_collection = T::Nfts::create_collection(&who, &admin, &config);
 		if let Ok(collection) = maybe_collection {
-			// insert fee
-			MintingFeeOf::<T, I>::insert(collection, fee);
-
 			Self::deposit_event(Event::<T, I>::CollectionCreated {
 				who: who.clone(),
 				collection,
 			});
+			return	Ok(())
 		}
-		Ok(())
+		Err(Error::<T, I>::UnknownCollection.into())
 	}
 
 	fn do_set_accept_adding(

@@ -375,15 +375,17 @@ where
 }
 
 parameter_types! {
-	pub GameDeposit: u128 = 5_000_000_000;
-	pub UpgradeDeposit: u128 = 1_000_000_000;
+	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub GameDeposit: u128 = 3 * unit(GAFI);
+	pub UpgradeDeposit: u128 = 1 * unit(GAFI);
+	pub BundleDeposit: u128 = 2 * unit(GAFI);
+	pub MiningPoolDeposit: u128 = 3 * unit(GAFI);
+
 	pub MaxGameCollection: u32 = 5;
 	pub MaxGameShare: u32 = 5;
-	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
 	pub MaxBundle: u32 = 10;
-	pub BundleDeposit: u128 = 2_000_000_000;
 }
 
 impl pallet_game::Config for Runtime {
@@ -395,6 +397,8 @@ impl pallet_game::Config for Runtime {
 	type Nfts = Nfts;
 	type Randomness = RandomnessCollectiveFlip;
 	type GameId = u32;
+	type PoolId = u32;
+	type MiningPoolDeposit = MiningPoolDeposit;
 	type GameDeposit = GameDeposit;
 	type MaxGameCollection = MaxGameCollection;
 	type MaxGameShare = MaxGameShare;
