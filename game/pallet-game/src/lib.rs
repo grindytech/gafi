@@ -94,10 +94,11 @@ pub mod pallet {
 		traits::tokens::nonfungibles_v2::InspectRole,
 		Blake2_128Concat, Twox64Concat,
 	};
+use sp_core::Get;
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Distribution};
+	use gafi_support::game::{Bundle, Distribution, Fraction};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -170,9 +171,16 @@ pub mod pallet {
 		/// The type used to identify a unique trade
 		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
-		/// The basic amount of funds that must be reserved for game.
+		/// The type used to identify a unique mining pool
+		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+
+		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
+
+		/// The basic amount of funds that must be reserved for a mining pool.
+		#[pallet::constant]
+		type MiningPoolDeposit: Get<BalanceOf<Self, I>>;
 
 		/// Maximum number of collections in a  game.
 		#[pallet::constant]
@@ -215,6 +223,16 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::GameId, OptionQuery>;
+
+	/// Storing next trade id
+	#[pallet::storage]
+	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::TradeId, OptionQuery>;
+
+	/// Storing next mining pool id
+	#[pallet::storage]
+	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::PoolId, OptionQuery>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -281,11 +299,20 @@ pub mod pallet {
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
-	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type ReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
-		Twox64Concat,
+		Blake2_128,
 		T::CollectionId,
 		BoundedVec<Item<T::ItemId>, T::MaxItem>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	pub(super) type DistributionOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128,
+		T::PoolId,
+		BoundedVec<Fraction<T::CollectionId, T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
 
@@ -293,6 +320,15 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
+
+	#[pallet::storage]
+	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::PoolId,
+		PoolDetails<T::AccountId, BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -333,11 +369,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
-
-	/// Storing next bundle id
-	#[pallet::storage]
-	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, T::TradeId, OptionQuery>;
 
 	/// Storing bundle
 	#[pallet::storage]
@@ -576,7 +607,11 @@ pub mod pallet {
 
 		/// The asking price is higher than the set price.
 		AskTooHigh,
+
+		// Id in use
+		GameIdInUse,
 		TradeIdInUse,
+		PoolIdInUse,
 
 		// Retail trade
 		IncorrectCollection,
@@ -1116,11 +1151,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
-			pool: Bundle<T::CollectionId, T::ItemId>,
+			resource: Bundle<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_dynamic_pool(&sender, pool, fee)?;
+			let id = Self::get_pool_id();
+			Self::do_create_dynamic_pool(&id, &sender, resource, fee)?;
 			Ok(())
 		}
 
@@ -1133,7 +1169,8 @@ pub mod pallet {
 			fee: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_stable_pool(&sender, distribution, fee)?;
+			let id = Self::get_pool_id();
+			Self::do_create_stable_pool(&id, &sender, distribution, fee)?;
 			Ok(())
 		}
 	}

@@ -439,7 +439,7 @@ fn create_item_should_works() {
 			1000
 		));
 
-		assert_eq!(ItemReserve::<Test>::get(0).to_vec(), [Item::new(0, 1000)]);
+		assert_eq!(ReserveOf::<Test>::get(0).to_vec(), [Item::new(0, 1000)]);
 	})
 }
 
@@ -458,7 +458,7 @@ fn add_item_should_works() {
 			1000
 		));
 
-		assert_eq!(ItemReserve::<Test>::get(0).to_vec(), [Item::new(0, 2000)]);
+		assert_eq!(ReserveOf::<Test>::get(0).to_vec(), [Item::new(0, 2000)]);
 	})
 }
 

@@ -161,6 +161,7 @@ impl pallet_game::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 	type GameId = u32;
 	type TradeId = u32;
+	type PoolId = u32;
 	type GameDeposit = GameDeposit;
 	type MaxGameCollection = MaxGameCollection;
 	type MaxGameShare = MaxGameShare;

@@ -55,7 +55,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		position: u32,
 	) -> Result<T::ItemId, Error<T, I>> {
-		ItemReserve::<T, I>::try_mutate(collection, |reserve_vec| {
+		ReserveOf::<T, I>::try_mutate(collection, |reserve_vec| {
 			let mut tmp = 0_u32;
 			for reserve in reserve_vec.into_iter() {
 				if reserve.amount > 0 && reserve.amount + tmp >= position {
@@ -212,6 +212,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		NextTradeId::<T, I>::set(Some(id.increment()));
 		id
 	}
+
+	pub(crate) fn get_pool_id() -> T::PoolId {
+		let id = NextPoolId::<T, I>::get().unwrap_or(T::PoolId::initial_value());
+		NextPoolId::<T, I>::set(Some(id.increment()));
+		id
+	}
 }
 
 
@@ -223,7 +229,7 @@ fn withdraw_reserve_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(2);
 
-		let _ = ItemReserve::<Test>::try_mutate(0, |reserve_vec| {
+		let _ = ReserveOf::<Test>::try_mutate(0, |reserve_vec| {
 			let _ = reserve_vec.try_push(Item::new(1, 9));
 			let _ = reserve_vec.try_push(Item::new(2, 5));
 			let _ = reserve_vec.try_push(Item::new(3, 1));

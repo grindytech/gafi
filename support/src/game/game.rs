@@ -126,20 +126,20 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 }
 
 ///Trait to provide an interface for NFTs mining
-pub trait Mining<AccountId, Price, CollectionId, ItemId> {
-
+pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 	fn do_create_dynamic_pool(
+		pool: &PoolId,
 		who: &AccountId,
-		pool: Bundle<CollectionId, ItemId>,
+		resource: Bundle<CollectionId, ItemId>,
 		fee: Price,
 	) -> DispatchResult;
 
 	fn do_create_stable_pool(
+		pool: &PoolId,
 		who: &AccountId,
 		distribution: Distribution<CollectionId, ItemId>,
 		fee: Price,
 	)-> DispatchResult;
-
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {

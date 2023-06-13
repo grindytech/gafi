@@ -33,7 +33,6 @@ pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(NameLimit))]
 pub struct GameDetails<AccountId, DepositBalance> {
 	/// game's owner.
 	pub(super) owner: AccountId,
@@ -47,7 +46,6 @@ pub struct GameDetails<AccountId, DepositBalance> {
 }
 
 #[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(NameLimit))]
 pub struct Item<ItemId> {
 	pub item: ItemId,
 	pub amount: u32,
@@ -91,4 +89,28 @@ pub struct AuctionConfig<AccountId, Price, BlockNumber> {
 pub enum ItemBalanceStatus {
 	Reserved,
 	Free,
+}
+
+
+/// Types of the mining pool
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum PoolType {
+	/// Item mining chance will change depending on item supply.
+	Dynamic,
+	/// Item mining chance is fixed with an infinite supply.
+	Stable,
+}
+
+/// Information about a mining pool.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct PoolDetails<AccountId, DepositBalance> {
+	/// pool type
+	pub(super) pool_type: PoolType,
+	/// game's owner.
+	pub(super) owner: AccountId,
+	/// The total balance deposited by the owner for all the storage data associated with this
+	/// game. Used by `destroy`.
+	pub(super) owner_deposit: DepositBalance,
+	/// Can create a new pool, add more resources.
+	pub(super) admin: AccountId,
 }
