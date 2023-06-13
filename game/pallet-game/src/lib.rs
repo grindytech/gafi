@@ -94,7 +94,7 @@ pub mod pallet {
 		traits::tokens::nonfungibles_v2::InspectRole,
 		Blake2_128Concat, Twox64Concat,
 	};
-use sp_core::Get;
+	use sp_core::Get;
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
@@ -254,11 +254,6 @@ use sp_core::Get;
 		ValueQuery,
 	>;
 
-	/// Storing Collection Minting Fee
-	#[pallet::storage]
-	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::CollectionId, BalanceOf<T, I>, OptionQuery>;
-
 	/// Game roles
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -297,13 +292,18 @@ use sp_core::Get;
 		ValueQuery,
 	>;
 
+	/// Storing the mining pool fee
+	#[pallet::storage]
+	pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
+
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
 	pub(super) type ReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128,
-		T::CollectionId,
-		BoundedVec<Item<T::ItemId>, T::MaxItem>,
+		T::PoolId,
+		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
 
@@ -319,7 +319,7 @@ use sp_core::Get;
 	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
 	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::PoolId, u32, ValueQuery>;
 
 	#[pallet::storage]
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
@@ -654,26 +654,18 @@ use sp_core::Get;
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
 		#[transactional]
-		pub fn create_game_collection(
-			origin: OriginFor<T>,
-			game: T::GameId,
-			fee: BalanceOf<T, I>,
-		) -> DispatchResult {
+		pub fn create_game_collection(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game, fee)?;
+			Self::do_create_game_collection(&sender, &game)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		#[transactional]
-		pub fn create_collection(
-			origin: OriginFor<T>,
-			admin: T::AccountId,
-			fee: BalanceOf<T, I>,
-		) -> DispatchResult {
+		pub fn create_collection(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(&sender, &admin, fee)?;
+			Self::do_create_collection(&sender, &admin)?;
 			Ok(())
 		}
 
@@ -739,13 +731,13 @@ use sp_core::Get;
 		#[transactional]
 		pub fn mint(
 			origin: OriginFor<T>,
-			collection: T::CollectionId,
+			pool: T::PoolId,
 			mint_to: AccountIdLookupOf<T>,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;
-			Self::do_mint(&sender, &collection, &target, amount)?;
+			Self::do_mint(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 
@@ -1153,10 +1145,12 @@ use sp_core::Get;
 			origin: OriginFor<T>,
 			resource: Bundle<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
+			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
-			Self::do_create_dynamic_pool(&id, &sender, resource, fee)?;
+			let admin = T::Lookup::lookup(admin)?;
+			Self::do_create_dynamic_pool(&id, &sender, resource, fee, &admin)?;
 			Ok(())
 		}
 
@@ -1167,10 +1161,21 @@ use sp_core::Get;
 			origin: OriginFor<T>,
 			distribution: Distribution<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
+			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
-			Self::do_create_stable_pool(&id, &sender, distribution, fee)?;
+			let admin = T::Lookup::lookup(admin)?;
+			Self::do_create_stable_pool(&id, &sender, distribution, fee, &admin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(41)]
+		#[pallet::weight(0)]
+		#[transactional]
+		pub fn with_draw_pool(origin: OriginFor<T>, pool: T::PoolId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_withdraw_pool(&pool, &sender)?;
 			Ok(())
 		}
 	}

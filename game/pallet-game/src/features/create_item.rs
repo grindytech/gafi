@@ -21,14 +21,6 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 
 			// issues new amount of item
 			Self::add_item_balance(&collection_owner, collection, item, amount)?;
-			// {
-			// 	ReserveOf::<T, I>::try_mutate(&collection, |reserve_vec| {
-			// 		reserve_vec.try_push(Item::new(item.clone(), amount))
-			// 	})
-			// 	.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
-
-			// 	Self::add_total_reserve(collection, amount)?;
-			// }
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
 				who: who.clone(),
@@ -55,22 +47,6 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 			);
 			// issues amount of item
 			Self::add_item_balance(&collection_owner, collection, item, amount)?;
-
-			// {
-			// 	ReserveOf::<T, I>::try_mutate(&collection, |reserve_vec| {
-			// 		let balances = reserve_vec.into_mut();
-			// 		for balance in balances {
-			// 			if balance.item == *item {
-			// 				balance.amount += amount;
-			// 				return Ok(balance.amount)
-			// 			}
-			// 		}
-			// 		return Err(Error::<T, I>::UnknownItem)
-			// 	})
-			// 	.map_err(|err| err)?;
-
-			// 	Self::add_total_reserve(collection, amount)?;
-			// }
 
 			Self::deposit_event(Event::<T, I>::ItemAdded {
 				who: who.clone(),

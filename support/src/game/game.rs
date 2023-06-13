@@ -29,8 +29,6 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	fn do_create_game_collection(
 		who: &AccountId,
 		game: &GameId,
-		// config: &CollectionConfig,
-		fee: Fee,
 	) -> DispatchResult;
 
 	/// Do create collection
@@ -44,8 +42,6 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	fn do_create_collection(
 		who: &AccountId,
 		admin: &AccountId,
-		// config: &CollectionConfig,
-		fee: Fee,
 	) -> DispatchResult;
 
 	/// Do Set Accept Adding
@@ -132,6 +128,7 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		who: &AccountId,
 		resource: Bundle<CollectionId, ItemId>,
 		fee: Price,
+		admin: &AccountId,
 	) -> DispatchResult;
 
 	fn do_create_stable_pool(
@@ -139,29 +136,32 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		who: &AccountId,
 		distribution: Distribution<CollectionId, ItemId>,
 		fee: Price,
+		admin: &AccountId,
 	)-> DispatchResult;
+
+	fn do_withdraw_pool(
+		pool: &PoolId,
+		who: &AccountId,
+	) -> DispatchResult;
+
+	/// Do Mint
+	///
+	/// Random mint item in a pool
+	///
+	/// Parameters:
+	/// - `pool`: mining pool id
+	/// - `who`: sender
+	/// - `target`: recipient account
+	/// - `amount`: amount of item
+	fn do_mint(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
-	/// Mint
-	///
-	/// Random mint item in the collection
-	///
-	/// Parameters:
-	/// - `_who`: sender
-	/// - `_collection`: collection id
-	/// - `_target`: recipient account, default `miner`
-	///
-	/// By default, this is not a supported operation.
-	fn do_mint(
-		_who: &AccountId,
-		_collection: &CollectionId,
-		_target: &AccountId,
-		_amount: Amount,
-	) -> DispatchResult {
-		Err(TokenError::Unsupported.into())
-	}
-
 	/// Burn
 	///
 	/// Burn item

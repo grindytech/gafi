@@ -56,9 +56,8 @@ impl<ItemId> Item<ItemId> {
 		Item { item, amount }
 	}
 
-	pub fn sub(mut self, amount: u32) -> Self {
+	pub fn sub(&mut self, amount: u32) {
 		self.amount -= amount;
-		self
 	}
 }
 

@@ -16,7 +16,6 @@ pub struct Package<CollectionId, ItemId> {
 	pub amount: u32,
 }
 
-
 impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 	pub fn new(collection: CollectionId, item: ItemId, amount: Amount) -> Self {
 		Package {
@@ -24,6 +23,12 @@ impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 			item,
 			amount,
 		}
+	}
+
+
+	pub fn sub(mut self, amount: u32) -> Self {
+		self.amount -= amount;
+		self
 	}
 }
 
