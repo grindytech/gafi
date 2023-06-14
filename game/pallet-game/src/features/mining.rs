@@ -53,7 +53,31 @@ impl<T: Config<I>, I: 'static>
 		fee: BalanceOf<T, I>,
 		admin: &T::AccountId,
 	) -> DispatchResult {
-		todo!()
+
+		// ensure collection owner & infinite supply
+		for fraction in &distribution {
+			Self::ensure_collection_owner(who, &fraction.collection)?;
+			ensure!(Self::is_infinite(&fraction.collection, &fraction.item), Error::<T, I>::NotInfiniteSupply);
+		}
+
+		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
+
+		DistributionOf::<T, I>::try_mutate(&pool, |fraction_vec| -> DispatchResult {
+			fraction_vec
+				.try_append(distribution.clone().into_mut())
+				.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
+			Ok(())
+		})?;
+
+		let pool_details = PoolDetails {
+			pool_type: PoolType::Stable,
+			owner: who.clone(),
+			owner_deposit: T::MiningPoolDeposit::get(),
+			admin: admin.clone(),
+		};
+
+		PoolOf::<T, I>::insert(pool, pool_details);
+		Ok(())
 	}
 
 	fn do_mint(

@@ -22,10 +22,6 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
-#[cfg(test)]
-pub(crate) type PackageFor<T> =
-	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
-
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
 	<T as pallet::Config<I>>::MaxBundle,
@@ -89,7 +85,6 @@ pub enum ItemBalanceStatus {
 	Reserved,
 	Free,
 }
-
 
 /// Types of the mining pool
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

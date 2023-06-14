@@ -292,6 +292,17 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::storage]
+	pub(super) type MaxSupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		Blake2_128Concat,
+		T::ItemId,
+		Option<u32>,
+		OptionQuery,
+	>;
+
 	/// Storing the mining pool fee
 	#[pallet::storage]
 	pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
@@ -629,6 +640,10 @@ pub mod pallet {
 		NotSwap,
 		NotAuction,
 		NotSetBuy,
+
+		//mining pool
+		InfiniteSupply,
+		NotInfiniteSupply,
 	}
 
 	#[pallet::hooks]
@@ -703,10 +718,10 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			config: ItemConfig,
-			amount: u32,
+			max_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
+			Self::do_create_item(&sender, &collection, &item, &config, max_supply)?;
 			Ok(())
 		}
 
@@ -720,9 +735,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			Self::do_add_item(&sender, &collection, &item, amount)?;
-
+			// Self::do_add_item(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
@@ -768,7 +781,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let destination = T::Lookup::lookup(dest)?;
 			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
-
 			Ok(())
 		}
 

@@ -36,7 +36,7 @@ impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 pub struct Fraction<CollectionId, ItemId> {
 	pub collection: CollectionId,
 	pub item: ItemId,
-	pub permil: u32,
+	pub fraction: u32,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

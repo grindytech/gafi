@@ -239,6 +239,29 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		NextPoolId::<T, I>::set(Some(id.increment()));
 		id
 	}
+
+	pub(crate) fn try_get_max_supply(
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+	) -> Result<u32, Error<T, I>> {
+		if let Some(supply) = MaxSupplyOf::<T, I>::get(collection, item) {
+			return match supply {
+				Some(amount) => Ok(amount),
+				None => Err(Error::<T, I>::InfiniteSupply),
+			}
+		}
+		Err(Error::<T, I>::UnknownCollection)
+	}
+
+	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
+		match MaxSupplyOf::<T, I>::get(collection, item) {
+			Some(maybe_supply) => match maybe_supply {
+				Some(_) => return false,
+				None => return true,
+			},
+			None => false,
+		}
+	}
 }
 
 // #[cfg(test)]

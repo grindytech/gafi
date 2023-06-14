@@ -95,30 +95,30 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `config`: item config
-	/// - `amount`: amount
+	/// - `max_supply`: maximum number of item, None indicate an infinite supply 
 	fn do_create_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
 		config: &ItemConfig,
-		amount: Amount,
+		max_supply: Option<u32>,
 	) -> DispatchResult;
 
-	/// Do add item
-	///
-	/// Add number amount of item in collection
-	///
-	/// Parameters:
-	/// - `who`: signer
-	/// - `collection`: collection id
-	/// - `item`: item id
-	/// - `amount`: amount
-	fn do_add_item(
-		who: &AccountId,
-		collection: &CollectionId,
-		item: &ItemId,
-		amount: Amount,
-	) -> DispatchResult;
+	// Do add item
+	//
+	// Add number amount of item in collection
+	//
+	// Parameters:
+	// - `who`: signer
+	// - `collection`: collection id
+	// - `item`: item id
+	// - `amount`: amount
+	// fn do_add_item(
+	// 	who: &AccountId,
+	// 	collection: &CollectionId,
+	// 	item: &ItemId,
+	// 	amount: Amount,
+	// ) -> DispatchResult;
 }
 
 ///Trait to provide an interface for NFTs mining

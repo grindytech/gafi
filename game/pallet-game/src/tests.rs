@@ -1,18 +1,20 @@
-use crate::{
-	mock::*,
-	types::{*},
-	Error, *,
-};
+use crate::{mock::*, types::*, Error, *};
 use sp_core::sr25519;
 
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
-	game::{Package},
+	game::{Distribution, Fraction, Package},
 };
 use pallet_nfts::{CollectionRole, CollectionRoles};
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::TokenError;
+
+type PackageFor<T> =
+	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
+
+type FractionFor<T> =
+	Fraction<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -66,7 +68,7 @@ fn do_create_item(
 		collection,
 		item,
 		*item_config,
-		amount
+		Some(amount)
 	));
 }
 
@@ -85,6 +87,24 @@ const TEST_BUNDLE: [PackageFor<Test>; 3] = [
 		collection: 0,
 		item: 2,
 		amount: 10,
+	},
+];
+
+const TEST_FRACTION: [FractionFor<Test>; 3] = [
+	Fraction {
+		collection: 0,
+		item: 0,
+		fraction: 30000, // 30%
+	},
+	Fraction {
+		collection: 0,
+		item: 1,
+		fraction: 35000, // 35%
+	},
+	Fraction {
+		collection: 0,
+		item: 2,
+		fraction: 35000, // 35%
 	},
 ];
 
@@ -135,6 +155,32 @@ fn do_all_create_dynamic_pool(
 		);
 	}
 	do_create_dynamic_pool(&owner, &admin, fee, source);
+	(owner, admin)
+}
+
+fn do_all_create_stable_pool(
+	fee: u128,
+	dist: Vec<FractionFor<Test>>,
+) -> (sr25519::Public, sr25519::Public) {
+	let (owner, admin) = do_create_game();
+	let latest_id = NextGameId::<Test>::get().unwrap() - 1;
+	do_create_collection(latest_id, &admin);
+
+	for pack in dist.clone() {
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			latest_id,
+			pack.item,
+			default_item_config(),
+			None
+		));
+	}
+	assert_ok!(PalletGame::create_stable_pool(
+		RuntimeOrigin::signed(owner.clone()),
+		dist.to_vec(),
+		fee,
+		admin.clone(),
+	));
 	(owner, admin)
 }
 
@@ -466,31 +512,31 @@ fn create_item_should_works() {
 			0,
 			0,
 			default_item_config(),
-			1000
+			Some(1000)
 		));
 
 		assert_eq!(ItemBalanceOf::<Test>::get((owner.clone(), 0, 0)), 1000);
 	})
 }
 
-#[test]
-fn add_item_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-		let (owner, admin) = do_create_game();
-		do_create_collection(0, &admin);
-		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+// #[test]
+// fn add_item_should_works() {
+// 	new_test_ext().execute_with(|| {
+// 		run_to_block(1);
+// 		let (owner, admin) = do_create_game();
+// 		do_create_collection(0, &admin);
+// 		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
 
-		assert_ok!(PalletGame::add_item(
-			RuntimeOrigin::signed(admin.clone()),
-			0,
-			0,
-			1000
-		));
+// 		assert_ok!(PalletGame::add_item(
+// 			RuntimeOrigin::signed(admin.clone()),
+// 			0,
+// 			0,
+// 			1000
+// 		));
 
-		assert_eq!(ItemBalanceOf::<Test>::get((owner.clone(), 0, 0)), 2000);
-	})
-}
+// 		assert_eq!(ItemBalanceOf::<Test>::get((owner.clone(), 0, 0)), 2000);
+// 	})
+// }
 
 #[test]
 fn create_dynamic_pool_should_works() {
@@ -534,13 +580,13 @@ fn create_dynamic_pool_should_works() {
 
 		assert_eq!(
 			Balances::free_balance(owner.clone()),
-			owner_balance - BUNDLE_DEPOSIT_VAL
+			owner_balance - MINING_DEPOSIT_VAL
 		);
 	})
 }
 
 #[test]
-fn mint_should_works() {
+fn mint_dynamic_pool_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let mint_fee = 2 * unit(GAKI);
@@ -584,7 +630,7 @@ fn mint_should_works() {
 }
 
 #[test]
-fn mint_should_fails() {
+fn mint_dynamic_pool_should_fails() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let (_, _) = do_all_create_dynamic_pool(1 * unit(GAKI), TEST_BUNDLE);
@@ -1619,5 +1665,141 @@ pub fn claim_set_buy_should_works() {
 
 #[test]
 fn create_stable_pool_should_works() {
-	new_test_ext().execute_with(|| {})
+	new_test_ext().execute_with(|| {
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &admin);
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			default_item_config(),
+			None
+		));
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			1,
+			default_item_config(),
+			None
+		));
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			2,
+			default_item_config(),
+			None
+		));
+
+		let owner_balance = Balances::free_balance(owner.clone());
+		assert_ok!(PalletGame::create_stable_pool(
+			RuntimeOrigin::signed(owner.clone()),
+			TEST_FRACTION.clone().to_vec(),
+			100,
+			admin.clone()
+		));
+
+		assert_eq!(
+			Balances::free_balance(owner.clone()),
+			owner_balance - MINING_DEPOSIT_VAL
+		);
+		assert_eq!(DistributionOf::<Test>::get(0), TEST_FRACTION.to_vec());
+	})
 }
+
+fn create_stable_pool_should_fails() {
+	new_test_ext().execute_with(|| {
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &admin);
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			default_item_config(),
+			None
+		));
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			1,
+			default_item_config(),
+			None
+		));
+
+		assert_err!(
+			PalletGame::create_stable_pool(
+				RuntimeOrigin::signed(admin.clone()),
+				TEST_FRACTION.clone()[0..1].to_vec(),
+				100,
+				admin.clone()
+			),
+			Error::<Test>::NoPermission
+		);
+
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			2,
+			default_item_config(),
+			Some(1000)
+		));
+
+		assert_err!(
+			PalletGame::create_stable_pool(
+				RuntimeOrigin::signed(owner.clone()),
+				TEST_FRACTION.clone().to_vec(),
+				100,
+				admin.clone()
+			),
+			Error::<Test>::NotInfiniteSupply
+		);
+	})
+}
+
+// #[test]
+// fn mint_stable_pool_should_works() {
+// 	new_test_ext().execute_with(|| {
+// 		run_to_block(1);
+// 		let mint_fee = 2 * unit(GAKI);
+// 		let (owner, _) = do_all_create_dynamic_pool(mint_fee, TEST_BUNDLE.clone());
+// 		let player = new_account(2, 1000_000 * unit(GAKI));
+// 		// Independent collection
+// 		{
+// 			let owner_balance = Balances::free_balance(owner.clone());
+// 			let player_balance = Balances::free_balance(player.clone());
+
+// 			let amount = 10;
+// 			for _ in TEST_BUNDLE.clone() {
+// 				assert_ok!(PalletGame::mint(
+// 					RuntimeOrigin::signed(player.clone()),
+// 					0,
+// 					player.clone(),
+// 					amount,
+// 				));
+// 			}
+
+// 			for pack in TEST_BUNDLE.clone() {
+// 				assert_eq!(
+// 					ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
+// 					amount
+// 				);
+// 				assert_eq!(
+// 					ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
+// 					pack.amount - amount
+// 				);
+// 			}
+// 			assert_eq!(
+// 				Balances::free_balance(player.clone()),
+// 				player_balance - (mint_fee * amount as u128 * TEST_BUNDLE.len() as u128)
+// 			);
+// 			assert_eq!(
+// 				Balances::free_balance(owner.clone()),
+// 				owner_balance + (mint_fee * amount as u128 * TEST_BUNDLE.len() as u128)
+// 			);
+// 		}
+// 	})
+// }
