@@ -100,6 +100,9 @@ pub enum PoolType {
 pub struct PoolDetails<AccountId, DepositBalance> {
 	/// pool type
 	pub(super) pool_type: PoolType,
+
+	pub(super) fee: DepositBalance,
+	
 	/// game's owner.
 	pub(super) owner: AccountId,
 	/// The total balance deposited by the owner for all the storage data associated with this

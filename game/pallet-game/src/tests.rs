@@ -4,7 +4,7 @@ use sp_core::sr25519;
 use frame_support::{assert_err, assert_ok, traits::Currency};
 use gafi_support::{
 	common::{unit, NativeToken::GAKI},
-	game::{Distribution, Fraction, Package},
+	game::{Package},
 };
 use pallet_nfts::{CollectionRole, CollectionRoles};
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
@@ -12,9 +12,6 @@ use sp_runtime::TokenError;
 
 type PackageFor<T> =
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
-
-type FractionFor<T> =
-	Fraction<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
 
 fn make_deposit(account: &sr25519::Public, balance: u128) {
 	let _ = pallet_balances::Pallet::<Test>::deposit_creating(account, balance);
@@ -90,21 +87,21 @@ const TEST_BUNDLE: [PackageFor<Test>; 3] = [
 	},
 ];
 
-const TEST_FRACTION: [FractionFor<Test>; 3] = [
-	Fraction {
+const TEST_FRACTION: [PackageFor<Test>; 3] = [
+	Package {
 		collection: 0,
 		item: 0,
-		fraction: 30000, // 30%
+		amount: 30000, // 30%
 	},
-	Fraction {
+	Package {
 		collection: 0,
 		item: 1,
-		fraction: 35000, // 35%
+		amount: 35000, // 35%
 	},
-	Fraction {
+	Package {
 		collection: 0,
 		item: 2,
-		fraction: 35000, // 35%
+		amount: 35000, // 35%
 	},
 ];
 
@@ -160,7 +157,7 @@ fn do_all_create_dynamic_pool(
 
 fn do_all_create_stable_pool(
 	fee: u128,
-	dist: Vec<FractionFor<Test>>,
+	dist: Vec<PackageFor<Test>>,
 ) -> (sr25519::Public, sr25519::Public) {
 	let (owner, admin) = do_create_game();
 	let latest_id = NextGameId::<Test>::get().unwrap() - 1;
@@ -1705,7 +1702,7 @@ fn create_stable_pool_should_works() {
 			Balances::free_balance(owner.clone()),
 			owner_balance - MINING_DEPOSIT_VAL
 		);
-		assert_eq!(DistributionOf::<Test>::get(0), TEST_FRACTION.to_vec());
+		assert_eq!(ReserveOf::<Test>::get(0), TEST_FRACTION.to_vec());
 	})
 }
 
@@ -1760,46 +1757,34 @@ fn create_stable_pool_should_fails() {
 	})
 }
 
-// #[test]
-// fn mint_stable_pool_should_works() {
-// 	new_test_ext().execute_with(|| {
-// 		run_to_block(1);
-// 		let mint_fee = 2 * unit(GAKI);
-// 		let (owner, _) = do_all_create_dynamic_pool(mint_fee, TEST_BUNDLE.clone());
-// 		let player = new_account(2, 1000_000 * unit(GAKI));
-// 		// Independent collection
-// 		{
-// 			let owner_balance = Balances::free_balance(owner.clone());
-// 			let player_balance = Balances::free_balance(player.clone());
+#[test]
+fn mint_stable_pool_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let mint_fee = 2 * unit(GAKI);
+		let (owner, _) = do_all_create_stable_pool(mint_fee, TEST_FRACTION.clone().to_vec());
+		let player = new_account(2, 1000_000 * unit(GAKI));
+		{
+			let owner_balance = Balances::free_balance(owner.clone());
+			let player_balance = Balances::free_balance(player.clone());
 
-// 			let amount = 10;
-// 			for _ in TEST_BUNDLE.clone() {
-// 				assert_ok!(PalletGame::mint(
-// 					RuntimeOrigin::signed(player.clone()),
-// 					0,
-// 					player.clone(),
-// 					amount,
-// 				));
-// 			}
+			let amount = 10;
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				amount,
+			));
 
-// 			for pack in TEST_BUNDLE.clone() {
-// 				assert_eq!(
-// 					ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
-// 					amount
-// 				);
-// 				assert_eq!(
-// 					ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
-// 					pack.amount - amount
-// 				);
-// 			}
-// 			assert_eq!(
-// 				Balances::free_balance(player.clone()),
-// 				player_balance - (mint_fee * amount as u128 * TEST_BUNDLE.len() as u128)
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(owner.clone()),
-// 				owner_balance + (mint_fee * amount as u128 * TEST_BUNDLE.len() as u128)
-// 			);
-// 		}
-// 	})
-// }
+			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
+			assert_eq!(
+				Balances::free_balance(player.clone()),
+				player_balance - (mint_fee * amount as u128  as u128)
+			);
+			assert_eq!(
+				Balances::free_balance(owner.clone()),
+				owner_balance + (mint_fee * amount as u128 as u128)
+			);
+		}
+	})
+}

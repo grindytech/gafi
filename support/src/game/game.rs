@@ -1,4 +1,4 @@
-use super::{Bundle, Package, TradeType, Distribution};
+use super::{Bundle, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::TokenError;
 
@@ -134,7 +134,7 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 	fn do_create_stable_pool(
 		pool: &PoolId,
 		who: &AccountId,
-		distribution: Distribution<CollectionId, ItemId>,
+		dist: Bundle<CollectionId, ItemId>,
 		fee: Price,
 		admin: &AccountId,
 	)-> DispatchResult;
@@ -142,6 +142,20 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 	fn do_withdraw_pool(
 		pool: &PoolId,
 		who: &AccountId,
+	) -> DispatchResult;
+
+	fn do_mint_dynamic_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
+
+	fn do_mint_stable_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
 	) -> DispatchResult;
 
 	/// Do Mint

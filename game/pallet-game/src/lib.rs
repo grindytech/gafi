@@ -98,7 +98,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Distribution, Fraction};
+	use gafi_support::game::{Bundle};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -303,10 +303,10 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Storing the mining pool fee
-	#[pallet::storage]
-	pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
+	// /// Storing the mining pool fee
+	// #[pallet::storage]
+	// pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
+	// 	StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
@@ -314,16 +314,7 @@ pub mod pallet {
 		_,
 		Blake2_128,
 		T::PoolId,
-		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxItem>,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	pub(super) type DistributionOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128,
-		T::PoolId,
-		BoundedVec<Fraction<T::CollectionId, T::ItemId>, T::MaxItem>,
+		BundleFor<T, I>,
 		ValueQuery,
 	>;
 
@@ -583,6 +574,7 @@ pub mod pallet {
 		UnknownAuction,
 		UnknownBid,
 		UnknownAcceptance,
+		UnknowMiningPool,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -1171,7 +1163,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
-			distribution: Distribution<T::CollectionId, T::ItemId>,
+			distribution: Bundle<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {
