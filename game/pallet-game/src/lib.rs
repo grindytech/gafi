@@ -98,7 +98,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Distribution, Fraction};
+	use gafi_support::game::{Bundle};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -292,10 +292,21 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing the mining pool fee
 	#[pallet::storage]
-	pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
+	pub(super) type MaxSupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		Blake2_128Concat,
+		T::ItemId,
+		Option<u32>,
+		OptionQuery,
+	>;
+
+	// /// Storing the mining pool fee
+	// #[pallet::storage]
+	// pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
+	// 	StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
@@ -303,16 +314,7 @@ pub mod pallet {
 		_,
 		Blake2_128,
 		T::PoolId,
-		BoundedVec<Package<T::CollectionId, T::ItemId>, T::MaxItem>,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	pub(super) type DistributionOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128,
-		T::PoolId,
-		BoundedVec<Fraction<T::CollectionId, T::ItemId>, T::MaxItem>,
+		BundleFor<T, I>,
 		ValueQuery,
 	>;
 
@@ -572,6 +574,7 @@ pub mod pallet {
 		UnknownAuction,
 		UnknownBid,
 		UnknownAcceptance,
+		UnknowMiningPool,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -629,6 +632,10 @@ pub mod pallet {
 		NotSwap,
 		NotAuction,
 		NotSetBuy,
+
+		//mining pool
+		InfiniteSupply,
+		NotInfiniteSupply,
 	}
 
 	#[pallet::hooks]
@@ -703,10 +710,10 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			config: ItemConfig,
-			amount: u32,
+			max_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
+			Self::do_create_item(&sender, &collection, &item, &config, max_supply)?;
 			Ok(())
 		}
 
@@ -720,9 +727,7 @@ pub mod pallet {
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			Self::do_add_item(&sender, &collection, &item, amount)?;
-
+			// Self::do_add_item(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
@@ -768,7 +773,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let destination = T::Lookup::lookup(dest)?;
 			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
-
 			Ok(())
 		}
 
@@ -1159,7 +1163,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
-			distribution: Distribution<T::CollectionId, T::ItemId>,
+			distribution: Bundle<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {

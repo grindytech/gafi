@@ -133,22 +133,26 @@ impl pallet_nfts::Config for Test {
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
-pub const MAX_ITEM_MINT_VAL: u32 = 10;
+pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
+pub const MINING_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
+pub const MAX_ITEM_MINT_VAL: u32 = 10;
 pub const MAX_GAME_SHARE_VAL: u32 = 10;
 pub const MAX_BUNDLE_VAL: u32 = 5;
-pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 	pub MaxGameCollection: u32 = MAX_GAME_COLLECTION_VAL;
-	pub MaxItem: u32 = 10;
-	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
+	pub MiningPoolDeposit: u128 = MINING_DEPOSIT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
-	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 	pub BundleDeposit: u128 = BUNDLE_DEPOSIT_VAL;
+
+	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
+	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 	pub MaxGameShare: u32 = MAX_GAME_SHARE_VAL;
+	
+	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub MaxItem: u32 = 10;
 }
 
 impl pallet_game::Config for Test {
@@ -162,7 +166,7 @@ impl pallet_game::Config for Test {
 	type GameId = u32;
 	type TradeId = u32;
 	type PoolId = u32;
-	type MiningPoolDeposit = BundleDeposit;
+	type MiningPoolDeposit = MiningPoolDeposit;
 	type GameDeposit = GameDeposit;
 	type MaxGameCollection = MaxGameCollection;
 	type MaxGameShare = MaxGameShare;

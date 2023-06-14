@@ -22,10 +22,6 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
-#[cfg(test)]
-pub(crate) type PackageFor<T> =
-	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
-
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
 	<T as pallet::Config<I>>::MaxBundle,
@@ -90,7 +86,6 @@ pub enum ItemBalanceStatus {
 	Free,
 }
 
-
 /// Types of the mining pool
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum PoolType {
@@ -105,6 +100,9 @@ pub enum PoolType {
 pub struct PoolDetails<AccountId, DepositBalance> {
 	/// pool type
 	pub(super) pool_type: PoolType,
+
+	pub(super) fee: DepositBalance,
+	
 	/// game's owner.
 	pub(super) owner: AccountId,
 	/// The total balance deposited by the owner for all the storage data associated with this

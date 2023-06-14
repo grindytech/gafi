@@ -1,4 +1,4 @@
-use super::{Bundle, Package, TradeType, Distribution};
+use super::{Bundle, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::TokenError;
 
@@ -95,30 +95,30 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `config`: item config
-	/// - `amount`: amount
+	/// - `max_supply`: maximum number of item, None indicate an infinite supply 
 	fn do_create_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
 		config: &ItemConfig,
-		amount: Amount,
+		max_supply: Option<u32>,
 	) -> DispatchResult;
 
-	/// Do add item
-	///
-	/// Add number amount of item in collection
-	///
-	/// Parameters:
-	/// - `who`: signer
-	/// - `collection`: collection id
-	/// - `item`: item id
-	/// - `amount`: amount
-	fn do_add_item(
-		who: &AccountId,
-		collection: &CollectionId,
-		item: &ItemId,
-		amount: Amount,
-	) -> DispatchResult;
+	// Do add item
+	//
+	// Add number amount of item in collection
+	//
+	// Parameters:
+	// - `who`: signer
+	// - `collection`: collection id
+	// - `item`: item id
+	// - `amount`: amount
+	// fn do_add_item(
+	// 	who: &AccountId,
+	// 	collection: &CollectionId,
+	// 	item: &ItemId,
+	// 	amount: Amount,
+	// ) -> DispatchResult;
 }
 
 ///Trait to provide an interface for NFTs mining
@@ -134,7 +134,7 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 	fn do_create_stable_pool(
 		pool: &PoolId,
 		who: &AccountId,
-		distribution: Distribution<CollectionId, ItemId>,
+		dist: Bundle<CollectionId, ItemId>,
 		fee: Price,
 		admin: &AccountId,
 	)-> DispatchResult;
@@ -142,6 +142,20 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 	fn do_withdraw_pool(
 		pool: &PoolId,
 		who: &AccountId,
+	) -> DispatchResult;
+
+	fn do_mint_dynamic_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
+
+	fn do_mint_stable_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
 	) -> DispatchResult;
 
 	/// Do Mint
