@@ -55,8 +55,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, Mining, MutateCollection, MutateItem, Package, Retail,
-	Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist, LootTable,
+	Auction, CreateItem, GameSetting, Level, LootTable, Mining, MutateCollection, MutateItem,
+	Package, Retail, Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
@@ -105,17 +105,19 @@ pub mod pallet {
 	pub struct Pallet<T, I = ()>(_);
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber> {
+	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> {
 		fn game(i: u16) -> GameId;
 
 		fn trade(i: u16) -> TradeId;
 
 		fn block(i: u16) -> BlockNumber;
+
+		fn pool(i: u16) -> PoolId;
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>>
-		BenchmarkHelper<GameId, TradeId, BlockNumber> for ()
+	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>, PoolId: From<u16>>
+		BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> for ()
 	{
 		fn game(i: u16) -> GameId {
 			i.into()
@@ -126,6 +128,10 @@ pub mod pallet {
 		}
 
 		fn block(i: u16) -> BlockNumber {
+			i.into()
+		}
+
+		fn pool(i: u16) -> PoolId {
 			i.into()
 		}
 	}
@@ -206,7 +212,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
 
-		/// Maximum number of loot that a table could has 
+		/// Maximum number of loot that a table could has
 		#[pallet::constant]
 		type MaxLoot: Get<u32>;
 
@@ -216,7 +222,7 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
 	}
 
 	/// Store basic game info
@@ -672,7 +678,8 @@ pub mod pallet {
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		#[transactional]
-		pub fn create_collection(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
+		pub fn create_collection(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
+			let admin = T::Lookup::lookup(admin)?;
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(&sender, &admin)?;
 			Ok(())
@@ -942,7 +949,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(23)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::lock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::lock_item_transfer())]
 		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
@@ -953,7 +960,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::unlock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::unlock_item_transfer())]
 		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
