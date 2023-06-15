@@ -139,6 +139,7 @@ pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
 pub const MAX_ITEM_MINT_VAL: u32 = 10;
 pub const MAX_GAME_SHARE_VAL: u32 = 10;
 pub const MAX_BUNDLE_VAL: u32 = 5;
+pub const MAX_LOOT: u32 = 10;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
@@ -153,6 +154,7 @@ parameter_types! {
 	
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxItem: u32 = 10;
+	pub MaxLoot: u32 = MAX_LOOT;
 }
 
 impl pallet_game::Config for Test {
@@ -175,6 +177,7 @@ impl pallet_game::Config for Test {
 	type UpgradeDeposit = UpgradeDeposit;
 	type BundleDeposit = BundleDeposit;
 	type MaxBundle = MaxBundle;
+	type MaxLoot = MaxLoot;
 }
 
 parameter_types! {

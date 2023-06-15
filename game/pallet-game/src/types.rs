@@ -30,7 +30,7 @@ pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 
 pub(crate) type LootTableFor<T, I = ()> = BoundedVec<
 	Loot<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
-	<T as pallet::Config<I>>::MaxItem,
+	<T as pallet::Config<I>>::MaxLoot,
 >;
 
 /// Information about a game.

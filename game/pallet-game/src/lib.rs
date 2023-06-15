@@ -202,9 +202,13 @@ pub mod pallet {
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Maximum collection in a bundle
+		/// Maximum collection in a bundle for trade
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
+
+		/// Maximum number of loot that a table could has 
+		#[pallet::constant]
+		type MaxLoot: Get<u32>;
 
 		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
@@ -314,7 +318,7 @@ pub mod pallet {
 		_,
 		Blake2_128,
 		T::PoolId,
-		BoundedVec<Loot<T::CollectionId, T::ItemId>, T::MaxItem>,
+		BoundedVec<Loot<T::CollectionId, T::ItemId>, T::MaxLoot>,
 		ValueQuery,
 	>;
 
@@ -583,6 +587,8 @@ pub mod pallet {
 		ExceedMaxGameShare,
 		/// Exceed max collections in a bundle
 		ExceedMaxBundle,
+		/// Exceed max loots in a table
+		ExceedMaxLoot,
 
 		SoldOut,
 		/// Too many attempts

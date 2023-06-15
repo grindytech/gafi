@@ -132,17 +132,6 @@ const TEST_BUNDLE1: [PackageFor<Test>; 3] = [
 	},
 ];
 
-fn do_mint_item(collection: u32, amount: u32) -> sr25519::Public {
-	let player = new_account(10, 100_000 * unit(GAKI));
-	assert_ok!(PalletGame::mint(
-		RuntimeOrigin::signed(player.clone()),
-		collection,
-		player.clone(),
-		amount
-	));
-	player
-}
-
 fn do_all_create_dynamic_pool(fee: u128) -> (sr25519::Public, sr25519::Public) {
 	let (owner, admin) = do_create_game();
 	do_create_collection(0, &admin);
@@ -168,44 +157,28 @@ fn do_all_create_dynamic_pool(fee: u128) -> (sr25519::Public, sr25519::Public) {
 	(owner, admin)
 }
 
-// fn do_all_create_stable_pool(
-// 	fee: u128,
-// 	dist: Vec<LootFor<Test>>,
-// ) -> (sr25519::Public, sr25519::Public) {
-// 	let (owner, admin) = do_create_game();
-// 	let latest_id = NextGameId::<Test>::get().unwrap() - 1;
-// 	do_create_collection(latest_id, &admin);
+fn do_all_create_stable_pool(fee: u128) -> (sr25519::Public, sr25519::Public) {
+	let (owner, admin) = do_create_game();
+	do_create_collection(0, &admin);
 
-// 	for pack in dist.clone() {
-// 		assert_ok!(PalletGame::create_item(
-// 			RuntimeOrigin::signed(admin.clone()),
-// 			latest_id,
-// 			pack.unwrap().item,
-// 			default_item_config(),
-// 			None
-// 		));
-// 	}
-// 	assert_ok!(PalletGame::create_stable_pool(
-// 		RuntimeOrigin::signed(owner.clone()),
-// 		dist.to_vec(),
-// 		fee,
-// 		admin.clone(),
-// 	));
-// 	(owner, admin)
-// }
+	for package in TEST_BUNDLE.clone() {
+		assert_ok!(PalletGame::create_item(
+			RuntimeOrigin::signed(admin.clone()),
+			package.collection,
+			package.item,
+			default_item_config(),
+			None
+		));
+	}
 
-fn do_create_dynamic_pool(
-	owner: &sr25519::Public,
-	admin: &sr25519::Public,
-	fee: u128,
-	source: [LootFor<Test>; 3],
-) {
-	assert_ok!(PalletGame::create_dynamic_pool(
+	assert_ok!(PalletGame::create_stable_pool(
 		RuntimeOrigin::signed(owner.clone()),
-		source.to_vec(),
+		TEST_TABLE.clone().to_vec(),
 		fee,
-		admin.clone(),
+		admin.clone()
 	));
+
+	(owner, admin)
 }
 
 fn create_account_with_item(
@@ -1557,6 +1530,7 @@ fn create_stable_pool_should_works() {
 	})
 }
 
+#[test]
 fn create_stable_pool_should_fails() {
 	new_test_ext().execute_with(|| {
 		let (owner, admin) = do_create_game();
@@ -1608,37 +1582,43 @@ fn create_stable_pool_should_fails() {
 	})
 }
 
-// #[test]
-// fn mint_stable_pool_should_works() {
-// 	new_test_ext().execute_with(|| {
-// 		run_to_block(1);
-// 		let mint_fee = 2 * unit(GAKI);
-// 		let (owner, _) = do_all_create_stable_pool(mint_fee, TEST_TABLE.clone().to_vec());
-// 		let player = new_account(2, 1000_000 * unit(GAKI));
-// 		{
-// 			let owner_balance = Balances::free_balance(owner.clone());
-// 			let player_balance = Balances::free_balance(player.clone());
+#[test]
+fn mint_stable_pool_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let mint_fee = 2 * unit(GAKI);
+		let (owner, _) = do_all_create_stable_pool(mint_fee);
+		let player = new_account(2, 1000_000 * unit(GAKI));
+		{
+			let owner_balance = Balances::free_balance(owner.clone());
+			let player_balance = Balances::free_balance(player.clone());
 
-// 			let amount = 10;
-// 			assert_ok!(PalletGame::mint(
-// 				RuntimeOrigin::signed(player.clone()),
-// 				0,
-// 				player.clone(),
-// 				amount,
-// 			));
+			let amount = 10;
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				amount,
+			));
 
-// 			assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
-// 			assert_eq!(
-// 				Balances::free_balance(player.clone()),
-// 				player_balance - (mint_fee * amount as u128 as u128)
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(owner.clone()),
-// 				owner_balance + (mint_fee * amount as u128 as u128)
-// 			);
-// 		}
-// 	})
-// }
+			let mut nfts = 0;
+			for package in TEST_BUNDLE.clone() {
+				nfts +=
+					ItemBalanceOf::<Test>::get((player.clone(), package.collection, package.item));
+			}
+			assert_eq!(nfts, amount);
+
+			assert_eq!(
+				Balances::free_balance(player.clone()),
+				player_balance - (mint_fee * amount as u128 as u128)
+			);
+			assert_eq!(
+				Balances::free_balance(owner.clone()),
+				owner_balance + (mint_fee * amount as u128 as u128)
+			);
+		}
+	})
+}
 
 #[test]
 fn create_dynamic_pool_should_works() {

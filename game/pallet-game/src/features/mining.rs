@@ -29,7 +29,7 @@ impl<T: Config<I>, I: 'static>
 		}
 
 		let table = LootTableFor::<T, I>::try_from(loot_table.clone())
-			.map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+			.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 		LootTableOf::<T, I>::insert(pool, table);
 
 		// create new pool
@@ -69,7 +69,7 @@ impl<T: Config<I>, I: 'static>
 
 		// store for random
 		let table =
-			LootTableFor::<T, I>::try_from(loot_table).map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+			LootTableFor::<T, I>::try_from(loot_table).map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 
 		LootTableOf::<T, I>::insert(pool, table);
 
@@ -175,7 +175,7 @@ impl<T: Config<I>, I: 'static>
 				}
 
 				let table = LootTableFor::<T, I>::try_from(table)
-					.map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+					.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 				LootTableOf::<T, I>::insert(pool, table);
 			}
 		}
@@ -223,7 +223,7 @@ impl<T: Config<I>, I: 'static>
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(
-							position > 0 && position < total_item,
+							position < total_item,
 							Error::<T, I>::MintFailed
 						);
 						let loot = Self::get_loot(&table, position);
