@@ -93,21 +93,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	// 	return Err(Error::<T, I>::WithdrawReserveFailed.into())
 	// }
 
-	pub(crate) fn add_total_reserve(pool: &T::PoolId, amount: u32) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalWeightOf::<T, I>::get(pool);
-		TotalWeightOf::<T, I>::insert(pool, total.saturating_add(amount));
-		Ok(())
-	}
-
-	pub(crate) fn sub_total_reserve(pool: &T::PoolId, amount: u32) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalWeightOf::<T, I>::get(pool);
-		ensure!(total >= amount, Error::<T, I>::SoldOut);
-		TotalWeightOf::<T, I>::insert(pool, total.saturating_sub(amount));
-		Ok(())
-	}
-
 	pub(crate) fn transfer_item(
 		from: &T::AccountId,
 		collection: &T::CollectionId,

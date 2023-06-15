@@ -21,11 +21,16 @@ impl<T: Config<I>, I: 'static>
 		// Deposit balance
 		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
 
-		let table =
-			LootTableFor::<T, I>::try_from(loot_table.clone()).map_err(|_| Error::<T, I>::ExceedMaxItem)?;
-		LootTableOf::<T, I>::insert(pool, table);
+		// reserve resource
+		for loot in &loot_table {
+			if let Some(nft) = &loot.maybe_nft {
+				Self::reserved_item(who, &nft.collection, &nft.item, loot.weight)?;
+			}
+		}
 
-		Self::add_total_reserve(pool, Self::total_weight(&loot_table))?;
+		let table = LootTableFor::<T, I>::try_from(loot_table.clone())
+			.map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+		LootTableOf::<T, I>::insert(pool, table);
 
 		// create new pool
 		let pool_details = PoolDetails {
@@ -63,15 +68,10 @@ impl<T: Config<I>, I: 'static>
 		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
 
 		// store for random
-		{
-			LootTableOf::<T, I>::try_mutate(&pool, |reserve_vec| -> DispatchResult {
-				reserve_vec
-					.try_append(loot_table.clone().into_mut())
-					.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
-				Ok(())
-			})?;
-			Self::add_total_reserve(pool, 100_000)?;
-		}
+		let table =
+			LootTableFor::<T, I>::try_from(loot_table).map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+
+		LootTableOf::<T, I>::insert(pool, table);
 
 		let pool_details = PoolDetails {
 			pool_type: PoolType::Stable,
@@ -117,12 +117,11 @@ impl<T: Config<I>, I: 'static>
 		amount: u32,
 	) -> DispatchResult {
 		// validating item amount
+		let mut table = LootTableOf::<T, I>::get(pool).clone().into();
 		{
-			let total_item = TotalWeightOf::<T, I>::get(pool);
-
+			let total_item = Self::total_weight(&table);
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
-
 			ensure!(
 				amount <= T::MaxMintItem::get(),
 				Error::<T, I>::ExceedAllowedAmount
@@ -143,15 +142,13 @@ impl<T: Config<I>, I: 'static>
 			// random minting
 			// let mut items: Vec<T::ItemId> = [].to_vec();
 			{
-				let mut total_item = TotalWeightOf::<T, I>::get(pool);
+				let mut total_item = Self::total_weight(&table);
 				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
-				let mut table = LootTableOf::<T, I>::get(pool).clone().into();
-
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(
-							position > 0 && position < total_item,
+							position < total_item,
 							Error::<T, I>::MintFailed
 						);
 						let loot = Self::take_loot(&mut table, position);
@@ -180,7 +177,6 @@ impl<T: Config<I>, I: 'static>
 				let table = LootTableFor::<T, I>::try_from(table)
 					.map_err(|_| Error::<T, I>::ExceedMaxItem)?;
 				LootTableOf::<T, I>::insert(pool, table);
-				Self::sub_total_reserve(pool, amount)?;
 			}
 		}
 
@@ -219,9 +215,10 @@ impl<T: Config<I>, I: 'static>
 			// random minting
 			// let mut items: Vec<T::ItemId> = [].to_vec();
 			{
-				let mut total_item = TotalWeightOf::<T, I>::get(pool);
+				let table = LootTableOf::<T, I>::get(pool).into();
+				let mut total_item = Self::total_weight(&table);
 				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
-				let reserve = LootTableOf::<T, I>::get(pool);
+
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
@@ -229,7 +226,7 @@ impl<T: Config<I>, I: 'static>
 							position > 0 && position < total_item,
 							Error::<T, I>::MintFailed
 						);
-						let loot = Self::get_loot(&reserve.clone().into(), position);
+						let loot = Self::get_loot(&table, position);
 						match loot {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {

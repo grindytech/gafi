@@ -318,11 +318,6 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Item reserve created by the owner, random mining by player
-	#[pallet::storage]
-	pub(super) type TotalWeightOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::PoolId, u32, ValueQuery>;
-
 	#[pallet::storage]
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
