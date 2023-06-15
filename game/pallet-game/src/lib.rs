@@ -430,7 +430,7 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			maybe_supply: Option<u32>,
 		},
 		ItemAdded {
 			who: T::AccountId,
@@ -712,24 +712,24 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			config: ItemConfig,
-			max_supply: Option<u32>,
+			maybe_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, max_supply)?;
+			Self::do_create_item(&sender, &collection, &item, &config, maybe_supply)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
 		#[transactional]
-		pub fn add_item(
+		pub fn add_supply(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			// Self::do_add_item(&sender, &collection, &item, amount)?;
+			Self::do_add_supply(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 

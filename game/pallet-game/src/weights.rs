@@ -38,7 +38,7 @@ pub trait WeightInfo {
 	fn create_game(s: u32, ) -> Weight;
 	fn create_game_collection(s: u32, ) -> Weight;
 	fn create_item(s: u32, ) -> Weight;
-	fn add_item(s: u32, ) -> Weight;
+	fn add_supply(s: u32, ) -> Weight;
 	fn mint(s: u32, ) -> Weight;
 	fn burn(s: u32, ) -> Weight;
 	fn transfer(s: u32, ) -> Weight;
@@ -164,7 +164,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// Storage: Game TotalWeightOf (r:1 w:1)
 	/// Proof: Game TotalWeightOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn add_item(_s: u32, ) -> Weight {
+	fn add_supply(_s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `508`
 		//  Estimated: `3638`
@@ -843,7 +843,7 @@ impl WeightInfo for () {
 	/// Storage: Game TotalWeightOf (r:1 w:1)
 	/// Proof: Game TotalWeightOf (max_values: None, max_size: Some(16), added: 2491, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn add_item(_s: u32, ) -> Weight {
+	fn add_supply(_s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `508`
 		//  Estimated: `3638`

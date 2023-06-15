@@ -76,7 +76,7 @@ The highest bid when the auction expired is the winner.
 ### Permissioned dispatchables
 * `add_game_collection`: Add exists a collection to a game.
 * `create_item`: Create NFTs.
-* `add_item`: Add NFTs.
+* `add_supply`: Add NFTs.
 * `set_upgrade_item`: Set NFT upgrade rules.
 * `remove_collection`: Remove a collection from a game.
 * `lock_item_transfer`: Lock NFT to prevent any trade.

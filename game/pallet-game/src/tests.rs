@@ -505,6 +505,25 @@ fn create_item_should_works() {
 }
 
 #[test]
+fn add_supply_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let (owner, admin) = do_create_game();
+		do_create_collection(0, &admin);
+		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+
+		assert_ok!(PalletGame::add_supply(
+			RuntimeOrigin::signed(admin.clone()),
+			0,
+			0,
+			1000
+		));
+
+		assert_eq!(MaxSupplyOf::<Test>::get(0, 0).unwrap().unwrap(), 2000);
+	})
+}
+
+#[test]
 pub fn burn_items_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);

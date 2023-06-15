@@ -251,18 +251,18 @@ benchmarks_instance_pallet! {
 		let (caller, admin) = do_create_collection::<T, I>(s, 0);
 		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0),
-			config: default_item_config(), amount: 10 };
+			config: default_item_config(), maybe_supply: Some(10) };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::ItemCreated { who: caller,
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
+			item: <T as pallet_nfts::Config>::Helper::item(0), maybe_supply: Some(10) }.into());
 	}
 
-	add_item {
+	add_supply {
 		let s in 0 .. MAX as u32;
 		let (caller, admin) = do_create_item::<T, I>(s, 0, 0, 0, 10);
-		let call = Call::<T, I>::add_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
+		let call = Call::<T, I>::add_supply { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
