@@ -1,13 +1,14 @@
 use codec::{Decode, Encode};
-use sp_runtime::Permill;
 use core::primitive::u32;
 use frame_support::{pallet_prelude::MaxEncodedLen, RuntimeDebug};
 use scale_info::TypeInfo;
+use sp_runtime::Permill;
 use sp_std::vec::Vec;
 
 use super::Amount;
 
 pub type Bundle<CollectionId, ItemId> = Vec<Package<CollectionId, ItemId>>;
+pub type LootTable<CollectionId, ItemId> = Vec<Loot<CollectionId, ItemId>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Package<CollectionId, ItemId> {
@@ -45,4 +46,16 @@ pub enum TradeType {
 pub enum PoolType {
 	Dynamic,
 	Fixed,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+pub struct NFT<CollectionId, ItemId> {
+	pub collection: CollectionId,
+	pub item: ItemId,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+pub struct Loot<CollectionId, ItemId> {
+	pub maybe_nft: Option<NFT<CollectionId, ItemId>>,
+	pub weight: u32,
 }
