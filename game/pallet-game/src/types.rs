@@ -1,5 +1,6 @@
 use crate::*;
 use codec::{Decode, Encode};
+use gafi_support::game::Loot;
 use core::primitive::u32;
 use frame_support::{
 	pallet_prelude::{BoundedVec, MaxEncodedLen},
@@ -25,6 +26,11 @@ pub type ItemUpgradeConfigFor<T, I = ()> =
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
 	<T as pallet::Config<I>>::MaxBundle,
+>;
+
+pub(crate) type LootTableFor<T, I = ()> = BoundedVec<
+	Loot<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
+	<T as pallet::Config<I>>::MaxLoot,
 >;
 
 /// Information about a game.

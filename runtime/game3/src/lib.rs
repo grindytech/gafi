@@ -45,7 +45,7 @@ pub use frame_support::{
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_nfts::{PalletFeatures, weights::SubstrateWeight as NftsWeight};
+use pallet_nfts::{weights::SubstrateWeight as NftsWeight, PalletFeatures};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
@@ -386,6 +386,7 @@ parameter_types! {
 	pub MaxMintItem: u32 = 10;
 	pub MaxItem: u32 = 20;
 	pub MaxBundle: u32 = 10;
+	pub MaxLoot: u32 = 10;
 }
 
 impl pallet_game::Config for Runtime {
@@ -408,6 +409,7 @@ impl pallet_game::Config for Runtime {
 	type BundleDeposit = BundleDeposit;
 	type TradeId = u32;
 	type MaxBundle = MaxBundle;
+	type MaxLoot = MaxLoot;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }

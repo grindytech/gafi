@@ -52,61 +52,46 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// With position = 4, result item = 1.
 	/// With position = 7, result item = 2.
 	/// With position = 10, result item = 3.
-	pub(crate) fn withdraw_reserve(
-		pool: &T::PoolId,
-		position: u32,
-	) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
-		ReserveOf::<T, I>::try_mutate(pool, |reserve_vec| {
-			let mut tmp = 0_u32;
-			for reserve in reserve_vec.into_iter() {
-				if reserve.amount > 0 && reserve.amount + tmp >= position {
-					*reserve = reserve.clone().sub(1);
-					return Ok(Package {
-						collection: reserve.clone().collection,
-						item: reserve.clone().item,
-						amount: 1,
-					})
-				} else {
-					tmp += reserve.amount;
-				}
-			}
-			return Err(Error::<T, I>::WithdrawReserveFailed.into())
-		})
-	}
+	// pub(crate) fn withdraw_reserve(
+	// 	pool: &T::PoolId,
+	// 	position: u32,
+	// ) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
+	// 	LootTableOf::<T, I>::try_mutate(pool, |reserve_vec| {
+	// 		let mut tmp = 0_u32;
+	// 		for reserve in reserve_vec.into_iter() {
+	// 			if reserve.amount > 0 && reserve.amount + tmp >= position {
+	// 				*reserve = reserve.clone().sub(1);
+	// 				return Ok(Package {
+	// 					collection: reserve.clone().collection,
+	// 					item: reserve.clone().item,
+	// 					amount: 1,
+	// 				})
+	// 			} else {
+	// 				tmp += reserve.amount;
+	// 			}
+	// 		}
+	// 		return Err(Error::<T, I>::WithdrawReserveFailed.into())
+	// 	})
+	// }
 
-	pub(crate) fn get_reserve(
-		reserve: &BundleFor<T, I>,
-		position: u32,
-	) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
-		let mut tmp = 0_u32;
-		for reserve in reserve.into_iter() {
-			if reserve.amount > 0 && reserve.amount + tmp >= position {
-				return Ok(Package {
-					collection: reserve.clone().collection,
-					item: reserve.clone().item,
-					amount: 1,
-				})
-			} else {
-				tmp += reserve.amount;
-			}
-		}
-		return Err(Error::<T, I>::WithdrawReserveFailed.into())
-	}
-
-	pub(crate) fn add_total_reserve(pool: &T::PoolId, amount: u32) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalReserveOf::<T, I>::get(pool);
-		TotalReserveOf::<T, I>::insert(pool, total.saturating_add(amount));
-		Ok(())
-	}
-
-	pub(crate) fn sub_total_reserve(pool: &T::PoolId, amount: u32) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalReserveOf::<T, I>::get(pool);
-		ensure!(total >= amount, Error::<T, I>::SoldOut);
-		TotalReserveOf::<T, I>::insert(pool, total.saturating_sub(amount));
-		Ok(())
-	}
+	// pub(crate) fn get_reserve(
+	// 	reserve: &BundleFor<T, I>,
+	// 	position: u32,
+	// ) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
+	// 	let mut tmp = 0_u32;
+	// 	for reserve in reserve.into_iter() {
+	// 		if reserve.amount > 0 && reserve.amount + tmp >= position {
+	// 			return Ok(Package {
+	// 				collection: reserve.clone().collection,
+	// 				item: reserve.clone().item,
+	// 				amount: 1,
+	// 			})
+	// 		} else {
+	// 			tmp += reserve.amount;
+	// 		}
+	// 	}
+	// 	return Err(Error::<T, I>::WithdrawReserveFailed.into())
+	// }
 
 	pub(crate) fn transfer_item(
 		from: &T::AccountId,
@@ -206,10 +191,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub fn count_amount(bundle: &Bundle<T::CollectionId, T::ItemId>) -> u32 {
+	pub fn total_weight(table: &LootTable<T::CollectionId, T::ItemId>) -> u32 {
 		let mut counter = 0;
-		for package in bundle {
-			counter += package.amount;
+		for package in table {
+			counter += package.weight;
 		}
 		counter
 	}
@@ -283,29 +268,29 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 }
 
-#[cfg(test)]
-#[test]
-fn withdraw_reserve_should_works() {
-	use crate::mock::{new_test_ext, run_to_block, PalletGame, Test};
+// #[cfg(test)]
+// #[test]
+// fn withdraw_reserve_should_works() {
+// 	use crate::mock::{new_test_ext, run_to_block, PalletGame, Test};
 
-	new_test_ext().execute_with(|| {
-		run_to_block(2);
+// 	new_test_ext().execute_with(|| {
+// 		run_to_block(2);
 
-		// let _ = ReserveOf::<Test>::try_mutate(0, |reserve_vec| {
-		// 	let _ = reserve_vec.try_push(Item::new(1, 9));
-		// 	let _ = reserve_vec.try_push(Item::new(2, 5));
-		// 	let _ = reserve_vec.try_push(Item::new(3, 1));
-		// 	Ok(())
-		// })
-		// .map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
+// 		// let _ = LootTableOf::<Test>::try_mutate(0, |reserve_vec| {
+// 		// 	let _ = reserve_vec.try_push(Item::new(1, 9));
+// 		// 	let _ = reserve_vec.try_push(Item::new(2, 5));
+// 		// 	let _ = reserve_vec.try_push(Item::new(3, 1));
+// 		// 	Ok(())
+// 		// })
+// 		// .map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
 
-		// let item = PalletGame::withdraw_reserve(&0, 0);
-		// assert_eq!(item.unwrap(), 1);
+// 		// let item = PalletGame::withdraw_reserve(&0, 0);
+// 		// assert_eq!(item.unwrap(), 1);
 
-		// let item = PalletGame::withdraw_reserve(&0, 9);
-		// assert_eq!(item.unwrap(), 2);
+// 		// let item = PalletGame::withdraw_reserve(&0, 9);
+// 		// assert_eq!(item.unwrap(), 2);
 
-		// let item = PalletGame::withdraw_reserve(&0, 13);
-		// assert_eq!(item.unwrap(), 3);
-	})
-}
+// 		// let item = PalletGame::withdraw_reserve(&0, 13);
+// 		// assert_eq!(item.unwrap(), 3);
+// 	})
+// }
