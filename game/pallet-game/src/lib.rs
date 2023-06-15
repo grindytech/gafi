@@ -98,7 +98,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Loot};
+	use gafi_support::game::{Bundle, Loot, NFT};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -445,10 +445,10 @@ pub mod pallet {
 			amount: u32,
 		},
 		Minted {
+			pool: T::PoolId,
 			who: T::AccountId,
 			target: T::AccountId,
-			collection: T::CollectionId,
-			items: Vec<T::ItemId>,
+			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
 		},
 		Burned {
 			who: T::AccountId,
@@ -564,6 +564,12 @@ pub mod pallet {
 			who: T::AccountId,
 			amount: u32,
 			ask_unit_price: BalanceOf<T, I>,
+		},
+		MiningPoolCreated {
+			pool: T::PoolId,
+			who: T::AccountId,
+			pool_type: PoolType,
+			table: LootTable<T::CollectionId, T::ItemId>,
 		},
 	}
 
@@ -1152,7 +1158,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(39)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
 		#[transactional]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
@@ -1168,7 +1174,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(40)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
 		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
@@ -1183,14 +1189,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(41)]
-		#[pallet::weight(0)]
-		#[transactional]
-		pub fn with_draw_pool(origin: OriginFor<T>, pool: T::PoolId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_withdraw_pool(&pool, &sender)?;
-			Ok(())
-		}
 	}
 
 	#[pallet::validate_unsigned]

@@ -7,7 +7,7 @@ use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::Bundle;
+use gafi_support::game::{Bundle, Loot, NFT};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_std::vec;
@@ -113,19 +113,82 @@ fn new_account_with_item<T: Config<I>, I: 'static>(
 	(player, owner, admin)
 }
 
-// fn do_mint_item<T: Config<I>, I: 'static>(
-// 	s: u32,
-// 	miner: &T::AccountId,
-// 	collection: u16,
-// 	amount: u32,
-// ) {
-// 	assert_ok!(PalletGame::<T, I>::mint(
-// 		RawOrigin::Signed(miner.clone()).into(),
-// 		<T as pallet_nfts::Config>::Helper::collection(collection),
-// 		T::Lookup::unlookup(miner.clone()),
-// 		amount,
-// 	));
-// }
+fn do_create_dynamic_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
+	let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+
+	let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(0),
+			}),
+			weight: 10,
+		},
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(1),
+			}),
+			weight: 10,
+		},
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(2),
+			}),
+			weight: 10,
+		},
+	];
+
+	assert_ok!(PalletGame::<T, I>::create_dynamic_pool(
+		RawOrigin::Signed(who.clone()).into(),
+		table.clone(),
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		T::Lookup::unlookup(who.clone()),
+	));
+
+	(who.clone(), who)
+}
+
+fn do_create_stable_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
+	let (owner, admin) = do_create_collection::<T, I>(s);
+	do_create_item::<T, I>(s, &admin, 0, 0, None);
+	do_create_item::<T, I>(s, &admin, 0, 1, None);
+	do_create_item::<T, I>(s, &admin, 0, 2, None);
+
+	let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(0),
+			}),
+			weight: 10,
+		},
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(1),
+			}),
+			weight: 10,
+		},
+		Loot {
+			maybe_nft: Some(NFT {
+				collection: <T as pallet_nfts::Config>::Helper::collection(0),
+				item: <T as pallet_nfts::Config>::Helper::item(2),
+			}),
+			weight: 10,
+		},
+	];
+
+	assert_ok!(PalletGame::<T, I>::create_stable_pool(
+		RawOrigin::Signed(owner.clone()).into(),
+		table.clone(),
+		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		T::Lookup::unlookup(admin.clone()),
+	));
+
+	(owner, admin)
+}
 
 fn do_set_upgrade_item<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	assert_ok!(PalletGame::<T, I>::set_upgrade_item(
@@ -272,23 +335,6 @@ benchmarks_instance_pallet! {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 }.into());
 	}
-
-// 	mint {
-// 		let s in 0 .. MAX as u32;
-// 		let (caller, admin) = do_create_item::<T, I>(s, 0, 0, 0, 10);
-
-// 		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-// 		let mint_to =   T::Lookup::unlookup(miner.clone());
-
-// 		let call = Call::<T, I>::mint { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-// 			mint_to: mint_to.clone(), amount: 1 };
-// 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller).into())? }
-// 	verify {
-// 		assert_last_event::<T, I>(Event::Minted { who: miner.clone(),
-// 			target: T::Lookup::lookup(mint_to.clone()).unwrap(),
-// 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-// 			items: vec![<T as pallet_nfts::Config>::Helper::item(0)] }.into());
-// 	}
 
 	burn {
 		let s in 0 .. MAX as u32;
@@ -869,4 +915,113 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	create_dynamic_pool {
+		let s in 0 .. MAX as u32;
+		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+
+		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(0),
+				}),
+				weight: 10,
+			},
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(1),
+				}),
+				weight: 10,
+			},
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(2),
+				}),
+				weight: 10,
+			},
+		];
+
+		let call = Call::<T, I>::create_dynamic_pool {
+			loot_table: table.clone(),
+			fee:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			admin: T::Lookup::unlookup(who.clone()),
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::MiningPoolCreated {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			who,
+			pool_type: PoolType::Dynamic,
+			table,
+		}.into() );
+	}
+
+	create_stable_pool {
+		let s in 0 .. MAX as u32;
+
+		let (who, admin) = do_create_collection::<T, I>(s);
+		do_create_item::<T, I>(s, &admin, 0, 0, None);
+		do_create_item::<T, I>(s, &admin, 0, 1, None);
+		do_create_item::<T, I>(s, &admin, 0, 2, None);
+
+		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(0),
+				}),
+				weight: 10,
+			},
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(1),
+				}),
+				weight: 10,
+			},
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(2),
+				}),
+				weight: 10,
+			},
+		];
+
+		let call = Call::<T, I>::create_stable_pool {
+			loot_table: table.clone(),
+			fee:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			admin: T::Lookup::unlookup(who.clone()),
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::MiningPoolCreated {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			who,
+			pool_type: PoolType::Stable,
+			table,
+		}.into() );
+	}
+
+	mint {
+		let s in 0 .. MAX as u32;
+
+		do_create_stable_pool::<T, I>(s);
+
+		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let mint_to =   T::Lookup::unlookup(miner.clone());
+
+		let call = Call::<T, I>::mint {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			mint_to: mint_to.clone(), amount: 10 };
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(miner.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::Minted {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			who: miner.clone(),
+			target: T::Lookup::lookup(mint_to.clone()).unwrap(),
+			nfts: vec![ NFT{collection: <T as pallet_nfts::Config>::Helper::collection(0), item: <T as pallet_nfts::Config>::Helper::item(0)}; 10] }.into());
+	}
 }

@@ -133,8 +133,6 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		admin: &AccountId,
 	) -> DispatchResult;
 
-	fn do_withdraw_pool(pool: &PoolId, who: &AccountId) -> DispatchResult;
-
 	fn do_mint_dynamic_pool(
 		pool: &PoolId,
 		who: &AccountId,
