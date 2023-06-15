@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, Mining};
+use gafi_support::game::{Bundle, Mining, NFT};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId> for Pallet<T, I>
@@ -43,6 +43,12 @@ impl<T: Config<I>, I: 'static>
 
 		// insert storage
 		PoolOf::<T, I>::insert(pool, pool_details);
+		Self::deposit_event(Event::<T, I>::MiningPoolCreated {
+			pool: *pool,
+			who: who.clone(),
+			pool_type: PoolType::Dynamic,
+			table: loot_table,
+		});
 
 		Ok(())
 	}
@@ -68,8 +74,8 @@ impl<T: Config<I>, I: 'static>
 		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
 
 		// store for random
-		let table =
-			LootTableFor::<T, I>::try_from(loot_table).map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
+		let table = LootTableFor::<T, I>::try_from(loot_table.clone())
+			.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 
 		LootTableOf::<T, I>::insert(pool, table);
 
@@ -82,6 +88,12 @@ impl<T: Config<I>, I: 'static>
 		};
 
 		PoolOf::<T, I>::insert(pool, pool_details);
+		Self::deposit_event(Event::<T, I>::MiningPoolCreated {
+			pool: *pool,
+			who: who.clone(),
+			pool_type: PoolType::Stable,
+			table: loot_table,
+		});
 		Ok(())
 	}
 
@@ -104,10 +116,6 @@ impl<T: Config<I>, I: 'static>
 			};
 		}
 		Err(Error::<T, I>::UnknowMiningPool.into())
-	}
-
-	fn do_withdraw_pool(pool: &T::PoolId, who: &T::AccountId) -> DispatchResult {
-		todo!()
 	}
 
 	fn do_mint_dynamic_pool(
@@ -140,17 +148,14 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
-			// let mut items: Vec<T::ItemId> = [].to_vec();
+			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
 				let mut total_item = Self::total_weight(&table);
 				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
-						ensure!(
-							position < total_item,
-							Error::<T, I>::MintFailed
-						);
+						ensure!(position < total_item, Error::<T, I>::MintFailed);
 						let loot = Self::take_loot(&mut table, position);
 						match loot {
 							Some(maybe_nft) =>
@@ -163,6 +168,7 @@ impl<T: Config<I>, I: 'static>
 										1,
 										ItemBalanceStatus::Free,
 									)?;
+									nfts.push(nft);
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
@@ -177,16 +183,16 @@ impl<T: Config<I>, I: 'static>
 				let table = LootTableFor::<T, I>::try_from(table)
 					.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 				LootTableOf::<T, I>::insert(pool, table);
+				Self::deposit_event(Event::<T, I>::Minted {
+					pool: *pool,
+					who: who.clone(),
+					target: target.clone(),
+					nfts,
+				});
+				return Ok(())
 			}
 		}
-
-		// Self::deposit_event(Event::<T, I>::Minted {
-		// 	who: who.clone(),
-		// 	target: target.clone(),
-		// 	collection: *collection,
-		// 	items,
-		// });
-		Ok(())
+		Err(Error::<T, I>::UnknowMiningPool.into())
 	}
 
 	fn do_mint_stable_pool(
@@ -213,7 +219,7 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
-			// let mut items: Vec<T::ItemId> = [].to_vec();
+			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let mut total_item = Self::total_weight(&table);
@@ -222,15 +228,13 @@ impl<T: Config<I>, I: 'static>
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
-						ensure!(
-							position < total_item,
-							Error::<T, I>::MintFailed
-						);
+						ensure!(position < total_item, Error::<T, I>::MintFailed);
 						let loot = Self::get_loot(&table, position);
 						match loot {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {
 									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
+									nfts.push(nft);
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
@@ -241,7 +245,15 @@ impl<T: Config<I>, I: 'static>
 					}
 				}
 			}
+
+			Self::deposit_event(Event::<T, I>::Minted {
+				pool: *pool,
+				who: who.clone(),
+				target: target.clone(),
+				nfts,
+			});
+			return Ok(())
 		}
-		Ok(())
+		Err(Error::<T, I>::UnknowMiningPool.into())
 	}
 }

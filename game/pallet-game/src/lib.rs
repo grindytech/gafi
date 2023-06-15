@@ -55,8 +55,8 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, Mining, MutateCollection, MutateItem, Package, Retail,
-	Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist, LootTable,
+	Auction, CreateItem, GameSetting, Level, LootTable, Mining, MutateCollection, MutateItem,
+	Package, Retail, Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
@@ -98,24 +98,26 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Loot};
+	use gafi_support::game::{Bundle, Loot, NFT};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
 	pub struct Pallet<T, I = ()>(_);
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber> {
+	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> {
 		fn game(i: u16) -> GameId;
 
 		fn trade(i: u16) -> TradeId;
 
 		fn block(i: u16) -> BlockNumber;
+
+		fn pool(i: u16) -> PoolId;
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>>
-		BenchmarkHelper<GameId, TradeId, BlockNumber> for ()
+	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>, PoolId: From<u16>>
+		BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> for ()
 	{
 		fn game(i: u16) -> GameId {
 			i.into()
@@ -126,6 +128,10 @@ pub mod pallet {
 		}
 
 		fn block(i: u16) -> BlockNumber {
+			i.into()
+		}
+
+		fn pool(i: u16) -> PoolId {
 			i.into()
 		}
 	}
@@ -206,7 +212,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
 
-		/// Maximum number of loot that a table could has 
+		/// Maximum number of loot that a table could has
 		#[pallet::constant]
 		type MaxLoot: Get<u32>;
 
@@ -216,7 +222,7 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
 	}
 
 	/// Store basic game info
@@ -430,7 +436,7 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			maybe_supply: Option<u32>,
 		},
 		ItemAdded {
 			who: T::AccountId,
@@ -439,10 +445,10 @@ pub mod pallet {
 			amount: u32,
 		},
 		Minted {
+			pool: T::PoolId,
 			who: T::AccountId,
 			target: T::AccountId,
-			collection: T::CollectionId,
-			items: Vec<T::ItemId>,
+			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
 		},
 		Burned {
 			who: T::AccountId,
@@ -559,6 +565,12 @@ pub mod pallet {
 			amount: u32,
 			ask_unit_price: BalanceOf<T, I>,
 		},
+		MiningPoolCreated {
+			pool: T::PoolId,
+			who: T::AccountId,
+			pool_type: PoolType,
+			table: LootTable<T::CollectionId, T::ItemId>,
+		},
 	}
 
 	#[pallet::error]
@@ -672,7 +684,8 @@ pub mod pallet {
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		#[transactional]
-		pub fn create_collection(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
+		pub fn create_collection(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
+			let admin = T::Lookup::lookup(admin)?;
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(&sender, &admin)?;
 			Ok(())
@@ -712,24 +725,24 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			config: ItemConfig,
-			max_supply: Option<u32>,
+			maybe_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, max_supply)?;
+			Self::do_create_item(&sender, &collection, &item, &config, maybe_supply)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
 		#[transactional]
-		pub fn add_item(
+		pub fn add_supply(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			// Self::do_add_item(&sender, &collection, &item, amount)?;
+			Self::do_add_supply(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
@@ -942,7 +955,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(23)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::lock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::lock_item_transfer())]
 		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
@@ -953,7 +966,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::unlock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::unlock_item_transfer())]
 		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
@@ -1145,7 +1158,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(39)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
 		#[transactional]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
@@ -1161,7 +1174,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(40)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
 		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
@@ -1176,14 +1189,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(41)]
-		#[pallet::weight(0)]
-		#[transactional]
-		pub fn with_draw_pool(origin: OriginFor<T>, pool: T::PoolId) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_withdraw_pool(&pool, &sender)?;
-			Ok(())
-		}
 	}
 
 	#[pallet::validate_unsigned]

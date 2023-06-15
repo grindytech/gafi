@@ -1,4 +1,4 @@
-use super::{Bundle, Package, TradeType, LootTable};
+use super::{Bundle, LootTable, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
 use sp_runtime::TokenError;
 
@@ -26,10 +26,7 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and game owner
 	/// - `game`: game id
 	/// - `config`: collection configuration
-	fn do_create_game_collection(
-		who: &AccountId,
-		game: &GameId,
-	) -> DispatchResult;
+	fn do_create_game_collection(who: &AccountId, game: &GameId) -> DispatchResult;
 
 	/// Do create collection
 	///
@@ -39,15 +36,12 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and collection owner
 	/// - `admin`: admin role
 	/// - `config`: collection configuration
-	fn do_create_collection(
-		who: &AccountId,
-		admin: &AccountId,
-	) -> DispatchResult;
+	fn do_create_collection(who: &AccountId, admin: &AccountId) -> DispatchResult;
 
 	/// Do Set Accept Adding
-	/// 
+	///
 	/// Accept to add collections to the game
-	/// 
+	///
 	/// - `who`: collection admin must be signed
 	/// - `game`: game id
 	/// - `ollection`: collection id to add to the game.
@@ -72,9 +66,9 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	) -> DispatchResult;
 
 	/// Do remove collection
-	/// 
+	///
 	/// Remove a colleciton from a game
-	/// 
+	///
 	/// - `who`: signer and collection owner
 	/// - `game`: game id
 	/// - `collection`: collection id
@@ -95,30 +89,30 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `config`: item config
-	/// - `max_supply`: maximum number of item, None indicate an infinite supply 
+	/// - `maybe_supply`: maximum number of item, None indicate an infinite supply
 	fn do_create_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
 		config: &ItemConfig,
-		max_supply: Option<u32>,
+		maybe_supply: Option<u32>,
 	) -> DispatchResult;
 
-	// Do add item
-	//
-	// Add number amount of item in collection
-	//
-	// Parameters:
-	// - `who`: signer
-	// - `collection`: collection id
-	// - `item`: item id
-	// - `amount`: amount
-	// fn do_add_item(
-	// 	who: &AccountId,
-	// 	collection: &CollectionId,
-	// 	item: &ItemId,
-	// 	amount: Amount,
-	// ) -> DispatchResult;
+	/// Do add item
+	///
+	/// Add number amount of item in collection
+	///
+	/// Parameters:
+	/// - `who`: signer
+	/// - `collection`: collection id
+	/// - `item`: item id
+	/// - `amount`: amount
+	fn do_add_supply(
+		who: &AccountId,
+		collection: &CollectionId,
+		item: &ItemId,
+		amount: Amount,
+	) -> DispatchResult;
 }
 
 ///Trait to provide an interface for NFTs mining
@@ -137,11 +131,6 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		loot_table: LootTable<CollectionId, ItemId>,
 		fee: Price,
 		admin: &AccountId,
-	)-> DispatchResult;
-
-	fn do_withdraw_pool(
-		pool: &PoolId,
-		who: &AccountId,
 	) -> DispatchResult;
 
 	fn do_mint_dynamic_pool(
@@ -345,7 +334,12 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `who`: who
 	/// - `amount`: amount item to sell
 	/// - `bid_price`: bid_price of each
-	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, amount: Amount, ask_price: Price) -> DispatchResult;
+	fn do_claim_set_buy(
+		trade: &TradeId,
+		who: &AccountId,
+		amount: Amount,
+		ask_price: Price,
+	) -> DispatchResult;
 
 	/// Do Cancel Set Buy
 	///
