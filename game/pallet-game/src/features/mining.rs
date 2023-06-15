@@ -8,7 +8,7 @@ impl<T: Config<I>, I: 'static>
 	fn do_create_dynamic_pool(
 		pool: &T::PoolId,
 		who: &T::AccountId,
-		resource: Bundle<T::CollectionId, T::ItemId>,
+		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		fee: BalanceOf<T, I>,
 		admin: &T::AccountId,
 	) -> DispatchResult {
@@ -21,15 +21,11 @@ impl<T: Config<I>, I: 'static>
 		// Deposit balance
 		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
 
-		// Reserve item balance
-		Self::reserved_bundle(who, resource.clone())?;
-		ReserveOf::<T, I>::try_mutate(&pool, |reserve_vec| -> DispatchResult {
-			reserve_vec
-				.try_append(resource.clone().into_mut())
-				.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
-			Ok(())
-		})?;
-		Self::add_total_reserve(pool, Self::count_amount(&resource))?;
+		let table =
+			LootTableFor::<T, I>::try_from(loot_table.clone()).map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+		LootTableOf::<T, I>::insert(pool, table);
+
+		Self::add_total_reserve(pool, Self::total_weight(&loot_table))?;
 
 		// create new pool
 		let pool_details = PoolDetails {
@@ -49,26 +45,28 @@ impl<T: Config<I>, I: 'static>
 	fn do_create_stable_pool(
 		pool: &T::PoolId,
 		who: &T::AccountId,
-		dist: Bundle<T::CollectionId, T::ItemId>,
+		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		fee: BalanceOf<T, I>,
 		admin: &T::AccountId,
 	) -> DispatchResult {
 		// ensure collection owner & infinite supply
-		for fraction in &dist {
-			Self::ensure_collection_owner(who, &fraction.collection)?;
-			ensure!(
-				Self::is_infinite(&fraction.collection, &fraction.item),
-				Error::<T, I>::NotInfiniteSupply
-			);
+		for fraction in &loot_table {
+			if let Some(nft) = &fraction.maybe_nft {
+				Self::ensure_collection_owner(who, &nft.collection)?;
+				ensure!(
+					Self::is_infinite(&nft.collection, &nft.item),
+					Error::<T, I>::NotInfiniteSupply
+				);
+			}
 		}
 
 		<T as Config<I>>::Currency::reserve(&who, T::MiningPoolDeposit::get())?;
 
 		// store for random
 		{
-			ReserveOf::<T, I>::try_mutate(&pool, |reserve_vec| -> DispatchResult {
+			LootTableOf::<T, I>::try_mutate(&pool, |reserve_vec| -> DispatchResult {
 				reserve_vec
-					.try_append(dist.clone().into_mut())
+					.try_append(loot_table.clone().into_mut())
 					.map_err(|_| <Error<T, I>>::ExceedMaxItem)?;
 				Ok(())
 			})?;
@@ -120,7 +118,7 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		// validating item amount
 		{
-			let total_item = TotalReserveOf::<T, I>::get(pool);
+			let total_item = TotalWeightOf::<T, I>::get(pool);
 
 			ensure!(total_item > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
@@ -145,30 +143,43 @@ impl<T: Config<I>, I: 'static>
 			// random minting
 			// let mut items: Vec<T::ItemId> = [].to_vec();
 			{
-				let mut total_item = TotalReserveOf::<T, I>::get(pool);
+				let mut total_item = TotalWeightOf::<T, I>::get(pool);
 				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
+				let mut table = LootTableOf::<T, I>::get(pool).clone().into();
+
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
-						match Self::withdraw_reserve(pool, position) {
-							Ok(package) => {
-								Self::repatriate_reserved_item(
-									&pool_details.owner,
-									&package.collection,
-									&package.item,
-									target,
-									1,
-									ItemBalanceStatus::Free,
-								)?;
-								// items.push(item);
-							},
-							Err(err) => return Err(err.into()),
+						// ensure position
+						ensure!(
+							position > 0 && position < total_item,
+							Error::<T, I>::MintFailed
+						);
+						let loot = Self::take_loot(&mut table, position);
+						match loot {
+							Some(maybe_nft) =>
+								if let Some(nft) = maybe_nft {
+									Self::repatriate_reserved_item(
+										&pool_details.owner,
+										&nft.collection,
+										&nft.item,
+										target,
+										1,
+										ItemBalanceStatus::Free,
+									)?;
+								},
+							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
+
 						total_item = total_item.saturating_sub(1);
 						maybe_position = Self::random_number(total_item, position);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
 				}
+
+				let table = LootTableFor::<T, I>::try_from(table)
+					.map_err(|_| Error::<T, I>::ExceedMaxItem)?;
+				LootTableOf::<T, I>::insert(pool, table);
 				Self::sub_total_reserve(pool, amount)?;
 			}
 		}
@@ -197,34 +208,36 @@ impl<T: Config<I>, I: 'static>
 		// deposit mining fee
 		// if collection owner not found, skip deposit
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
-				// make a deposit
-				<T as pallet::Config<I>>::Currency::transfer(
-					&who,
-					&pool_details.owner,
-					pool_details.fee * amount.into(),
-					ExistenceRequirement::KeepAlive,
-				)?;
+			// make a deposit
+			<T as pallet::Config<I>>::Currency::transfer(
+				&who,
+				&pool_details.owner,
+				pool_details.fee * amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
 
 			// random minting
 			// let mut items: Vec<T::ItemId> = [].to_vec();
 			{
-				let mut total_item = TotalReserveOf::<T, I>::get(pool);
+				let mut total_item = TotalWeightOf::<T, I>::get(pool);
 				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
-				let reserve = ReserveOf::<T, I>::get(pool);
+				let reserve = LootTableOf::<T, I>::get(pool);
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
-						match Self::get_reserve(&reserve, position) {
-							Ok(package) => {
-								Self::add_item_balance(
-									target,
-									&package.collection,
-									&package.item,
-									1,
-								)?;
-								// items.push(item);
-							},
-							Err(err) => return Err(err.into()),
+						// ensure position
+						ensure!(
+							position > 0 && position < total_item,
+							Error::<T, I>::MintFailed
+						);
+						let loot = Self::get_loot(&reserve.clone().into(), position);
+						match loot {
+							Some(maybe_nft) =>
+								if let Some(nft) = maybe_nft {
+									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
+								},
+							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
+
 						maybe_position = Self::random_number(total_item, position);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())

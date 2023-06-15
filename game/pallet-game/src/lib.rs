@@ -56,7 +56,7 @@ use frame_system::{
 };
 use gafi_support::game::{
 	Auction, CreateItem, GameSetting, Level, Mining, MutateCollection, MutateItem, Package, Retail,
-	Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
+	Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist, LootTable,
 };
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
@@ -98,7 +98,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle};
+	use gafi_support::game::{Bundle, Loot};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -310,17 +310,17 @@ pub mod pallet {
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
-	pub(super) type ReserveOf<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type LootTableOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128,
 		T::PoolId,
-		BundleFor<T, I>,
+		BoundedVec<Loot<T::CollectionId, T::ItemId>, T::MaxItem>,
 		ValueQuery,
 	>;
 
 	/// Item reserve created by the owner, random mining by player
 	#[pallet::storage]
-	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
+	pub(super) type TotalWeightOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::PoolId, u32, ValueQuery>;
 
 	#[pallet::storage]
@@ -636,6 +636,7 @@ pub mod pallet {
 		//mining pool
 		InfiniteSupply,
 		NotInfiniteSupply,
+		MintFailed,
 	}
 
 	#[pallet::hooks]
@@ -1147,14 +1148,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
-			resource: Bundle<T::CollectionId, T::ItemId>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_dynamic_pool(&id, &sender, resource, fee, &admin)?;
+			Self::do_create_dynamic_pool(&id, &sender, loot_table, fee, &admin)?;
 			Ok(())
 		}
 
@@ -1163,14 +1164,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
-			distribution: Bundle<T::CollectionId, T::ItemId>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
 			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_stable_pool(&id, &sender, distribution, fee, &admin)?;
+			Self::do_create_stable_pool(&id, &sender, loot_table, fee, &admin)?;
 			Ok(())
 		}
 
