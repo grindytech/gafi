@@ -24,11 +24,6 @@ impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
 			amount,
 		}
 	}
-
-	pub fn sub(mut self, amount: u32) -> Self {
-		self.amount -= amount;
-		self
-	}
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
