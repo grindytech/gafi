@@ -23,7 +23,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				// issues new amount of item
 				Self::add_item_balance(&collection_owner, collection, item, supply)?;
 			}
-			MaxSupplyOf::<T, I>::insert(collection, item, maybe_supply);
+			SupplyOf::<T, I>::insert(collection, item, maybe_supply);
 
 			Self::deposit_event(Event::<T, I>::ItemCreated {
 				who: who.clone(),
@@ -49,13 +49,13 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
 				Error::<T, I>::NoPermission
 			);
-			let maybe_supply = MaxSupplyOf::<T, I>::get(collection, item);
+			let maybe_supply = SupplyOf::<T, I>::get(collection, item);
 			if let Some(supply) = maybe_supply {
 				match supply {
 					Some(val) => {
 						let new_supply = val + amount;
 						Self::add_item_balance(&collection_owner, collection, item, amount)?;
-						MaxSupplyOf::<T, I>::insert(collection, item, Some(new_supply));
+						SupplyOf::<T, I>::insert(collection, item, Some(new_supply));
 					},
 					None => return Err(Error::<T, I>::InfiniteSupply.into()),
 				};

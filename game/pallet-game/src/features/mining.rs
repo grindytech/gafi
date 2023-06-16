@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, Mining, NFT};
+use gafi_support::game::{Mining, NFT};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId> for Pallet<T, I>
@@ -127,17 +127,15 @@ impl<T: Config<I>, I: 'static>
 		// validating item amount
 		let mut table = LootTableOf::<T, I>::get(pool).clone().into();
 		{
-			let total_item = Self::total_weight(&table);
-			ensure!(total_item > 0, Error::<T, I>::SoldOut);
-			ensure!(amount <= total_item, Error::<T, I>::ExceedTotalAmount);
+			let total_weight = Self::total_weight(&table);
+			ensure!(total_weight > 0, Error::<T, I>::SoldOut);
+			ensure!(amount <= total_weight, Error::<T, I>::ExceedTotalAmount);
 			ensure!(
 				amount <= T::MaxMintItem::get(),
 				Error::<T, I>::ExceedAllowedAmount
 			);
 		}
 
-		// deposit mining fee
-		// if collection owner not found, skip deposit
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// make a deposit
 			<T as pallet::Config<I>>::Currency::transfer(
@@ -150,12 +148,12 @@ impl<T: Config<I>, I: 'static>
 			// random minting
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
-				let mut total_item = Self::total_weight(&table);
-				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
+				let mut total_weight = Self::total_weight(&table);
+				let mut maybe_position = Self::random_number(total_weight, Self::gen_random());
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
-						ensure!(position < total_item, Error::<T, I>::MintFailed);
+						ensure!(position < total_weight, Error::<T, I>::MintFailed);
 						let loot = Self::take_loot(&mut table, position);
 						match loot {
 							Some(maybe_nft) =>
@@ -173,8 +171,8 @@ impl<T: Config<I>, I: 'static>
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
 
-						total_item = total_item.saturating_sub(1);
-						maybe_position = Self::random_number(total_item, position);
+						total_weight = total_weight.saturating_sub(1);
+						maybe_position = Self::random_number(total_weight, position);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
@@ -207,8 +205,6 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::ExceedAllowedAmount
 		);
 
-		// deposit mining fee
-		// if collection owner not found, skip deposit
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// make a deposit
 			<T as pallet::Config<I>>::Currency::transfer(
@@ -222,13 +218,13 @@ impl<T: Config<I>, I: 'static>
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
-				let mut total_item = Self::total_weight(&table);
-				let mut maybe_position = Self::random_number(total_item, Self::gen_random());
+				let total_weight = Self::total_weight(&table);
+				let mut maybe_position = Self::random_number(total_weight, Self::gen_random());
 
 				for _ in 0..amount {
 					if let Some(position) = maybe_position {
 						// ensure position
-						ensure!(position < total_item, Error::<T, I>::MintFailed);
+						ensure!(position < total_weight, Error::<T, I>::MintFailed);
 						let loot = Self::get_loot(&table, position);
 						match loot {
 							Some(maybe_nft) =>
@@ -239,7 +235,7 @@ impl<T: Config<I>, I: 'static>
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
 
-						maybe_position = Self::random_number(total_item, position);
+						maybe_position = Self::random_number(total_weight, position);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}

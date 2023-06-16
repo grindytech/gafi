@@ -5,7 +5,7 @@ use sp_runtime::{Permill, RuntimeDebug};
 use sp_std::vec::Vec;
 
 use crate::common::ID;
-use super::pool::Service;
+use super::pool_fee::Service;
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct CustomService<AccountId> {

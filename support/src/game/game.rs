@@ -1,6 +1,5 @@
 use super::{Bundle, LootTable, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
-use sp_runtime::TokenError;
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -10,10 +9,10 @@ pub trait GameSetting<AccountId, GameId> {
 	/// Implementing the function create game
 	///
 	/// Parameters:
-	/// - `who`: signer and game owner
 	/// - `game`: new game id
+	/// - `who`: signer and game owner
 	/// - `admin`: admin
-	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
+	fn do_create_game(game: &GameId, who: &AccountId, admin: &AccountId) -> DispatchResult;
 }
 
 pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fee> {
@@ -117,6 +116,16 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 
 ///Trait to provide an interface for NFTs mining
 pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
+
+	/// Do create dynamic pool
+	/// 
+	/// Create a dynamic pool where the weight of the table changes after each loot.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer and owner
+	/// - `loot_table`: loot table
+	/// - `fee`: mining fee
+	/// - `admin`: admin
 	fn do_create_dynamic_pool(
 		pool: &PoolId,
 		who: &AccountId,
@@ -125,6 +134,15 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		admin: &AccountId,
 	) -> DispatchResult;
 
+	/// Do create dynamic pool
+	/// 
+	/// Create a stable pool where the weight of the table remains constant.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer and owner
+	/// - `loot_table`: loot table
+	/// - `fee`: mining fee
+	/// - `admin`: admin
 	fn do_create_stable_pool(
 		pool: &PoolId,
 		who: &AccountId,
@@ -133,6 +151,14 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		admin: &AccountId,
 	) -> DispatchResult;
 
+	/// Do mint dynamic pool
+	/// 
+	/// Do an `amount` of mining in a dynamic pool.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer
+	/// - `target`:  recipient account
+	/// - `amount`: amount of item
 	fn do_mint_dynamic_pool(
 		pool: &PoolId,
 		who: &AccountId,
@@ -140,6 +166,14 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		amount: Amount,
 	) -> DispatchResult;
 
+	/// Do mint dynamic pool
+	/// 
+	/// Do an `amount` of mining in a stable pool.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer
+	/// - `target`:  recipient account
+	/// - `amount`: amount of item
 	fn do_mint_stable_pool(
 		pool: &PoolId,
 		who: &AccountId,

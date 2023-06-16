@@ -1,7 +1,6 @@
 /// Item module provides utility functions for pallet-game
 use crate::*;
 use frame_support::pallet_prelude::*;
-use gafi_support::game::Bundle;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Generate a random number from a given seed.
@@ -46,53 +45,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
-	/// Withdraw an item in reserve which item depend on position.
-	/// The position of item withdrawal in a sum up from left to right
-	/// Example array [(`item`: `amount`)]: [(1, 5), (2, 4), (3, 3)],
-	/// With position = 4, result item = 1.
-	/// With position = 7, result item = 2.
-	/// With position = 10, result item = 3.
-	// pub(crate) fn withdraw_reserve(
-	// 	pool: &T::PoolId,
-	// 	position: u32,
-	// ) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
-	// 	LootTableOf::<T, I>::try_mutate(pool, |reserve_vec| {
-	// 		let mut tmp = 0_u32;
-	// 		for reserve in reserve_vec.into_iter() {
-	// 			if reserve.amount > 0 && reserve.amount + tmp >= position {
-	// 				*reserve = reserve.clone().sub(1);
-	// 				return Ok(Package {
-	// 					collection: reserve.clone().collection,
-	// 					item: reserve.clone().item,
-	// 					amount: 1,
-	// 				})
-	// 			} else {
-	// 				tmp += reserve.amount;
-	// 			}
-	// 		}
-	// 		return Err(Error::<T, I>::WithdrawReserveFailed.into())
-	// 	})
-	// }
-
-	// pub(crate) fn get_reserve(
-	// 	reserve: &BundleFor<T, I>,
-	// 	position: u32,
-	// ) -> Result<Package<T::CollectionId, T::ItemId>, Error<T, I>> {
-	// 	let mut tmp = 0_u32;
-	// 	for reserve in reserve.into_iter() {
-	// 		if reserve.amount > 0 && reserve.amount + tmp >= position {
-	// 			return Ok(Package {
-	// 				collection: reserve.clone().collection,
-	// 				item: reserve.clone().item,
-	// 				amount: 1,
-	// 			})
-	// 		} else {
-	// 			tmp += reserve.amount;
-	// 		}
-	// 	}
-	// 	return Err(Error::<T, I>::WithdrawReserveFailed.into())
-	// }
-
+	/// Transfer an `amount` of `item` in `collection` from `from` to `to`.
 	pub(crate) fn transfer_item(
 		from: &T::AccountId,
 		collection: &T::CollectionId,
@@ -105,7 +58,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub(crate) fn move_item(
+	/// Convert an `amount` of `old_item` to an `amount` of `new_item` in the `collection` of `who`.
+	pub(crate) fn convert_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		old_item: &T::ItemId,
@@ -117,6 +71,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn add_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -129,6 +84,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn sub_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -142,6 +98,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of reserved `item` in `collection` to `who`.
 	fn add_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -154,6 +111,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of reserved `item` in `collection` to `who`.
 	fn sub_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -170,6 +128,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Lock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn reserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -181,16 +140,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub(crate) fn reserved_bundle(
-		who: &T::AccountId,
-		bundle: Bundle<T::CollectionId, T::ItemId>,
-	) -> Result<(), Error<T, I>> {
-		for package in bundle {
-			Self::reserved_item(who, &package.collection, &package.item, package.amount)?;
-		}
-		Ok(())
-	}
-
+	/// Calculate the total weight in a `table` of loot.
 	pub fn total_weight(table: &LootTable<T::CollectionId, T::ItemId>) -> u32 {
 		let mut counter = 0;
 		for package in table {
@@ -199,6 +149,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		counter
 	}
 
+	/// Unlock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn unreserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -232,33 +183,30 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Get the available game id and increase the id by 1.
+	pub(crate) fn get_game_id() -> T::GameId {
+		let id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+		NextGameId::<T, I>::set(Some(id.increment()));
+		id
+	}
+
+	/// Get the available trade id and increase the id by 1.
 	pub(crate) fn get_trade_id() -> T::TradeId {
 		let id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 		NextTradeId::<T, I>::set(Some(id.increment()));
 		id
 	}
 
+	/// Get the available pool id and increase the id by 1.
 	pub(crate) fn get_pool_id() -> T::PoolId {
 		let id = NextPoolId::<T, I>::get().unwrap_or(T::PoolId::initial_value());
 		NextPoolId::<T, I>::set(Some(id.increment()));
 		id
 	}
 
-	pub(crate) fn try_get_max_supply(
-		collection: &T::CollectionId,
-		item: &T::ItemId,
-	) -> Result<u32, Error<T, I>> {
-		if let Some(supply) = MaxSupplyOf::<T, I>::get(collection, item) {
-			return match supply {
-				Some(amount) => Ok(amount),
-				None => Err(Error::<T, I>::InfiniteSupply),
-			}
-		}
-		Err(Error::<T, I>::UnknownCollection)
-	}
-
+	/// Check if `item` in `collection` is in infinite supply.
 	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
-		match MaxSupplyOf::<T, I>::get(collection, item) {
+		match SupplyOf::<T, I>::get(collection, item) {
 			Some(maybe_supply) => match maybe_supply {
 				Some(_) => return false,
 				None => return true,
@@ -267,30 +215,3 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		}
 	}
 }
-
-// #[cfg(test)]
-// #[test]
-// fn withdraw_reserve_should_works() {
-// 	use crate::mock::{new_test_ext, run_to_block, PalletGame, Test};
-
-// 	new_test_ext().execute_with(|| {
-// 		run_to_block(2);
-
-// 		// let _ = LootTableOf::<Test>::try_mutate(0, |reserve_vec| {
-// 		// 	let _ = reserve_vec.try_push(Item::new(1, 9));
-// 		// 	let _ = reserve_vec.try_push(Item::new(2, 5));
-// 		// 	let _ = reserve_vec.try_push(Item::new(3, 1));
-// 		// 	Ok(())
-// 		// })
-// 		// .map_err(|_err: Error<Test>| <Error<Test>>::ExceedMaxItem);
-
-// 		// let item = PalletGame::withdraw_reserve(&0, 0);
-// 		// assert_eq!(item.unwrap(), 1);
-
-// 		// let item = PalletGame::withdraw_reserve(&0, 9);
-// 		// assert_eq!(item.unwrap(), 2);
-
-// 		// let item = PalletGame::withdraw_reserve(&0, 13);
-// 		// assert_eq!(item.unwrap(), 3);
-// 	})
-// }

@@ -88,7 +88,6 @@ pub mod crypto {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::types::Item;
 	use frame_support::{
 		pallet_prelude::{OptionQuery, ValueQuery, *},
 		traits::tokens::nonfungibles_v2::InspectRole,
@@ -225,11 +224,12 @@ pub mod pallet {
 		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
 	}
 
-	/// Store basic game info
+	/// Storing basic game info
 	#[pallet::storage]
 	pub(super) type Game<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
+	/// Storing next game id
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::GameId, OptionQuery>;
@@ -301,9 +301,10 @@ pub mod pallet {
 		u32,
 		ValueQuery,
 	>;
-
+	
+	/// Storing Nft supplies, `None` indicates infinite supply
 	#[pallet::storage]
-	pub(super) type MaxSupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+	pub(super) type SupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		T::CollectionId,
@@ -312,11 +313,6 @@ pub mod pallet {
 		Option<u32>,
 		OptionQuery,
 	>;
-
-	// /// Storing the mining pool fee
-	// #[pallet::storage]
-	// pub(super) type MiningFeeOf<T: Config<I>, I: 'static = ()> =
-	// 	StorageMap<_, Blake2_128Concat, T::PoolId, BalanceOf<T, I>, OptionQuery>;
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
@@ -328,6 +324,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Storing mining pool configuration
 	#[pallet::storage]
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -349,7 +346,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Store the original items of the upgraded items
+	/// Storing the original items of the upgraded items
 	#[pallet::storage]
 	pub(super) type OriginItemOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -359,7 +356,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Store the upgrade config
+	/// Storing the upgrade config
 	#[pallet::storage]
 	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
@@ -407,6 +404,7 @@ pub mod pallet {
 	pub(super) type HighestBidOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
+	/// Store accepts to add collections to the games
 	#[pallet::storage]
 	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
@@ -667,8 +665,9 @@ pub mod pallet {
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
-			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(&sender, &game, &admin)?;
+			let game = Self::get_game_id();
+
+			Self::do_create_game(&game, &sender, &admin)?;
 			Ok(())
 		}
 
@@ -1235,6 +1234,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {
 			Some(config) => {
@@ -1245,6 +1245,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		}
 	}
 
+	/// Return `Ok(())` if `who` is the owner of `collection`.
 	pub fn ensure_collection_owner(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
