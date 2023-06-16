@@ -81,6 +81,7 @@ The highest bid when the auction expired is the winner.
 * `remove_collection`: Remove a collection from a game.
 * `lock_item_transfer`: Lock NFT to prevent any trade.
 * `unlock_item_transfer`: Revert the effects of a previous `lock_item_transfer`.
+* `create_stable_pool`: Create a mining pool with a constant weight loot table.
 
 ### Trade dispatchables
 * `set_price`: Set price for NFTs.
@@ -98,6 +99,7 @@ The highest bid when the auction expired is the winner.
 * `bid_auction`: Make a bid.
 * `claim_auction`: End the auction when it expires.
 * `cancel_trade`: Cancel a trade with trade id.
+* `create_dynamic_pool`: Create a mining pool with a dynamic weight loot table.
 
 ### Metadata (permissioned) dispatchables
 * `set_attribute`: Set a metadata attribute of an item or collection.
