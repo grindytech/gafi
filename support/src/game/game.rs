@@ -9,10 +9,10 @@ pub trait GameSetting<AccountId, GameId> {
 	/// Implementing the function create game
 	///
 	/// Parameters:
-	/// - `who`: signer and game owner
 	/// - `game`: new game id
+	/// - `who`: signer and game owner
 	/// - `admin`: admin
-	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
+	fn do_create_game(game: &GameId, who: &AccountId, admin: &AccountId) -> DispatchResult;
 }
 
 pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fee> {

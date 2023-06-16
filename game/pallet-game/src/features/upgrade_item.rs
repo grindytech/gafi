@@ -89,7 +89,7 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 
-			Self::move_item(who, collection, item, &config.item, amount)?;
+			Self::convert_item(who, collection, item, &config.item, amount)?;
 
 			Self::deposit_event(Event::Upgraded {
 				who: who.clone(),

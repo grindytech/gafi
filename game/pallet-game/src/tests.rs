@@ -519,7 +519,7 @@ fn add_supply_should_works() {
 			1000
 		));
 
-		assert_eq!(MaxSupplyOf::<Test>::get(0, 0).unwrap().unwrap(), 2000);
+		assert_eq!(SupplyOf::<Test>::get(0, 0).unwrap().unwrap(), 2000);
 	})
 }
 

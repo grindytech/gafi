@@ -136,8 +136,6 @@ impl<T: Config<I>, I: 'static>
 			);
 		}
 
-		// deposit mining fee
-		// if collection owner not found, skip deposit
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// make a deposit
 			<T as pallet::Config<I>>::Currency::transfer(
@@ -207,8 +205,6 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::ExceedAllowedAmount
 		);
 
-		// deposit mining fee
-		// if collection owner not found, skip deposit
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// make a deposit
 			<T as pallet::Config<I>>::Currency::transfer(

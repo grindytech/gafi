@@ -45,6 +45,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
+	/// Transfer an `amount` of `item` in `collection` from `from` to `to`.
 	pub(crate) fn transfer_item(
 		from: &T::AccountId,
 		collection: &T::CollectionId,
@@ -57,7 +58,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub(crate) fn move_item(
+	/// Convert an `amount` of `old_item` to an `amount` of `new_item` in the `collection` of `who`.
+	pub(crate) fn convert_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		old_item: &T::ItemId,
@@ -69,6 +71,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn add_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -81,6 +84,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn sub_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -94,6 +98,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of reserved `item` in `collection` to `who`.
 	fn add_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -106,6 +111,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of reserved `item` in `collection` to `who`.
 	fn sub_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -122,6 +128,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Lock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn reserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -133,6 +140,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Calculate the total weight in a `table` of loot.
 	pub fn total_weight(table: &LootTable<T::CollectionId, T::ItemId>) -> u32 {
 		let mut counter = 0;
 		for package in table {
@@ -141,6 +149,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		counter
 	}
 
+	/// Unlock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn unreserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -174,20 +183,30 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Get the available game id and increase the id by 1.
+	pub(crate) fn get_game_id() -> T::GameId {
+		let id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+		NextGameId::<T, I>::set(Some(id.increment()));
+		id
+	}
+
+	/// Get the available trade id and increase the id by 1.
 	pub(crate) fn get_trade_id() -> T::TradeId {
 		let id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 		NextTradeId::<T, I>::set(Some(id.increment()));
 		id
 	}
 
+	/// Get the available pool id and increase the id by 1.
 	pub(crate) fn get_pool_id() -> T::PoolId {
 		let id = NextPoolId::<T, I>::get().unwrap_or(T::PoolId::initial_value());
 		NextPoolId::<T, I>::set(Some(id.increment()));
 		id
 	}
 
+	/// Check if `item` in `collection` is in infinite supply.
 	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
-		match MaxSupplyOf::<T, I>::get(collection, item) {
+		match SupplyOf::<T, I>::get(collection, item) {
 			Some(maybe_supply) => match maybe_supply {
 				Some(_) => return false,
 				None => return true,
