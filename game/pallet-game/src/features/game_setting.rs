@@ -29,6 +29,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 			),
 		);
 
+		GameAccount::<T, I>::insert( who, game, ());
 		Game::<T, I>::insert(game, details);
 		Self::deposit_event(Event::GameCreated { who: who.clone(), game: *game });
 		Ok(())
