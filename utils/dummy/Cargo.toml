@@ -17,15 +17,15 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 	"derive",
 ] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
-frame-support = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-frame-system = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", optional = true }
+frame-support = { default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+frame-system = { default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42" }
+frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42", optional = true }
 
 [dev-dependencies]
-pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37"}
-sp-core = {version = "7.0.0",  default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-io = {version = "7.0.0",  default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+pallet-balances = {default-features = false, version = "4.0.0-dev", git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-core = {version = "7.0.0",  default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42" }
+sp-io = {workspace = true, default-features = false}
+sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42" }
 
 # Local
 gu-currency = {default-features = false, version = "4.0.0-dev", path = "../currency"}
@@ -40,6 +40,7 @@ std = [
 	"frame-system/std",
 	"gu-convertor/std",
 	"gu-currency/std",
+	"sp-io/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

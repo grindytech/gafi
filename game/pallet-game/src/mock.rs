@@ -21,6 +21,7 @@ pub type Extrinsic = TestXt<RuntimeCall, ()>;
 type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type AccountPublic = <Signature as Verify>::Signer;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -33,7 +34,7 @@ frame_support::construct_runtime!(
 		PalletGame: pallet_game,
 		Balances: pallet_balances,
 		Nfts: pallet_nfts,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 	}
 );
 
@@ -66,23 +67,26 @@ impl system::Config for Test {
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
-parameter_types! {
-	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
-}
 
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
 	type Balance = u128;
+	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+	type FreezeIdentifier = ();
+	type MaxFreezes = ();
+	type HoldIdentifier = ();
+	type MaxHolds = ();
 }
 
-impl pallet_randomness_collective_flip::Config for Test {}
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 pub const ITEM_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const METADATA_DEPOSIT_VAL: u128 = 3_000_000_000;
@@ -100,8 +104,8 @@ impl pallet_nfts::Config for Test {
 	type CollectionId = u32;
 	type ItemId = u32;
 	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<Self::AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ConstU128<2>;
 	type ItemDeposit = ItemDeposit;
@@ -115,59 +119,65 @@ impl pallet_nfts::Config for Test {
 	type ItemAttributesApprovalsLimit = ConstU32<2>;
 	type MaxTips = ConstU32<10>;
 	type MaxDeadlineDuration = ConstU64<10000>;
+	type MaxAttributesPerCall = ConstU32<2>;
 	type Features = Features;
+	/// Off-chain = signature On-chain - therefore no conversion needed.
+	/// It needs to be From<MultiSignature> for benchmarking.
+	type OffchainSignature = Signature;
+	/// Using `AccountPublic` here makes it trivial to convert to `AccountId` via `into_account()`.
+	type OffchainPublic = AccountPublic;
 	type WeightInfo = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = ();
 }
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
-pub const MAX_ITEM_MINT_VAL: u32 = 10;
-pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
-pub const MAX_BUNDLE_VAL: u32 = 5;
 pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
-pub const MAX_NUM_BID_VAL: u32 = 10;
+pub const MINING_DEPOSIT_VAL: u128 = 5_000_000_000;
+pub const MAX_GAME_COLLECTION_VAL: u32 = 10;
+pub const MAX_ITEM_MINT_VAL: u32 = 10;
+pub const MAX_GAME_SHARE_VAL: u32 = 10;
+pub const MAX_BUNDLE_VAL: u32 = 5;
+pub const MAX_LOOT: u32 = 10;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
 	pub MaxGameCollection: u32 = MAX_GAME_COLLECTION_VAL;
-	pub MaxItem: u32 = 10;
-	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
+	pub MiningPoolDeposit: u128 = MINING_DEPOSIT_VAL;
 	pub UpgradeDeposit: u128 = UPGRADE_DEPOSIT_VAL;
-	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 	pub BundleDeposit: u128 = BUNDLE_DEPOSIT_VAL;
+
+	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
+	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
+	pub MaxGameShare: u32 = MAX_GAME_SHARE_VAL;
+	
+	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub MaxItem: u32 = 10;
+	pub MaxLoot: u32 = MAX_LOOT;
 }
 
 impl pallet_game::Config for Test {
 	type PalletId = PalletGameId;
-
 	type RuntimeEvent = RuntimeEvent;
-
 	type WeightInfo = ();
-
+	type NftsWeightInfo = ();
 	type Currency = Balances;
-
 	type Nfts = Nfts;
-
 	type Randomness = RandomnessCollectiveFlip;
-
 	type GameId = u32;
-
 	type TradeId = u32;
-
+	type PoolId = u32;
+	type MiningPoolDeposit = MiningPoolDeposit;
 	type GameDeposit = GameDeposit;
-
 	type MaxGameCollection = MaxGameCollection;
-
+	type MaxGameShare = MaxGameShare;
 	type MaxItem = MaxItem;
-
 	type MaxMintItem = MaxMintItem;
-
 	type UpgradeDeposit = UpgradeDeposit;
-
 	type BundleDeposit = BundleDeposit;
-
 	type MaxBundle = MaxBundle;
+	type MaxLoot = MaxLoot;
 }
 
 parameter_types! {

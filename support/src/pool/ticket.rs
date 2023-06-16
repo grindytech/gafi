@@ -8,7 +8,7 @@ use sp_std::vec::Vec;
 
 use crate::common::ID;
 
-use super::pool::Service;
+use super::pool_fee::Service;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]

@@ -4,7 +4,7 @@ build:
 
 .PHONY: test
 test:
-	cargo test --features with-game3
+	cargo test -r --features with-game3
 
 .PHONY: check
 check:

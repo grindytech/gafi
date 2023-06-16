@@ -21,3 +21,9 @@ pub use upgrade_item::*;
 
 pub mod common;
 pub use common::*;
+
+pub mod mining;
+pub use mining::*;
+
+pub mod loot_table;
+pub use loot_table::*;

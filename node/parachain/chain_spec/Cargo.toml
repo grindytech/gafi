@@ -17,7 +17,7 @@ hex-literal = "0.3.4"
 jsonrpc-core = "18.0.0"
 jsonrpsee = {version = "0.14.0", features = ["server"]}
 log = "0.4.16"
-serde = {version = "1.0.132", features = ["derive"]}
+serde = {workspace = true, features = ["derive"]}
 serde_json = "1.0.59"
 
 # Frontier
@@ -60,7 +60,6 @@ sp-blockchain = {workspace = true}
 sp-consensus = {workspace = true}
 sp-consensus-aura = {workspace = true}
 sp-core = {workspace = true}
-sp-finality-grandpa = {workspace = true}
 sp-inherents = {workspace = true}
 sp-keystore = {workspace = true}
 sp-offchain = {workspace = true}

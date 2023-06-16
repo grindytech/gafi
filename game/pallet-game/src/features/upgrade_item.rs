@@ -23,7 +23,7 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		// ensure collection ownership
 		ensure!(
-			T::Nfts::collection_owner(collection) == Some(who.clone()),
+			T::Nfts::is_admin(collection, who),
 			Error::<T, I>::NoPermission
 		);
 
@@ -33,8 +33,12 @@ impl<T: Config<I>, I: 'static>
 			Error::<T, I>::UpgradeExists,
 		);
 
-		// create item
-		let _ = T::Nfts::mint_into(collection, new_item, who, config, false)?;
+		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
+			// create item
+			let _ = T::Nfts::mint_into(collection, new_item, &collection_owner, config, true)?;
+		} else {
+			return Err(Error::<T, I>::UnknownCollection.into())
+		}
 
 		LevelOf::<T, I>::insert(collection, new_item, level);
 		OriginItemOf::<T, I>::insert((collection, new_item), (collection, item));
@@ -85,7 +89,7 @@ impl<T: Config<I>, I: 'static>
 				)?;
 			}
 
-			Self::move_item(who, collection, item, &config.item, amount)?;
+			Self::convert_item(who, collection, item, &config.item, amount)?;
 
 			Self::deposit_event(Event::Upgraded {
 				who: who.clone(),

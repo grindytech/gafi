@@ -1,5 +1,6 @@
 use crate::*;
 use codec::{Decode, Encode};
+use gafi_support::game::Loot;
 use core::primitive::u32;
 use frame_support::{
 	pallet_prelude::{BoundedVec, MaxEncodedLen},
@@ -22,18 +23,18 @@ pub type CollectionConfigFor<T, I = ()> =
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
-#[cfg(test)]
-pub(crate) type PackageFor<T> =
-	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>;
-
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
 	<T as pallet::Config<I>>::MaxBundle,
 >;
 
+pub(crate) type LootTableFor<T, I = ()> = BoundedVec<
+	Loot<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
+	<T as pallet::Config<I>>::MaxLoot,
+>;
+
 /// Information about a game.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(NameLimit))]
 pub struct GameDetails<AccountId, DepositBalance> {
 	/// game's owner.
 	pub(super) owner: AccountId,
@@ -44,24 +45,6 @@ pub struct GameDetails<AccountId, DepositBalance> {
 	pub(super) collections: u32,
 	/// Can thaw tokens, force transfers and burn tokens from any account.
 	pub(super) admin: AccountId,
-}
-
-#[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(NameLimit))]
-pub struct Item<ItemId> {
-	pub item: ItemId,
-	pub amount: u32,
-}
-
-impl<ItemId> Item<ItemId> {
-	pub fn new(item: ItemId, amount: u32) -> Self {
-		Item { item, amount }
-	}
-
-	pub fn sub(mut self, amount: u32) -> Self {
-		self.amount -= amount;
-		self
-	}
 }
 
 /// Upgrade Item configuration.
@@ -91,4 +74,30 @@ pub struct AuctionConfig<AccountId, Price, BlockNumber> {
 pub enum ItemBalanceStatus {
 	Reserved,
 	Free,
+}
+
+/// Types of the mining pool
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum PoolType {
+	/// Item mining chance will change depending on item supply.
+	Dynamic,
+	/// Item mining chance is fixed with an infinite supply.
+	Stable,
+}
+
+/// Information about a mining pool.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct PoolDetails<AccountId, DepositBalance> {
+	/// pool type
+	pub(super) pool_type: PoolType,
+
+	pub(super) fee: DepositBalance,
+	
+	/// game's owner.
+	pub(super) owner: AccountId,
+	/// The total balance deposited by the owner for all the storage data associated with this
+	/// game. Used by `destroy`.
+	pub(super) owner_deposit: DepositBalance,
+	/// Can create a new pool, add more resources.
+	pub(super) admin: AccountId,
 }

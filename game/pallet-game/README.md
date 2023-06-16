@@ -7,7 +7,7 @@ The studio can publish NFTs and get the rewards from mining fees, upgrading fees
 
 ## Overview
 The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
-Pallet-game is coupled with [pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts), and pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
+Pallet-game is coupled with [pallet-nfts](https://github.com/grindytech/substrate/tree/master/frame/nfts), and pallet-game is the [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155): Multi Token Standard version.
 
 
 ### Terminology
@@ -76,11 +76,12 @@ The highest bid when the auction expired is the winner.
 ### Permissioned dispatchables
 * `add_game_collection`: Add exists a collection to a game.
 * `create_item`: Create NFTs.
-* `add_item`: Add NFTs.
+* `add_supply`: Add NFTs.
 * `set_upgrade_item`: Set NFT upgrade rules.
 * `remove_collection`: Remove a collection from a game.
 * `lock_item_transfer`: Lock NFT to prevent any trade.
 * `unlock_item_transfer`: Revert the effects of a previous `lock_item_transfer`.
+* `create_stable_pool`: Create a mining pool with a constant weight loot table.
 
 ### Trade dispatchables
 * `set_price`: Set price for NFTs.
@@ -98,6 +99,7 @@ The highest bid when the auction expired is the winner.
 * `bid_auction`: Make a bid.
 * `claim_auction`: End the auction when it expires.
 * `cancel_trade`: Cancel a trade with trade id.
+* `create_dynamic_pool`: Create a mining pool with a dynamic weight loot table.
 
 ### Metadata (permissioned) dispatchables
 * `set_attribute`: Set a metadata attribute of an item or collection.
@@ -118,7 +120,7 @@ Please visit the [unittest](https://github.com/grindytech/gafi/blob/master/game/
 `$ cargo test -p pallet-game`
 
 ### Prerequisites
-[pallet-nfts](https://github.com/paritytech/substrate/tree/master/frame/nfts)
+[pallet-nfts](https://github.com/grindytech/substrate/tree/master/frame/nfts)
 [offchain-worker](https://docs.substrate.io/reference/how-to-guides/offchain-workers/)
 
 License: Apache-2.0

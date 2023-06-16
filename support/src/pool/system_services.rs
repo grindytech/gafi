@@ -3,11 +3,11 @@ use frame_support::pallet_prelude::*;
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 use sp_runtime::{Permill, RuntimeDebug};
-use sp_std::{prelude::*, vec, vec::Vec};
+use sp_std::{prelude::*, vec::Vec};
 
 use crate::common::ID;
 
-use super::{pool::Service, ticket::Ticket};
+use super::{pool_fee::Service, ticket::Ticket};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -63,7 +63,7 @@ impl<AccountIdLookup, AccountId> SystemPool<AccountIdLookup, AccountId> for () {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Default, Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct SystemServicePack {
 	pub data: Vec<(ID, SystemService)>,
 }
@@ -71,12 +71,6 @@ pub struct SystemServicePack {
 impl SystemServicePack {
 	pub fn new(data: Vec<(ID, SystemService)>) -> Self {
 		Self { data }
-	}
-}
-
-impl Default for SystemServicePack {
-	fn default() -> Self {
-		Self { data: vec![] }
 	}
 }
 

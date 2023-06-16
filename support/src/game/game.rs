@@ -1,6 +1,5 @@
-use super::{Bundle, Package, TradeType};
+use super::{Bundle, LootTable, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
-use sp_runtime::TokenError;
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -10,10 +9,10 @@ pub trait GameSetting<AccountId, GameId> {
 	/// Implementing the function create game
 	///
 	/// Parameters:
-	/// - `who`: signer and game owner
 	/// - `game`: new game id
+	/// - `who`: signer and game owner
 	/// - `admin`: admin
-	fn do_create_game(who: &AccountId, game: &GameId, admin: &AccountId) -> DispatchResult;
+	fn do_create_game(game: &GameId, who: &AccountId, admin: &AccountId) -> DispatchResult;
 }
 
 pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fee> {
@@ -26,12 +25,7 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and game owner
 	/// - `game`: game id
 	/// - `config`: collection configuration
-	fn do_create_game_collection(
-		who: &AccountId,
-		game: &GameId,
-		// config: &CollectionConfig,
-		fee: Fee,
-	) -> DispatchResult;
+	fn do_create_game_collection(who: &AccountId, game: &GameId) -> DispatchResult;
 
 	/// Do create collection
 	///
@@ -41,11 +35,19 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and collection owner
 	/// - `admin`: admin role
 	/// - `config`: collection configuration
-	fn do_create_collection(
+	fn do_create_collection(who: &AccountId, admin: &AccountId) -> DispatchResult;
+
+	/// Do Set Accept Adding
+	///
+	/// Accept to add collections to the game
+	///
+	/// - `who`: collection admin must be signed
+	/// - `game`: game id
+	/// - `ollection`: collection id to add to the game.
+	fn do_set_accept_adding(
 		who: &AccountId,
-		admin: &AccountId,
-		// config: &CollectionConfig,
-		fee: Fee,
+		game: &GameId,
+		collection: &CollectionId,
 	) -> DispatchResult;
 
 	/// Do add collection
@@ -63,9 +65,9 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	) -> DispatchResult;
 
 	/// Do remove collection
-	/// 
+	///
 	/// Remove a colleciton from a game
-	/// 
+	///
 	/// - `who`: signer and collection owner
 	/// - `game`: game id
 	/// - `collection`: collection id
@@ -86,13 +88,13 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `config`: item config
-	/// - `amount`: amount
+	/// - `maybe_supply`: maximum number of item, None indicate an infinite supply
 	fn do_create_item(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
 		config: &ItemConfig,
-		amount: Amount,
+		maybe_supply: Option<u32>,
 	) -> DispatchResult;
 
 	/// Do add item
@@ -104,7 +106,7 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	/// - `collection`: collection id
 	/// - `item`: item id
 	/// - `amount`: amount
-	fn do_add_item(
+	fn do_add_supply(
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
@@ -112,26 +114,91 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	) -> DispatchResult;
 }
 
-pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
-	/// Mint
+///Trait to provide an interface for NFTs mining
+pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
+
+	/// Do create dynamic pool
+	/// 
+	/// Create a dynamic pool where the weight of the table changes after each loot.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer and owner
+	/// - `loot_table`: loot table
+	/// - `fee`: mining fee
+	/// - `admin`: admin
+	fn do_create_dynamic_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		loot_table: LootTable<CollectionId, ItemId>,
+		fee: Price,
+		admin: &AccountId,
+	) -> DispatchResult;
+
+	/// Do create dynamic pool
+	/// 
+	/// Create a stable pool where the weight of the table remains constant.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer and owner
+	/// - `loot_table`: loot table
+	/// - `fee`: mining fee
+	/// - `admin`: admin
+	fn do_create_stable_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		loot_table: LootTable<CollectionId, ItemId>,
+		fee: Price,
+		admin: &AccountId,
+	) -> DispatchResult;
+
+	/// Do mint dynamic pool
+	/// 
+	/// Do an `amount` of mining in a dynamic pool.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer
+	/// - `target`:  recipient account
+	/// - `amount`: amount of item
+	fn do_mint_dynamic_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
+
+	/// Do mint dynamic pool
+	/// 
+	/// Do an `amount` of mining in a stable pool.
+	/// 
+	/// - `pool`: mining pool id
+	/// - `who`: signer
+	/// - `target`:  recipient account
+	/// - `amount`: amount of item
+	fn do_mint_stable_pool(
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
+
+	/// Do Mint
 	///
-	/// Random mint item in the collection
+	/// Random mint item in a pool
 	///
 	/// Parameters:
-	/// - `_who`: sender
-	/// - `_collection`: collection id
-	/// - `_target`: recipient account, default `miner`
-	///
-	/// By default, this is not a supported operation.
+	/// - `pool`: mining pool id
+	/// - `who`: sender
+	/// - `target`: recipient account
+	/// - `amount`: amount of item
 	fn do_mint(
-		_who: &AccountId,
-		_collection: &CollectionId,
-		_target: &AccountId,
-		_amount: Amount,
-	) -> DispatchResult {
-		Err(TokenError::Unsupported.into())
-	}
+		pool: &PoolId,
+		who: &AccountId,
+		target: &AccountId,
+		amount: Amount,
+	) -> DispatchResult;
+}
 
+pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 	/// Burn
 	///
 	/// Burn item
@@ -301,7 +368,12 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `who`: who
 	/// - `amount`: amount item to sell
 	/// - `bid_price`: bid_price of each
-	fn do_claim_set_buy(trade: &TradeId, who: &AccountId, amount: Amount, ask_price: Price) -> DispatchResult;
+	fn do_claim_set_buy(
+		trade: &TradeId,
+		who: &AccountId,
+		amount: Amount,
+		ask_price: Price,
+	) -> DispatchResult;
 
 	/// Do Cancel Set Buy
 	///

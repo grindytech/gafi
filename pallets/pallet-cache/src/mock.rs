@@ -1,11 +1,11 @@
 use crate::{self as pallet_cache};
-use frame_support::{parameter_types, traits::GenesisBuild};
+use frame_support::{parameter_types, traits::{GenesisBuild, tokens::Balance}};
 use frame_system as system;
 
 use frame_support::traits::{OnFinalize, OnInitialize};
 pub use gafi_support::pool::{TicketInfo, TicketType};
 pub use pallet_balances::Call as BalancesCall;
-use sp_core::H256;
+use sp_core::{H256, ConstU128, ConstU32};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -34,20 +34,22 @@ frame_support::construct_runtime!(
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
-parameter_types! {
-	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
-}
-
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
 	type Balance = u128;
+	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+	type FreezeIdentifier = ();
+	type MaxFreezes = ();
+	type HoldIdentifier = ();
+	type MaxHolds = ();
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;

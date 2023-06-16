@@ -18,10 +18,8 @@
 //! # Game Module
 //!
 //! A simple, secure module for dealing with in-game finances.
-//!
 
 #![recursion_limit = "256"]
-
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -44,14 +42,10 @@ mod weights;
 use crate::weights::WeightInfo;
 pub use weights::*;
 
-use codec::MaxEncodedLen;
 use frame_support::{
 	ensure,
 	traits::{
-		tokens::{
-			nonfungibles_v2::{Create, Inspect, Mutate, Transfer},
-			AttributeNamespace,
-		},
+		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
 	transactional, PalletId,
@@ -61,10 +55,12 @@ use frame_system::{
 	Config as SystemConfig,
 };
 use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, MutateCollection, MutateItem, Package, Retail, Swap,
-	Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
+	Auction, CreateItem, GameSetting, Level, LootTable, Mining, MutateCollection, MutateItem,
+	Package, Retail, Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
 };
-use pallet_nfts::{CollectionConfig, Incrementable, ItemConfig};
+use pallet_nfts::{
+	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
+};
 use sp_core::offchain::KeyTypeId;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 use sp_std::vec::Vec;
@@ -92,33 +88,35 @@ pub mod crypto {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::types::Item;
-
-	use super::*;
 	use frame_support::{
 		pallet_prelude::{OptionQuery, ValueQuery, *},
+		traits::tokens::nonfungibles_v2::InspectRole,
 		Blake2_128Concat, Twox64Concat,
 	};
+	use sp_core::Get;
+
+	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::Bundle;
+	use gafi_support::game::{Bundle, Loot, NFT};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(_);
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber> {
+	pub trait BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> {
 		fn game(i: u16) -> GameId;
 
 		fn trade(i: u16) -> TradeId;
 
 		fn block(i: u16) -> BlockNumber;
+
+		fn pool(i: u16) -> PoolId;
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>>
-		BenchmarkHelper<GameId, TradeId, BlockNumber> for ()
+	impl<GameId: From<u16>, TradeId: From<u16>, BlockNumber: From<u16>, PoolId: From<u16>>
+		BenchmarkHelper<GameId, TradeId, BlockNumber, PoolId> for ()
 	{
 		fn game(i: u16) -> GameId {
 			i.into()
@@ -129,6 +127,10 @@ pub mod pallet {
 		}
 
 		fn block(i: u16) -> BlockNumber {
+			i.into()
+		}
+
+		fn pool(i: u16) -> PoolId {
 			i.into()
 		}
 	}
@@ -149,6 +151,9 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// Weight information for pallet-nfts.
+		type NftsWeightInfo: NftsWeightInfo;
+
 		/// The currency mechanism, used for paying for reserves.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
@@ -159,7 +164,8 @@ pub mod pallet {
 				Self::AccountId,
 				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
 			> + Inspect<Self::AccountId>
-			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>;
+			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>
+			+ InspectRole<Self::AccountId>;
 
 		/// generate random ID
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -170,13 +176,24 @@ pub mod pallet {
 		/// The type used to identify a unique trade
 		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
-		/// The basic amount of funds that must be reserved for game.
+		/// The type used to identify a unique mining pool
+		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+
+		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Max number of collections in a game
+		/// The basic amount of funds that must be reserved for a mining pool.
+		#[pallet::constant]
+		type MiningPoolDeposit: Get<BalanceOf<Self, I>>;
+
+		/// Maximum number of collections in a  game.
 		#[pallet::constant]
 		type MaxGameCollection: Get<u32>;
+
+		/// Maximum number of games a collection can share.
+		#[pallet::constant]
+		type MaxGameShare: Get<u32>;
 
 		/// Maximum number of item that a collection could has
 		#[pallet::constant]
@@ -190,9 +207,13 @@ pub mod pallet {
 		#[pallet::constant]
 		type UpgradeDeposit: Get<BalanceOf<Self, I>>;
 
-		/// Maximum collection in a bundle
+		/// Maximum collection in a bundle for trade
 		#[pallet::constant]
 		type MaxBundle: Get<u32>;
+
+		/// Maximum number of loot that a table could has
+		#[pallet::constant]
+		type MaxLoot: Get<u32>;
 
 		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
@@ -200,17 +221,28 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
 	}
 
-	/// Store basic game info
+	/// Storing basic game info
 	#[pallet::storage]
 	pub(super) type Game<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
+	/// Storing next game id
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::GameId, OptionQuery>;
+
+	/// Storing next trade id
+	#[pallet::storage]
+	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::TradeId, OptionQuery>;
+
+	/// Storing next mining pool id
+	#[pallet::storage]
+	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::PoolId, OptionQuery>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -222,15 +254,15 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing Collection Minting Fee
-	#[pallet::storage]
-	pub(super) type MintingFeeOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::CollectionId, BalanceOf<T, I>, OptionQuery>;
-
 	/// Collection belongs to
 	#[pallet::storage]
-	pub(super) type GameOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::CollectionId, T::GameId, OptionQuery>;
+	pub(super) type GamesOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::CollectionId,
+		BoundedVec<T::GameId, T::MaxGameShare>,
+		ValueQuery,
+	>;
 
 	/// Game roles
 	#[pallet::storage]
@@ -269,21 +301,38 @@ pub mod pallet {
 		u32,
 		ValueQuery,
 	>;
+	
+	/// Storing Nft supplies, `None` indicates infinite supply
+	#[pallet::storage]
+	pub(super) type SupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::CollectionId,
+		Blake2_128Concat,
+		T::ItemId,
+		Option<u32>,
+		OptionQuery,
+	>;
 
 	/// Item reserve for random minting created by the owner
 	#[pallet::storage]
-	pub(super) type ItemReserve<T: Config<I>, I: 'static = ()> = StorageMap<
+	pub(super) type LootTableOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
-		Twox64Concat,
-		T::CollectionId,
-		BoundedVec<Item<T::ItemId>, T::MaxItem>,
+		Blake2_128,
+		T::PoolId,
+		BoundedVec<Loot<T::CollectionId, T::ItemId>, T::MaxLoot>,
 		ValueQuery,
 	>;
 
-	/// Item reserve created by the owner, random mining by player
+	/// Storing mining pool configuration
 	#[pallet::storage]
-	pub(super) type TotalReserveOf<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Twox64Concat, T::CollectionId, u32, ValueQuery>;
+	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::PoolId,
+		PoolDetails<T::AccountId, BalanceOf<T, I>>,
+		OptionQuery,
+	>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -297,7 +346,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Store the original items of the upgraded items
+	/// Storing the original items of the upgraded items
 	#[pallet::storage]
 	pub(super) type OriginItemOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
@@ -307,7 +356,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Store the upgrade config
+	/// Storing the upgrade config
 	#[pallet::storage]
 	pub(super) type UpgradeConfigOf<T: Config<I>, I: 'static = ()> = StorageNMap<
 		_,
@@ -324,11 +373,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, [u8; 32], ValueQuery>;
-
-	/// Storing next bundle id
-	#[pallet::storage]
-	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, T::TradeId, OptionQuery>;
 
 	/// Storing bundle
 	#[pallet::storage]
@@ -360,6 +404,11 @@ pub mod pallet {
 	pub(super) type HighestBidOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::TradeId, (T::AccountId, BalanceOf<T, I>), OptionQuery>;
 
+	/// Store accepts to add collections to the games
+	#[pallet::storage]
+	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -371,11 +420,21 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 		},
+		AddingAcceptanceSet {
+			who: T::AccountId,
+			game: T::GameId,
+			collection: T::CollectionId,
+		},
+		CollectionAdded {
+			who: T::AccountId,
+			game: T::GameId,
+			collection: T::CollectionId,
+		},
 		ItemCreated {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			maybe_supply: Option<u32>,
 		},
 		ItemAdded {
 			who: T::AccountId,
@@ -384,10 +443,10 @@ pub mod pallet {
 			amount: u32,
 		},
 		Minted {
+			pool: T::PoolId,
 			who: T::AccountId,
 			target: T::AccountId,
-			collection: T::CollectionId,
-			items: Vec<T::ItemId>,
+			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
 		},
 		Burned {
 			who: T::AccountId,
@@ -504,6 +563,12 @@ pub mod pallet {
 			amount: u32,
 			ask_unit_price: BalanceOf<T, I>,
 		},
+		MiningPoolCreated {
+			pool: T::PoolId,
+			who: T::AccountId,
+			pool_type: PoolType,
+			table: LootTable<T::CollectionId, T::ItemId>,
+		},
 	}
 
 	#[pallet::error]
@@ -517,6 +582,8 @@ pub mod pallet {
 		UnknownUpgrade,
 		UnknownAuction,
 		UnknownBid,
+		UnknownAcceptance,
+		UnknowMiningPool,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -526,8 +593,12 @@ pub mod pallet {
 		ExceedAllowedAmount,
 		/// Exceed the maximum allowed collection in a game
 		ExceedMaxCollection,
+		/// Exceeded the maximum number of games that can be shared between collections
+		ExceedMaxGameShare,
 		/// Exceed max collections in a bundle
 		ExceedMaxBundle,
+		/// Exceed max loots in a table
+		ExceedMaxLoot,
 
 		SoldOut,
 		/// Too many attempts
@@ -550,7 +621,11 @@ pub mod pallet {
 
 		/// The asking price is higher than the set price.
 		AskTooHigh,
+
+		// Id in use
+		GameIdInUse,
 		TradeIdInUse,
+		PoolIdInUse,
 
 		// Retail trade
 		IncorrectCollection,
@@ -568,6 +643,11 @@ pub mod pallet {
 		NotSwap,
 		NotAuction,
 		NotSetBuy,
+
+		//mining pool
+		InfiniteSupply,
+		NotInfiniteSupply,
+		MintFailed,
 	}
 
 	#[pallet::hooks]
@@ -585,39 +665,46 @@ pub mod pallet {
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
-			let game = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
-			Self::do_create_game(&sender, &game, &admin)?;
+			let game = Self::get_game_id();
+
+			Self::do_create_game(&game, &sender, &admin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
+		#[transactional]
+		pub fn create_game_collection(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_create_game_collection(&sender, &game)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		#[transactional]
-		pub fn create_game_collection(
-			origin: OriginFor<T>,
-			game: T::GameId,
-			fee: BalanceOf<T, I>,
-		) -> DispatchResult {
+		pub fn create_collection(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
+			let admin = T::Lookup::lookup(admin)?;
 			let sender = ensure_signed(origin)?;
-			Self::do_create_game_collection(&sender, &game, fee)?;
+			Self::do_create_collection(&sender, &admin)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_accept_adding(1_u32))]
 		#[transactional]
-		pub fn create_collection(
+		pub fn set_accept_adding(
 			origin: OriginFor<T>,
-			admin: T::AccountId,
-			fee: BalanceOf<T, I>,
+			game: T::GameId,
+			collection: T::CollectionId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_collection(&sender, &admin, fee)?;
+			Self::do_set_accept_adding(&sender, &game, &collection)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_game_collection(1_u32))]
 		#[transactional]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
@@ -637,26 +724,24 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			config: ItemConfig,
-			amount: u32,
+			maybe_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, amount)?;
+			Self::do_create_item(&sender, &collection, &item, &config, maybe_supply)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
 		#[transactional]
-		pub fn add_item(
+		pub fn add_supply(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			Self::do_add_item(&sender, &collection, &item, amount)?;
-
+			Self::do_add_supply(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
@@ -665,13 +750,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn mint(
 			origin: OriginFor<T>,
-			collection: T::CollectionId,
+			pool: T::PoolId,
 			mint_to: AccountIdLookupOf<T>,
 			amount: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;
-			Self::do_mint(&sender, &collection, &target, amount)?;
+			Self::do_mint(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 
@@ -702,7 +787,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let destination = T::Lookup::lookup(dest)?;
 			Self::do_transfer_item(&sender, &collection, &item, &destination, amount)?;
-
 			Ok(())
 		}
 
@@ -740,7 +824,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(13)]
-		#[pallet::weight(0)]
+		#[pallet::weight({0})]
 		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
@@ -777,7 +861,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(16)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply(1_u32))]
 		#[transactional]
 		pub fn add_retail_supply(
 			origin: OriginFor<T>,
@@ -817,7 +901,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(19)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade(1_u32))]
 		#[transactional]
 		pub fn cancel_trade(
 			origin: OriginFor<T>,
@@ -870,7 +954,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(23)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::lock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::lock_item_transfer())]
 		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
@@ -881,7 +965,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::unlock_item_transfer(1_u32))]
+		#[pallet::weight(T::NftsWeightInfo::unlock_item_transfer())]
 		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
@@ -986,7 +1070,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(32)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::set_attribute())]
 		#[transactional]
 		pub fn set_attribute(
 			origin: OriginFor<T>,
@@ -1002,7 +1086,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(33)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::clear_attribute())]
 		#[transactional]
 		pub fn clear_attribute(
 			origin: OriginFor<T>,
@@ -1017,7 +1101,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(34)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::set_metadata())]
 		#[transactional]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
@@ -1029,7 +1113,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(35)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::clear_metadata())]
 		#[transactional]
 		pub fn clear_metadata(
 			origin: OriginFor<T>,
@@ -1040,7 +1124,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(36)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::set_collection_metadata())]
 		#[transactional]
 		pub fn set_collection_metadata(
 			origin: OriginFor<T>,
@@ -1051,7 +1135,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(37)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::NftsWeightInfo::clear_collection_metadata())]
 		#[transactional]
 		pub fn clear_collection_metadata(
 			origin: OriginFor<T>,
@@ -1059,6 +1143,51 @@ pub mod pallet {
 		) -> DispatchResult {
 			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
 		}
+
+		#[pallet::call_index(38)]
+		#[pallet::weight(T::NftsWeightInfo::set_team())]
+		pub fn set_team(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			issuer: Option<AccountIdLookupOf<T>>,
+			admin: Option<AccountIdLookupOf<T>>,
+			freezer: Option<AccountIdLookupOf<T>>,
+		) -> DispatchResult {
+			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
+		}
+
+		#[pallet::call_index(39)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
+		#[transactional]
+		pub fn create_dynamic_pool(
+			origin: OriginFor<T>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
+			fee: BalanceOf<T, I>,
+			admin: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let id = Self::get_pool_id();
+			let admin = T::Lookup::lookup(admin)?;
+			Self::do_create_dynamic_pool(&id, &sender, loot_table, fee, &admin)?;
+			Ok(())
+		}
+
+		#[pallet::call_index(40)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
+		#[transactional]
+		pub fn create_stable_pool(
+			origin: OriginFor<T>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
+			fee: BalanceOf<T, I>,
+			admin: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let id = Self::get_pool_id();
+			let admin = T::Lookup::lookup(admin)?;
+			Self::do_create_stable_pool(&id, &sender, loot_table, fee, &admin)?;
+			Ok(())
+		}
+
 	}
 
 	#[pallet::validate_unsigned]
@@ -1105,6 +1234,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {
 			Some(config) => {
@@ -1115,6 +1245,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		}
 	}
 
+	/// Return `Ok(())` if `who` is the owner of `collection`.
 	pub fn ensure_collection_owner(
 		who: &T::AccountId,
 		collection: &T::CollectionId,

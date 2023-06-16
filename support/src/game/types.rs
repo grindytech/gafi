@@ -7,6 +7,7 @@ use sp_std::vec::Vec;
 use super::Amount;
 
 pub type Bundle<CollectionId, ItemId> = Vec<Package<CollectionId, ItemId>>;
+pub type LootTable<CollectionId, ItemId> = Vec<Loot<CollectionId, ItemId>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Package<CollectionId, ItemId> {
@@ -33,4 +34,23 @@ pub enum TradeType {
 	Wishlist,
 	Auction,
 	Swap,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum PoolType {
+	Dynamic,
+	Fixed,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+pub struct NFT<CollectionId, ItemId> {
+	pub collection: CollectionId,
+	pub item: ItemId,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+pub struct Loot<CollectionId, ItemId> {
+	/// Each loot can be an nft or nothing
+	pub maybe_nft: Option<NFT<CollectionId, ItemId>>,
+	pub weight: u32,
 }

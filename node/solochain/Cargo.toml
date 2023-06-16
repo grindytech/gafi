@@ -34,7 +34,6 @@ sc-consensus = {workspace = true}
 sc-consensus-aura = {workspace = true}
 sc-consensus-manual-seal = {workspace = true}
 sc-executor = {workspace = true}
-sc-finality-grandpa = {workspace = true}
 sc-network = {workspace = true}
 sc-rpc = {workspace = true}
 sc-rpc-api = {workspace = true}
@@ -47,7 +46,6 @@ sp-block-builder = {workspace = true}
 sp-blockchain = {workspace = true}
 sp-consensus-aura = {workspace = true, features = ["std"]}
 sp-core = {workspace = true, features = ["std"]}
-sp-finality-grandpa = {workspace = true, features = ["std"]}
 sp-inherents = {workspace = true, features = ["std"]}
 sp-keyring = {workspace = true}
 sp-offchain = {workspace = true, features = ["std"]}

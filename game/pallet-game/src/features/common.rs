@@ -8,7 +8,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// You should call this function with different seed values until the random
 	/// number lies within `u32::MAX - u32::MAX % n`.
 	/// TODO: deal with randomness freshness
-	/// https://github.com/paritytech/substrate/issues/8311
+	/// https://github.com/grindytech/substrate/issues/8311
 	fn generate_random_number(seed: u32) -> u32 {
 		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
 		let random_number = <u32>::decode(&mut random_seed.as_ref())
@@ -45,51 +45,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		random
 	}
 
-	/// Withdraw an item in reserve which item depend on position.
-	/// The position of item withdrawal in a sum up from left to right
-	/// Example array [(`item`: `amount`)]: [(1, 5), (2, 4), (3, 3)],
-	/// With position = 4, result item = 1.
-	/// With position = 7, result item = 2.
-	/// With position = 10, result item = 3.
-	pub(crate) fn withdraw_reserve(
-		collection: &T::CollectionId,
-		position: u32,
-	) -> Result<T::ItemId, Error<T, I>> {
-		ItemReserve::<T, I>::try_mutate(collection, |reserve_vec| {
-			let mut tmp = 0_u32;
-			for reserve in reserve_vec.into_iter() {
-				if reserve.amount > 0 && reserve.amount + tmp >= position {
-					*reserve = reserve.sub(1);
-					return Ok(reserve.clone().item)
-				} else {
-					tmp += reserve.amount;
-				}
-			}
-			return Err(Error::<T, I>::WithdrawReserveFailed.into())
-		})
-	}
-
-	pub(crate) fn add_total_reserve(
-		collection: &T::CollectionId,
-		amount: u32,
-	) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalReserveOf::<T, I>::get(collection);
-		TotalReserveOf::<T, I>::insert(collection, total.saturating_add(amount));
-		Ok(())
-	}
-
-	pub(crate) fn sub_total_reserve(
-		collection: &T::CollectionId,
-		amount: u32,
-	) -> Result<(), Error<T, I>> {
-		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
-		let total = TotalReserveOf::<T, I>::get(collection);
-		ensure!(total >= amount, Error::<T, I>::SoldOut);
-		TotalReserveOf::<T, I>::insert(collection, total.saturating_sub(amount));
-		Ok(())
-	}
-
+	/// Transfer an `amount` of `item` in `collection` from `from` to `to`.
 	pub(crate) fn transfer_item(
 		from: &T::AccountId,
 		collection: &T::CollectionId,
@@ -102,7 +58,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub(crate) fn move_item(
+	/// Convert an `amount` of `old_item` to an `amount` of `new_item` in the `collection` of `who`.
+	pub(crate) fn convert_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		old_item: &T::ItemId,
@@ -114,6 +71,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn add_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -126,6 +84,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of `item` in `collection` to `who`.
 	pub(crate) fn sub_item_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -139,6 +98,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Add a new `amount` of reserved `item` in `collection` to `who`.
 	fn add_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -151,6 +111,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Subtract a new `amount` of reserved `item` in `collection` to `who`.
 	fn sub_reserved_balance(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -159,11 +120,15 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ReservedBalanceOf::<T, I>::get((who, collection, item));
-		ensure!(balance >= amount, Error::<T, I>::InsufficientReservedBalance);
+		ensure!(
+			balance >= amount,
+			Error::<T, I>::InsufficientReservedBalance
+		);
 		ReservedBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
 		Ok(())
 	}
 
+	/// Lock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn reserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -175,6 +140,16 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Calculate the total weight in a `table` of loot.
+	pub fn total_weight(table: &LootTable<T::CollectionId, T::ItemId>) -> u32 {
+		let mut counter = 0;
+		for package in table {
+			counter += package.weight;
+		}
+		counter
+	}
+
+	/// Unlock `amount` of `item` in `collection` of `who`.
 	pub(crate) fn unreserved_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -186,7 +161,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	///  Move the item reserved item balance of one account into the item balance of another, according to `status`.
+	///  Move the item reserved item balance of one account into the item balance of another,
+	/// according to `status`.
 	pub(crate) fn repatriate_reserved_item(
 		slashed: &T::AccountId,
 		collection: &T::CollectionId,
@@ -207,9 +183,35 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
+	/// Get the available game id and increase the id by 1.
+	pub(crate) fn get_game_id() -> T::GameId {
+		let id = NextGameId::<T, I>::get().unwrap_or(T::GameId::initial_value());
+		NextGameId::<T, I>::set(Some(id.increment()));
+		id
+	}
+
+	/// Get the available trade id and increase the id by 1.
 	pub(crate) fn get_trade_id() -> T::TradeId {
 		let id = NextTradeId::<T, I>::get().unwrap_or(T::TradeId::initial_value());
 		NextTradeId::<T, I>::set(Some(id.increment()));
 		id
+	}
+
+	/// Get the available pool id and increase the id by 1.
+	pub(crate) fn get_pool_id() -> T::PoolId {
+		let id = NextPoolId::<T, I>::get().unwrap_or(T::PoolId::initial_value());
+		NextPoolId::<T, I>::set(Some(id.increment()));
+		id
+	}
+
+	/// Check if `item` in `collection` is in infinite supply.
+	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
+		match SupplyOf::<T, I>::get(collection, item) {
+			Some(maybe_supply) => match maybe_supply {
+				Some(_) => return false,
+				None => return true,
+			},
+			None => false,
+		}
 	}
 }
