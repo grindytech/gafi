@@ -88,7 +88,6 @@ pub mod crypto {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::types::Item;
 	use frame_support::{
 		pallet_prelude::{OptionQuery, ValueQuery, *},
 		traits::tokens::nonfungibles_v2::InspectRole,

@@ -2,7 +2,6 @@ use codec::{Decode, Encode};
 use core::primitive::u32;
 use frame_support::{pallet_prelude::MaxEncodedLen, RuntimeDebug};
 use scale_info::TypeInfo;
-use sp_runtime::Permill;
 use sp_std::vec::Vec;
 
 use super::Amount;
@@ -56,6 +55,7 @@ pub struct NFT<CollectionId, ItemId> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 pub struct Loot<CollectionId, ItemId> {
+	/// Each loot can be an nft or nothing
 	pub maybe_nft: Option<NFT<CollectionId, ItemId>>,
 	pub weight: u32,
 }

@@ -47,22 +47,6 @@ pub struct GameDetails<AccountId, DepositBalance> {
 	pub(super) admin: AccountId,
 }
 
-#[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct Item<ItemId> {
-	pub item: ItemId,
-	pub amount: u32,
-}
-
-impl<ItemId> Item<ItemId> {
-	pub fn new(item: ItemId, amount: u32) -> Self {
-		Item { item, amount }
-	}
-
-	pub fn sub(&mut self, amount: u32) {
-		self.amount -= amount;
-	}
-}
-
 /// Upgrade Item configuration.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct UpgradeItemConfig<ItemId, Price> {

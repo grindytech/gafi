@@ -1,6 +1,5 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Bundle, LootTable, Mining, NFT};
+use gafi_support::game::{LootTable, NFT};
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Get Basic Loot Mechanism
@@ -30,7 +29,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 	/// Get Basic Loot Mechanism
 	///
-	/// Returns an NFT depending on the `position`.
+	/// Take and return an NFT depending on the `position`.
 	///
 	/// - `table`: loot table
 	/// - `position`: rolling for loot, position must be in 0..`total weight - 1`
