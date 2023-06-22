@@ -229,6 +229,19 @@ pub mod pallet {
 	pub(super) type Game<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::GameId, GameDetailsFor<T, I>>;
 
+	/// The games owned by any given account; set out this way so that games owned by
+	/// a single account can be enumerated.
+	#[pallet::storage]
+	pub type GameAccount<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::GameId,
+		(),
+		OptionQuery,
+	>;
+
 	/// Storing next game id
 	#[pallet::storage]
 	pub(super) type NextGameId<T: Config<I>, I: 'static = ()> =
@@ -301,7 +314,7 @@ pub mod pallet {
 		u32,
 		ValueQuery,
 	>;
-	
+
 	/// Storing Nft supplies, `None` indicates infinite supply
 	#[pallet::storage]
 	pub(super) type SupplyOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -683,7 +696,10 @@ pub mod pallet {
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		#[transactional]
-		pub fn create_collection(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
+		pub fn create_collection(
+			origin: OriginFor<T>,
+			admin: AccountIdLookupOf<T>,
+		) -> DispatchResult {
 			let admin = T::Lookup::lookup(admin)?;
 			let sender = ensure_signed(origin)?;
 			Self::do_create_collection(&sender, &admin)?;
@@ -1187,7 +1203,6 @@ pub mod pallet {
 			Self::do_create_stable_pool(&id, &sender, loot_table, fee, &admin)?;
 			Ok(())
 		}
-
 	}
 
 	#[pallet::validate_unsigned]

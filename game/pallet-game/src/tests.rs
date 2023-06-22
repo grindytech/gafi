@@ -235,7 +235,7 @@ fn do_all_set_bundle(package: Vec<PackageFor<Test>>, price: u128) -> sr25519::Pu
 }
 
 #[test]
-fn create_first_game_should_works() {
+fn create_game_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let before_balance = 3_000 * unit(GAKI);
@@ -261,6 +261,15 @@ fn create_first_game_should_works() {
 			CollectionRoles(
 				CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
 			)
+		);
+
+		assert_ok!(PalletGame::create_game(
+			RuntimeOrigin::signed(owner.clone()),
+			admin.clone()
+		));
+		assert_eq!(
+			GameAccount::<Test>::iter_prefix(owner.clone()).collect::<Vec<_>>(),
+			[(0, ()), (1, ())]
 		);
 	});
 }
