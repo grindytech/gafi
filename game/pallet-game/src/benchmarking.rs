@@ -550,7 +550,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	fill_wishlist {
+	claim_wishlist {
 		let s in 0 .. MAX as u32;
 
 		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
@@ -558,7 +558,7 @@ benchmarks_instance_pallet! {
 
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
 
-		let call = Call::<T, I>::fill_wishlist {
+		let call = Call::<T, I>::claim_wishlist {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};

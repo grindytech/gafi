@@ -285,7 +285,7 @@ pub trait Trade<AccountId, TradeId> {
 	fn do_cancel_trade(trade: &TradeId, who: &AccountId, trade_type: TradeType) -> DispatchResult;
 }
 
-pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price, BlockNumber> {
 	/// Do Set Price
 	///
 	/// Set item price for selling
@@ -300,6 +300,8 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 		who: &AccountId,
 		package: Package<CollectionId, ItemId>,
 		price: Price,
+		start_block: Option<BlockNumber>,
+		end_block: Option<BlockNumber>,
 	) -> DispatchResult;
 
 	/// Do Buy Item
@@ -357,6 +359,8 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 		who: &AccountId,
 		package: Package<CollectionId, ItemId>,
 		price: Price,
+		start_block: Option<BlockNumber>,
+		end_block: Option<BlockNumber>,
 	) -> DispatchResult;
 
 	/// Do Claim Set Buy
@@ -385,7 +389,7 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price> {
 	fn do_cancel_set_buy(trade: &TradeId, who: &AccountId) -> DispatchResult;
 }
 
-pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price, BlockNumber> {
 	/// Do Set Bundle
 	///
 	/// Bundling for sale
@@ -400,6 +404,8 @@ pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
+		start_block: Option<BlockNumber>,
+		end_block: Option<BlockNumber>,
 	) -> DispatchResult;
 
 	/// Do Buy Bundle
@@ -421,7 +427,7 @@ pub trait Wholesale<AccountId, CollectionId, ItemId, TradeId, Price> {
 }
 
 /// Trait for wishlist functionality
-pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price, BlockNumber> {
 	/// Do Set Wishlist
 	///
 	/// Set a wishlist with the price
@@ -435,6 +441,8 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		price: Price,
+		start_block: Option<BlockNumber>,
+		end_block: Option<BlockNumber>,
 	) -> DispatchResult;
 
 	/// Do Set Wishlist
@@ -445,7 +453,7 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 	/// - `trade`: trade id
 	/// - `who`: seller
 	/// - `ask_price`: ask price
-	fn do_fill_wishlist(trade: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
+	fn do_claim_wishlist(trade: &TradeId, who: &AccountId, ask_price: Price) -> DispatchResult;
 
 	/// Do Cancel Wishlist
 	///
@@ -456,7 +464,7 @@ pub trait Wishlist<AccountId, CollectionId, ItemId, TradeId, Price> {
 }
 
 /// Trait for swap items
-pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price> {
+pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price, BlockNumber> {
 	/// Do Set Swap
 	///
 	/// Set a swap from a source bundle for a required bundle, maybe with price
@@ -472,6 +480,8 @@ pub trait Swap<AccountId, CollectionId, ItemId, TradeId, Price> {
 		source: Bundle<CollectionId, ItemId>,
 		required: Bundle<CollectionId, ItemId>,
 		maybe_price: Option<Price>,
+		start_block: Option<BlockNumber>,
+		end_block: Option<BlockNumber>,
 	) -> DispatchResult;
 
 	/// Do Claim Swap
