@@ -1,11 +1,11 @@
 use crate::*;
 use codec::{Decode, Encode};
-use gafi_support::game::Loot;
 use core::primitive::u32;
 use frame_support::{
 	pallet_prelude::{BoundedVec, MaxEncodedLen},
 	RuntimeDebug,
 };
+use gafi_support::game::{Loot, MintSettings};
 
 use scale_info::TypeInfo;
 pub type BalanceOf<T, I = ()> =
@@ -17,11 +17,21 @@ pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::S
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
+pub type PoolDetailsFor<T, I> = PoolDetails<
+	<T as SystemConfig>::AccountId,
+	BalanceOf<T, I>,
+	BlockNumber<T>,
+	<T as pallet_nfts::Config>::CollectionId,
+>;
+
 pub type CollectionConfigFor<T, I = ()> =
 	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
+
+pub type MintSettingsFor<T, I = ()> =
+	MintSettings<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,
@@ -87,17 +97,16 @@ pub enum PoolType {
 
 /// Information about a mining pool.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct PoolDetails<AccountId, DepositBalance> {
+pub struct PoolDetails<AccountId, Balance, BlockNumber, CollectionId> {
 	/// pool type
 	pub(super) pool_type: PoolType,
-
-	pub(super) fee: DepositBalance,
-	
 	/// game's owner.
 	pub(super) owner: AccountId,
 	/// The total balance deposited by the owner for all the storage data associated with this
 	/// game. Used by `destroy`.
-	pub(super) owner_deposit: DepositBalance,
+	pub(super) owner_deposit: Balance,
 	/// Can create a new pool, add more resources.
 	pub(super) admin: AccountId,
+	/// mint settings
+	pub(super) mint_settings: MintSettings<Balance, BlockNumber, CollectionId>,
 }
