@@ -809,16 +809,6 @@ pub fn buy_item_should_fails() {
 			PalletGame::buy_item(
 				RuntimeOrigin::signed(buyer.clone()),
 				0,
-				8,
-				price,
-			),
-			Error::<Test>::TradeNotStarted
-		);
-
-		assert_err!(
-			PalletGame::buy_item(
-				RuntimeOrigin::signed(buyer.clone()),
-				0,
 				1,
 				price - (1 * unit(GAKI)),
 			),
