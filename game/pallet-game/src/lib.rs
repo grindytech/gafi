@@ -343,7 +343,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::PoolId,
-		PoolDetails<T::AccountId, BalanceOf<T, I>>,
+		PoolDetailsFor<T, I>,
 		OptionQuery,
 	>;
 
@@ -1178,13 +1178,13 @@ pub mod pallet {
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
-			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_dynamic_pool(&id, &sender, loot_table, fee, &admin)?;
+			Self::do_create_dynamic_pool(&id, &sender, loot_table, &admin, mint_settings)?;
 			Ok(())
 		}
 
@@ -1194,13 +1194,13 @@ pub mod pallet {
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
-			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_stable_pool(&id, &sender, loot_table, fee, &admin)?;
+			Self::do_create_stable_pool(&id, &sender, loot_table, &admin, mint_settings)?;
 			Ok(())
 		}
 	}

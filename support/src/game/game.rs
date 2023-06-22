@@ -1,4 +1,4 @@
-use super::{Bundle, LootTable, Package, TradeType};
+use super::{Bundle, LootTable, Package, TradeType, MintSettings};
 use frame_support::pallet_prelude::DispatchResult;
 
 pub type Amount = u32;
@@ -115,7 +115,7 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 }
 
 ///Trait to provide an interface for NFTs mining
-pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
+pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 
 	/// Do create dynamic pool
 	/// 
@@ -130,8 +130,8 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		pool: &PoolId,
 		who: &AccountId,
 		loot_table: LootTable<CollectionId, ItemId>,
-		fee: Price,
 		admin: &AccountId,
+		mint_settings: MintSettings<Price, BlockNumber, CollectionId>,
 	) -> DispatchResult;
 
 	/// Do create dynamic pool
@@ -147,8 +147,8 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId> {
 		pool: &PoolId,
 		who: &AccountId,
 		loot_table: LootTable<CollectionId, ItemId>,
-		fee: Price,
 		admin: &AccountId,
+		mint_settings: MintSettings<Price, BlockNumber, CollectionId>,
 	) -> DispatchResult;
 
 	/// Do mint dynamic pool
