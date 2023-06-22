@@ -1,6 +1,6 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Mining, MintSettings, NFT};
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
+use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
@@ -105,6 +105,22 @@ impl<T: Config<I>, I: 'static>
 		amount: u32,
 	) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
+			// verify mint settings
+			let mint_settings = pool_details.mint_settings;
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			if let Some(start_block) = mint_settings.start_block {
+				ensure!(block_number >= start_block, Error::<T, I>::MintNotStarted);
+			}
+			if let Some(end_block) = mint_settings.end_block {
+				ensure!(block_number <= end_block, Error::<T, I>::MintEnded);
+			}
+			match mint_settings.mint_type {
+				MintType::HolderOf(collection) => {
+					ensure!(ItemBalanceOf::<T, I>::contains_prefix((who.clone(), collection,)), Error::<T, I>::NotWhitelisted);
+				},
+				_ => {},
+			};
+
 			match pool_details.pool_type {
 				PoolType::Dynamic => {
 					Self::do_mint_dynamic_pool(pool, who, target, amount)?;

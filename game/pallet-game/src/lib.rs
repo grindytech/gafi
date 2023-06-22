@@ -661,6 +661,9 @@ pub mod pallet {
 		InfiniteSupply,
 		NotInfiniteSupply,
 		MintFailed,
+		MintNotStarted,
+		MintEnded,
+		NotWhitelisted,
 	}
 
 	#[pallet::hooks]
