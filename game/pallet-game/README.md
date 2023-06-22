@@ -92,7 +92,7 @@ The highest bid when the auction expired is the winner.
 * `set_buy`: Place a buy trade for NFTs.
 * `claim_set_buy`: Sell NFTs for `set_buy`.
 * `set_wishlist`: Order a buy-all for a bundle.
-* `fill_wishlist`: Sell a bundle for `set_wishlist`.
+* `claim_wishlist`: Sell a bundle for `set_wishlist`.
 * `set_swap`: Set an exchange a bundle for a bundle may have an additional cost.
 * `claim_swap`: Make an exchange from `set_swap`.
 * `set_auction`: Bid for a bundle, starting on a specific block with a minimum bid and duration.

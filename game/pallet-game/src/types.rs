@@ -17,6 +17,9 @@ pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::S
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
+pub type TradeConfigFor<T, I> =
+	TradeConfig<<T as SystemConfig>::AccountId, BalanceOf<T, I>, BundleFor<T, I>, BlockNumber<T>>;
+
 pub type PoolDetailsFor<T, I> = PoolDetails<
 	<T as SystemConfig>::AccountId,
 	BalanceOf<T, I>,
@@ -65,11 +68,13 @@ pub struct UpgradeItemConfig<ItemId, Price> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct TradeConfig<AccountId, Price, Bundle> {
+pub struct TradeConfig<AccountId, Price, Bundle, BlockNumber> {
 	pub trade: TradeType,
 	pub owner: AccountId,
 	pub maybe_price: Option<Price>,
 	pub maybe_required: Option<Bundle>,
+	pub start_block: Option<BlockNumber>,
+	pub end_block: Option<BlockNumber>,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

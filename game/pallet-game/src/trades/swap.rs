@@ -3,7 +3,7 @@ use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Bundle, Swap, TradeType};
 
 impl<T: Config<I>, I: 'static>
-	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
+	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
 {
 	fn do_set_swap(
 		trade: &T::TradeId,
@@ -11,6 +11,8 @@ impl<T: Config<I>, I: 'static>
 		source: Bundle<T::CollectionId, T::ItemId>,
 		required: Bundle<T::CollectionId, T::ItemId>,
 		maybe_price: Option<BalanceOf<T, I>>,
+		start_block: Option<T::BlockNumber>,
+		end_block: Option<T::BlockNumber>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -42,6 +44,8 @@ impl<T: Config<I>, I: 'static>
 				owner: who.clone(),
 				maybe_price,
 				maybe_required: Some(bundle_out),
+				start_block,
+				end_block,
 			},
 		);
 
@@ -63,6 +67,14 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(config.trade == TradeType::Swap, Error::<T, I>::NotSwap);
+
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			if let Some(start_block) = config.start_block {
+				ensure!(block_number >= start_block, Error::<T, I>::TradeNotStarted);
+			}
+			if let Some(end_block) = config.end_block {
+				ensure!(block_number <= end_block, Error::<T, I>::TradeEnded);
+			}
 
 			if let Some(price) = config.maybe_price {
 				// check price
