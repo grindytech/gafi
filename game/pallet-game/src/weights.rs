@@ -7,6 +7,7 @@
 //! HOSTNAME: `admin`, CPU: `<UNKNOWN>`
 //! EXECUTION: None, WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 1024
 
+//SBP-M2: I would suggest to use https://github.com/paritytech/substrate/blob/master/.maintain/frame-weight-template.hbs
 // Executed Command:
 // ./target/release/gafi-node
 // benchmark

@@ -12,6 +12,7 @@ impl<T: Config<I>, I: 'static>
 		BalanceOf<T, I>,
 	> for Pallet<T, I>
 {
+	// SBP-M2: Input params are declared as reference, no need to pass their reference again.
 	fn do_create_game_collection(
 		who: &T::AccountId,
 		game: &T::GameId,
@@ -33,6 +34,8 @@ impl<T: Config<I>, I: 'static>
 
 			let maybe_collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
 
+			// SBP-M2: Why we are returning `UnknownGame` error in this case as well?
+			// SBP-M2: '?' can be incorporated?
 			if let Ok(collection) = maybe_collection {
 				// insert game collections
 				CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
@@ -68,6 +71,7 @@ impl<T: Config<I>, I: 'static>
 			mint_settings: MintSettings::default(),
 		};
 
+		// SBP-M2: `?` can be incorporate?
 		let maybe_collection = T::Nfts::create_collection(&who, &admin, &config);
 		if let Ok(collection) = maybe_collection {
 			Self::deposit_event(Event::<T, I>::CollectionCreated {
@@ -158,6 +162,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
+			// SBP-M2: match can be applied directly to `collection_vec.iter().po...`, no need to declare extra variable.
 			let maybe_position = collection_vec.iter().position(|x| *x == *collection);
 			match maybe_position {
 				Some(position) => {

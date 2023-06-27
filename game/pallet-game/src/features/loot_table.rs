@@ -1,6 +1,7 @@
 use crate::*;
 use gafi_support::game::{LootTable, NFT};
 
+// SBP-M2: Please try to incorporate safe math operations.
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Get Basic Loot Mechanism
 	///

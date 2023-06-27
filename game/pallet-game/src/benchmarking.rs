@@ -384,6 +384,9 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			new_item: <T as pallet_nfts::Config>::Helper::item(100),
 			config: default_item_config(),
+			// SBP-M2: benchmark is not setup for worst case, the length should be taken from range
+			// so that the extrinsic can return the actual weight consumed by the transaction in
+			// DispatchResultWithPostInfo by passing data length in weight_info's parameter
 			data: bvec![0u8; 50],
 			level: 0,
 			fee: <T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -471,6 +474,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_bundle {
 		let s in 0 .. MAX as u32;
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
@@ -520,6 +524,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_wishlist {
 		let s in 0 .. MAX as u32;
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
@@ -588,6 +593,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_swap {
 		let s in 0 .. MAX as u32;
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
@@ -676,6 +682,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_auction {
 		let s in 0 .. MAX as u32;
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
@@ -915,6 +922,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_dynamic_pool {
 		let s in 0 .. MAX as u32;
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
@@ -958,6 +966,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
+	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_stable_pool {
 		let s in 0 .. MAX as u32;
 

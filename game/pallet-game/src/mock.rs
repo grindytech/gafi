@@ -151,12 +151,13 @@ parameter_types! {
 	pub MaxMintItem: u32 = MAX_ITEM_MINT_VAL;
 	pub MaxBundle: u32 = MAX_BUNDLE_VAL;
 	pub MaxGameShare: u32 = MAX_GAME_SHARE_VAL;
-	
+
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxItem: u32 = 10;
 	pub MaxLoot: u32 = MAX_LOOT;
 }
 
+// SBP-M2: Implement all trait items.
 impl pallet_game::Config for Test {
 	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
@@ -218,6 +219,8 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
+
+		// SBP-M2: Remove commented code.
 		// Timestamp::set_timestamp(
 		// 	(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
 		// );
