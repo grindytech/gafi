@@ -31,5 +31,7 @@ package-lock.json
 # Custome chain spec
 genesis/
 
+# Maintain files
+.maintain
 
 *.log
