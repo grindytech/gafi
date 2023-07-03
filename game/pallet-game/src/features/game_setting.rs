@@ -5,6 +5,8 @@ use pallet_nfts::{CollectionRole, CollectionRoles};
 impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 	for Pallet<T, I>
 {
+	// SBP-M2: `who` is a reference type, no need to pass it's reference again in inner calls.
+	// SBP-M2: Please make sure to handle duplicate record error.
 	fn do_create_game(
 		game: &T::GameId,
 		who: &T::AccountId,

@@ -49,6 +49,9 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
 				Error::<T, I>::NoPermission
 			);
+
+			//SBP-M2: Is there any reason to declare extra variable `maybe_supply`? Can be simplified
+			// by applying patter match directly on storage operation. Like: if let Some(..) = SupplyOf...
 			let maybe_supply = SupplyOf::<T, I>::get(collection, item);
 			if let Some(supply) = maybe_supply {
 				match supply {

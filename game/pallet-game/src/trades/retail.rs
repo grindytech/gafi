@@ -65,6 +65,7 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
+	// SBP-M2: Try to incorporate safe math operations.
 	fn do_buy_item(
 		trade: &T::TradeId,
 		who: &T::AccountId,
@@ -329,7 +330,7 @@ impl<T: Config<I>, I: 'static>
 
 				Self::deposit_event(Event::<T, I>::SetBuyClaimed {
 					trade: *trade,
-					who: who.clone(),					
+					who: who.clone(),
 					amount: package.amount,
 					ask_unit_price,
 				});
@@ -349,6 +350,8 @@ impl<T: Config<I>, I: 'static>
 
 				// unreserve deposit
 				let price = config.maybe_price.unwrap_or_default();
+
+				// SBP-M2: Incorporate safe math operation.
 				<T as pallet::Config<I>>::Currency::unreserve(
 					&config.owner,
 					price * package.amount.into(),

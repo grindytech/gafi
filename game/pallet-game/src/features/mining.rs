@@ -105,6 +105,7 @@ impl<T: Config<I>, I: 'static>
 		amount: u32,
 	) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
+			// SBP-M2: `return` can only be used before match, instead of using in both the cases.
 			// verify mint settings
 			let mint_settings = pool_details.mint_settings;
 			let block_number = <frame_system::Pallet<T>>::block_number();
@@ -163,6 +164,7 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
+			// SBP-M2: can `Vec::new()` be incorporated?
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
 				let mut total_weight = Self::total_weight(&table);
@@ -171,6 +173,7 @@ impl<T: Config<I>, I: 'static>
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(position < total_weight, Error::<T, I>::MintFailed);
+						// SBP-M2: Try to apply match directly on Self::take_loot()
 						let loot = Self::take_loot(&mut table, position);
 						match loot {
 							Some(maybe_nft) =>
@@ -232,6 +235,7 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
+			// SBP-M2: Can `Vec::new()` be incorporated?
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
@@ -242,6 +246,7 @@ impl<T: Config<I>, I: 'static>
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(position < total_weight, Error::<T, I>::MintFailed);
+						// SBP-M2: Why this additional variable declaration? Can't pattern-match applied directly on `Self::get_loot()`?
 						let loot = Self::get_loot(&table, position);
 						match loot {
 							Some(maybe_nft) =>

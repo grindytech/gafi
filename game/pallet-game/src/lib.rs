@@ -596,6 +596,7 @@ pub mod pallet {
 		UnknownAuction,
 		UnknownBid,
 		UnknownAcceptance,
+		// SBP-M2: Please resolve this typo.
 		UnknowMiningPool,
 
 		/// Exceed the maximum allowed item in a collection
@@ -677,6 +678,8 @@ pub mod pallet {
 		}
 	}
 
+	// SBP-M2: No need to use transactional as it's default to revert back storage changes in case of any error.
+	// SBP-M2: Please add documentation for each extrinsic.
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(1)]
@@ -813,6 +816,10 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: As weights are 2D, we need to take care of proof_size as well, here we should check
+		// the length of `Vec` and it should be returned with DispatchResultWithPostInfo return type.
+		// This will help in calculating the actual `proof_size` used in the transaction.
+		// For this, benchmark should also be updated in order to incorporate this change.
 		#[pallet::call_index(11)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
 		#[transactional]
@@ -898,6 +905,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please refer set_upgrade_item's comment.
 		#[pallet::call_index(17)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
 		#[transactional]
@@ -927,6 +936,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: Missing test case. Please add.
 		#[pallet::call_index(19)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade(1_u32))]
 		#[transactional]
@@ -940,6 +950,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please refer set_upgrade_item's comment.
 		#[pallet::call_index(20)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
 		#[transactional]
@@ -1004,6 +1016,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::unlock_item_transfer(origin, collection, item)
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please refer set_upgrade_item's comment.
 		#[pallet::call_index(25)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
 		#[transactional]
@@ -1034,6 +1048,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please refer set_upgrade_item's comment
 		#[pallet::call_index(27)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
 		#[transactional]
@@ -1189,6 +1205,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please refer set_upgrade_item's comment
 		#[pallet::call_index(39)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
 		#[transactional]
@@ -1205,6 +1223,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
+		// Please see set_upgrade_item's comment
 		#[pallet::call_index(40)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
 		#[transactional]
