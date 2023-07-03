@@ -339,13 +339,8 @@ pub mod pallet {
 
 	/// Storing mining pool configuration
 	#[pallet::storage]
-	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Twox64Concat,
-		T::PoolId,
-		PoolDetailsFor<T, I>,
-		OptionQuery,
-	>;
+	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Twox64Concat, T::PoolId, PoolDetailsFor<T, I>, OptionQuery>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -394,13 +389,8 @@ pub mod pallet {
 
 	/// Storing trade configuration
 	#[pallet::storage]
-	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::TradeId,
-		TradeConfigFor<T, I>,
-		OptionQuery,
-	>;
+	pub(super) type TradeConfigOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::TradeId, TradeConfigFor<T, I>, OptionQuery>;
 
 	/// Storing auction configuration
 	#[pallet::storage]
@@ -643,7 +633,7 @@ pub mod pallet {
 		// trade
 		TradeNotStarted,
 		TradeEnded,
-		
+
 		// Retail trade
 		IncorrectCollection,
 		IncorrectItem,
@@ -677,13 +667,13 @@ pub mod pallet {
 		}
 	}
 
-	// SBP-M2: No need to use transactional as it's default to revert back storage changes in case of any error.
-	// SBP-M2: Please add documentation for each extrinsic.
+	// SBP-M2: No need to use transactional as it's default to revert back storage changes in case
+	// of any error. SBP-M2: Please add documentation for each extrinsic.
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		#[pallet::call_index(1)]
+		
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game(1_u32))]
-		#[transactional]
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
@@ -693,18 +683,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(2)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
-		#[transactional]
 		pub fn create_game_collection(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_game_collection(&sender, &game)?;
 			Ok(())
 		}
 
-		#[pallet::call_index(3)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
-		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: AccountIdLookupOf<T>,
@@ -715,9 +703,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_accept_adding(1_u32))]
-		#[transactional]
 		pub fn set_accept_adding(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -728,9 +715,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_game_collection(1_u32))]
-		#[transactional]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -741,9 +727,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(6)]
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item(1_u32))]
-		#[transactional]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -756,9 +741,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(7)]
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
-		#[transactional]
 		pub fn add_supply(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -770,9 +754,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint(1_u32))]
-		#[transactional]
 		pub fn mint(
 			origin: OriginFor<T>,
 			pool: T::PoolId,
@@ -785,9 +768,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(8)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
-		#[transactional]
 		pub fn burn(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -799,9 +781,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer(1_u32))]
-		#[transactional]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -815,13 +796,13 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// SBP-M2: As weights are 2D, we need to take care of proof_size as well, here we should check
-		// the length of `Vec` and it should be returned with DispatchResultWithPostInfo return type.
-		// This will help in calculating the actual `proof_size` used in the transaction.
-		// For this, benchmark should also be updated in order to incorporate this change.
-		#[pallet::call_index(11)]
+		// SBP-M2: As weights are 2D, we need to take care of proof_size as well, here we should
+		// check the length of `Vec` and it should be returned with DispatchResultWithPostInfo
+		// return type. This will help in calculating the actual `proof_size` used in the
+		// transaction. For this, benchmark should also be updated in order to incorporate this
+		// change.
+		#[pallet::call_index(10)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
-		#[transactional]
 		pub fn set_upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -838,9 +819,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(12)]
+		#[pallet::call_index(11)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item(1_u32))]
-		#[transactional]
 		pub fn upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -852,18 +832,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(13)]
+		#[pallet::call_index(12)]
 		#[pallet::weight({0})]
-		#[transactional]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
 			ensure_none(origin)?;
 			RandomSeed::<T, I>::set(seed);
 			Ok(())
 		}
 
-		#[pallet::call_index(14)]
+		#[pallet::call_index(13)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price(1_u32))]
-		#[transactional]
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -877,9 +855,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(15)]
+		#[pallet::call_index(14)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item(1_u32))]
-		#[transactional]
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -891,9 +868,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(16)]
+		#[pallet::call_index(15)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply(1_u32))]
-		#[transactional]
 		pub fn add_retail_supply(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -906,9 +882,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
-		#[pallet::call_index(17)]
+		#[pallet::call_index(16)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
-		#[transactional]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -922,9 +897,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(18)]
+		#[pallet::call_index(17)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
-		#[transactional]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -936,9 +910,8 @@ pub mod pallet {
 		}
 
 		// SBP-M2: Missing test case. Please add.
-		#[pallet::call_index(19)]
+		#[pallet::call_index(18)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade(1_u32))]
-		#[transactional]
 		pub fn cancel_trade(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -951,9 +924,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
-		#[pallet::call_index(20)]
+		#[pallet::call_index(19)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
-		#[transactional]
 		pub fn set_wishlist(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -967,9 +939,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(21)]
+		#[pallet::call_index(20)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist(1_u32))]
-		#[transactional]
 		pub fn claim_wishlist(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -980,9 +951,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(22)]
+		#[pallet::call_index(21)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection(1_u32))]
-		#[transactional]
 		pub fn remove_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -993,9 +963,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(23)]
+		#[pallet::call_index(22)]
 		#[pallet::weight(T::NftsWeightInfo::lock_item_transfer())]
-		#[transactional]
 		pub fn lock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1004,9 +973,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::lock_item_transfer(origin, collection, item)
 		}
 
-		#[pallet::call_index(24)]
+		#[pallet::call_index(23)]
 		#[pallet::weight(T::NftsWeightInfo::unlock_item_transfer())]
-		#[transactional]
 		pub fn unlock_item_transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1017,9 +985,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
-		#[pallet::call_index(25)]
+		#[pallet::call_index(24)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
-		#[transactional]
 		pub fn set_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1030,13 +997,20 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_swap(&trade, &sender, source, required, maybe_price, start_block, end_block)?;
+			Self::do_set_swap(
+				&trade,
+				&sender,
+				source,
+				required,
+				maybe_price,
+				start_block,
+				end_block,
+			)?;
 			Ok(())
 		}
 
-		#[pallet::call_index(26)]
+		#[pallet::call_index(25)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap(1_u32))]
-		#[transactional]
 		pub fn claim_swap(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1049,9 +1023,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment
-		#[pallet::call_index(27)]
+		#[pallet::call_index(26)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
-		#[transactional]
 		pub fn set_auction(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1065,9 +1038,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(28)]
+		#[pallet::call_index(27)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction(1_u32))]
-		#[transactional]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1078,18 +1050,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(29)]
+		#[pallet::call_index(28)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
-		#[transactional]
 		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&trade)?;
 			Ok(())
 		}
 
-		#[pallet::call_index(30)]
+		#[pallet::call_index(29)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy(1_u32))]
-		#[transactional]
 		pub fn set_buy(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -1103,9 +1073,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(31)]
+		#[pallet::call_index(30)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy(1_u32))]
-		#[transactional]
 		pub fn claim_set_buy(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1117,9 +1086,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(32)]
+		#[pallet::call_index(31)]
 		#[pallet::weight(T::NftsWeightInfo::set_attribute())]
-		#[transactional]
 		pub fn set_attribute(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1133,9 +1101,8 @@ pub mod pallet {
 			)
 		}
 
-		#[pallet::call_index(33)]
+		#[pallet::call_index(32)]
 		#[pallet::weight(T::NftsWeightInfo::clear_attribute())]
-		#[transactional]
 		pub fn clear_attribute(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1148,9 +1115,8 @@ pub mod pallet {
 			)
 		}
 
-		#[pallet::call_index(34)]
+		#[pallet::call_index(33)]
 		#[pallet::weight(T::NftsWeightInfo::set_metadata())]
-		#[transactional]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1160,9 +1126,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)
 		}
 
-		#[pallet::call_index(35)]
+		#[pallet::call_index(34)]
 		#[pallet::weight(T::NftsWeightInfo::clear_metadata())]
-		#[transactional]
 		pub fn clear_metadata(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1171,9 +1136,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::clear_metadata(origin, collection, item)
 		}
 
-		#[pallet::call_index(36)]
+		#[pallet::call_index(35)]
 		#[pallet::weight(T::NftsWeightInfo::set_collection_metadata())]
-		#[transactional]
 		pub fn set_collection_metadata(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1182,9 +1146,8 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(origin, collection, data)
 		}
 
-		#[pallet::call_index(37)]
+		#[pallet::call_index(36)]
 		#[pallet::weight(T::NftsWeightInfo::clear_collection_metadata())]
-		#[transactional]
 		pub fn clear_collection_metadata(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1192,7 +1155,7 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
 		}
 
-		#[pallet::call_index(38)]
+		#[pallet::call_index(37)]
 		#[pallet::weight(T::NftsWeightInfo::set_team())]
 		pub fn set_team(
 			origin: OriginFor<T>,
@@ -1206,9 +1169,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment
-		#[pallet::call_index(39)]
+		#[pallet::call_index(38)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
-		#[transactional]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1224,9 +1186,8 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please see set_upgrade_item's comment
-		#[pallet::call_index(40)]
+		#[pallet::call_index(39)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
-		#[transactional]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
