@@ -17,7 +17,7 @@ serde = {workspace = true, features = ["derive"]}
 frame-benchmarking = {workspace = true, default-features = false, optional = true}
 frame-support = {default-features = false, workspace = true}
 frame-system = {vdefault-features = false, workspace = true}
-scale-info = {version = "2.8.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.9.0", default-features = false, features = ["derive"]}
 sp-core = {workspace = true, default-features = false}
 sp-std = {workspace = true, default-features = false}
 sp-runtime = {workspace = true, default-features = false}

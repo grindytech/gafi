@@ -17,7 +17,7 @@ codec = {package = "parity-scale-codec", version = "3.2.2", default-features = f
   "derive",
 ]}
 log = {version = "0.4.19", default-features = false}
-scale-info = {version = "2.8.0", default-features = false, features = ["derive"]}
+scale-info = {version = "2.9.0", default-features = false, features = ["derive"]}
 
 frame-benchmarking = {workspace = true, default-features = false, optional = true}
 frame-support = {default-features = false, workspace = true}
