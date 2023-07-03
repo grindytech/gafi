@@ -7,9 +7,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Note that there is potential bias introduced by using modulus operator.
 	/// You should call this function with different seed values until the random
 	/// number lies within `u32::MAX - u32::MAX % n`.
-	// SBP-M2: Please resolve this TODO
-	/// TODO: deal with randomness freshness
-	/// https://github.com/grindytech/substrate/issues/8311
 	fn generate_random_number(seed: u32) -> u32 {
 		let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
 		let random_number = <u32>::decode(&mut random_seed.as_ref())
@@ -207,14 +204,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 	/// Check if `item` in `collection` is in infinite supply.
 	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
-		// SBP-M2: Can be simplified like this:
-		// `SupplyOf::<T, I>::get(collection, item).map(|maybe_supply| maybe_supply.is_none()).unwrap_or_default()`
-		match SupplyOf::<T, I>::get(collection, item) {
-			Some(maybe_supply) => match maybe_supply {
-				Some(_) => return false,
-				None => return true,
-			},
-			None => false,
-		}
+		SupplyOf::<T, I>::get(collection, item)
+			.map(|maybe_supply| maybe_supply.is_none())
+			.unwrap_or_default()
 	}
 }

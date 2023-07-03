@@ -1,6 +1,7 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Amount, UpgradeItem};
+use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
 	UpgradeItem<
@@ -35,8 +36,7 @@ impl<T: Config<I>, I: 'static>
 
 		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
 			// create item
-			// SBP-M2: No need to bind `let`.
-			let _ = T::Nfts::mint_into(collection, new_item, &collection_owner, config, true)?;
+			T::Nfts::mint_into(collection, new_item, &collection_owner, config, true)?;
 		} else {
 			return Err(Error::<T, I>::UnknownCollection.into())
 		}
@@ -64,7 +64,6 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	// SBP-M2: Please try to incorporate safe math operations.
 	fn do_upgrade_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
@@ -86,7 +85,7 @@ impl<T: Config<I>, I: 'static>
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,
 					&owner,
-					config.fee * amount.into(),
+					config.fee.saturating_mul(amount.into()),
 					ExistenceRequirement::KeepAlive,
 				)?;
 			}
@@ -103,7 +102,7 @@ impl<T: Config<I>, I: 'static>
 
 			return Ok(())
 		}
-		// SBP-M2: return can be removed.
-		return Err(Error::<T, I>::UnknownUpgrade.into())
+
+		Err(Error::<T, I>::UnknownUpgrade.into())
 	}
 }

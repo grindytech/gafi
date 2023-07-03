@@ -50,10 +50,7 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				Error::<T, I>::NoPermission
 			);
 
-			//SBP-M2: Is there any reason to declare extra variable `maybe_supply`? Can be simplified
-			// by applying patter match directly on storage operation. Like: if let Some(..) = SupplyOf...
-			let maybe_supply = SupplyOf::<T, I>::get(collection, item);
-			if let Some(supply) = maybe_supply {
+			if let Some(supply) = SupplyOf::<T, I>::get(collection, item) {
 				match supply {
 					Some(val) => {
 						let new_supply = val + amount;

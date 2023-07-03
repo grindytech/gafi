@@ -21,8 +21,7 @@ scale-info = {version = "2.8.0", default-features = false, features = ["derive"]
 
 frame-benchmarking = {workspace = true, default-features = false, optional = true}
 frame-support = {default-features = false, workspace = true}
-# SBP-M2: Is it intentional (vdefault-features)? Cargo issues warning for this.
-frame-system = {vdefault-features = false, workspace = true}
+frame-system = {default-features = false, workspace = true}
 pallet-balances = {workspace = true, default-features = false}
 pallet-nfts = {workspace = true, default-features = false}
 sp-core = {workspace = true, default-features = false}

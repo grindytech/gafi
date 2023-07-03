@@ -219,11 +219,6 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-
-		// SBP-M2: Remove commented code.
-		// Timestamp::set_timestamp(
-		// 	(System::block_number() as u64 * MILLISECS_PER_BLOCK) + INIT_TIMESTAMP,
-		// );
 	}
 }
 

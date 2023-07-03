@@ -596,8 +596,7 @@ pub mod pallet {
 		UnknownAuction,
 		UnknownBid,
 		UnknownAcceptance,
-		// SBP-M2: Please resolve this typo.
-		UnknowMiningPool,
+		UnknownMiningPool,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
