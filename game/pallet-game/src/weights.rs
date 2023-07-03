@@ -49,7 +49,7 @@ pub trait WeightInfo {
 	fn set_bundle(s: u32, ) -> Weight;
 	fn buy_bundle(s: u32, ) -> Weight;
 	fn set_wishlist(s: u32, ) -> Weight;
-	fn fill_wishlist(s: u32, ) -> Weight;
+	fn claim_wishlist(s: u32, ) -> Weight;
 	fn remove_collection(s: u32) -> Weight;
 	fn set_swap(s: u32) -> Weight;
 	fn claim_swap(s: u32) -> Weight;
@@ -386,7 +386,7 @@ impl<T: frame_system::Config> WeightInfo for GameWeightInfo<T> {
 	/// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn fill_wishlist(s: u32, ) -> Weight {
+	fn claim_wishlist(s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `881`
 		//  Estimated: `6108`
@@ -1063,7 +1063,7 @@ impl WeightInfo for () {
 	/// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn fill_wishlist(s: u32, ) -> Weight {
+	fn claim_wishlist(s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `881`
 		//  Estimated: `6108`

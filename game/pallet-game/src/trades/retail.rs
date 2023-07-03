@@ -6,13 +6,15 @@ use frame_support::{
 use gafi_support::game::{Amount, Package, Retail, TradeType};
 
 impl<T: Config<I>, I: 'static>
-	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>> for Pallet<T, I>
+	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
 {
 	fn do_set_price(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
+		start_block: Option<T::BlockNumber>,
+		end_block: Option<T::BlockNumber>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -46,6 +48,8 @@ impl<T: Config<I>, I: 'static>
 				owner: who.clone(),
 				maybe_price: Some(unit_price),
 				maybe_required: None,
+				start_block,
+				end_block,
 			},
 		);
 
@@ -72,6 +76,14 @@ impl<T: Config<I>, I: 'static>
 				config.trade == TradeType::SetPrice,
 				Error::<T, I>::NotSetPrice
 			);
+
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			if let Some(start_block) = config.start_block {
+				ensure!(block_number >= start_block, Error::<T, I>::TradeNotStarted);
+			}
+			if let Some(end_block) = config.end_block {
+				ensure!(block_number <= end_block, Error::<T, I>::TradeEnded);
+			}
 
 			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
 				// ensure item can be transfer
@@ -213,6 +225,8 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
+		start_block: Option<T::BlockNumber>,
+		end_block: Option<T::BlockNumber>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -240,6 +254,8 @@ impl<T: Config<I>, I: 'static>
 				owner: who.clone(),
 				maybe_price: Some(unit_price),
 				maybe_required: None,
+				start_block,
+				end_block,
 			},
 		);
 
@@ -263,6 +279,14 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(config.trade == TradeType::SetBuy, Error::<T, I>::NotSetBuy);
+			
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			if let Some(start_block) = config.start_block {
+				ensure!(block_number >= start_block, Error::<T, I>::TradeNotStarted);
+			}
+			if let Some(end_block) = config.end_block {
+				ensure!(block_number <= end_block, Error::<T, I>::TradeEnded);
+			}
 
 			if let Some(package) = BundleOf::<T, I>::get(trade).first() {
 				// ensure item can be transfer
