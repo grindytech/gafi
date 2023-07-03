@@ -343,7 +343,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::PoolId,
-		PoolDetails<T::AccountId, BalanceOf<T, I>>,
+		PoolDetailsFor<T, I>,
 		OptionQuery,
 	>;
 
@@ -398,7 +398,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		TradeConfig<T::AccountId, BalanceOf<T, I>, BundleFor<T, I>>,
+		TradeConfigFor<T, I>,
 		OptionQuery,
 	>;
 
@@ -641,6 +641,10 @@ pub mod pallet {
 		TradeIdInUse,
 		PoolIdInUse,
 
+		// trade
+		TradeNotStarted,
+		TradeEnded,
+		
 		// Retail trade
 		IncorrectCollection,
 		IncorrectItem,
@@ -662,6 +666,9 @@ pub mod pallet {
 		InfiniteSupply,
 		NotInfiniteSupply,
 		MintFailed,
+		MintNotStarted,
+		MintEnded,
+		NotWhitelisted,
 	}
 
 	#[pallet::hooks]
@@ -862,10 +869,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
 			unit_price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_price(&trade, &sender, package, unit_price)?;
+			Self::do_set_price(&trade, &sender, package, unit_price, start_block, end_block)?;
 			Ok(())
 		}
 
@@ -905,10 +914,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_bundle(&trade, &sender, bundle, price)?;
+			Self::do_set_bundle(&trade, &sender, bundle, price, start_block, end_block)?;
 			Ok(())
 		}
 
@@ -948,23 +959,25 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_wishlist(&trade, &sender, bundle, price)?;
+			Self::do_set_wishlist(&trade, &sender, bundle, price, start_block, end_block)?;
 			Ok(())
 		}
 
 		#[pallet::call_index(21)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::fill_wishlist(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist(1_u32))]
 		#[transactional]
-		pub fn fill_wishlist(
+		pub fn claim_wishlist(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			ask_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_fill_wishlist(&trade, &sender, ask_price)?;
+			Self::do_claim_wishlist(&trade, &sender, ask_price)?;
 			Ok(())
 		}
 
@@ -1013,10 +1026,12 @@ pub mod pallet {
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_swap(&trade, &sender, source, required, maybe_price)?;
+			Self::do_set_swap(&trade, &sender, source, required, maybe_price, start_block, end_block)?;
 			Ok(())
 		}
 
@@ -1080,10 +1095,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
 			unit_price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
-			Self::do_set_buy(&trade, &sender, package, unit_price)?;
+			Self::do_set_buy(&trade, &sender, package, unit_price, start_block, end_block)?;
 			Ok(())
 		}
 
@@ -1196,13 +1213,13 @@ pub mod pallet {
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
-			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_dynamic_pool(&id, &sender, loot_table, fee, &admin)?;
+			Self::do_create_dynamic_pool(&id, &sender, loot_table, &admin, mint_settings)?;
 			Ok(())
 		}
 
@@ -1214,13 +1231,13 @@ pub mod pallet {
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
-			fee: BalanceOf<T, I>,
 			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let id = Self::get_pool_id();
 			let admin = T::Lookup::lookup(admin)?;
-			Self::do_create_stable_pool(&id, &sender, loot_table, fee, &admin)?;
+			Self::do_create_stable_pool(&id, &sender, loot_table, &admin, mint_settings)?;
 			Ok(())
 		}
 	}

@@ -54,3 +54,24 @@ pub struct Loot<CollectionId, ItemId> {
 	pub maybe_nft: Option<NFT<CollectionId, ItemId>>,
 	pub weight: u32,
 }
+
+#[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum MintType<CollectionId> {
+	/// Anyone could mint items.
+	Public,
+	/// Only holders of items in specified collection could mint new items.
+	HolderOf(CollectionId),
+}
+
+/// Holds the information about minting.
+#[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct MintSettings<Price, BlockNumber, CollectionId> {
+	/// Whether anyone can mint or if minters are restricted to some subset.
+	pub mint_type: MintType<CollectionId>,
+	/// An price per mint.
+	pub price: Price,
+	/// When the mint starts.
+	pub start_block: Option<BlockNumber>,
+	/// When the mint ends.
+	pub end_block: Option<BlockNumber>,
+}

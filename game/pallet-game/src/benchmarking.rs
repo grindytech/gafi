@@ -7,7 +7,7 @@ use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::{Bundle, Loot, NFT};
+use gafi_support::game::{Bundle, Loot, NFT, MintSettings, MintType};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_std::vec;
@@ -36,6 +36,16 @@ fn new_funded_account<T: Config<I>, I: 'static>(s: u32, seed: u32, amount: u128)
 fn default_item_config() -> ItemConfig {
 	ItemConfig::default()
 }
+
+fn default_mint_config<T: Config<I>, I: 'static>() -> MintSettingsFor<T, I> {
+	MintSettings {
+		mint_type: MintType::Public,
+		price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		start_block: None,
+		end_block: None,
+	}
+}
+
 
 fn assert_last_event<T: Config<I>, I: 'static>(generic_event: <T as Config<I>>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -143,8 +153,8 @@ fn do_create_dynamic_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T:
 	assert_ok!(PalletGame::<T, I>::create_dynamic_pool(
 		RawOrigin::Signed(who.clone()).into(),
 		table.clone(),
-		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		T::Lookup::unlookup(who.clone()),
+		default_mint_config::<T, I>(),
 	));
 
 	(who.clone(), who)
@@ -183,8 +193,8 @@ fn do_create_stable_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::
 	assert_ok!(PalletGame::<T, I>::create_stable_pool(
 		RawOrigin::Signed(owner.clone()).into(),
 		table.clone(),
-		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		T::Lookup::unlookup(admin.clone()),
+		default_mint_config::<T, I>(),
 	));
 
 	(owner, admin)
@@ -214,6 +224,8 @@ fn do_set_price<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 		RawOrigin::Signed(who.clone()).into(),
 		package,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		None,
+		None,
 	));
 }
 
@@ -235,6 +247,8 @@ fn do_set_bundle<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 		RawOrigin::Signed(who.clone()).into(),
 		bundle.clone(),
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		None,
+		None,
 	));
 }
 
@@ -256,6 +270,8 @@ fn do_set_wishlist<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 		RawOrigin::Signed(who.clone()).into(),
 		bundle,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		None,
+		None,
 	));
 }
 
@@ -439,6 +455,8 @@ benchmarks_instance_pallet! {
 		let call = Call::<T, I>::set_price {
 			package: package,
 			unit_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
 	verify {
@@ -494,6 +512,8 @@ benchmarks_instance_pallet! {
 		let call = Call::<T, I>::set_bundle {
 			bundle: bundle.clone(),
 			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
 	verify {
@@ -544,6 +564,8 @@ benchmarks_instance_pallet! {
 		let call = Call::<T, I>::set_wishlist {
 			bundle: bundle.clone(),
 			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
 	verify {
@@ -555,7 +577,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	fill_wishlist {
+	claim_wishlist {
 		let s in 0 .. MAX as u32;
 
 		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
@@ -563,7 +585,7 @@ benchmarks_instance_pallet! {
 
 		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
 
-		let call = Call::<T, I>::fill_wishlist {
+		let call = Call::<T, I>::claim_wishlist {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};
@@ -621,6 +643,8 @@ benchmarks_instance_pallet! {
 			source: bundle.clone(),
 			required: required.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
+			start_block: None,
+			end_block: None,
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
 	verify {
@@ -666,7 +690,9 @@ benchmarks_instance_pallet! {
 			RawOrigin::Signed(player1.clone()).into(),
 			source.clone(),
 			required.clone(),
-			Some(<T as pallet::Config<I>>::Currency::minimum_balance())
+			Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
+			None,
+			None,
 		));
 
 		let call = Call::<T, I>::claim_swap {
@@ -776,6 +802,8 @@ benchmarks_instance_pallet! {
 		let call = Call::<T, I>::set_buy {
 			package: package.clone(),
 			unit_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
 	verify {
@@ -802,7 +830,9 @@ benchmarks_instance_pallet! {
 		assert_ok!(PalletGame::<T, I>::set_buy(
 			RawOrigin::Signed(player.clone()).into(),
 			package.clone(),
-			<T as pallet::Config<I>>::Currency::minimum_balance()
+			<T as pallet::Config<I>>::Currency::minimum_balance(),
+			None,
+			None,
 		));
 
 		let call = Call::<T, I>::claim_set_buy {
@@ -953,7 +983,7 @@ benchmarks_instance_pallet! {
 
 		let call = Call::<T, I>::create_dynamic_pool {
 			loot_table: table.clone(),
-			fee:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			mint_settings: default_mint_config::<T, I>(),
 			admin: T::Lookup::unlookup(who.clone()),
 		};
 	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
@@ -1001,7 +1031,7 @@ benchmarks_instance_pallet! {
 
 		let call = Call::<T, I>::create_stable_pool {
 			loot_table: table.clone(),
-			fee:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			mint_settings: default_mint_config::<T, I>(),
 			admin: T::Lookup::unlookup(who.clone()),
 		};
 	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }

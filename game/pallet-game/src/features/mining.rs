@@ -1,16 +1,17 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Mining, NFT};
+use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
+use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
-	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId> for Pallet<T, I>
+	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
+	for Pallet<T, I>
 {
 	fn do_create_dynamic_pool(
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
-		fee: BalanceOf<T, I>,
 		admin: &T::AccountId,
+		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure pool is available
 		ensure!(
@@ -35,10 +36,10 @@ impl<T: Config<I>, I: 'static>
 		// create new pool
 		let pool_details = PoolDetails {
 			pool_type: PoolType::Dynamic,
-			fee,
 			owner: who.clone(),
 			owner_deposit: T::MiningPoolDeposit::get(),
 			admin: admin.clone(),
+			mint_settings,
 		};
 
 		// insert storage
@@ -57,8 +58,8 @@ impl<T: Config<I>, I: 'static>
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
-		fee: BalanceOf<T, I>,
 		admin: &T::AccountId,
+		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure collection owner & infinite supply
 		for fraction in &loot_table {
@@ -81,10 +82,10 @@ impl<T: Config<I>, I: 'static>
 
 		let pool_details = PoolDetails {
 			pool_type: PoolType::Stable,
-			fee,
 			owner: who.clone(),
 			owner_deposit: T::MiningPoolDeposit::get(),
 			admin: admin.clone(),
+			mint_settings,
 		};
 
 		PoolOf::<T, I>::insert(pool, pool_details);
@@ -105,6 +106,22 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// SBP-M2: `return` can only be used before match, instead of using in both the cases.
+			// verify mint settings
+			let mint_settings = pool_details.mint_settings;
+			let block_number = <frame_system::Pallet<T>>::block_number();
+			if let Some(start_block) = mint_settings.start_block {
+				ensure!(block_number >= start_block, Error::<T, I>::MintNotStarted);
+			}
+			if let Some(end_block) = mint_settings.end_block {
+				ensure!(block_number <= end_block, Error::<T, I>::MintEnded);
+			}
+			match mint_settings.mint_type {
+				MintType::HolderOf(collection) => {
+					ensure!(ItemBalanceOf::<T, I>::contains_prefix((who.clone(), collection,)), Error::<T, I>::NotWhitelisted);
+				},
+				_ => {},
+			};
+
 			match pool_details.pool_type {
 				PoolType::Dynamic => {
 					Self::do_mint_dynamic_pool(pool, who, target, amount)?;
@@ -142,7 +159,7 @@ impl<T: Config<I>, I: 'static>
 			<T as pallet::Config<I>>::Currency::transfer(
 				&who,
 				&pool_details.owner,
-				pool_details.fee * amount.into(),
+				pool_details.mint_settings.price * amount.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 
@@ -213,7 +230,7 @@ impl<T: Config<I>, I: 'static>
 			<T as pallet::Config<I>>::Currency::transfer(
 				&who,
 				&pool_details.owner,
-				pool_details.fee * amount.into(),
+				pool_details.mint_settings.price * amount.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 
