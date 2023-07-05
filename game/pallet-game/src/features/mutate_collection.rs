@@ -12,13 +12,10 @@ impl<T: Config<I>, I: 'static>
 		BalanceOf<T, I>,
 	> for Pallet<T, I>
 {
-	fn do_create_game_collection(
-		who: &T::AccountId,
-		game: &T::GameId,
-	) -> DispatchResult {
+	fn do_create_game_collection(who: &T::AccountId, game: &T::GameId) -> DispatchResult {
 		// verify create collection role
 		ensure!(
-			GameRoleOf::<T, I>::get(game, &who) ==
+			GameRoleOf::<T, I>::get(game, who) ==
 				Some(CollectionRoles(
 					CollectionRole::Issuer | CollectionRole::Freezer | CollectionRole::Admin
 				)),
@@ -31,50 +28,46 @@ impl<T: Config<I>, I: 'static>
 				mint_settings: MintSettings::default(),
 			};
 
-			let maybe_collection = T::Nfts::create_collection(&game_details.owner, &who, &config);
+			match T::Nfts::create_collection(&game_details.owner, who, &config) {
+				Ok(collection) => {
+					CollectionsOf::<T, I>::try_mutate(game, |collection_vec| -> DispatchResult {
+						collection_vec
+							.try_push(collection)
+							.map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
+						Ok(())
+					})?;
 
-			if let Ok(collection) = maybe_collection {
-				// insert game collections
-				CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
-					collection_vec
-						.try_push(collection)
-						.map_err(|_| Error::<T, I>::ExceedMaxCollection)?;
-					Ok(())
-				})?;
+					// insert collection game
+					GamesOf::<T, I>::try_mutate(collection, |game_vec| -> DispatchResult {
+						game_vec.try_push(*game).map_err(|_| Error::<T, I>::ExceedMaxGameShare)?;
+						Ok(())
+					})?;
 
-				// insert collection game
-				GamesOf::<T, I>::try_mutate(collection, |game_vec| -> DispatchResult {
-					game_vec.try_push(*game).map_err(|_| Error::<T, I>::ExceedMaxGameShare)?;
-					Ok(())
-				})?;
-
-				Self::deposit_event(Event::<T, I>::CollectionCreated {
-					who: who.clone(),
-					collection,
-				});
-				return Ok(())
+					Self::deposit_event(Event::<T, I>::CollectionCreated {
+						who: who.clone(),
+						collection,
+					});
+					return Ok(())
+				},
+				Err(err) => return Err(err),
 			}
 		}
 		Err(Error::<T, I>::UnknownGame.into())
 	}
 
-	fn do_create_collection(
-		who: &T::AccountId,
-		admin: &T::AccountId,
-	) -> DispatchResult {
+	fn do_create_collection(who: &T::AccountId, admin: &T::AccountId) -> DispatchResult {
 		let config: CollectionConfigFor<T, I> = CollectionConfig {
 			settings: CollectionSettings::default(),
 			max_supply: None,
 			mint_settings: MintSettings::default(),
 		};
 
-		let maybe_collection = T::Nfts::create_collection(&who, &admin, &config);
-		if let Ok(collection) = maybe_collection {
+		if let Ok(collection) = T::Nfts::create_collection(&who, &admin, &config) {
 			Self::deposit_event(Event::<T, I>::CollectionCreated {
 				who: who.clone(),
 				collection,
 			});
-			return	Ok(())
+			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownCollection.into())
 	}
@@ -158,8 +151,7 @@ impl<T: Config<I>, I: 'static>
 		);
 
 		CollectionsOf::<T, I>::try_mutate(&game, |collection_vec| -> DispatchResult {
-			let maybe_position = collection_vec.iter().position(|x| *x == *collection);
-			match maybe_position {
+			match collection_vec.iter().position(|x| *x == *collection) {
 				Some(position) => {
 					collection_vec.remove(position);
 					Ok(())

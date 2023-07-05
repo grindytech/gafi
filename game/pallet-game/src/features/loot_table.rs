@@ -1,5 +1,6 @@
 use crate::*;
 use gafi_support::game::{LootTable, NFT};
+use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Get Basic Loot Mechanism
@@ -18,10 +19,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 				continue
 			};
 
-			if (item.weight + sum - 1) >= position {
+			if (item.weight.saturating_add(sum).saturating_less_one()) >= position {
 				return Some(item.clone().maybe_nft)
 			} else {
-				sum += item.weight;
+				sum.saturating_accrue(item.weight);
 			}
 		}
 		return None
@@ -43,11 +44,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 				continue
 			};
 
-			if (item.weight + sum - 1) >= position {
-				item.weight -= 1;
+			if (item.weight.saturating_add(sum).saturating_less_one()) >= position {
+				item.weight.saturating_dec();
 				return Some(item.clone().maybe_nft)
 			} else {
-				sum += item.weight;
+				sum.saturating_accrue(item.weight);
 			}
 		}
 		return None
@@ -57,10 +58,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 #[cfg(test)]
 #[test]
 fn get_loot_should_works() {
-	use frame_support::assert_err;
 	use gafi_support::game::Loot;
 
-	use crate::mock::{new_test_ext, run_to_block, PalletGame, Test};
+	use crate::mock::{new_test_ext, run_to_block, PalletGame};
 
 	new_test_ext().execute_with(|| {
 		run_to_block(2);
@@ -86,7 +86,8 @@ fn get_loot_should_works() {
 				}),
 				weight: 200,
 			},
-		].to_vec();
+		]
+		.to_vec();
 		assert_eq!(
 			PalletGame::get_loot(&table.clone(), 0).unwrap(),
 			table[0].maybe_nft
@@ -118,10 +119,9 @@ fn get_loot_should_works() {
 #[cfg(test)]
 #[test]
 fn take_loot_should_works() {
-	use frame_support::assert_err;
 	use gafi_support::game::Loot;
 
-	use crate::mock::{new_test_ext, run_to_block, PalletGame, Test};
+	use crate::mock::{new_test_ext, run_to_block, PalletGame};
 
 	new_test_ext().execute_with(|| {
 		run_to_block(2);

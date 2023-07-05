@@ -49,8 +49,8 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
 				Error::<T, I>::NoPermission
 			);
-			let maybe_supply = SupplyOf::<T, I>::get(collection, item);
-			if let Some(supply) = maybe_supply {
+
+			if let Some(supply) = SupplyOf::<T, I>::get(collection, item) {
 				match supply {
 					Some(val) => {
 						let new_supply = val + amount;

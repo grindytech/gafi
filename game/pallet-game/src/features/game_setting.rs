@@ -10,7 +10,7 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 		who: &T::AccountId,
 		admin: &T::AccountId,
 	) -> DispatchResult {
-		<T as Config<I>>::Currency::reserve(&who, T::GameDeposit::get())?;
+		<T as Config<I>>::Currency::reserve(who, T::GameDeposit::get())?;
 
 		let details = GameDetails {
 			owner: who.clone(),
@@ -18,8 +18,6 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 			owner_deposit: T::GameDeposit::get(),
 			admin: admin.clone(),
 		};
-		let next_id = game.increment();
-		NextGameId::<T, I>::set(Some(next_id));
 
 		GameRoleOf::<T, I>::insert(
 			game,
