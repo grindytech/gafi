@@ -633,7 +633,6 @@ pub mod pallet {
 		// trade
 		TradeNotStarted,
 		TradeEnded,
-
 		// Retail trade
 		IncorrectCollection,
 		IncorrectItem,
@@ -1392,7 +1391,7 @@ pub mod pallet {
 		}
 
 		/// Set up a purchase for `package`.
-		/// 
+		///
 		/// It is possible to trade for a small part of the `package`.
 		///
 		/// Origin must be Signed.
@@ -1421,13 +1420,13 @@ pub mod pallet {
 		}
 
 		/// Sell ​​`amount` of the item for `set_buy`.
-		/// 
+		///
 		/// Origin must be Signed.
 		///
 		/// - `trade`: The set_buy trade id.
 		/// - `amount`: The amount of items to sell.
 		/// - `ask_price`: The price that the sender willing to accept.
-		/// 
+		///
 		/// Emits `BuySet`.
 		///
 		/// Weight: `O(1)`
@@ -1445,7 +1444,7 @@ pub mod pallet {
 		}
 
 		/// Set an attribute for a collection or item.
-		/// 
+		///
 		/// Simply re-call `set_attribute` of `pallet-nfts`.
 		///
 		/// Origin must be Signed and must conform to the namespace ruleset:
@@ -1486,7 +1485,7 @@ pub mod pallet {
 		/// Clear an attribute for a collection or item.
 		///
 		/// Simply re-call `clear_attribute` of `pallet-nfts`.
-		/// 
+		///
 		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Owner of the
 		/// attribute.
 		///
@@ -1517,8 +1516,8 @@ pub mod pallet {
 		/// Set the metadata for an item.
 		///
 		/// Simply re-call `set_metadata` of `pallet-nfts`.
-		/// 
-		/// 
+		///
+		///
 		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Admin of the
 		/// `collection`.
 		///
@@ -1547,7 +1546,7 @@ pub mod pallet {
 		/// Clear the metadata for an item.
 		///
 		/// Simply re-call `clear_metadata` of `pallet-nfts`.
-		/// 
+		///
 		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Admin of the
 		/// `collection`.
 		///
@@ -1572,7 +1571,7 @@ pub mod pallet {
 		/// Set the metadata for a collection.
 		///
 		/// Simply re-call `set_collection_metadata` of `pallet-nfts`.
-		/// 
+		///
 		/// Origin must be either `ForceOrigin` or `Signed` and the sender should be the Admin of
 		/// the `collection`.
 		///
@@ -1599,7 +1598,7 @@ pub mod pallet {
 		/// Clear the metadata for a collection.
 		///
 		/// Simply re-call `clear_collection_metadata` of `pallet-nfts`.
-		/// 
+		///
 		/// Origin must be either `ForceOrigin` or `Signed` and the sender should be the Admin of
 		/// the `collection`.
 		///
@@ -1622,7 +1621,7 @@ pub mod pallet {
 		/// Change the Issuer, Admin and Freezer of a collection.
 		///
 		/// Simply re-call `set_team` of `pallet-nfts`.
-		/// 
+		///
 		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Owner of the
 		/// `collection`.
 		///
@@ -1685,8 +1684,8 @@ pub mod pallet {
 
 		/// Create a stable mining pool.
 		///
-		/// Origin must be Signed and the sender should be the owner of all collections in the `loot_table`.
-		/// Collection in `loot_table` must be infinite supply.
+		/// Origin must be Signed and the sender should be the owner of all collections in the
+		/// `loot_table`. Collection in `loot_table` must be infinite supply.
 		///
 		/// Note: The mining chance will not be changed after each NFT is minted.
 		///
