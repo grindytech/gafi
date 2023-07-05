@@ -48,7 +48,7 @@ use frame_support::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
 		Currency, Randomness, ReservableCurrency,
 	},
-	transactional, PalletId,
+	PalletId,
 };
 use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
@@ -667,22 +667,41 @@ pub mod pallet {
 		}
 	}
 
-	// SBP-M2: No need to use transactional as it's default to revert back storage changes in case
-	// of any error. SBP-M2: Please add documentation for each extrinsic.
+	// SBP-M2: Please add documentation for each extrinsic.
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		
+		/// Create a new game.
+		///
+		/// Origin must be Signed.
+		///
+		/// If the origin is Signed, then funds of signer are reserved: `GameDeposit`.
+		///
+		/// - `admin`: the admin of the game.
+		///
+		/// Emits `GameCreated`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game(1_u32))]
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
 			let game = Self::get_game_id();
-
 			Self::do_create_game(&game, &sender, &admin)?;
 			Ok(())
 		}
 
+		/// Create a collection in the game.
+		///
+		/// Origin must be Signed and the sender should be the Admin the the `game`.
+		///
+		/// If the origin is Signed, then funds of signer are reserved: `CollectionDeposit`.
+		///
+		/// - `game`: the game id.
+		///
+		/// Emits `CollectionCreated`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
 		pub fn create_game_collection(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
@@ -691,6 +710,21 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create a new collection.
+		///
+		/// This new collection has no items initially and its owner is the origin.
+		///
+		/// The origin must be Signed and the sender must have sufficient funds free.
+		///
+		/// `CollectionDeposit` funds of sender are reserved.
+		///
+		/// Parameters:
+		/// - `admin`: The admin of this collection. The admin is the initial address of each
+		/// member of the collection's admin team.
+		///
+		/// Emits `CollectionCreated`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
 		pub fn create_collection(
@@ -703,6 +737,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set acceptance of ownership for a particular account.
+		///
+		/// Origin must be `Signed` and the sender should be the Admin of `collection`.
+		///
+		/// - `game`: Game ID.
+		/// - `collection`: Collection ID.
+		///
+		/// Emits `AddingAcceptanceSet`.
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_accept_adding(1_u32))]
 		pub fn set_accept_adding(
@@ -715,6 +757,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Add a collection to the game.
+		///
+		/// The origin must be Signed and the sender should be the Admin of the `game`.
+		///
+		/// Parameters:
+		/// - `game`: Game ID.
+		/// - `collection`: Collection ID.
+		///
+		/// Emits `CollectionAdded`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_game_collection(1_u32))]
 		pub fn add_game_collection(
@@ -727,6 +780,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create an certain amount of item for a particular collection.
+		///
+		/// The origin must be Signed and the sender should be the Admin of `collection`.
+		///
+		/// - `collection`: The collection of the item to be minted.
+		/// - `item`: An identifier of the new item.
+		/// - `config`: Item Config.
+		/// - `maybe_supply`: Item supply, None indicates the infinite supply.
+		///
+		/// Emits `ItemCreated` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(5)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item(1_u32))]
 		pub fn create_item(
@@ -741,6 +806,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Add supplies for the item.
+		///
+		/// The origin must be Signed and the sender should be the Admin of `collection`.
+		///
+		/// - `collection`: The collection of the item to be minted.
+		/// - `item`: An identifier of the new item.
+		/// - `amount`: Supply amount.
+		///
+		/// Emits `ItemAdded` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(6)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
 		pub fn add_supply(
@@ -754,6 +830,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Mint an amount of item on a particular mining pool.
+		///
+		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
+		///
+		/// - `pool`: The pool to be minted.
+		/// - `mint_to`: Account into which the item will be minted.
+		/// - `amount`: The amount may be minted.
+		///
+		/// Emits `Minted` event when successful.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(7)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint(1_u32))]
 		pub fn mint(
@@ -768,6 +855,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Burn amount of item.
+		///
+		/// The origin must conform to `ForceOrigin` or must be Signed and the signing account must
+		/// be the owner of the `item` and has sufficient item balance.
+		///
+		/// - `collection`: The collection of the item to be burned.
+		/// - `item`: The item to be burned.
+		/// - `amount`: The amount of item to be burned.
+		///
+		/// Emits `Burned`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(8)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
 		pub fn burn(
@@ -781,6 +880,19 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Move an item from the sender account to another.
+		///
+		/// Origin must be Signed and the signing account must be the owner of the `item`.
+		///
+		/// Arguments:
+		/// - `collection`: The collection of the item to be transferred.
+		/// - `item`: The item to be transferred.
+		/// - `dest`: The account to receive ownership of the item.
+		/// - `amount`: The amount of item to be transferred.
+		///
+		/// Emits `Transferred`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(9)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer(1_u32))]
 		pub fn transfer(
@@ -801,6 +913,23 @@ pub mod pallet {
 		// return type. This will help in calculating the actual `proof_size` used in the
 		// transaction. For this, benchmark should also be updated in order to incorporate this
 		// change.
+
+		/// Set upgrade rule for item.
+		///
+		/// Origin must be Signed and signer should be the Admin of `collection`.
+		///
+		/// Arguments:
+		/// - `collection`: The collection of the item to be upgrade-rule set.
+		/// - `item`: The item to be upgrade-rule set.
+		/// - `new_item`: An identifier of the new item.
+		/// - `config`: Item config of `new_item`.
+		/// - `data`: `new_item` metadata.
+		/// - `level`: Upgrade level.
+		/// - `fee`: Upgrade fee.
+		///
+		/// Emits `UpgradeSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(10)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
 		pub fn set_upgrade_item(
@@ -819,6 +948,20 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Upgrade certain number of items.
+		///
+		/// The origin must be signed and the signer must have a sufficient `amount` of `items`.
+		///
+		/// Signer must pay `fee` * `amount` to upgrade the item.
+		///
+		/// Arguments:
+		/// - `collection`: The collection of the item to be upgraded.
+		/// - `item`: The item to be upgraded.
+		/// - `amount`: The amount of `item` to be upgraded.
+		///
+		/// Emits `Upgraded`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(11)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item(1_u32))]
 		pub fn upgrade_item(
@@ -832,6 +975,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Submit random seed from offchain-worker to runtime.
+		///
+		/// Only called by offchain-worker.
+		///
+		/// Arguments:
+		/// - `seed`: random seed value.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(12)]
 		#[pallet::weight({0})]
 		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
@@ -840,6 +991,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set the price for a package.
+		///
+		/// Origin must be Signed and must be the owner of the `item`.
+		///
+		/// - `package`: a number of an item in a collection to set the price for.
+		/// - `unit_price`: The price for each item.
+		/// - `start_block`: The block to start setting the price.
+		/// - `end_block`: The block to end setting the price.
+		///
+		/// Emits `PriceSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(13)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price(1_u32))]
 		pub fn set_price(
@@ -855,6 +1018,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Buy certain number of items from `set_price`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The set_price trade id.
+		/// - `amount`: Number of items to buy.
+		/// - `bid_price`: Bid for each item, `bid_price` must be equal to or higher than
+		///   `price_unit`.
+		///
+		/// Emits `ItemBought`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(14)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item(1_u32))]
 		pub fn buy_item(
@@ -868,6 +1043,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Add more items to set the price in `set_price`.
+		///
+		/// Origin must be Signed and must be the owner of the `trade`.
+		///
+		/// - `trade`: The set_price trade id.
+		/// - `supply`: The number of items to be added.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(15)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply(1_u32))]
 		pub fn add_retail_supply(
@@ -882,6 +1065,19 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
+
+		/// Set the price for the `bundle`.
+		///
+		/// Origin must be Signed and must be the owner of the `bundle`.
+		///
+		/// - `bundle`: A group of items may be from different collections to set price for.
+		/// - `price`: The price the `bundle`.
+		/// - `start_block`: The block to start setting the price.
+		/// - `end_block`: The block to end setting the price.
+		///
+		/// Emits `BundleSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(16)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
 		pub fn set_bundle(
@@ -897,6 +1093,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Buy a bundle from `set_bundle`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: set_bundle trade id.
+		/// - `bid_price`: The price the sender is willing to pay.
+		///
+		/// Emits `BundleSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(17)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
 		pub fn buy_bundle(
@@ -910,6 +1116,17 @@ pub mod pallet {
 		}
 
 		// SBP-M2: Missing test case. Please add.
+
+		/// Cancel a trade in `trade_type` by id `trade`.
+		///
+		/// Origin must be Signed and signer must be the trade owner.
+		///
+		/// - `trade`: Trade id.
+		/// - `trade_type`: Trade type.
+		///
+		/// Emits `TradeCanceled`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(18)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade(1_u32))]
 		pub fn cancel_trade(
@@ -924,6 +1141,19 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
+
+		/// Set up a purchase for `bundle`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `bundle`:  A group of items may be from different collections want to buy.
+		/// - `price`: The price the sender is willing to pay.
+		/// 	- `start_block`: The block to start set wishlist.
+		/// - `end_block`: The block to end set wishlist.
+		///
+		/// Emits `WishlistSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(19)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
 		pub fn set_wishlist(
@@ -939,6 +1169,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Sell the bundle for `set_wishlist`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`:  The set_wishlist trade id.
+		/// - `ask_price`: The price the sender is willing to accept.
+		///
+		/// Emits `WishlistFilled`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(20)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist(1_u32))]
 		pub fn claim_wishlist(
@@ -951,6 +1191,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove a collection in the game.
+		///
+		/// Origin must be Signed and signer should be the Admin of the game or collection.
+		///
+		/// - `game`:  The game id.
+		/// - `ask_price`: The collection id.
+		///
+		/// Emits `CollectionRemoved`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(21)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection(1_u32))]
 		pub fn remove_collection(
@@ -963,6 +1213,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Disallow further unprivileged transfer or trade of an item.
+		/// Simply re-call `lock_item_transfer` of `pallet-nfts`.
+		///
+		/// Origin must be Signed and the sender should be the Freezer of the `collection`.
+		///
+		/// - `collection`: The collection of the item to be changed.
+		/// - `item`: The item to become non-transferable.
+		///
+		/// Emits `ItemTransferLocked`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(22)]
 		#[pallet::weight(T::NftsWeightInfo::lock_item_transfer())]
 		pub fn lock_item_transfer(
@@ -973,6 +1234,17 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::lock_item_transfer(origin, collection, item)
 		}
 
+		/// Re-allow unprivileged transfer of an item.
+		/// Simply re-call `unlock_item_transfer` of `pallet-nfts`.
+		///
+		/// Origin must be Signed and the sender should be the Freezer of the `collection`.
+		///
+		/// - `collection`: The collection of the item to be changed.
+		/// - `item`: The item to become transferable.
+		///
+		/// Emits `ItemTransferUnlocked`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(23)]
 		#[pallet::weight(T::NftsWeightInfo::unlock_item_transfer())]
 		pub fn unlock_item_transfer(
@@ -985,6 +1257,20 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment.
+
+		/// Set a swap to exchange `source` to `required`.
+		///
+		/// Origin must be Signed and the sender must be the owner of `source`.
+		///
+		/// - `source`: Bundle in.
+		/// - `required`: Bundle out.
+		/// - `maybe_price`: Maybe the price that sender willing to accept.
+		/// 	- `start_block`: The block to start set swap.
+		/// - `end_block`: The block to end set swap.
+		///
+		/// Emits `SwapSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
 		pub fn set_swap(
@@ -1009,6 +1295,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Make an exchange for `set_swap`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The set_swap trade id.
+		/// - `maybe_bid_price`: Maybe a price sender willing to pay.
+		///
+		/// Emits `SwapClaimed`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(25)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap(1_u32))]
 		pub fn claim_swap(
@@ -1023,6 +1319,20 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment
+
+		/// Create a auction for `source`.
+		///
+		/// Origin must be Signed and signer must be the owner of the `source`.
+		/// The last bidder will win the auction.
+		///
+		/// - `source`: The bundle for auction.
+		/// - `maybe_price`: Maybe a minimum bid.
+		/// - `start_block`: The block to start the auction.
+		/// - `duration`: The duration of the auction and measured by the number of blocks.
+		///
+		/// Emits `AuctionSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(26)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
 		pub fn set_auction(
@@ -1038,6 +1348,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Make a bid for the auction.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The auction id.
+		/// - `bid`: The bid, `bid` must be higher than the minimum bid and higher than the previous
+		///   bid.
+		///
+		/// Emits `Bid`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(27)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction(1_u32))]
 		pub fn bid_auction(
@@ -1050,6 +1371,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Handling an auction after it's over.
+		///
+		/// The last bidder will win the auction.
+		/// If there is no bid, the NFT in the auction will be refunded.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The auction id.
+		///
+		/// Emits `AuctionClaimed`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(28)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
 		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
@@ -1058,6 +1391,20 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set up a purchase for `package`.
+		/// 
+		/// It is possible to trade for a small part of the `package`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `package`: A number of an item in a collection want to buy.
+		/// - `unit_price`: The price of each item the sender is willing to pay.
+		/// - `start_block`: The block to start set buy.
+		/// - `end_block`: The block to end set buy.
+		///
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(29)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy(1_u32))]
 		pub fn set_buy(
@@ -1073,6 +1420,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Sell ​​`amount` of the item for `set_buy`.
+		/// 
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The set_buy trade id.
+		/// - `amount`: The amount of items to sell.
+		/// - `ask_price`: The price that the sender willing to accept.
+		/// 
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(30)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy(1_u32))]
 		pub fn claim_set_buy(
@@ -1086,6 +1444,30 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set an attribute for a collection or item.
+		/// 
+		/// Simply re-call `set_attribute` of `pallet-nfts`.
+		///
+		/// Origin must be Signed and must conform to the namespace ruleset:
+		/// - `CollectionOwner` namespace could be modified by the `collection` Admin only;
+		/// - `ItemOwner` namespace could be modified by the `maybe_item` owner only. `maybe_item`
+		///   should be set in that case;
+		/// - `Account(AccountId)` namespace could be modified only when the `origin` was given a
+		///   permission to do so;
+		///
+		/// The funds of `origin` are reserved according to the formula:
+		/// `AttributeDepositBase + DepositPerByte * (key.len + value.len)` taking into
+		/// account any already reserved funds.
+		///
+		/// - `collection`: The identifier of the collection whose item's metadata to set.
+		/// - `maybe_item`: The identifier of the item whose metadata to set.
+		/// - `namespace`: Attribute's namespace.
+		/// - `key`: The key of the attribute.
+		/// - `value`: The value to which to set the attribute.
+		///
+		/// Emits `AttributeSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(31)]
 		#[pallet::weight(T::NftsWeightInfo::set_attribute())]
 		pub fn set_attribute(
@@ -1101,6 +1483,23 @@ pub mod pallet {
 			)
 		}
 
+		/// Clear an attribute for a collection or item.
+		///
+		/// Simply re-call `clear_attribute` of `pallet-nfts`.
+		/// 
+		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Owner of the
+		/// attribute.
+		///
+		/// Any deposit is freed for the collection's owner.
+		///
+		/// - `collection`: The identifier of the collection whose item's metadata to clear.
+		/// - `maybe_item`: The identifier of the item whose metadata to clear.
+		/// - `namespace`: Attribute's namespace.
+		/// - `key`: The key of the attribute.
+		///
+		/// Emits `AttributeCleared`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(32)]
 		#[pallet::weight(T::NftsWeightInfo::clear_attribute())]
 		pub fn clear_attribute(
@@ -1115,6 +1514,25 @@ pub mod pallet {
 			)
 		}
 
+		/// Set the metadata for an item.
+		///
+		/// Simply re-call `set_metadata` of `pallet-nfts`.
+		/// 
+		/// 
+		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Admin of the
+		/// `collection`.
+		///
+		/// If the origin is Signed, then funds of signer are reserved according to the formula:
+		/// `MetadataDepositBase + DepositPerByte * data.len` taking into
+		/// account any already reserved funds.
+		///
+		/// - `collection`: The identifier of the collection whose item's metadata to set.
+		/// - `item`: The identifier of the item whose metadata to set.
+		/// - `data`: The general information of this item. Limited in length by `StringLimit`.
+		///
+		/// Emits `ItemMetadataSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(33)]
 		#[pallet::weight(T::NftsWeightInfo::set_metadata())]
 		pub fn set_metadata(
@@ -1126,6 +1544,21 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)
 		}
 
+		/// Clear the metadata for an item.
+		///
+		/// Simply re-call `clear_metadata` of `pallet-nfts`.
+		/// 
+		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Admin of the
+		/// `collection`.
+		///
+		/// Any deposit is freed for the collection's owner.
+		///
+		/// - `collection`: The identifier of the collection whose item's metadata to clear.
+		/// - `item`: The identifier of the item whose metadata to clear.
+		///
+		/// Emits `ItemMetadataCleared`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(34)]
 		#[pallet::weight(T::NftsWeightInfo::clear_metadata())]
 		pub fn clear_metadata(
@@ -1136,6 +1569,23 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::clear_metadata(origin, collection, item)
 		}
 
+		/// Set the metadata for a collection.
+		///
+		/// Simply re-call `set_collection_metadata` of `pallet-nfts`.
+		/// 
+		/// Origin must be either `ForceOrigin` or `Signed` and the sender should be the Admin of
+		/// the `collection`.
+		///
+		/// If the origin is `Signed`, then funds of signer are reserved according to the formula:
+		/// `MetadataDepositBase + DepositPerByte * data.len` taking into
+		/// account any already reserved funds.
+		///
+		/// - `collection`: The identifier of the item whose metadata to update.
+		/// - `data`: The general information of this item. Limited in length by `StringLimit`.
+		///
+		/// Emits `CollectionMetadataSet`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(35)]
 		#[pallet::weight(T::NftsWeightInfo::set_collection_metadata())]
 		pub fn set_collection_metadata(
@@ -1146,6 +1596,20 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(origin, collection, data)
 		}
 
+		/// Clear the metadata for a collection.
+		///
+		/// Simply re-call `clear_collection_metadata` of `pallet-nfts`.
+		/// 
+		/// Origin must be either `ForceOrigin` or `Signed` and the sender should be the Admin of
+		/// the `collection`.
+		///
+		/// Any deposit is freed for the collection's owner.
+		///
+		/// - `collection`: The identifier of the collection whose metadata to clear.
+		///
+		/// Emits `CollectionMetadataCleared`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(36)]
 		#[pallet::weight(T::NftsWeightInfo::clear_collection_metadata())]
 		pub fn clear_collection_metadata(
@@ -1155,6 +1619,24 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::clear_collection_metadata(origin, collection)
 		}
 
+		/// Change the Issuer, Admin and Freezer of a collection.
+		///
+		/// Simply re-call `set_team` of `pallet-nfts`.
+		/// 
+		/// Origin must be either `ForceOrigin` or Signed and the sender should be the Owner of the
+		/// `collection`.
+		///
+		/// Note: by setting the role to `None` only the `ForceOrigin` will be able to change it
+		/// after to `Some(account)`.
+		///
+		/// - `collection`: The collection whose team should be changed.
+		/// - `issuer`: The new Issuer of this collection.
+		/// - `admin`: The new Admin of this collection.
+		/// - `freezer`: The new Freezer of this collection.
+		///
+		/// Emits `TeamChanged`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(37)]
 		#[pallet::weight(T::NftsWeightInfo::set_team())]
 		pub fn set_team(
@@ -1169,6 +1651,20 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please refer set_upgrade_item's comment
+
+		/// Create a dynamic mining pool.
+		///
+		/// Origin must be Signed and the sender should have sufficient items in the `loot_table`.
+		///
+		/// Note: The mining chance will be changed after each NFT is minted.
+		///
+		/// - `loot_table`: A bundle of NFTs for mining.
+		/// - `admin`: The Admin of this mining pool.
+		/// - `mint_settings`: The mining pool settings.
+		///
+		/// Emits `MiningPoolCreated`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(38)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
 		pub fn create_dynamic_pool(
@@ -1186,6 +1682,21 @@ pub mod pallet {
 
 		// SBP-M2: DispatchResultWithPostInfo should be used for actual `proof_size`.
 		// Please see set_upgrade_item's comment
+
+		/// Create a stable mining pool.
+		///
+		/// Origin must be Signed and the sender should be the owner of all collections in the `loot_table`.
+		/// Collection in `loot_table` must be infinite supply.
+		///
+		/// Note: The mining chance will not be changed after each NFT is minted.
+		///
+		/// - `loot_table`: A bundle of NFTs for mining.
+		/// - `admin`: The Admin of this mining pool.
+		/// - `mint_settings`: The mining pool settings.
+		///
+		/// Emits `MiningPoolCreated`.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(39)]
 		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
 		pub fn create_stable_pool(

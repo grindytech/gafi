@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, UpgradeItem};
+use gafi_support::game::{Amount, UpgradeItem, Level};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
@@ -19,7 +19,7 @@ impl<T: Config<I>, I: 'static>
 		item: &T::ItemId,
 		new_item: &T::ItemId,
 		config: &ItemConfig,
-		level: gafi_support::game::Level,
+		level: Level,
 		fee: BalanceOf<T, I>,
 	) -> DispatchResult {
 		// ensure collection ownership
