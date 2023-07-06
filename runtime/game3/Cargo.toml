@@ -1,66 +1,70 @@
 # SBP-M2: Please update package details
 [package]
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-description = "A fresh FRAME-based Substrate node, ready for hacking."
-edition = "2021"
-homepage = "https://substrate.io/"
-license = "Apache-2.0"
 name = "game3-runtime"
-publish = false
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+description = "Web3 Game runtime"
 version = "4.0.0-dev"
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+publish = false
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-log = {version = "0.4.19", default-features = false}
-codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"]}
-scale-info = {version = "2.8.0", default-features = false, features = ["derive"]}
+log = { version = "0.4.19", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
+  "derive",
+] }
+scale-info = { version = "2.8.0", default-features = false, features = [
+  "derive",
+] }
 
-frame-executive = {default-features = false, workspace = true}
-frame-support = {default-features = false, workspace = true}
-frame-system = {default-features = false, workspace = true}
-frame-try-runtime = {workspace = true, default-features = false, optional = true}
-pallet-aura = {default-features = false, workspace = true}
-pallet-balances = {default-features = false, workspace = true}
-pallet-grandpa = {default-features = false, workspace = true}
-pallet-insecure-randomness-collective-flip = {workspace = true, default-features = false}
-pallet-nfts = {default-features = false, workspace = true}
-pallet-sudo = {default-features = false, workspace = true}
-pallet-timestamp = {default-features = false, workspace = true}
-pallet-transaction-payment = {default-features = false, workspace = true}
-sp-api = {default-features = false, workspace = true}
-sp-block-builder = {default-features = false, workspace = true}
-sp-consensus-aura = {default-features = false, workspace = true}
-sp-consensus-grandpa = {default-features = false, workspace = true}
-sp-core = {default-features = false, workspace = true}
-sp-inherents = {default-features = false, workspace = true}
-sp-offchain = {default-features = false, workspace = true}
-sp-runtime = {default-features = false, workspace = true}
-sp-session = {default-features = false, workspace = true}
-sp-std = {default-features = false, workspace = true}
-sp-transaction-pool = {default-features = false, workspace = true}
-sp-version = {default-features = false, workspace = true}
+frame-executive = { default-features = false, workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+frame-try-runtime = { workspace = true, default-features = false, optional = true }
+pallet-aura = { default-features = false, workspace = true }
+pallet-balances = { default-features = false, workspace = true }
+pallet-grandpa = { default-features = false, workspace = true }
+pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-nfts = { default-features = false, workspace = true }
+pallet-sudo = { default-features = false, workspace = true }
+pallet-timestamp = { default-features = false, workspace = true }
+pallet-transaction-payment = { default-features = false, workspace = true }
+sp-api = { default-features = false, workspace = true }
+sp-block-builder = { default-features = false, workspace = true }
+sp-consensus-aura = { default-features = false, workspace = true }
+sp-consensus-grandpa = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-inherents = { default-features = false, workspace = true }
+sp-offchain = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-session = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+sp-transaction-pool = { default-features = false, workspace = true }
+sp-version = { default-features = false, workspace = true }
 
 # Used for the node template's RPCs
-frame-system-rpc-runtime-api = {workspace = true, default-features = false}
-pallet-transaction-payment-rpc-runtime-api = {workspace = true, default-features = false}
+frame-system-rpc-runtime-api = { workspace = true, default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
 
 # Used for runtime benchmarking
-frame-benchmarking = {workspace = true, default-features = false, optional = true}
-frame-system-benchmarking = {workspace = true, default-features = false, optional = true}
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 # Local Dependencies
-gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
-pallet-cache = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache"}
-pallet-faucet = {version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet"}
-pallet-template = {version = "4.0.0-dev", default-features = false, path = "../../pallets/template"}
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
+pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache" }
+pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
+pallet-template = { version = "4.0.0-dev", default-features = false, path = "../../pallets/template" }
 
-pallet-game = {version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game"}
+pallet-game = { version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game" }
 
 [build-dependencies]
-substrate-wasm-builder = {workspace = true, optional = true}
+substrate-wasm-builder = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -75,7 +79,7 @@ runtime-benchmarks = [
   "sp-runtime/runtime-benchmarks",
   "pallet-faucet/runtime-benchmarks",
   "pallet-nfts/runtime-benchmarks",
-  "pallet-game/runtime-benchmarks"
+  "pallet-game/runtime-benchmarks",
 ]
 std = [
   "frame-try-runtime?/std",

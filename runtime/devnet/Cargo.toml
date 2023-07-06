@@ -1,14 +1,14 @@
 # SBP-M2: Please update package details
 [package]
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-description = "A fresh FRAME-based Substrate runtime, ready for hacking."
-edition = "2021"
-homepage = "https://substrate.io/"
-license = "Apache-2.0"
 name = "devnet"
-publish = false
-repository = "https://github.com/grindytech/gafi"
+description = "Development network runtime"
 version = "4.0.0-dev"
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+publish = false
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

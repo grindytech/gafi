@@ -105,7 +105,6 @@ impl<T: Config<I>, I: 'static>
 		amount: u32,
 	) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
-			// SBP-M2: `return` can only be used before match, instead of using in both the cases.
 			// verify mint settings
 			let mint_settings = pool_details.mint_settings;
 			let block_number = <frame_system::Pallet<T>>::block_number();
@@ -117,23 +116,24 @@ impl<T: Config<I>, I: 'static>
 			}
 			match mint_settings.mint_type {
 				MintType::HolderOf(collection) => {
-					ensure!(ItemBalanceOf::<T, I>::contains_prefix((who.clone(), collection,)), Error::<T, I>::NotWhitelisted);
+					ensure!(
+						ItemBalanceOf::<T, I>::contains_prefix((who.clone(), collection,)),
+						Error::<T, I>::NotWhitelisted
+					);
 				},
 				_ => {},
 			};
 
 			match pool_details.pool_type {
 				PoolType::Dynamic => {
-					Self::do_mint_dynamic_pool(pool, who, target, amount)?;
-					return Ok(())
+					return Self::do_mint_dynamic_pool(pool, who, target, amount)
 				},
 				PoolType::Stable => {
-					Self::do_mint_stable_pool(pool, who, target, amount)?;
-					return Ok(())
+					return Self::do_mint_stable_pool(pool, who, target, amount)
 				},
-			};
+			}
 		}
-		Err(Error::<T, I>::UnknowMiningPool.into())
+		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
 
 	fn do_mint_dynamic_pool(
@@ -164,8 +164,7 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
-			// SBP-M2: can `Vec::new()` be incorporated?
-			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
+			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let mut total_weight = Self::total_weight(&table);
 				let mut maybe_position = Self::random_number(total_weight, Self::gen_random());
@@ -173,9 +172,7 @@ impl<T: Config<I>, I: 'static>
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(position < total_weight, Error::<T, I>::MintFailed);
-						// SBP-M2: Try to apply match directly on Self::take_loot()
-						let loot = Self::take_loot(&mut table, position);
-						match loot {
+						match Self::take_loot(&mut table, position) {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {
 									Self::repatriate_reserved_item(
@@ -210,7 +207,7 @@ impl<T: Config<I>, I: 'static>
 				return Ok(())
 			}
 		}
-		Err(Error::<T, I>::UnknowMiningPool.into())
+		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
 
 	fn do_mint_stable_pool(
@@ -235,8 +232,7 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
-			// SBP-M2: Can `Vec::new()` be incorporated?
-			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = [].to_vec();
+			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let total_weight = Self::total_weight(&table);
@@ -246,9 +242,7 @@ impl<T: Config<I>, I: 'static>
 					if let Some(position) = maybe_position {
 						// ensure position
 						ensure!(position < total_weight, Error::<T, I>::MintFailed);
-						// SBP-M2: Why this additional variable declaration? Can't pattern-match applied directly on `Self::get_loot()`?
-						let loot = Self::get_loot(&table, position);
-						match loot {
+						match Self::get_loot(&table, position) {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {
 									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
@@ -272,6 +266,6 @@ impl<T: Config<I>, I: 'static>
 			});
 			return Ok(())
 		}
-		Err(Error::<T, I>::UnknowMiningPool.into())
+		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
 }

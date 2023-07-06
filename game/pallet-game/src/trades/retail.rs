@@ -4,6 +4,7 @@ use frame_support::{
 	traits::{BalanceStatus, ExistenceRequirement},
 };
 use gafi_support::game::{Amount, Package, Retail, TradeType};
+use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
 	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
@@ -104,7 +105,7 @@ impl<T: Config<I>, I: 'static>
 				<T as pallet::Config<I>>::Currency::transfer(
 					&who,
 					&config.owner,
-					price * amount.into(),
+					price.saturating_mul(amount.into()),
 					ExistenceRequirement::KeepAlive,
 				)?;
 
@@ -351,10 +352,9 @@ impl<T: Config<I>, I: 'static>
 				// unreserve deposit
 				let price = config.maybe_price.unwrap_or_default();
 
-				// SBP-M2: Incorporate safe math operation.
 				<T as pallet::Config<I>>::Currency::unreserve(
 					&config.owner,
-					price * package.amount.into(),
+					price.saturating_mul(package.amount.into()),
 				);
 
 				// end trade
