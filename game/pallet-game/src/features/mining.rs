@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
-use gafi_support::game::{Mining, MintSettings, MintType, NFT};
+use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>

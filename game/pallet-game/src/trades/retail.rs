@@ -66,6 +66,7 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
+	// SBP-M2: Try to incorporate safe math operations.
 	fn do_buy_item(
 		trade: &T::TradeId,
 		who: &T::AccountId,
