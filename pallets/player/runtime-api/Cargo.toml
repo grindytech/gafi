@@ -1,9 +1,9 @@
 [package]
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
 description = "RPC runtime API for player pallet"
-edition = "2021"
-homepage = "https://substrate.io/"
-license = "Apache-2.0"
+edition = {workspace = true}
+homepage = {workspace = true}
+license = {workspace = true}
 name = "pallet-player-rpc-runtime-api"
 publish = false
 repository = "https://github.com/cryptoviet/gafi"
