@@ -1,6 +1,6 @@
 [package]
 authors = ["Parity Technologies <admin@parity.io>"]
-edition = "2021"
+edition = {workspace = true}
 name = "runtime-common"
 version = "0.9.23"
 

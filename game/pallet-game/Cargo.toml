@@ -3,7 +3,7 @@ authors = {workspace = true}
 description = "Pallet Game"
 edition = {workspace = true}
 homepage = "https://gafi.network"
-license = "Apache-2.0"
+license = {workspace = true}
 name = "pallet-game"
 publish = false
 repository = {workspace = true}

@@ -1,9 +1,9 @@
 [package]
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
 description = "FRAME pallet template for defining custom runtime logic."
-edition = "2021"
-homepage = "https://substrate.io/"
-license = "Apache-2.0"
+edition = {workspace = true}
+homepage = {workspace = true}
+license = {workspace = true}
 name = "funding-pool"
 publish = false
 repository = "https://github.com/grindytech/gafi"
