@@ -223,6 +223,14 @@ fn create_account_with_item(
 	(player, owner, admin)
 }
 
+fn funded_account_with_item(source: [PackageFor<Test>; 3]) -> sr25519::Public {
+	let player = new_account(3, 1000 * unit(GAKI));
+	for pack in source.clone() {
+		ItemBalanceOf::<Test>::insert((player.clone(), pack.collection, pack.item), pack.amount);
+	}
+	player
+}
+
 fn do_all_set_price(package: PackageFor<Test>, price: u128) -> sr25519::Public {
 	let (who, _, _) = create_account_with_item(TEST_BUNDLE);
 
@@ -1871,5 +1879,112 @@ fn mint_dynamic_pool_should_fails() {
 			),
 			Error::<Test>::MintEnded
 		);
+	})
+}
+
+#[test]
+fn cancel_trade_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		// set price
+		{
+			let player = do_all_set_price(TEST_BUNDLE[0].clone(), unit(GAKI));
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				TradeType::SetPrice,
+			));
+		}
+
+		// set buy
+		{
+			let player = new_account(0, 1000 * unit(GAKI));
+			assert_ok!(PalletGame::set_buy(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE[0].clone(),
+				unit(GAKI),
+				None,
+				None,
+			));
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				1,
+				TradeType::SetBuy,
+			));
+		}
+
+		// set price bundle
+		{
+			let player = funded_account_with_item(TEST_BUNDLE.clone());
+			assert_ok!(PalletGame::set_bundle(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE.clone().to_vec(),
+				unit(GAKI),
+				None,
+				None,
+			));
+
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				2,
+				TradeType::Bundle,
+			));
+		}
+
+		// wishlist
+		{
+			let player = new_account(0, 1000 * unit(GAKI));
+			assert_ok!(PalletGame::set_wishlist(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE.clone().to_vec(),
+				unit(GAKI),
+				None,
+				None,
+			));
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				3,
+				TradeType::Wishlist,
+			));
+		}
+
+		// swap
+		{	
+			let player = funded_account_with_item(TEST_BUNDLE.clone());
+			assert_ok!(PalletGame::set_swap(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE.clone().to_vec(),
+				TEST_BUNDLE1.clone().to_vec(),
+				Some(unit(GAKI)),
+				None,
+				None,
+			));
+
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				4,
+				TradeType::Swap,
+			));
+		}
+
+		// auction
+		{	
+			let player = funded_account_with_item(TEST_BUNDLE.clone());
+			assert_ok!(PalletGame::set_auction(
+				RuntimeOrigin::signed(player.clone()),
+				TEST_BUNDLE.clone().to_vec(),
+				Some(unit(GAKI)),
+				1,
+				1,
+			));
+
+			run_to_block(2);
+			assert_ok!(PalletGame::cancel_trade(
+				RuntimeOrigin::signed(player.clone()),
+				5,
+				TradeType::Auction,
+			));
+		}
 	})
 }

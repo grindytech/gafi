@@ -666,7 +666,6 @@ pub mod pallet {
 		}
 	}
 
-	// SBP-M2: Please add documentation for each extrinsic.
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		/// Create a new game.
@@ -1113,8 +1112,6 @@ pub mod pallet {
 			Self::do_buy_bundle(&trade, &sender, bid_price)?;
 			Ok(())
 		}
-
-		// SBP-M2: Missing test case. Please add.
 
 		/// Cancel a trade in `trade_type` by id `trade`.
 		///
