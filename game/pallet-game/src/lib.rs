@@ -680,7 +680,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game())]
 		pub fn create_game(origin: OriginFor<T>, admin: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
@@ -701,7 +701,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game_collection())]
 		pub fn create_game_collection(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_create_game_collection(&sender, &game)?;
@@ -724,7 +724,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection())]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			admin: AccountIdLookupOf<T>,
@@ -744,7 +744,7 @@ pub mod pallet {
 		///
 		/// Emits `AddingAcceptanceSet`.
 		#[pallet::call_index(3)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_accept_adding(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_accept_adding())]
 		pub fn set_accept_adding(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -767,7 +767,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(4)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_game_collection(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_game_collection())]
 		pub fn add_game_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -791,7 +791,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(5)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item())]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -816,7 +816,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(6)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_supply())]
 		pub fn add_supply(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -840,7 +840,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint())]
 		pub fn mint(
 			origin: OriginFor<T>,
 			pool: T::PoolId,
@@ -866,7 +866,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(8)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::burn())]
 		pub fn burn(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -892,7 +892,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(9)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -929,7 +929,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(10)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_upgrade_item(data.len() as u32))]
 		pub fn set_upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -961,7 +961,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(11)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::upgrade_item())]
 		pub fn upgrade_item(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1002,7 +1002,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(13)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_price())]
 		pub fn set_price(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -1029,7 +1029,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(14)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_item())]
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1050,7 +1050,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(15)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply())]
 		pub fn add_retail_supply(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1077,7 +1077,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(16)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle())]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -1102,7 +1102,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(17)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::buy_bundle())]
 		pub fn buy_bundle(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1124,7 +1124,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(18)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::cancel_trade())]
 		pub fn cancel_trade(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1151,7 +1151,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist())]
 		pub fn set_wishlist(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -1176,7 +1176,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(20)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist())]
 		pub fn claim_wishlist(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1198,7 +1198,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(21)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::remove_collection())]
 		pub fn remove_collection(
 			origin: OriginFor<T>,
 			game: T::GameId,
@@ -1268,7 +1268,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap())]
 		pub fn set_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1302,7 +1302,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(25)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap())]
 		pub fn claim_swap(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1330,7 +1330,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(26)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction())]
 		pub fn set_auction(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1356,7 +1356,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(27)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::bid_auction())]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1380,7 +1380,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(28)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction())]
 		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&trade)?;
@@ -1402,7 +1402,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(29)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy())]
 		pub fn set_buy(
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
@@ -1428,7 +1428,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(30)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy())]
 		pub fn claim_set_buy(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
@@ -1662,7 +1662,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(38)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool())]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1694,7 +1694,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(39)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(1_u32))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool())]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
