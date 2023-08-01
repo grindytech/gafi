@@ -1312,7 +1312,7 @@ pub fn set_auction_should_works() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(price),
-			1,
+			Some(1),
 			1,
 		));
 		assert_eq!(
@@ -1336,7 +1336,7 @@ pub fn bid_auction_should_works() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
-			1,
+			Some(1),
 			10,
 		));
 
@@ -1372,7 +1372,7 @@ pub fn bid_auction_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
-			2,
+			Some(2),
 			10,
 		));
 
@@ -1418,7 +1418,7 @@ pub fn claim_auction_should_works() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
-			1,
+			Some(1),
 			10,
 		));
 
@@ -1482,7 +1482,7 @@ pub fn claim_auction_should_fails() {
 			RuntimeOrigin::signed(player.clone()),
 			TEST_BUNDLE.clone().to_vec(),
 			Some(100 * unit(GAKI)),
-			1,
+			Some(1),
 			10,
 		));
 
@@ -1975,7 +1975,7 @@ fn cancel_trade_should_works() {
 				RuntimeOrigin::signed(player.clone()),
 				TEST_BUNDLE.clone().to_vec(),
 				Some(unit(GAKI)),
-				1,
+				Some(1),
 				1,
 			));
 

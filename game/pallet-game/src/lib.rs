@@ -540,7 +540,7 @@ pub mod pallet {
 			who: T::AccountId,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
-			start_block: T::BlockNumber,
+			start_block: Option<T::BlockNumber>,
 			duration: T::BlockNumber,
 		},
 		Bid {
@@ -994,8 +994,8 @@ pub mod pallet {
 		///
 		/// - `package`: a number of an item in a collection to set the price for.
 		/// - `unit_price`: The price for each item.
-		/// - `start_block`: The block to start setting the price.
-		/// - `end_block`: The block to end setting the price.
+		/// - `start_block`: The block to start setting the price, `None` indicates the current block.
+		/// - `end_block`: The block to end setting the price, `None` indicates no end.
 		///
 		/// Emits `PriceSet`.
 		///
@@ -1066,8 +1066,8 @@ pub mod pallet {
 		///
 		/// - `bundle`: A group of items may be from different collections to set price for.
 		/// - `price`: The price the `bundle`.
-		/// - `start_block`: The block to start setting the price.
-		/// - `end_block`: The block to end setting the price.
+		/// - `start_block`: The block to start setting the price, `None` indicates the current block.
+		/// - `end_block`: The block to end setting the price, `None` indicates no end.
 		///
 		/// Emits `BundleSet`.
 		///
@@ -1138,8 +1138,8 @@ pub mod pallet {
 		///
 		/// - `bundle`:  A group of items may be from different collections want to buy.
 		/// - `price`: The price the sender is willing to pay.
-		/// 	- `start_block`: The block to start set wishlist.
-		/// - `end_block`: The block to end set wishlist.
+		/// - `start_block`: The block to start set wishlist, `None` indicates the current block.
+		/// - `end_block`: The block to end set wishlist, `None` indicates no end.
 		///
 		/// Emits `WishlistSet`.
 		///
@@ -1256,8 +1256,8 @@ pub mod pallet {
 		/// - `source`: Bundle in.
 		/// - `required`: Bundle out.
 		/// - `maybe_price`: Maybe the price that sender willing to accept.
-		/// 	- `start_block`: The block to start set swap.
-		/// - `end_block`: The block to end set swap.
+		/// - `start_block`: The block to start set swap, `None` indicates the current block.
+		/// - `end_block`: The block to end set swap, `None` indicates no end.
 		///
 		/// Emits `SwapSet`.
 		///
@@ -1323,8 +1323,8 @@ pub mod pallet {
 		///
 		/// - `source`: The bundle for auction.
 		/// - `maybe_price`: Maybe a minimum bid.
-		/// - `start_block`: The block to start the auction.
-		/// - `duration`: The duration of the auction and measured by the number of blocks.
+		/// - `start_block`: The block to start the auction, `None` indicates the current block.
+		/// - `duration`: The duration of the auction measured by the number of blocks.
 		///
 		/// Emits `AuctionSet`.
 		///
@@ -1335,7 +1335,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
-			start_block: T::BlockNumber,
+			start_block: Option<T::BlockNumber>,
 			duration: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;

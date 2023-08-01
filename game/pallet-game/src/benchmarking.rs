@@ -297,7 +297,7 @@ fn do_set_auction<T: Config<I>, I: 'static>() -> T::AccountId {
 		RawOrigin::Signed(who.clone()).into(),
 		source,
 		Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-		<T as pallet::Config<I>>::Helper::block(0),
+		Some(<T as pallet::Config<I>>::Helper::block(0)),
 		<T as pallet::Config<I>>::Helper::block(10),
 	));
 	who
@@ -684,7 +684,7 @@ benchmarks_instance_pallet! {
 		let call = Call::<T, I>::set_auction {
 			source: source.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-			start_block:  <T as pallet::Config<I>>::Helper::block(0),
+			start_block: Some(<T as pallet::Config<I>>::Helper::block(0)),
 			duration:  <T as pallet::Config<I>>::Helper::block(10),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
@@ -694,7 +694,7 @@ benchmarks_instance_pallet! {
 			who,
 			source:  source,
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-			start_block:  <T as pallet::Config<I>>::Helper::block(0),
+			start_block:  Some(<T as pallet::Config<I>>::Helper::block(0)),
 			duration:  <T as pallet::Config<I>>::Helper::block(10),
 		}.into() );
 	}
