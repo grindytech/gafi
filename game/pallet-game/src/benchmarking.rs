@@ -7,7 +7,7 @@ use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::{Bundle, Loot, NFT, MintSettings, MintType};
+use gafi_support::game::{Bundle, Loot, MintSettings, MintType, NFT};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_core::Get;
@@ -26,7 +26,11 @@ fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
 }
 
-fn new_funded_account<T: Config<I>, I: 'static>(value: u32, seed: u32, amount: u128) -> T::AccountId {
+fn new_funded_account<T: Config<I>, I: 'static>(
+	value: u32,
+	seed: u32,
+	amount: u128,
+) -> T::AccountId {
 	let balance_amount = amount.try_into().ok().unwrap();
 	let name: String = format!("{}{}", value, seed);
 	let user = account(string_to_static_str(name), value, seed);
@@ -41,12 +45,11 @@ fn default_item_config() -> ItemConfig {
 fn default_mint_config<T: Config<I>, I: 'static>() -> MintSettingsFor<T, I> {
 	MintSettings {
 		mint_type: MintType::Public,
-		price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		start_block: None,
 		end_block: None,
 	}
 }
-
 
 fn assert_last_event<T: Config<I>, I: 'static>(generic_event: <T as Config<I>>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -393,9 +396,6 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			new_item: <T as pallet_nfts::Config>::Helper::item(100),
 			config: default_item_config(),
-			// SBP-M2: benchmark is not setup for worst case, the length should be taken from range
-			// so that the extrinsic can return the actual weight consumed by the transaction in
-			// DispatchResultWithPostInfo by passing data length in weight_info's parameter
 			data: bvec![0u8; s as usize],
 			level: 0,
 			fee: <T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -480,21 +480,15 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_bundle {
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 		let (who, _, _) = new_account_with_item::<T, I>(0);
-
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_bundle {
 			bundle: bundle.clone(),
@@ -529,21 +523,15 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_wishlist {
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 		let (who, _, _) = new_account_with_item::<T, I>(0);
-
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_wishlist {
 			bundle: bundle.clone(),
@@ -596,28 +584,24 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_swap {
-		let (who, _, _) = new_account_with_item::<T, I>(0);
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
+		let x in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let required = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(2),
-			amount: 10,
-		}];
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 1,
+		}; x as usize];
 
 		let call = Call::<T, I>::set_swap {
 			source: bundle.clone(),
@@ -687,22 +671,15 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_auction {
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 		let (who, _, _) = new_account_with_item::<T, I>(0);
-
-
 		let source = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_auction {
 			source: source.clone(),
@@ -917,33 +894,17 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_dynamic_pool {
+		let s in 0 .. <T as pallet::Config<I>>::MaxLoot::get();
 		let (who, _, _) = new_account_with_item::<T, I>(0);
-
-		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		let table = vec![
 			Loot {
 				maybe_nft: Some(NFT {
 					collection: <T as pallet_nfts::Config>::Helper::collection(0),
 					item: <T as pallet_nfts::Config>::Helper::item(0),
 				}),
 				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(1),
-				}),
-				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(2),
-				}),
-				weight: 10,
-			},
-		];
+		}; s as usize];
 
 		let call = Call::<T, I>::create_dynamic_pool {
 			loot_table: table.clone(),
@@ -960,36 +921,21 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_stable_pool {
+		let s in 0 .. <T as pallet::Config<I>>::MaxLoot::get();
 		let (who, admin) = do_create_collection::<T, I>();
 		do_create_item::<T, I>(&admin, 0, 0, None);
 		do_create_item::<T, I>(&admin, 0, 1, None);
 		do_create_item::<T, I>(&admin, 0, 2, None);
 
-		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		let table = vec![
 			Loot {
 				maybe_nft: Some(NFT {
 					collection: <T as pallet_nfts::Config>::Helper::collection(0),
 					item: <T as pallet_nfts::Config>::Helper::item(0),
 				}),
 				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(1),
-				}),
-				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(2),
-				}),
-				weight: 10,
-			},
-		];
+		}; s as usize];
 
 		let call = Call::<T, I>::create_stable_pool {
 			loot_table: table.clone(),

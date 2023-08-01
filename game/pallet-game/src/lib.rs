@@ -1077,7 +1077,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(16)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_bundle(bundle.len() as u32))]
 		pub fn set_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -1151,7 +1151,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(bundle.len() as u32))]
 		pub fn set_wishlist(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
@@ -1268,7 +1268,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(source.len() as u32, required.len() as u32))]
 		pub fn set_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1330,7 +1330,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(26)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_auction(source.len() as u32))]
 		pub fn set_auction(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1662,7 +1662,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(38)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(loot_table.len() as u32))]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1694,7 +1694,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(39)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(loot_table.len() as u32))]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
