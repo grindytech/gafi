@@ -39,7 +39,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		position: u32,
 	) -> Option<Option<NFT<T::CollectionId, T::ItemId>>> {
 		let mut sum: u32 = 0_u32;
-		for mut item in table {
+		for item in table {
 			if item.weight == 0 {
 				continue
 			};
