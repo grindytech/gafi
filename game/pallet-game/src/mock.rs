@@ -157,7 +157,6 @@ parameter_types! {
 	pub MaxLoot: u32 = MAX_LOOT;
 }
 
-// SBP-M2: Implement all trait items.
 impl pallet_game::Config for Test {
 	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
@@ -179,6 +178,8 @@ impl pallet_game::Config for Test {
 	type BundleDeposit = BundleDeposit;
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = ();
 }
 
 parameter_types! {

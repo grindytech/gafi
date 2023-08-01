@@ -44,6 +44,17 @@ benchmark-game:
     --wasm-execution compiled \
     --pallet pallet_game \
     --extrinsic '*' \
+    --steps 20 \
+    --repeat 10 \
+    --output ./benchmarking/pallet-game/weights.rs
+
+.PHONY: pallet-game-weights
+pallet-game-weights:
+	./target/release/gafi-node benchmark pallet \
+    --chain dev \
+    --wasm-execution compiled \
+    --pallet pallet_game \
+    --extrinsic '*' \
     --steps 50 \
     --repeat 20 \
     --execution wasm \

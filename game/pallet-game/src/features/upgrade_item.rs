@@ -64,7 +64,6 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	// SBP-M2: Please try to incorporate safe math operations.
 	fn do_upgrade_item(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
