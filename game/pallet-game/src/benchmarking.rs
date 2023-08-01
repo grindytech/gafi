@@ -7,9 +7,10 @@ use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
 use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::{Bundle, Loot, NFT, MintSettings, MintType};
+use gafi_support::game::{Bundle, Loot, MintSettings, MintType, NFT};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
+use sp_core::Get;
 use sp_std::vec;
 
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
@@ -25,10 +26,14 @@ fn string_to_static_str(s: String) -> &'static str {
 	Box::leak(s.into_boxed_str())
 }
 
-fn new_funded_account<T: Config<I>, I: 'static>(s: u32, seed: u32, amount: u128) -> T::AccountId {
+fn new_funded_account<T: Config<I>, I: 'static>(
+	value: u32,
+	seed: u32,
+	amount: u128,
+) -> T::AccountId {
 	let balance_amount = amount.try_into().ok().unwrap();
-	let name: String = format!("{}{}", s, seed);
-	let user = account(string_to_static_str(name), s, seed);
+	let name: String = format!("{}{}", value, seed);
+	let user = account(string_to_static_str(name), value, seed);
 	<T as pallet::Config<I>>::Currency::make_free_balance_be(&user, balance_amount);
 	return user
 }
@@ -40,12 +45,11 @@ fn default_item_config() -> ItemConfig {
 fn default_mint_config<T: Config<I>, I: 'static>() -> MintSettingsFor<T, I> {
 	MintSettings {
 		mint_type: MintType::Public,
-		price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+		price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		start_block: None,
 		end_block: None,
 	}
 }
-
 
 fn assert_last_event<T: Config<I>, I: 'static>(generic_event: <T as Config<I>>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -55,9 +59,9 @@ fn assert_last_event<T: Config<I>, I: 'static>(generic_event: <T as Config<I>>::
 	assert_eq!(event, &system_event);
 }
 
-fn do_create_game<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
-	let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-	let admin = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+fn do_create_game<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
+	let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+	let admin = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
 	assert_ok!(PalletGame::<T, I>::create_game(
 		RawOrigin::Signed(caller.clone()).into(),
 		T::Lookup::unlookup(admin.clone()),
@@ -65,18 +69,18 @@ fn do_create_game<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::Account
 	(caller, admin)
 }
 
-fn do_create_game_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
-	let (owner, admin) = do_create_game::<T, I>(s);
+fn do_create_game_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
+	let (owner, admin) = do_create_game::<T, I>();
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
-		RawOrigin::Signed(owner.clone()).into(),
+		RawOrigin::Signed(admin.clone()).into(),
 		<T as pallet::Config<I>>::Helper::game(0),
 	));
 	(owner, admin)
 }
 
-fn do_create_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
-	let owner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-	let admin = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+fn do_create_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
+	let owner = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+	let admin = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
 
 	assert_ok!(PalletGame::<T, I>::create_collection(
 		RawOrigin::Signed(owner.clone()).into(),
@@ -86,7 +90,6 @@ fn do_create_collection<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::A
 }
 
 fn do_create_item<T: Config<I>, I: 'static>(
-	s: u32,
 	admin: &T::AccountId,
 	collection: u16,
 	item: u16,
@@ -102,15 +105,14 @@ fn do_create_item<T: Config<I>, I: 'static>(
 }
 
 fn new_account_with_item<T: Config<I>, I: 'static>(
-	s: u32,
 	collection: u16,
 ) -> (T::AccountId, T::AccountId, T::AccountId) {
-	let (owner, admin) = do_create_collection::<T, I>(s);
-	do_create_item::<T, I>(s, &admin, collection, 0, Some(1000));
-	do_create_item::<T, I>(s, &admin, collection, 1, Some(1000));
-	do_create_item::<T, I>(s, &admin, collection, 2, Some(1000));
+	let (owner, admin) = do_create_collection::<T, I>();
+	do_create_item::<T, I>(&admin, collection, 0, Some(1000));
+	do_create_item::<T, I>(&admin, collection, 1, Some(1000));
+	do_create_item::<T, I>(&admin, collection, 2, Some(1000));
 
-	let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+	let player = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 	for i in 0..3 {
 		assert_ok!(PalletGame::<T, I>::transfer(
 			RawOrigin::Signed(owner.clone()).into(),
@@ -123,8 +125,8 @@ fn new_account_with_item<T: Config<I>, I: 'static>(
 	(player, owner, admin)
 }
 
-fn do_create_dynamic_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
-	let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+fn do_create_dynamic_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
+	let (who, _, _) = new_account_with_item::<T, I>(0);
 
 	let table: LootTable<T::CollectionId, T::ItemId> = vec![
 		Loot {
@@ -160,11 +162,11 @@ fn do_create_dynamic_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T:
 	(who.clone(), who)
 }
 
-fn do_create_stable_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::AccountId) {
-	let (owner, admin) = do_create_collection::<T, I>(s);
-	do_create_item::<T, I>(s, &admin, 0, 0, None);
-	do_create_item::<T, I>(s, &admin, 0, 1, None);
-	do_create_item::<T, I>(s, &admin, 0, 2, None);
+fn do_create_stable_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
+	let (owner, admin) = do_create_collection::<T, I>();
+	do_create_item::<T, I>(&admin, 0, 0, None);
+	do_create_item::<T, I>(&admin, 0, 1, None);
+	do_create_item::<T, I>(&admin, 0, 2, None);
 
 	let table: LootTable<T::CollectionId, T::ItemId> = vec![
 		Loot {
@@ -200,7 +202,7 @@ fn do_create_stable_pool<T: Config<I>, I: 'static>(s: u32) -> (T::AccountId, T::
 	(owner, admin)
 }
 
-fn do_set_upgrade_item<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
+fn do_set_upgrade_item<T: Config<I>, I: 'static>(who: &T::AccountId) {
 	assert_ok!(PalletGame::<T, I>::set_upgrade_item(
 		RawOrigin::Signed(who.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(0),
@@ -213,7 +215,7 @@ fn do_set_upgrade_item<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	));
 }
 
-fn do_set_price<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
+fn do_set_price<T: Config<I>, I: 'static>(who: &T::AccountId) {
 	let package = Package {
 		collection: <T as pallet_nfts::Config>::Helper::collection(0),
 		item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -229,7 +231,7 @@ fn do_set_price<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	));
 }
 
-fn do_set_bundle<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
+fn do_set_bundle<T: Config<I>, I: 'static>(who: &T::AccountId) {
 	let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -252,7 +254,7 @@ fn do_set_bundle<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	));
 }
 
-fn do_set_wishlist<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
+fn do_set_wishlist<T: Config<I>, I: 'static>(who: &T::AccountId) {
 	let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -275,8 +277,8 @@ fn do_set_wishlist<T: Config<I>, I: 'static>(s: u32, who: &T::AccountId) {
 	));
 }
 
-fn do_set_auction<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
-	let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+fn do_set_auction<T: Config<I>, I: 'static>() -> T::AccountId {
+	let (who, _, _) = new_account_with_item::<T, I>(0);
 
 	let source = vec![
 		Package {
@@ -295,7 +297,7 @@ fn do_set_auction<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
 		RawOrigin::Signed(who.clone()).into(),
 		source,
 		Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-		<T as pallet::Config<I>>::Helper::block(0),
+		Some(<T as pallet::Config<I>>::Helper::block(0)),
 		<T as pallet::Config<I>>::Helper::block(10),
 	));
 	who
@@ -304,9 +306,8 @@ fn do_set_auction<T: Config<I>, I: 'static>(s: u32) -> T::AccountId {
 benchmarks_instance_pallet! {
 
 	create_game {
-		let s in 0 .. MAX as u32;
-		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(s + MAX, MAX, 1000_000_000u128 * UNIT));
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT));
 
 		let call = Call::<T, I>::create_game { admin };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
@@ -316,32 +317,29 @@ benchmarks_instance_pallet! {
 
 
 	create_game_collection {
-		let s in 0 .. MAX as u32;
-		let (caller, admin) = do_create_game::<T, I>(s);
+		let (caller, admin) = do_create_game::<T, I>();
 
 		let call = Call::<T, I>::create_game_collection { game: <T as pallet::Config<I>>::Helper::game(0)};
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::CollectionCreated { who: caller.clone(), collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());
+		assert_last_event::<T, I>(Event::CollectionCreated { who: admin.clone(), collection: <T as pallet_nfts::Config>::Helper::collection(0) }.into());
 	}
 
 	create_item {
-		let s in 0 .. MAX as u32;
-		let (caller, admin) = do_create_collection::<T, I>(s);
+		let (caller, admin) = do_create_collection::<T, I>();
 		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0),
 			config: default_item_config(), maybe_supply: Some(10) };
-	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	}: { call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::ItemCreated { who: caller,
+		assert_last_event::<T, I>(Event::ItemCreated { who: admin,
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0), maybe_supply: Some(10) }.into());
 	}
 
 	add_supply {
-		let s in 0 .. MAX as u32;
-		let (owner, admin) = do_create_collection::<T, I>(s);
-		do_create_item::<T, I>(s, &admin, 0, 0, Some(10));
+		let (owner, admin) = do_create_collection::<T, I>();
+		do_create_item::<T, I>(&admin, 0, 0, Some(10));
 
 		let call = Call::<T, I>::add_supply { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			 item: <T as pallet_nfts::Config>::Helper::item(0), amount: 10 };
@@ -353,8 +351,7 @@ benchmarks_instance_pallet! {
 	}
 
 	burn {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
 		let call = Call::<T, I>::burn { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -370,10 +367,9 @@ benchmarks_instance_pallet! {
 
 
 	transfer {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
-		let dest =  T::Lookup::unlookup(new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT));
+		let dest =  T::Lookup::unlookup(new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT));
 
 		let call = Call::<T, I>::transfer { collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -391,8 +387,8 @@ benchmarks_instance_pallet! {
 	}
 
 	set_upgrade_item {
-		let s in 0 .. MAX as u32;
-		let (_, _, who) = new_account_with_item::<T, I>(s, 0);
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let (_, _, who) = new_account_with_item::<T, I>(0);
 
 
 		let call = Call::<T, I>::set_upgrade_item {
@@ -400,10 +396,7 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			new_item: <T as pallet_nfts::Config>::Helper::item(100),
 			config: default_item_config(),
-			// SBP-M2: benchmark is not setup for worst case, the length should be taken from range
-			// so that the extrinsic can return the actual weight consumed by the transaction in
-			// DispatchResultWithPostInfo by passing data length in weight_info's parameter
-			data: bvec![0u8; 50],
+			data: bvec![0u8; s as usize],
 			level: 0,
 			fee: <T as pallet::Config<I>>::Currency::minimum_balance(),
 			};
@@ -419,11 +412,9 @@ benchmarks_instance_pallet! {
 	}
 
 	upgrade_item {
-		let s in 0 .. MAX as u32;
+		let (who, _, admin) = new_account_with_item::<T, I>(0);
 
-		let (who, _, admin) = new_account_with_item::<T, I>(s, 0);
-
-		do_set_upgrade_item::<T, I>(s, &admin);
+		do_set_upgrade_item::<T, I>(&admin);
 
 		let call = Call::<T, I>::upgrade_item {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -443,8 +434,7 @@ benchmarks_instance_pallet! {
 	}
 
 	set_price {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
 		let package = Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -471,11 +461,9 @@ benchmarks_instance_pallet! {
 	}
 
 	buy_item {
-		let s in 0 .. MAX as u32;
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
-		do_set_price::<T, I>(s, &who);
+		do_set_price::<T, I>(&who);
 
 		let call = Call::<T, I>::buy_item {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -492,22 +480,15 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_bundle {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_bundle {
 			bundle: bundle.clone(),
@@ -526,10 +507,8 @@ benchmarks_instance_pallet! {
 	}
 
 	buy_bundle {
-		let s in 0 .. MAX as u32;
-
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-		do_set_bundle::<T, I>(s, &who);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
+		do_set_bundle::<T, I>(&who);
 
 		let call = Call::<T, I>::buy_bundle {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -544,22 +523,15 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_wishlist {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_wishlist {
 			bundle: bundle.clone(),
@@ -578,12 +550,10 @@ benchmarks_instance_pallet! {
 	}
 
 	claim_wishlist {
-		let s in 0 .. MAX as u32;
+		let player = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
+		do_set_wishlist::<T, I>(&player);
 
-		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
-		do_set_wishlist::<T, I>(s, &player);
-
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
 		let call = Call::<T, I>::claim_wishlist {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -599,8 +569,7 @@ benchmarks_instance_pallet! {
 	}
 
 	remove_collection {
-		let s in 0 .. MAX as u32;
-		let (owner, who) = do_create_game_collection::<T, I>(s);
+		let (owner, who) = do_create_game_collection::<T, I>();
 
 		let call = Call::<T, I>::remove_collection {
 			game: <T as pallet::Config<I>>::Helper::game(0),
@@ -615,29 +584,24 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_swap {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
+		let x in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let bundle = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let required = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(2),
-			amount: 10,
-		}];
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			amount: 1,
+		}; x as usize];
 
 		let call = Call::<T, I>::set_swap {
 			source: bundle.clone(),
@@ -658,9 +622,8 @@ benchmarks_instance_pallet! {
 	}
 
 	claim_swap {
-		let s in 0 .. MAX as u32;
-		let (player1, _, _) = new_account_with_item::<T, I>(s, 0);
-		let (player2, _, _) = new_account_with_item::<T, I>(s, 1);
+		let (player1, _, _) = new_account_with_item::<T, I>(0);
+		let (player2, _, _) = new_account_with_item::<T, I>(1);
 
 		let source = vec![
 		Package {
@@ -708,28 +671,20 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	set_auction {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
-
+		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let source = vec![
 		Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
-			amount: 10,
-		},
-		Package {
-			collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			item: <T as pallet_nfts::Config>::Helper::item(1),
-			amount: 10,
-		}];
+			amount: 1,
+		}; s as usize];
 
 		let call = Call::<T, I>::set_auction {
 			source: source.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-			start_block:  <T as pallet::Config<I>>::Helper::block(0),
+			start_block: Some(<T as pallet::Config<I>>::Helper::block(0)),
 			duration:  <T as pallet::Config<I>>::Helper::block(10),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
@@ -739,16 +694,15 @@ benchmarks_instance_pallet! {
 			who,
 			source:  source,
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
-			start_block:  <T as pallet::Config<I>>::Helper::block(0),
+			start_block:  Some(<T as pallet::Config<I>>::Helper::block(0)),
 			duration:  <T as pallet::Config<I>>::Helper::block(10),
 		}.into() );
 	}
 
 	bid_auction {
-		let s in 0 .. MAX as u32;
-		let _ = do_set_auction::<T, I>(s);
+		let _ = do_set_auction::<T, I>();
 
-		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		let call = Call::<T, I>::bid_auction {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -764,17 +718,16 @@ benchmarks_instance_pallet! {
 	}
 
 	claim_auction {
-		let s in 0 .. MAX as u32;
-		let _ = do_set_auction::<T, I>(s);
+		let _ = do_set_auction::<T, I>();
 
-		let bidder = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let bidder = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 		assert_ok!(PalletGame::<T, I>::bid_auction(
 			RawOrigin::Signed(bidder.clone()).into(),
 			<T as pallet::Config<I>>::Helper::trade(0),
 			<T as pallet::Config<I>>::Currency::minimum_balance()
 		));
 
-		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		frame_system::Pallet::<T>::set_block_number(<T as pallet::Config<I>>::Helper::block(10));
 
@@ -790,8 +743,7 @@ benchmarks_instance_pallet! {
 	}
 
 	set_buy {
-		let s in 0 .. MAX as u32;
-		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		let package = Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
@@ -818,10 +770,9 @@ benchmarks_instance_pallet! {
 	}
 
 	claim_set_buy {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
 
-		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let player = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 		let package = Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -851,8 +802,7 @@ benchmarks_instance_pallet! {
 	}
 
 	create_collection{
-		let s in 0 .. MAX as u32;
-		let caller = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		let call = Call::<T, I>::create_collection {
 			admin:  T::Lookup::unlookup(caller.clone()),
@@ -866,8 +816,7 @@ benchmarks_instance_pallet! {
 	}
 
 	set_accept_adding {
-		let s in 0 .. MAX as u32;
-		let who = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let who = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		assert_ok!(PalletGame::<T, I>::create_collection(RawOrigin::Signed(who.clone()).into(),
 		T::Lookup::unlookup(who.clone()),
@@ -887,11 +836,8 @@ benchmarks_instance_pallet! {
 	}
 
 	add_game_collection {
-		let s in 0 .. MAX as u32;
-
-		let (_, who) = do_create_game::<T, I>(s);
-
-		let player = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		let (_, who) = do_create_game::<T, I>();
+		let player = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		assert_ok!(PalletGame::<T, I>::create_collection(
 			RawOrigin::Signed(player.clone()).into(),
@@ -918,11 +864,8 @@ benchmarks_instance_pallet! {
 	}
 
 	add_retail_supply {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
-		do_set_price::<T, I>(s, &who);
-
+		let (who, _, _) = new_account_with_item::<T, I>(0);
+		do_set_price::<T, I>(&who);
 		let package = Package {
 			collection: <T as pallet_nfts::Config>::Helper::collection(0),
 			item: <T as pallet_nfts::Config>::Helper::item(0),
@@ -936,9 +879,8 @@ benchmarks_instance_pallet! {
 	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
 
 	cancel_trade {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-		do_set_bundle::<T, I>(s, &who);
+		let (who, _, _) = new_account_with_item::<T, I>(0);
+		do_set_bundle::<T, I>(&who);
 
 		let call = Call::<T, I>::cancel_trade {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
@@ -952,34 +894,17 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_dynamic_pool {
-		let s in 0 .. MAX as u32;
-		let (who, _, _) = new_account_with_item::<T, I>(s, 0);
-
-		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		let s in 0 .. <T as pallet::Config<I>>::MaxLoot::get();
+		let (who, _, _) = new_account_with_item::<T, I>(0);
+		let table = vec![
 			Loot {
 				maybe_nft: Some(NFT {
 					collection: <T as pallet_nfts::Config>::Helper::collection(0),
 					item: <T as pallet_nfts::Config>::Helper::item(0),
 				}),
 				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(1),
-				}),
-				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(2),
-				}),
-				weight: 10,
-			},
-		];
+		}; s as usize];
 
 		let call = Call::<T, I>::create_dynamic_pool {
 			loot_table: table.clone(),
@@ -996,38 +921,21 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	// SBP-M2: Setup benchmark for worst case scenario (populate vec for worst case). Please refer set_upgrade_item's comment.
 	create_stable_pool {
-		let s in 0 .. MAX as u32;
+		let s in 0 .. <T as pallet::Config<I>>::MaxLoot::get();
+		let (who, admin) = do_create_collection::<T, I>();
+		do_create_item::<T, I>(&admin, 0, 0, None);
+		do_create_item::<T, I>(&admin, 0, 1, None);
+		do_create_item::<T, I>(&admin, 0, 2, None);
 
-		let (who, admin) = do_create_collection::<T, I>(s);
-		do_create_item::<T, I>(s, &admin, 0, 0, None);
-		do_create_item::<T, I>(s, &admin, 0, 1, None);
-		do_create_item::<T, I>(s, &admin, 0, 2, None);
-
-		let table: LootTable<T::CollectionId, T::ItemId> = vec![
+		let table = vec![
 			Loot {
 				maybe_nft: Some(NFT {
 					collection: <T as pallet_nfts::Config>::Helper::collection(0),
 					item: <T as pallet_nfts::Config>::Helper::item(0),
 				}),
 				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(1),
-				}),
-				weight: 10,
-			},
-			Loot {
-				maybe_nft: Some(NFT {
-					collection: <T as pallet_nfts::Config>::Helper::collection(0),
-					item: <T as pallet_nfts::Config>::Helper::item(2),
-				}),
-				weight: 10,
-			},
-		];
+		}; s as usize];
 
 		let call = Call::<T, I>::create_stable_pool {
 			loot_table: table.clone(),
@@ -1045,11 +953,8 @@ benchmarks_instance_pallet! {
 	}
 
 	mint {
-		let s in 0 .. MAX as u32;
-
-		do_create_stable_pool::<T, I>(s);
-
-		let miner = new_funded_account::<T, I>(s, s, 1000_000_000u128 * UNIT);
+		do_create_stable_pool::<T, I>();
+		let miner = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 		let mint_to =   T::Lookup::unlookup(miner.clone());
 
 		let call = Call::<T, I>::mint {

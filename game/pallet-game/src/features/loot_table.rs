@@ -2,7 +2,6 @@ use crate::*;
 use gafi_support::game::{LootTable, NFT};
 use sp_runtime::Saturating;
 
-// SBP-M2: Please try to incorporate safe math operations.
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Get Basic Loot Mechanism
 	///
@@ -40,7 +39,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		position: u32,
 	) -> Option<Option<NFT<T::CollectionId, T::ItemId>>> {
 		let mut sum: u32 = 0_u32;
-		for mut item in table {
+		for item in table {
 			if item.weight == 0 {
 				continue
 			};
