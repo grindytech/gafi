@@ -11,7 +11,7 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		source: Bundle<T::CollectionId, T::ItemId>,
 		maybe_price: Option<BalanceOf<T, I>>,
-		start_block: T::BlockNumber,
+		start_block: Option<T::BlockNumber>,
 		duration: T::BlockNumber,
 	) -> DispatchResult {
 		// ensure available trade
@@ -34,12 +34,17 @@ impl<T: Config<I>, I: 'static>
 			Ok(())
 		})?;
 
+		let start = match start_block {
+			Some(block) => block,
+			None => <frame_system::Pallet<T>>::block_number(),
+		};
+
 		AuctionConfigOf::<T, I>::insert(
 			trade,
 			AuctionConfig {
 				owner: who.clone(),
 				maybe_price,
-				start_block,
+				start_block: start,
 				duration,
 			},
 		);

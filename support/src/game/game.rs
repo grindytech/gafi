@@ -523,7 +523,7 @@ pub trait Auction<AccountId, CollectionId, ItemId, TradeId, Price, Block> {
 		who: &AccountId,
 		bundle: Bundle<CollectionId, ItemId>,
 		maybe_price: Option<Price>,
-		start_block: Block,
+		start_block: Option<Block>,
 		duration: Block,
 	) -> DispatchResult;
 
