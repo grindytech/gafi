@@ -663,6 +663,9 @@ pub mod pallet {
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		fn offchain_worker(_block_number: BlockNumberFor<T>) {
 			let _ = Self::submit_random_seed_raw_unsigned(_block_number);
+
+			let random = RandomSeed::<T, I>::get();
+			log::info!("random {:?}", random);
 		}
 	}
 
@@ -1749,6 +1752,8 @@ pub mod pallet {
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	fn submit_random_seed_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
 		let random_seed = sp_io::offchain::random_seed();
+
+		log::info!("random_seed sp_io {:?}", random_seed);
 
 		let call = Call::submit_random_seed_unsigned { seed: random_seed };
 
