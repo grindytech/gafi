@@ -59,7 +59,7 @@ gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../
 pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache" }
 pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
 pallet-template = { version = "4.0.0-dev", default-features = false, path = "../../pallets/template" }
-
+game-randomness = { version = "4.0.0-dev", default-features = false, path = "../../game/randomness" }
 pallet-game = { version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game" }
 
 [build-dependencies]
@@ -117,6 +117,7 @@ std = [
   "gafi-support/std",
   "pallet-template/std",
   "pallet-nfts/std",
+  "game-randomness/std",
   "pallet-game/std",
 ]
 try-runtime = [

@@ -46,45 +46,20 @@ use frame_support::{
 	ensure,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
-		Currency, Randomness, ReservableCurrency,
+		Currency, ReservableCurrency,
 	},
-	PalletId,
 };
-use frame_system::{
-	offchain::{CreateSignedTransaction, SubmitTransaction},
-	Config as SystemConfig,
-};
-use gafi_support::game::{
-	Auction, CreateItem, GameSetting, Level, LootTable, Mining, MutateCollection, MutateItem,
-	Package, Retail, Swap, Trade, TradeType, TransferItem, UpgradeItem, Wholesale, Wishlist,
-};
+use frame_system::{pallet_prelude::BlockNumberFor, Config as SystemConfig};
+use gafi_support::game::*;
+
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
-use sp_core::offchain::KeyTypeId;
-use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
+use sp_runtime::{
+	traits::{StaticLookup},
+};
 use sp_std::vec::Vec;
 use types::*;
-
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
-pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
-
-pub mod crypto {
-	use super::KEY_TYPE;
-	use sp_runtime::{
-		app_crypto::{app_crypto, sr25519},
-		MultiSignature, MultiSigner,
-	};
-	app_crypto!(sr25519, KEY_TYPE);
-	pub struct TestAuthId;
-
-	// implemented for runtime
-	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
-		type RuntimeAppPublic = Public;
-		type GenericSignature = sp_core::sr25519::Signature;
-		type GenericPublic = sp_core::sr25519::Public;
-	}
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -97,7 +72,7 @@ pub mod pallet {
 
 	use super::*;
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use gafi_support::game::{Bundle, Loot, NFT};
+	use gafi_support::game::{Bundle, GameRandomness, Loot, NFT};
 	use pallet_nfts::CollectionRoles;
 
 	#[pallet::pallet]
@@ -137,13 +112,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>:
-		frame_system::Config + pallet_nfts::Config + CreateSignedTransaction<Call<Self, I>>
-	{
-		/// The Game's pallet id
-		#[pallet::constant]
-		type PalletId: Get<PalletId>;
-
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -166,9 +135,6 @@ pub mod pallet {
 			> + Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>
 			+ InspectRole<Self::AccountId>;
-
-		/// generate random ID
-		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 
 		/// The type used to identify a unique game
 		type GameId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
@@ -218,6 +184,8 @@ pub mod pallet {
 		/// The basic amount of funds that must be reserved for any bundle.
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
+
+		type GameRandomness: GameRandomness;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -411,6 +379,16 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
+
+	/// Defines the block when next unsigned transaction will be accepted.
+	///
+	/// To prevent spam of unsigned (and unpaid!) transactions on the network,
+	/// we only allow one transaction every `T::UnsignedInterval` blocks.
+	/// This storage entry defines when new transaction is going to be accepted.
+	#[pallet::storage]
+	#[pallet::getter(fn next_unsigned_at)]
+	pub(super) type NextUnsignedAt<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -657,13 +635,6 @@ pub mod pallet {
 		MintNotStarted,
 		MintEnded,
 		NotWhitelisted,
-	}
-
-	#[pallet::hooks]
-	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
-		fn offchain_worker(_block_number: BlockNumberFor<T>) {
-			let _ = Self::submit_random_seed_raw_unsigned(_block_number);
-		}
 	}
 
 	#[pallet::call]
@@ -972,29 +943,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Submit random seed from offchain-worker to runtime.
-		///
-		/// Only called by offchain-worker.
-		///
-		/// Arguments:
-		/// - `seed`: random seed value.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(12)]
-		#[pallet::weight({0})]
-		pub fn submit_random_seed_unsigned(origin: OriginFor<T>, seed: [u8; 32]) -> DispatchResult {
-			ensure_none(origin)?;
-			RandomSeed::<T, I>::set(seed);
-			Ok(())
-		}
-
 		/// Set the price for a package.
 		///
 		/// Origin must be Signed and must be the owner of the `item`.
 		///
 		/// - `package`: a number of an item in a collection to set the price for.
 		/// - `unit_price`: The price for each item.
-		/// - `start_block`: The block to start setting the price, `None` indicates the current block.
+		/// - `start_block`: The block to start setting the price, `None` indicates the current
+		///   block.
 		/// - `end_block`: The block to end setting the price, `None` indicates no end.
 		///
 		/// Emits `PriceSet`.
@@ -1066,7 +1022,8 @@ pub mod pallet {
 		///
 		/// - `bundle`: A group of items may be from different collections to set price for.
 		/// - `price`: The price the `bundle`.
-		/// - `start_block`: The block to start setting the price, `None` indicates the current block.
+		/// - `start_block`: The block to start setting the price, `None` indicates the current
+		///   block.
 		/// - `end_block`: The block to end setting the price, `None` indicates no end.
 		///
 		/// Emits `BundleSet`.
@@ -1675,10 +1632,12 @@ pub mod pallet {
 			let admin = T::Lookup::lookup(admin)?;
 			let table_len = loot_table.len() as u32;
 			Self::do_create_dynamic_pool(&id, &sender, loot_table, &admin, mint_settings)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
-				table_len,
-			))
-			.into())
+			Ok(
+				Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
+					table_len,
+				))
+				.into(),
+			)
 		}
 
 		/// Create a stable mining pool.
@@ -1708,57 +1667,17 @@ pub mod pallet {
 			let admin = T::Lookup::lookup(admin)?;
 			let table_len = loot_table.len() as u32;
 			Self::do_create_stable_pool(&id, &sender, loot_table, &admin, mint_settings)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
-				table_len,
-			))
-			.into())
-		}
-	}
-
-	#[pallet::validate_unsigned]
-	impl<T: Config<I>, I: 'static> ValidateUnsigned for Pallet<T, I> {
-		type Call = Call<T, I>;
-
-		/// Validate unsigned call to this module.
-		///
-		/// By default unsigned transactions are disallowed, but implementing the validator
-		/// here we make sure that some particular calls (the ones produced by offchain worker)
-		/// are being whitelisted and marked as valid.
-		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			match call {
-				Call::submit_random_seed_unsigned { seed: _ } => match source {
-					TransactionSource::Local | TransactionSource::InBlock => {
-						let valid_tx = |provide| {
-							ValidTransaction::with_tag_prefix("pallet-game")
-								.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
-								.and_provides([&provide])
-								.longevity(3)
-								.propagate(true)
-								.build()
-						};
-						valid_tx(b"approve_whitelist_unsigned".to_vec())
-					},
-					_ => InvalidTransaction::Call.into(),
-				},
-				_ => InvalidTransaction::Call.into(),
-			}
+			Ok(
+				Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
+					table_len,
+				))
+				.into(),
+			)
 		}
 	}
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	fn submit_random_seed_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
-		let random_seed = sp_io::offchain::random_seed();
-
-		let call = Call::submit_random_seed_unsigned { seed: random_seed };
-
-		let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
-			.map_err(|_| {
-				log::error!("Failed in offchain_unsigned_tx");
-			});
-		Ok(())
-	}
-
 	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {

@@ -12,7 +12,7 @@ use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, ed25519::AuthorityId};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -375,7 +375,22 @@ where
 }
 
 parameter_types! {
-	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
+	pub PalletGameId: PalletId =  PalletId(*b"gamernds");
+	pub UnsignedPriority: u32 = 50;
+	pub RandomAttemps: u32 = 10;
+}
+
+impl game_randomness::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type PalletId = PalletGameId;
+	type WeightInfo = ();
+	type AuthorityId = game_randomness::crypto::TestAuthId;
+	type Randomness = RandomnessCollectiveFlip;
+	type UnsignedPriority = UnsignedPriority;
+	type RandomAttemps = RandomAttemps;
+}
+
+parameter_types! {
 	pub GameDeposit: u128 = 3 * unit(GAFI);
 	pub UpgradeDeposit: u128 = 1 * unit(GAFI);
 	pub BundleDeposit: u128 = 2 * unit(GAFI);
@@ -390,13 +405,11 @@ parameter_types! {
 }
 
 impl pallet_game::Config for Runtime {
-	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = SubstrateWeight<Runtime>;
 	type NftsWeightInfo = NftsWeight<Runtime>;
 	type Currency = Balances;
 	type Nfts = Nfts;
-	type Randomness = RandomnessCollectiveFlip;
 	type GameId = u32;
 	type PoolId = u32;
 	type MiningPoolDeposit = MiningPoolDeposit;
@@ -410,9 +423,11 @@ impl pallet_game::Config for Runtime {
 	type TradeId = u32;
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
+	type GameRandomness = GameRandomness;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
+
 
 parameter_types! {
 	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
@@ -455,6 +470,7 @@ construct_runtime!(
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
 
 		Game: pallet_game::{Pallet, Call, Storage, Event<T>},
+		GameRandomness: game_randomness::{Pallet, Call, Event<T>},
 		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
 	}

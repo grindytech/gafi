@@ -1,8 +1,22 @@
-use super::{Bundle, LootTable, Package, TradeType, MintSettings};
+use super::{Bundle, LootTable, MintSettings, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
 
 pub type Amount = u32;
 pub type Level = u32;
+
+pub trait GameRandomness {
+	/// Generates a random number from 1 to `total` (inclusive).
+	///
+	/// Returns `None` if `total` is 0.
+	fn random_number(total: u32) -> Option<u32>;
+}
+
+impl GameRandomness for () {
+	fn random_number(_total: u32) -> Option<u32> {
+		Some(1)
+	}
+}
+
 pub trait GameSetting<AccountId, GameId> {
 	/// Do create a new game
 	///
@@ -116,11 +130,10 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 
 ///Trait to provide an interface for NFTs mining
 pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
-
 	/// Do create dynamic pool
-	/// 
+	///
 	/// Create a dynamic pool where the weight of the table changes after each loot.
-	/// 
+	///
 	/// - `pool`: mining pool id
 	/// - `who`: signer and owner
 	/// - `loot_table`: loot table
@@ -135,9 +148,9 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	) -> DispatchResult;
 
 	/// Do create dynamic pool
-	/// 
+	///
 	/// Create a stable pool where the weight of the table remains constant.
-	/// 
+	///
 	/// - `pool`: mining pool id
 	/// - `who`: signer and owner
 	/// - `loot_table`: loot table
@@ -152,9 +165,9 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	) -> DispatchResult;
 
 	/// Do mint dynamic pool
-	/// 
+	///
 	/// Do an `amount` of mining in a dynamic pool.
-	/// 
+	///
 	/// - `pool`: mining pool id
 	/// - `who`: signer
 	/// - `target`:  recipient account
@@ -167,9 +180,9 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	) -> DispatchResult;
 
 	/// Do mint dynamic pool
-	/// 
+	///
 	/// Do an `amount` of mining in a stable pool.
-	/// 
+	///
 	/// - `pool`: mining pool id
 	/// - `who`: signer
 	/// - `target`:  recipient account

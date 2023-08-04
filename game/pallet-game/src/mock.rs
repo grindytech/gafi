@@ -1,4 +1,4 @@
-use crate as pallet_game;
+use crate::{self as pallet_game};
 use frame_support::{
 	dispatch::Vec,
 	parameter_types,
@@ -34,7 +34,7 @@ frame_support::construct_runtime!(
 		PalletGame: pallet_game,
 		Balances: pallet_balances,
 		Nfts: pallet_nfts,
-		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
+
 	}
 );
 
@@ -67,7 +67,6 @@ impl system::Config for Test {
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
-
 impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
@@ -85,8 +84,6 @@ impl pallet_balances::Config for Test {
 	type HoldIdentifier = ();
 	type MaxHolds = ();
 }
-
-impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 pub const ITEM_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const METADATA_DEPOSIT_VAL: u128 = 3_000_000_000;
@@ -131,6 +128,13 @@ impl pallet_nfts::Config for Test {
 	type Helper = ();
 }
 
+// type Extrinsic = TestXt<RuntimeCall, ()>;
+// type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+parameter_types! {
+	pub const UnsignedPriority: u64 = 1 << 20;
+}
+
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
 pub const UPGRADE_DEPOSIT_VAL: u128 = 3_000_000_000;
 pub const BUNDLE_DEPOSIT_VAL: u128 = 3_000_000_000;
@@ -158,13 +162,11 @@ parameter_types! {
 }
 
 impl pallet_game::Config for Test {
-	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type NftsWeightInfo = ();
 	type Currency = Balances;
 	type Nfts = Nfts;
-	type Randomness = RandomnessCollectiveFlip;
 	type GameId = u32;
 	type TradeId = u32;
 	type PoolId = u32;
@@ -178,39 +180,9 @@ impl pallet_game::Config for Test {
 	type BundleDeposit = BundleDeposit;
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
+	type GameRandomness = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
-}
-
-parameter_types! {
-	pub const UnsignedPriority: u64 = 100;
-}
-
-impl frame_system::offchain::SigningTypes for Test {
-	type Public = <Signature as Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
-where
-	RuntimeCall: From<C>,
-{
-	type OverarchingCall = RuntimeCall;
-	type Extrinsic = Extrinsic;
-}
-
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
-where
-	RuntimeCall: From<LocalCall>,
-{
-	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: RuntimeCall,
-		_public: <Signature as Verify>::Signer,
-		_account: AccountId,
-		nonce: u64,
-	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
-		Some((call, (nonce, ())))
-	}
 }
 
 pub fn run_to_block(n: u64) {
