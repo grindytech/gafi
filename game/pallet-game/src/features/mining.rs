@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
-use gafi_support::game::{Mining, MintSettings, NFT, MintType};
+// use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
@@ -167,7 +167,7 @@ impl<T: Config<I>, I: 'static>
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let mut total_weight = Self::total_weight(&table);
-				let mut maybe_random = Self::random_number(total_weight, Self::gen_random(), 10);
+				let mut maybe_random = T::GameRandomness::random_number(total_weight);
 				for _ in 0..amount {
 					if let Some(random) = maybe_random {
 						// ensure position
@@ -189,7 +189,7 @@ impl<T: Config<I>, I: 'static>
 						};
 
 						total_weight = total_weight.saturating_sub(1);
-						maybe_random = Self::random_number(total_weight, random, 10);
+						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
@@ -236,8 +236,7 @@ impl<T: Config<I>, I: 'static>
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let total_weight = Self::total_weight(&table);
-				let mut maybe_random = Self::random_number(total_weight, Self::gen_random(), 10);
-
+				let mut maybe_random = T::GameRandomness::random_number(total_weight);
 				for _ in 0..amount {
 					if let Some(random) = maybe_random {
 						// ensure position
@@ -250,7 +249,7 @@ impl<T: Config<I>, I: 'static>
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
-						maybe_random = Self::random_number(total_weight, random, 10);
+						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}

@@ -27,6 +27,3 @@ pub use mining::*;
 
 pub mod loot_table;
 pub use loot_table::*;
-
-pub mod randomness;
-pub use randomness::*;

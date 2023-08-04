@@ -14,6 +14,7 @@ members = [
   'pallets/pallet-faucet',
   'pallets/pallet-cache',
   'game/pallet-game',
+  'game/randomness',
   'support',
 ]
 [profile.release]

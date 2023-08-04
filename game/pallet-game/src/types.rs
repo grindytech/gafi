@@ -91,15 +91,6 @@ pub enum ItemBalanceStatus {
 	Free,
 }
 
-/// Types of the mining pool
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub enum PoolType {
-	/// Item mining chance will change depending on item supply.
-	Dynamic,
-	/// Item mining chance is fixed with an infinite supply.
-	Stable,
-}
-
 /// Information about a mining pool.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct PoolDetails<AccountId, Balance, BlockNumber, CollectionId> {
