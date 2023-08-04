@@ -12,7 +12,7 @@ use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, ed25519::AuthorityId};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -387,9 +387,11 @@ parameter_types! {
 	pub MaxItem: u32 = 20;
 	pub MaxBundle: u32 = 10;
 	pub MaxLoot: u32 = 10;
+	pub UnsignedPriority: u64 = 10;
 }
 
 impl pallet_game::Config for Runtime {
+	type AuthorityId = pallet_game::crypto::TestAuthId;
 	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = SubstrateWeight<Runtime>;
@@ -410,6 +412,7 @@ impl pallet_game::Config for Runtime {
 	type TradeId = u32;
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
+	type UnsignedPriority = UnsignedPriority;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
