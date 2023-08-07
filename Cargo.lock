@@ -2502,6 +2502,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-randomness"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-support",
+ "log",
+ "pallet-insecure-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "game3-node"
 version = "4.0.0-dev"
 dependencies = [
@@ -2559,6 +2576,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "gafi-support",
+ "game-randomness",
  "log",
  "pallet-aura",
  "pallet-balances",
@@ -4769,9 +4787,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-support",
+ "game-randomness",
  "log",
  "pallet-balances",
- "pallet-insecure-randomness-collective-flip",
  "pallet-nfts",
  "parity-scale-codec",
  "scale-info",

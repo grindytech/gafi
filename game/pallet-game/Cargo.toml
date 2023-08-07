@@ -1,39 +1,42 @@
 [package]
-authors = {workspace = true}
-description = "Pallet Game"
-edition = {workspace = true}
-homepage = "https://gafi.network"
-license = {workspace = true}
 name = "pallet-game"
+description = "Pallet Game"
+
+authors = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
 publish = false
-repository = {workspace = true}
+repository = { workspace = true }
 version = "4.0.0-dev"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = {package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
   "derive",
-]}
-log = {version = "0.4.19", default-features = false}
-scale-info = {version = "2.8.0", default-features = false, features = ["derive"]}
+] }
+log = { version = "0.4.19", default-features = false }
+scale-info = { version = "2.8.0", default-features = false, features = [
+  "derive",
+] }
 
-frame-benchmarking = {workspace = true, default-features = false, optional = true}
-frame-support = {default-features = false, workspace = true}
-frame-system = {default-features = false, workspace = true}
-pallet-balances = {workspace = true, default-features = false}
-pallet-nfts = {workspace = true, default-features = false}
-sp-core = {workspace = true, default-features = false}
-sp-runtime = {workspace = true, default-features = false}
-sp-std = {workspace = true, default-features = false}
-sp-io = {workspace = true, default-features = false}
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+pallet-balances = { workspace = true, default-features = false }
+pallet-nfts = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
 
-gafi-support = {version = "4.0.0-dev", path = "../../support", default-features = false}
+gafi-support = { version = "4.0.0-dev", path = "../../support", default-features = false }
 
 [dev-dependencies]
-pallet-insecure-randomness-collective-flip = {workspace = true, default-features = false}
-sp-keystore = {workspace = true}
+sp-keystore = { workspace = true }
+game-randomness = { version = "4.0.0-dev", path = "../randomness", default-features = false }
 
 [features]
 default = ["std"]
@@ -44,6 +47,7 @@ runtime-benchmarks = [
 
 std = [
   "codec/std",
+  "game-randomness/std",
   "frame-benchmarking?/std",
   "frame-support/std",
   "frame-system/std",

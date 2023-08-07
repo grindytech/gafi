@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
-use gafi_support::game::{Mining, MintSettings, NFT, MintType};
+// use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
@@ -167,12 +167,12 @@ impl<T: Config<I>, I: 'static>
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let mut total_weight = Self::total_weight(&table);
-				let mut maybe_position = Self::random_number(total_weight, Self::gen_random());
+				let mut maybe_random = T::GameRandomness::random_number(total_weight);
 				for _ in 0..amount {
-					if let Some(position) = maybe_position {
+					if let Some(random) = maybe_random {
 						// ensure position
-						ensure!(position < total_weight, Error::<T, I>::MintFailed);
-						match Self::take_loot(&mut table, position) {
+						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
+						match Self::take_loot(&mut table, random) {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {
 									Self::repatriate_reserved_item(
@@ -189,7 +189,7 @@ impl<T: Config<I>, I: 'static>
 						};
 
 						total_weight = total_weight.saturating_sub(1);
-						maybe_position = Self::random_number(total_weight, position);
+						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
@@ -236,13 +236,12 @@ impl<T: Config<I>, I: 'static>
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let total_weight = Self::total_weight(&table);
-				let mut maybe_position = Self::random_number(total_weight, Self::gen_random());
-
+				let mut maybe_random = T::GameRandomness::random_number(total_weight);
 				for _ in 0..amount {
-					if let Some(position) = maybe_position {
+					if let Some(random) = maybe_random {
 						// ensure position
-						ensure!(position < total_weight, Error::<T, I>::MintFailed);
-						match Self::get_loot(&table, position) {
+						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
+						match Self::get_loot(&table, random) {
 							Some(maybe_nft) =>
 								if let Some(nft) = maybe_nft {
 									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
@@ -250,8 +249,7 @@ impl<T: Config<I>, I: 'static>
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
-
-						maybe_position = Self::random_number(total_weight, position);
+						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}

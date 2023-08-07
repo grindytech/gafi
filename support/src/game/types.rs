@@ -36,10 +36,13 @@ pub enum TradeType {
 	Swap,
 }
 
+/// Types of the mining pool
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum PoolType {
+	/// Item mining chance will change depending on item supply.
 	Dynamic,
-	Fixed,
+	/// Item mining chance is fixed with an infinite supply.
+	Stable,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
