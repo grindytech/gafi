@@ -66,16 +66,17 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub const UnsignedPriority: u64 = 100;
 	pub const RandomAttemps: u32 = 10;
+	pub const UnsignedInterval: u32 = 1;
 }
 
 impl game_randomness::Config for Test {
 	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
-	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type Randomness = RandomnessCollectiveFlip;
 	type RandomAttemps = RandomAttemps;
 	type UnsignedPriority = UnsignedPriority;
+	type UnsignedInterval = UnsignedInterval;
 }
 
 impl frame_system::offchain::SigningTypes for Test {

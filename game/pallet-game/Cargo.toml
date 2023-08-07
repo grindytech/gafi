@@ -1,10 +1,11 @@
 [package]
-authors = { workspace = true }
-description = "Pallet Game"
-edition = { workspace = true }
-homepage = "https://gafi.network"
-license = { workspace = true }
 name = "pallet-game"
+description = "Pallet Game"
+
+authors = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
 publish = false
 repository = { workspace = true }
 version = "4.0.0-dev"

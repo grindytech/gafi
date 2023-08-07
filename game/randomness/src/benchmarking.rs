@@ -3,7 +3,7 @@
 use super::*;
 
 #[allow(unused)]
-use crate::Pallet as Template;
+use crate::Pallet as GameRandomness;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
@@ -12,24 +12,14 @@ mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn do_something() {
-		let value = 100u32.into();
-		let caller: T::AccountId = whitelisted_caller();
+	fn submit_random_seed_unsigned() {
+		let block_number = 1u32.into();
+		let seed = [0; 32];
 		#[extrinsic_call]
-		do_something(RawOrigin::Signed(caller), value);
+		submit_random_seed_unsigned(RawOrigin::None, block_number, seed);
 
-		assert_eq!(Something::<T>::get(), Some(value));
+		assert_eq!(RandomSeed::<T>::get().unwrap().seed, seed);
 	}
 
-	#[benchmark]
-	fn cause_error() {
-		Something::<T>::put(100u32);
-		let caller: T::AccountId = whitelisted_caller();
-		#[extrinsic_call]
-		cause_error(RawOrigin::Signed(caller));
-
-		assert_eq!(Something::<T>::get(), Some(101u32));
-	}
-
-	impl_benchmark_test_suite!(Template, crate::mock::new_test_ext(), crate::mock::Test);
+	impl_benchmark_test_suite!(GameRandomness, crate::mock::new_test_ext(), crate::mock::Test);
 }

@@ -24,7 +24,7 @@ run-dev:
     --rpc-port 9933 \
     --ws-external \
     --rpc-methods=Unsafe \
-    --rpc-external \
+    --rpc-external
 
 .PHONY: run-manual-seal
 run-manual-seal:
