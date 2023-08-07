@@ -16,11 +16,13 @@ impl<T: Config> Pallet<T> {
 
 	/// Generate a random number from the off-chain worker's random seed
 	pub(crate) fn gen_random() -> Result<u32, Error<T>> {
-		let seed = RandomSeed::<T>::get();
-
-		match <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref())) {
-			Ok(random) => Ok(random),
-			Err(_) => Err(Error::<T>::InvalidSeed),
+		if let Some(seed_data) = RandomSeed::<T>::get() {
+			match <u32>::decode(&mut TrailingZeroInput::new(seed_data.seed.as_ref())) {
+				Ok(random) => Ok(random),
+				Err(_) => Err(Error::<T>::InvalidSeed),
+			}
+		} else {
+			Err(Error::<T>::InvalidSeed)
 		}
 	}
 }
@@ -29,7 +31,7 @@ impl<T: Config> GameRandomness for Pallet<T> {
 	/// Generates a random number between 1 and `total` (inclusive).
 	/// This function repeats the process up to `RandomAttemps` times if
 	/// the number falls within the overflow range of the modulo operation to mitigate modulo bias.
-	/// 
+	///
 	/// Returns `None` if `total` is 0.
 	fn random_number(total: u32) -> Option<u32> {
 		if let Ok(seed) = Self::gen_random() {
@@ -43,7 +45,7 @@ impl<T: Config> GameRandomness for Pallet<T> {
 				}
 				random_number = Self::generate_random_number(seed);
 			}
-			return Some((random_number % total) + 1)
+			return Some((random_number % total).saturating_add(1))
 		}
 		None
 	}

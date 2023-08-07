@@ -12,7 +12,7 @@ use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, ed25519::AuthorityId};
+use sp_consensus_aura::{ed25519::AuthorityId, sr25519::AuthorityId as AuraId};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -378,16 +378,17 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamernds");
 	pub UnsignedPriority: u32 = 50;
 	pub RandomAttemps: u32 = 10;
+	pub UnsignedInterval: u32 = 1;
 }
 
 impl game_randomness::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type PalletId = PalletGameId;
 	type WeightInfo = ();
-	type AuthorityId = game_randomness::crypto::TestAuthId;
 	type Randomness = RandomnessCollectiveFlip;
 	type UnsignedPriority = UnsignedPriority;
 	type RandomAttemps = RandomAttemps;
+	type UnsignedInterval = UnsignedInterval;
 }
 
 parameter_types! {
@@ -427,7 +428,6 @@ impl pallet_game::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
-
 
 parameter_types! {
 	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
@@ -470,7 +470,7 @@ construct_runtime!(
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
 
 		Game: pallet_game::{Pallet, Call, Storage, Event<T>},
-		GameRandomness: game_randomness::{Pallet, Call, Event<T>},
+		GameRandomness: game_randomness,
 		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
 	}
@@ -702,11 +702,13 @@ impl_runtime_apis! {
 			use baseline::Pallet as BaselineBench;
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
+			use game_randomness::Pallet as GameRandomnessBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
+			list_benchmark!(list, extra, game_randomness, GameRandomnessBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -729,12 +731,14 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
+			use game_randomness::Pallet as GameRandomnessBench;
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
+			add_benchmark!(params, batches, game_randomness, GameRandomnessBench::<Runtime>);
 
 			Ok(batches)
 		}

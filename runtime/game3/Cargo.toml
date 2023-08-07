@@ -79,6 +79,7 @@ runtime-benchmarks = [
   "pallet-faucet/runtime-benchmarks",
   "pallet-nfts/runtime-benchmarks",
   "pallet-game/runtime-benchmarks",
+  "game-randomness/runtime-benchmarks",
 ]
 std = [
   "frame-try-runtime?/std",

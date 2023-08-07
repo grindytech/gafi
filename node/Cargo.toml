@@ -25,7 +25,6 @@ sc-consensus-manual-seal = { workspace = true, optional = true }
 
 # Local
 game3-node = { path = "game3", default-features = false, optional = true }
-devnet = { path = "devnet", default-features = false, optional = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
@@ -39,5 +38,3 @@ std = []
 runtime-benchmarks = ["game3-node/runtime-benchmarks", "aura"]
 
 with-game3 = ["game3-node"]
-
-with-dev = ["with-dev"]
