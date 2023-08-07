@@ -18,8 +18,7 @@ run:
     --rpc-port 9933 \
     --ws-external \
     --rpc-methods=Unsafe \
-    --rpc-external \
-
+    --rpc-external
 
 .PHONY: check-benchmark
 check-benchmark:

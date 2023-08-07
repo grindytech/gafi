@@ -6,24 +6,17 @@
 pub use pallet::*;
 
 use codec::{Decode, Encode};
-use frame_support::{
-	ensure,
-	pallet_prelude::*,
-	traits::{
-		Randomness,
-	},
-	PalletId, RuntimeDebug,
-};
+use frame_support::{ensure, pallet_prelude::*, traits::Randomness, PalletId, RuntimeDebug};
 use frame_system::{
 	offchain::{
 		AppCrypto, CreateSignedTransaction, SendUnsignedTransaction, SignedPayload, Signer,
-		SigningTypes,
+		SigningTypes, SubmitTransaction,
 	},
 	pallet_prelude::BlockNumberFor,
 };
 use sp_core::{offchain::KeyTypeId, Get};
 use sp_runtime::{
-	traits::{TrailingZeroInput},
+	traits::TrailingZeroInput,
 	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
 };
 
@@ -81,20 +74,21 @@ pub mod crypto {
 	}
 }
 
-/// Payload used by this example crate to hold price
-/// data required to submit a transaction.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo)]
-pub struct SeedPayload<Public, BlockNumber> {
-	pub block_number: BlockNumber,
-	pub seed: [u8; 32],
-	pub public: Public,
-}
+// /// Payload used by this example crate to hold price
+// /// data required to submit a transaction.
+// #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo)]
+// pub struct SeedPayload<Public, BlockNumber> {
+// 	pub block_number: BlockNumber,
+// 	pub seed: [u8; 32],
+// 	pub public: Public,
+// }
 
-impl<T: SigningTypes> SignedPayload<T> for SeedPayload<T::Public, BlockNumberFor<T>> {
-	fn public(&self) -> T::Public {
-		self.public.clone()
-	}
-}
+// impl<T: SigningTypes> SignedPayload<T> for SeedPayload<T::Public, BlockNumberFor<T>> {
+// 	fn public(&self) -> T::Public {
+// 		self.public.clone()
+// 	}
+// }
+
 enum TransactionType {
 	Signed,
 	UnsignedForAny,
@@ -170,9 +164,11 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn offchain_worker(_block_number: BlockNumberFor<T>) {
-			let _ = Self::submit_random_seed_raw_unsigned(_block_number);
-
+		fn offchain_worker(block_number: BlockNumberFor<T>) {
+			let res = Self::submit_random_seed_raw_unsigned(block_number);
+			if let Err(e) = res {
+				log::error!("Error: {}", e);
+			}
 			let random = RandomSeed::<T>::get();
 			log::info!("random {:?}", random);
 		}
@@ -193,14 +189,14 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[pallet::call_index(12)]
 		#[pallet::weight({0})]
-		pub fn submit_random_seed_unsigned_payload(
+		pub fn submit_random_seed_unsigned(
 			origin: OriginFor<T>,
-			seed_payload: SeedPayload<T::Public, T::BlockNumber>,
-			_signature: T::Signature,
+			block_number: BlockNumberFor<T>,
+			seed: [u8; 32],
 		) -> DispatchResult {
 			ensure_none(origin)?;
-			let block_number = <frame_system::Pallet<T>>::block_number();
-			RandomSeed::<T>::set(seed_payload.seed);
+			// let block_number = <frame_system::Pallet<T>>::block_number();
+			RandomSeed::<T>::set(seed);
 			NextUnsignedAt::<T>::set(block_number);
 			Ok(())
 		}
@@ -213,19 +209,25 @@ pub mod pallet {
 			let seed = sp_io::offchain::random_seed();
 			log::info!("random_seed sp_io {:?}", seed);
 
-			let (_, result) = Signer::<T, T::AuthorityId>::any_account()
-				.send_unsigned_transaction(
-					|account| SeedPayload {
-						seed,
-						block_number,
-						public: account.public.clone(),
-					},
-					|payload, signature| Call::submit_random_seed_unsigned_payload {
-						seed_payload: payload,
-						signature,
-					},
-				)
-				.ok_or("No local accounts accounts available.")?;
+			// let (_, result) = Signer::<T, T::AuthorityId>::any_account()
+			// 	.send_unsigned_transaction(
+			// 		|account| SeedPayload {
+			// 			seed,
+			// 			block_number,
+			// 			public: account.public.clone(),
+			// 		},
+			// 		|payload, signature| Call::submit_random_seed_unsigned {
+			// 			seed_payload: payload,
+			// 			signature,
+			// 		},
+			// 	)
+			// 	.ok_or("No local accounts accounts available.")?;
+			let call = Call::submit_random_seed_unsigned { block_number, seed };
+
+			let _ = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
+			.map_err(|_| {
+				log::error!("Failed in offchain_unsigned_tx");
+			});
 
 			Ok(())
 		}
@@ -244,7 +246,7 @@ pub mod pallet {
 			if &current_block < block_number {
 				return InvalidTransaction::Future.into()
 			}
-	
+
 			// // We prioritize transactions that are more far away from current average.
 			// //
 			// // Note this doesn't make much sense when building an actual oracle, but this example
@@ -259,8 +261,8 @@ pub mod pallet {
 			// 		}
 			// 	})
 			// 	.unwrap_or(0);
-	
-			ValidTransaction::with_tag_prefix("pallet-game")
+
+			ValidTransaction::with_tag_prefix("game-randomness")
 				// We set base priority to 2**20 and hope it's included before any other
 				.priority(T::UnsignedPriority::get())
 				// This transaction does not require anything else to go before into the pool.
@@ -290,22 +292,31 @@ pub mod pallet {
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
 		type Call = Call<T>;
 
-		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			// Firstly let's check that we call the right function.
-			if let Call::submit_random_seed_unsigned_payload {
-				seed_payload: ref payload,
-				ref signature,
-			} = call
-			{
-				let signature_valid =
-					SignedPayload::<T>::verify::<T::AuthorityId>(payload, signature.clone());
-
-				if !signature_valid {
-					return InvalidTransaction::BadProof.into()
-				}
-				Self::validate_transaction_parameters(&payload.block_number, &payload.seed)
-			} else {
-				InvalidTransaction::Call.into()
+		/// Validate unsigned call to this module.
+		///
+		/// By default unsigned transactions are disallowed, but implementing the validator
+		/// here we make sure that some particular calls (the ones produced by offchain worker)
+		/// are being whitelisted and marked as valid.
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			match call {
+				Call::submit_random_seed_unsigned {
+					block_number: _,
+					seed: _,
+				} => match source {
+					TransactionSource::Local | TransactionSource::InBlock => {
+						let valid_tx = |provide| {
+							ValidTransaction::with_tag_prefix("game-randomness")
+								.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+								.and_provides([&provide])
+								.longevity(3)
+								.propagate(true)
+								.build()
+						};
+						valid_tx(b"submit_random_seed_unsigned".to_vec())
+					},
+					_ => InvalidTransaction::Call.into(),
+				},
+				_ => InvalidTransaction::Call.into(),
 			}
 		}
 	}
