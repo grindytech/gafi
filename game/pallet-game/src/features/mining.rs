@@ -1,9 +1,8 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
-// use gafi_support::game::{Mining, MintSettings, NFT, MintType};
 
 impl<T: Config<I>, I: 'static>
-	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
+	Mining<T::AccountId, BalanceOf<T, I>, T::MintId, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
 	for Pallet<T, I>
 {
 	fn do_create_dynamic_pool(
@@ -99,6 +98,7 @@ impl<T: Config<I>, I: 'static>
 	}
 
 	fn do_mint(
+		mint: &T::MintId,
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
@@ -124,14 +124,28 @@ impl<T: Config<I>, I: 'static>
 				_ => {},
 			};
 
-			match pool_details.pool_type {
-				PoolType::Dynamic => {
-					return Self::do_mint_dynamic_pool(pool, who, target, amount)
-				},
-				PoolType::Stable => {
-					return Self::do_mint_stable_pool(pool, who, target, amount)
-				},
-			}
+			let reserve = pool_details.mint_settings.price * amount.into();
+			
+			let mint_request = MintRequest {
+				miner: who.clone(),
+				pool: pool.clone(),
+				target: target.clone(),
+				mining_fee: pool_details.mint_settings.price,
+				owner_reserve: reserve,
+				request: amount,
+				block_number,
+			};
+
+			MintRequestOf::<T, I>::insert(mint, mint_request);
+
+			// match pool_details.pool_type {
+			// 	PoolType::Dynamic => {
+			// 		return Self::do_mint_dynamic_pool(pool, who, target, amount)
+			// 	},
+			// 	PoolType::Stable => {
+			// 		return Self::do_mint_stable_pool(pool, who, target, amount)
+			// 	},
+			// }
 		}
 		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
@@ -164,48 +178,49 @@ impl<T: Config<I>, I: 'static>
 			)?;
 
 			// random minting
-			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
-			{
-				let mut total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
-						// ensure position
-						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
-						match Self::take_loot(&mut table, random) {
-							Some(maybe_nft) =>
-								if let Some(nft) = maybe_nft {
-									Self::repatriate_reserved_item(
-										&pool_details.owner,
-										&nft.collection,
-										&nft.item,
-										target,
-										1,
-										ItemBalanceStatus::Free,
-									)?;
-									nfts.push(nft);
-								},
-							None => return Err(Error::<T, I>::MintFailed.into()),
-						};
+			// let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
+			// {
+			// 	let mut total_weight = Self::total_weight(&table);
+			// 	let mut maybe_random = T::GameRandomness::random_number(total_weight);
+			// 	for _ in 0..amount {
+			// 		if let Some(random) = maybe_random {
+			// 			// ensure position
+			// 			ensure!(random <= total_weight, Error::<T, I>::MintFailed);
+			// 			match Self::take_loot(&mut table, random) {
+			// 				Some(maybe_nft) =>
+			// 					if let Some(nft) = maybe_nft {
+			// 						Self::repatriate_reserved_item(
+			// 							&pool_details.owner,
+			// 							&nft.collection,
+			// 							&nft.item,
+			// 							target,
+			// 							1,
+			// 							ItemBalanceStatus::Free,
+			// 						)?;
+			// 						nfts.push(nft);
+			// 					},
+			// 				None => return Err(Error::<T, I>::MintFailed.into()),
+			// 			};
 
-						total_weight = total_weight.saturating_sub(1);
-						maybe_random = T::GameRandomness::random_number(total_weight);
-					} else {
-						return Err(Error::<T, I>::SoldOut.into())
-					}
-				}
+			// 			total_weight = total_weight.saturating_sub(1);
+			// 			maybe_random = T::GameRandomness::random_number(total_weight);
+			// 		} else {
+			// 			return Err(Error::<T, I>::SoldOut.into())
+			// 		}
+			// 	}
 
-				let table = LootTableFor::<T, I>::try_from(table)
-					.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
-				LootTableOf::<T, I>::insert(pool, table);
-				Self::deposit_event(Event::<T, I>::Minted {
-					pool: *pool,
-					who: who.clone(),
-					target: target.clone(),
-					nfts,
-				});
-				return Ok(())
-			}
+			// 	let table = LootTableFor::<T, I>::try_from(table)
+			// 		.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
+			// 	LootTableOf::<T, I>::insert(pool, table);
+
+			// 	Self::deposit_event(Event::<T, I>::Minted {
+			// 		pool: *pool,
+			// 		who: who.clone(),
+			// 		target: target.clone(),
+			// 		nfts,
+			// 	});
+			// 	return Ok(())
+			// }
 		}
 		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
@@ -231,38 +246,38 @@ impl<T: Config<I>, I: 'static>
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			// random minting
-			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
-			{
-				let table = LootTableOf::<T, I>::get(pool).into();
-				let total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
-						// ensure position
-						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
-						match Self::get_loot(&table, random) {
-							Some(maybe_nft) =>
-								if let Some(nft) = maybe_nft {
-									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
-									nfts.push(nft);
-								},
-							None => return Err(Error::<T, I>::MintFailed.into()),
-						};
-						maybe_random = T::GameRandomness::random_number(total_weight);
-					} else {
-						return Err(Error::<T, I>::SoldOut.into())
-					}
-				}
-			}
+			// // random minting
+			// let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
+			// {
+			// 	let table = LootTableOf::<T, I>::get(pool).into();
+			// 	let total_weight = Self::total_weight(&table);
+			// 	let mut maybe_random = T::GameRandomness::random_number(total_weight);
+			// 	for _ in 0..amount {
+			// 		if let Some(random) = maybe_random {
+			// 			// ensure position
+			// 			ensure!(random <= total_weight, Error::<T, I>::MintFailed);
+			// 			match Self::get_loot(&table, random) {
+			// 				Some(maybe_nft) =>
+			// 					if let Some(nft) = maybe_nft {
+			// 						Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
+			// 						nfts.push(nft);
+			// 					},
+			// 				None => return Err(Error::<T, I>::MintFailed.into()),
+			// 			};
+			// 			maybe_random = T::GameRandomness::random_number(total_weight);
+			// 		} else {
+			// 			return Err(Error::<T, I>::SoldOut.into())
+			// 		}
+			// 	}
+			// }
 
-			Self::deposit_event(Event::<T, I>::Minted {
-				pool: *pool,
-				who: who.clone(),
-				target: target.clone(),
-				nfts,
-			});
-			return Ok(())
+			// Self::deposit_event(Event::<T, I>::Minted {
+			// 	pool: *pool,
+			// 	who: who.clone(),
+			// 	target: target.clone(),
+			// 	nfts,
+			// });
+			// return Ok(())
 		}
 		Err(Error::<T, I>::UnknownMiningPool.into())
 	}

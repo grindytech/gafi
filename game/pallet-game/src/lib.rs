@@ -49,15 +49,13 @@ use frame_support::{
 		Currency, ReservableCurrency,
 	},
 };
-use frame_system::{pallet_prelude::BlockNumberFor, Config as SystemConfig};
+use frame_system::Config as SystemConfig;
 use gafi_support::game::*;
 
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
-use sp_runtime::{
-	traits::{StaticLookup},
-};
+use sp_runtime::traits::StaticLookup;
 use sp_std::vec::Vec;
 use types::*;
 
@@ -145,6 +143,9 @@ pub mod pallet {
 		/// The type used to identify a unique mining pool
 		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
+		/// The type used to identify a unique mint request
+		type MintId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
+
 		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
@@ -224,6 +225,11 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::PoolId, OptionQuery>;
+
+	///Storing next mint id
+	#[pallet::storage]
+	pub(super) type NextMintId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::MintId, OptionQuery>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -310,6 +316,16 @@ pub mod pallet {
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::PoolId, PoolDetailsFor<T, I>, OptionQuery>;
 
+	/// Storing mint request
+	#[pallet::storage]
+	pub(super) type MintRequestOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		T::MintId,
+		MintRequestFor<T, I>,
+		OptionQuery,
+	>;
+
 	/// Level of item
 	#[pallet::storage]
 	pub(super) type LevelOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -388,7 +404,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn next_unsigned_at)]
 	pub(super) type NextUnsignedAt<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, BlockNumberFor<T>, ValueQuery>;
+		StorageValue<_, BlockNumber<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -820,7 +836,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;
-			Self::do_mint(&pool, &sender, &target, amount)?;
+
+			let mint_id = Self::get_mint_id();
+			Self::do_mint(&mint_id, &pool, &sender, &target, amount)?;
 			Ok(())
 		}
 

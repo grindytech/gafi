@@ -129,7 +129,7 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 }
 
 ///Trait to provide an interface for NFTs mining
-pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
+pub trait Mining<AccountId, Price, MintId, CollectionId, ItemId, PoolId, BlockNumber> {
 	/// Do create dynamic pool
 	///
 	/// Create a dynamic pool where the weight of the table changes after each loot.
@@ -204,6 +204,7 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	/// - `target`: recipient account
 	/// - `amount`: amount of item
 	fn do_mint(
+		mint: &MintId,
 		pool: &PoolId,
 		who: &AccountId,
 		target: &AccountId,

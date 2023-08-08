@@ -162,6 +162,13 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		id
 	}
 
+	/// Get the available mint id and increase the id by 1.
+	pub(crate) fn get_mint_id() -> T::MintId {
+		let id = NextMintId::<T, I>::get().unwrap_or(T::MintId::initial_value());
+		NextMintId::<T, I>::set(Some(id.increment()));
+		id
+	}
+
 	/// Check if `item` in `collection` is in infinite supply.
 	pub(crate) fn is_infinite(collection: &T::CollectionId, item: &T::ItemId) -> bool {
 		SupplyOf::<T, I>::get(collection, item)
