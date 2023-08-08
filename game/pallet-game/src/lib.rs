@@ -49,15 +49,38 @@ use frame_support::{
 		Currency, ReservableCurrency,
 	},
 };
-use frame_system::Config as SystemConfig;
+use frame_system::{
+	offchain::{CreateSignedTransaction, SubmitTransaction},
+	Config as SystemConfig,
+};
 use gafi_support::game::*;
-
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
+use sp_core::offchain::KeyTypeId;
 use sp_runtime::traits::StaticLookup;
 use sp_std::vec::Vec;
 use types::*;
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
+pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
+
+pub mod crypto {
+	use super::KEY_TYPE;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		MultiSignature, MultiSigner,
+	};
+	app_crypto!(sr25519, KEY_TYPE);
+	pub struct TestAuthId;
+
+	// implemented for runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -110,7 +133,9 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
+	pub trait Config<I: 'static = ()>:
+		frame_system::Config + pallet_nfts::Config + CreateSignedTransaction<Call<Self, I>>
+	{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -142,9 +167,6 @@ pub mod pallet {
 
 		/// The type used to identify a unique mining pool
 		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
-
-		/// The type used to identify a unique mint request
-		type MintId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
@@ -188,6 +210,12 @@ pub mod pallet {
 
 		type GameRandomness: GameRandomness;
 
+		#[pallet::constant]
+		type MaxMintRequest: Get<u32>;
+
+		#[pallet::constant]
+		type MintInterval: Get<Self::BlockNumber>;
+
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
 		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
@@ -225,11 +253,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::PoolId, OptionQuery>;
-
-	///Storing next mint id
-	#[pallet::storage]
-	pub(super) type NextMintId<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, T::MintId, OptionQuery>;
 
 	/// Collections in the game
 	#[pallet::storage]
@@ -321,9 +344,9 @@ pub mod pallet {
 	pub(super) type MintRequestOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Twox64Concat,
-		T::MintId,
-		MintRequestFor<T, I>,
-		OptionQuery,
+		BlockNumber<T>,
+		BoundedVec<MintRequestFor<T, I>, T::MaxMintRequest>,
+		ValueQuery,
 	>;
 
 	/// Level of item
@@ -651,6 +674,14 @@ pub mod pallet {
 		MintNotStarted,
 		MintEnded,
 		NotWhitelisted,
+		OverRequest,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
+		fn offchain_worker(block_number: BlockNumber<T>) {
+			let _ = Self::execute_mint_request(block_number);
+		}
 	}
 
 	#[pallet::call]
@@ -837,8 +868,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;
 
-			let mint_id = Self::get_mint_id();
-			Self::do_mint(&mint_id, &pool, &sender, &target, amount)?;
+			Self::do_mint_request(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 
@@ -1692,6 +1722,50 @@ pub mod pallet {
 				.into(),
 			)
 		}
+
+		#[pallet::call_index(40)]
+		#[pallet::weight(0)]
+		pub fn mint_unsigned(
+			origin: OriginFor<T>,
+			pool: T::PoolId,
+			who: T::AccountId,
+			target: T::AccountId,
+			amount: u32,
+		) -> DispatchResult {
+			ensure_none(origin)?;
+			let _ = Self::do_mint(&pool, &who, &target, amount);
+			Ok(())
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config<I>, I: 'static> ValidateUnsigned for Pallet<T, I> {
+		type Call = Call<T, I>;
+
+		/// Validate unsigned call to this module.
+		///
+		/// By default unsigned transactions are disallowed, but implementing the validator
+		/// here we make sure that some particular calls (the ones produced by offchain worker)
+		/// are being whitelisted and marked as valid.
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			match call {
+				Call::mint_unsigned { .. } => match source {
+					TransactionSource::Local | TransactionSource::InBlock => {
+						let valid_tx = |provide| {
+							ValidTransaction::with_tag_prefix("pallet-game")
+								.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+								.and_provides([&provide])
+								.longevity(3)
+								.propagate(true)
+								.build()
+						};
+						valid_tx(b"approve_whitelist_unsigned".to_vec())
+					},
+					_ => InvalidTransaction::Call.into(),
+				},
+				_ => InvalidTransaction::Call.into(),
+			}
+		}
 	}
 }
 
@@ -1717,5 +1791,27 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			return Ok(())
 		}
 		return Err(Error::<T, I>::UnknownCollection)
+	}
+
+	pub fn execute_mint_request(block_number: BlockNumber<T>) -> Result<(), Error<T, I>> {
+		for request in MintRequestOf::<T, I>::get(block_number) {
+			log::info!("mint request: {:?}", request);
+
+			if request.block_number >= block_number {
+				let call = Call::mint_unsigned {
+					pool: request.pool,
+					who: request.miner,
+					target: request.target,
+					amount: request.amount,
+				};
+
+				let _ =
+					SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
+						.map_err(|_| {
+							log::error!("Failed in offchain_unsigned_tx");
+						});
+			}
+		}
+		Ok(())
 	}
 }

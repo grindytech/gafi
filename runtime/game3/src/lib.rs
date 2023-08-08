@@ -403,6 +403,9 @@ parameter_types! {
 	pub MaxItem: u32 = 20;
 	pub MaxBundle: u32 = 10;
 	pub MaxLoot: u32 = 10;
+
+	pub MaxMintRequest: u32 = 10;
+	pub MintInterval: u32 = 3;
 }
 
 impl pallet_game::Config for Runtime {
@@ -424,6 +427,8 @@ impl pallet_game::Config for Runtime {
 	type TradeId = u32;
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
+	type MaxMintRequest = MaxMintRequest;
+	type MintInterval = MintInterval;
 	type GameRandomness = GameRandomness;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
