@@ -132,7 +132,7 @@ pub struct MintRequest<AccountId, PoolId, Balance, BlockNumber> {
 	pub(super) mining_fee: Balance,
 
 	/// Total balance reserve on miner
-	pub(super) owner_reserve: Balance,
+	pub(super) miner_reserve: Balance,
 
 	/// block_number request
 	pub(super) block_number: BlockNumber,

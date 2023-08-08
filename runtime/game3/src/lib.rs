@@ -376,7 +376,7 @@ where
 
 parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamernds");
-	pub UnsignedPriority: u32 = 50;
+	pub RandomnessUnsignedPriority: u32 = 50;
 	pub RandomAttemps: u32 = 10;
 	pub UnsignedInterval: u32 = 1;
 }
@@ -386,7 +386,7 @@ impl game_randomness::Config for Runtime {
 	type PalletId = PalletGameId;
 	type WeightInfo = ();
 	type Randomness = RandomnessCollectiveFlip;
-	type UnsignedPriority = UnsignedPriority;
+	type UnsignedPriority = RandomnessUnsignedPriority;
 	type RandomAttemps = RandomAttemps;
 	type UnsignedInterval = UnsignedInterval;
 }
@@ -405,7 +405,8 @@ parameter_types! {
 	pub MaxLoot: u32 = 10;
 
 	pub MaxMintRequest: u32 = 10;
-	pub MintInterval: u32 = 3;
+	pub MintInterval: u32 = 5;
+	pub UnsignedPriority: u32 = 100;
 }
 
 impl pallet_game::Config for Runtime {
@@ -430,6 +431,7 @@ impl pallet_game::Config for Runtime {
 	type MaxMintRequest = MaxMintRequest;
 	type MintInterval = MintInterval;
 	type GameRandomness = GameRandomness;
+	type UnsignedPriority = UnsignedPriority;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
@@ -474,7 +476,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Nfts: pallet_nfts::{Pallet, Event<T>, Storage},
 
-		Game: pallet_game::{Pallet, Call, Storage, Event<T>},
+		Game: pallet_game,
 		GameRandomness: game_randomness,
 		Faucet: pallet_faucet::{Pallet, Call, Config<T>, Storage, Event<T>},
 		PalletCache: pallet_cache::{Pallet, Event<T>, Storage},
