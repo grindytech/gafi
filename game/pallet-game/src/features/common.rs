@@ -52,7 +52,13 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
 		ensure!(balance >= amount, Error::<T, I>::InsufficientItemBalance);
-		ItemBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
+
+		let new_balance = balance.saturating_sub(amount);
+		if new_balance == 0 {
+			ItemBalanceOf::<T, I>::remove((who, collection, item));
+		} else {
+			ItemBalanceOf::<T, I>::insert((who, collection, item), new_balance);
+		}
 		Ok(())
 	}
 
@@ -82,7 +88,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			balance >= amount,
 			Error::<T, I>::InsufficientReservedBalance
 		);
-		ReservedBalanceOf::<T, I>::insert((who, collection, item), balance.saturating_sub(amount));
+		let new_balance = balance.saturating_sub(amount);
+		if new_balance == 0 {
+			ReservedBalanceOf::<T, I>::remove((who, collection, item));
+		} else {
+			ReservedBalanceOf::<T, I>::insert((who, collection, item), new_balance);
+		}
 		Ok(())
 	}
 
