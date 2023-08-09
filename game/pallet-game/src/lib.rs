@@ -44,13 +44,14 @@ pub use weights::*;
 
 use frame_support::{
 	ensure,
+	pallet_prelude::*,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
 		BalanceStatus, Currency, ReservableCurrency,
 	},
 };
 use frame_system::{
-	offchain::{CreateSignedTransaction, SubmitTransaction},
+	offchain::{CreateSignedTransaction},
 	Config as SystemConfig,
 };
 use gafi_support::game::*;
@@ -65,26 +66,6 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 use types::*;
-
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"gafi");
-pub const UNSIGNED_TXS_PRIORITY: u64 = 10;
-
-pub mod crypto {
-	use super::KEY_TYPE;
-	use sp_runtime::{
-		app_crypto::{app_crypto, sr25519},
-		MultiSignature, MultiSigner,
-	};
-	app_crypto!(sr25519, KEY_TYPE);
-	pub struct TestAuthId;
-
-	// implemented for runtime
-	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
-		type RuntimeAppPublic = Public;
-		type GenericSignature = sp_core::sr25519::Signature;
-		type GenericPublic = sp_core::sr25519::Public;
-	}
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -138,7 +119,7 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>:
-		frame_system::Config + pallet_nfts::Config + CreateSignedTransaction<Call<Self, I>>
+		frame_system::Config + pallet_nfts::Config
 	{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
@@ -219,13 +200,6 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MintInterval: Get<Self::BlockNumber>;
-
-		/// A configuration for base priority of unsigned transactions.
-		///
-		/// This is exposed so that it can be tuned for particular runtime, when
-		/// multiple pallets send unsigned transactions.
-		#[pallet::constant]
-		type UnsignedPriority: Get<TransactionPriority>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -680,8 +654,26 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
-		fn offchain_worker(block_number: BlockNumber<T>) {
-			let _ = Self::execute_mint_request(block_number);
+		// fn offchain_worker(block_number: BlockNumber<T>) {
+		// 	let _ = Self::execute_mint_request(block_number);
+		// }
+
+		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+			for request in MintRequestOf::<T, I>::get(block_number) {
+				{
+					log::info!("execute request: {:?} at block {:?}", request, block_number);
+					let _ = Self::execute_mint(request);
+				}
+			}
+
+			Weight::zero()
+		}
+
+		fn on_finalize(block_number: BlockNumber<T>) {
+			if !MintRequestOf::<T, I>::get(block_number).is_empty() {
+				log::info!("Remove requests at block {:?}", block_number);
+				let res = Self::remove_mint_request(block_number);
+			}
 		}
 	}
 
@@ -1723,80 +1715,45 @@ pub mod pallet {
 			Self::do_mint_request(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
-
-		#[pallet::call_index(41)]
-		#[pallet::weight(0)]
-		pub fn execute_mint_unsigned(
-			origin: OriginFor<T>,
-			payload: MintRequestFor<T, I>,
-		) -> DispatchResult {
-			ensure_none(origin)?;
-
-			if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
-				if let Ok(_) = match pool_details.pool_type {
-					PoolType::Dynamic => Self::do_mint_dynamic_pool(
-						&payload.pool,
-						&payload.miner,
-						&payload.target,
-						payload.amount,
-					),
-					PoolType::Stable => Self::do_mint_stable_pool(
-						&payload.pool,
-						&payload.miner,
-						&payload.target,
-						payload.amount,
-					),
-				} {
-					<T as pallet::Config<I>>::Currency::repatriate_reserved(
-						&payload.miner,
-						&pool_details.owner,
-						payload.miner_reserve,
-						BalanceStatus::Free,
-					)?;
-
-					log::info!("execute_mint_unsigned success!");
-					return Ok(())
-				}
-			}
-			<T as pallet::Config<I>>::Currency::unreserve(&payload.miner, payload.miner_reserve);
-			Ok(())
-		}
-
-		#[pallet::call_index(42)]
-		#[pallet::weight(0)]
-		pub fn remove_mint_request_unsigned(
-			origin: OriginFor<T>,
-			block_number: BlockNumber<T>,
-		) -> DispatchResult {
-			ensure_none(origin)?;
-			MintRequestOf::<T, I>::remove(block_number);
-			Ok(())
-		}
 	}
 
-	#[pallet::validate_unsigned]
-	impl<T: Config<I>, I: 'static> ValidateUnsigned for Pallet<T, I> {
-		type Call = Call<T, I>;
-
-		/// Validate unsigned call to this module.
-		///
-		/// By default unsigned transactions are disallowed, but implementing the validator
-		/// here we make sure that some particular calls (the ones produced by offchain worker)
-		/// are being whitelisted and marked as valid.
-		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			// Firstly let's check that we call the right function.
-			if let Call::execute_mint_unsigned { payload } = call {
-				Self::validate_request_parameters(&payload.block_number)
-			} else if let Call::remove_mint_request_unsigned { block_number } = call {
-				Self::validate_remove_parameters(&block_number)
-			} else {
-				InvalidTransaction::Call.into()
-			}
-		}
-	}
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	pub fn execute_mint(payload: MintRequestFor<T, I>) -> DispatchResult {
+		if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
+			if let Ok(_) = match pool_details.pool_type {
+				PoolType::Dynamic => Self::do_mint_dynamic_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+				PoolType::Stable => Self::do_mint_stable_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+			} {
+				<T as pallet::Config<I>>::Currency::repatriate_reserved(
+					&payload.miner,
+					&pool_details.owner,
+					payload.miner_reserve,
+					BalanceStatus::Free,
+				)?;
+				return Ok(())
+			}
+		}
+		<T as pallet::Config<I>>::Currency::unreserve(&payload.miner, payload.miner_reserve);
+		Ok(())
+	}
+
+	pub fn remove_mint_request(block_number: BlockNumber<T>) -> DispatchResult {
+		MintRequestOf::<T, I>::remove(block_number);
+		Ok(())
+	}
+
 	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {
@@ -1818,107 +1775,5 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			return Ok(())
 		}
 		return Err(Error::<T, I>::UnknownCollection)
-	}
-
-	pub fn execute_mint_request(block_number: BlockNumber<T>) -> Result<(), Error<T, I>> {
-		for request in MintRequestOf::<T, I>::get(block_number.saturating_plus_one()) {
-			{
-				log::info!("execute request: {:?}", request);
-				let call = Call::execute_mint_unsigned { payload: request };
-
-				let _ =
-					SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
-						.map_err(|_| {
-							log::error!("Failed in pallet-game execute_mint_unsigned");
-						});
-			}
-		}
-		if !MintRequestOf::<T, I>::get(block_number).is_empty() {
-			let call: Call<_, _> = Call::remove_mint_request_unsigned { block_number };
-
-			let _ = SubmitTransaction::<T, Call<T, I>>::submit_unsigned_transaction(call.into())
-				.map_err(|_| {
-					log::error!("Failed in pallet-game remove_mint_request_unsigned");
-				});
-		}
-		Ok(())
-	}
-
-	fn validate_request_parameters(block_number: &BlockNumber<T>) -> TransactionValidity {
-		// Now let's check if the transaction has any chance to succeed.
-		let current_block = <frame_system::Pallet<T>>::block_number();
-		if &current_block > block_number {
-			return InvalidTransaction::Stale.into()
-		}
-
-		// Let's make sure to reject transactions from the future.
-		if &current_block < block_number {
-			return InvalidTransaction::Future.into()
-		}
-
-		ValidTransaction::with_tag_prefix("pallet-game")
-			// We set base priority to 2**20 and hope it's included before any other
-			.priority(T::UnsignedPriority::get())
-			// This transaction does not require anything else to go before into the pool.
-			// In theory we could require `previous_unsigned_at` transaction to go first,
-			// but it's not necessary in our case.
-			//.and_requires()
-			// We set the `provides` tag to be the same as `next_unsigned_at`. This makes
-			// sure only one transaction produced after `next_unsigned_at` will ever
-			// get to the transaction pool and will end up in the block.
-			// We can still have multiple transactions compete for the same "spot",
-			// and the one with higher priority will replace other one in the pool.
-			// .and_provides(next_unsigned_at)
-			// The transaction is only valid for next 1 blocks. After that it's
-			// going to be revalidated by the pool.
-			.longevity(10)
-			// It's fine to propagate that transaction to other peers, which means it can be
-			// created even by nodes that don't produce blocks.
-			// Note that sometimes it's better to keep it for yourself (if you are the block
-			// producer), since for instance in some schemes others may copy your solution and
-			// claim a reward.
-			.propagate(true)
-			.build()
-	}
-
-	fn validate_remove_parameters(block_number: &BlockNumber<T>) -> TransactionValidity {
-		// Now let's check if the transaction has any chance to succeed.
-		let current_block = <frame_system::Pallet<T>>::block_number();
-
-		log::info!("current_block: {:?}", current_block);
-		log::info!("block_number: {:?}", block_number);
-
-		if current_block > block_number.saturating_plus_one() {
-			return InvalidTransaction::Stale.into()
-		}
-
-		// Let's make sure to reject transactions from the future.
-		if current_block < block_number.saturating_plus_one() {
-			return InvalidTransaction::Future.into()
-		}
-
-		ValidTransaction::with_tag_prefix("pallet-game")
-			// We set base priority to 2**20 and hope it's included before any other
-			.priority(T::UnsignedPriority::get())
-			// This transaction does not require anything else to go before into the pool.
-			// In theory we could require `previous_unsigned_at` transaction to go first,
-			// but it's not necessary in our case.
-			//.and_requires()
-			// We set the `provides` tag to be the same as `next_unsigned_at`. This makes
-			// sure only one transaction produced after `next_unsigned_at` will ever
-			// get to the transaction pool and will end up in the block.
-			// We can still have multiple transactions compete for the same "spot",
-			// and the one with higher priority will replace other one in the pool.
-			// .and_provides(next_unsigned_at)
-			// The transaction is only valid for next 1 blocks. After that it's
-			// going to be revalidated by the pool.
-			.longevity(10)
-			// It's fine to propagate that transaction to other peers, which means it can be
-			// created even by nodes that don't produce blocks.
-			// Note that sometimes it's better to keep it for yourself (if you are the block
-			// producer), since for instance in some schemes others may copy your solution and
-			// claim a reward.
-			.propagate(true)
-			.build()
 	}
 }

@@ -211,8 +211,6 @@ impl pallet_game::Config for Test {
 	type GameRandomness = ();
 	type MaxMintRequest = MaxMintRequest;
 	type MintInterval = MintInterval;
-	type UnsignedPriority = UnsignedPriority;
-
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }

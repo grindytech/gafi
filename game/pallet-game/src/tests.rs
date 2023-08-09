@@ -1778,10 +1778,7 @@ fn execute_mint_should_works() {
 
 		let owner_balance = Balances::free_balance(owner.clone());
 
-		assert_ok!(PalletGame::execute_mint_unsigned(
-			RuntimeOrigin::none(),
-			request
-		));
+		assert_ok!(PalletGame::execute_mint(request));
 
 		let mut nfts = 0;
 		for package in TEST_BUNDLE.clone() {
@@ -1789,10 +1786,7 @@ fn execute_mint_should_works() {
 		}
 		assert_eq!(nfts, amount);
 
-		assert_eq!(
-			Balances::reserved_balance(player.clone()),
-			0
-		);
+		assert_eq!(Balances::reserved_balance(player.clone()), 0);
 		assert_eq!(
 			Balances::free_balance(owner.clone()),
 			owner_balance + (default_mint_config().price * amount as u128 as u128)

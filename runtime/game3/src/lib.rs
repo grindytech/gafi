@@ -406,7 +406,6 @@ parameter_types! {
 
 	pub MaxMintRequest: u32 = 10;
 	pub MintInterval: u32 = 2;
-	pub UnsignedPriority: u32 = 100;
 }
 
 impl pallet_game::Config for Runtime {
@@ -431,7 +430,6 @@ impl pallet_game::Config for Runtime {
 	type MaxMintRequest = MaxMintRequest;
 	type MintInterval = MintInterval;
 	type GameRandomness = GameRandomness;
-	type UnsignedPriority = UnsignedPriority;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }
