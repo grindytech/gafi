@@ -405,7 +405,7 @@ parameter_types! {
 	pub MaxLoot: u32 = 10;
 
 	pub MaxMintRequest: u32 = 10;
-	pub MintInterval: u32 = 5;
+	pub MintInterval: u32 = 2;
 	pub UnsignedPriority: u32 = 100;
 }
 

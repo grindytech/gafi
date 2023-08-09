@@ -1847,10 +1847,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	fn validate_request_parameters(block_number: &BlockNumber<T>) -> TransactionValidity {
 		// Now let's check if the transaction has any chance to succeed.
 		let current_block = <frame_system::Pallet<T>>::block_number();
-
-		log::info!("current_block: {:?}", current_block);
-		log::info!("block_number: {:?}", block_number);
-
 		if &current_block > block_number {
 			return InvalidTransaction::Stale.into()
 		}
@@ -1875,7 +1871,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			// .and_provides(next_unsigned_at)
 			// The transaction is only valid for next 1 blocks. After that it's
 			// going to be revalidated by the pool.
-			// .longevity(10)
+			.longevity(10)
 			// It's fine to propagate that transaction to other peers, which means it can be
 			// created even by nodes that don't produce blocks.
 			// Note that sometimes it's better to keep it for yourself (if you are the block
@@ -1892,12 +1888,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		log::info!("current_block: {:?}", current_block);
 		log::info!("block_number: {:?}", block_number);
 
-		if &current_block.saturating_plus_one() > block_number {
+		if current_block > block_number.saturating_plus_one() {
 			return InvalidTransaction::Stale.into()
 		}
 
 		// Let's make sure to reject transactions from the future.
-		if &current_block < block_number {
+		if current_block < block_number.saturating_plus_one() {
 			return InvalidTransaction::Future.into()
 		}
 
@@ -1916,7 +1912,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			// .and_provides(next_unsigned_at)
 			// The transaction is only valid for next 1 blocks. After that it's
 			// going to be revalidated by the pool.
-			// .longevity(10)
+			.longevity(10)
 			// It's fine to propagate that transaction to other peers, which means it can be
 			// created even by nodes that don't produce blocks.
 			// Note that sometimes it's better to keep it for yourself (if you are the block
