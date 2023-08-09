@@ -194,21 +194,13 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 		amount: Amount,
 	) -> DispatchResult;
 
-	/// Do Mint
-	///
-	/// Random mint item in a pool
-	///
-	/// Parameters:
-	/// - `pool`: mining pool id
-	/// - `who`: sender
-	/// - `target`: recipient account
-	/// - `amount`: amount of item
-	fn do_mint(
+	fn do_mint_request(
 		pool: &PoolId,
 		who: &AccountId,
 		target: &AccountId,
 		amount: Amount,
 	) -> DispatchResult;
+
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {

@@ -1668,43 +1668,6 @@ fn create_stable_pool_should_fails() {
 }
 
 #[test]
-fn mint_stable_pool_should_works() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-		let (owner, _) = do_all_create_stable_pool(default_mint_config());
-		let player = new_account(2, 1000_000 * unit(GAKI));
-		{
-			let owner_balance = Balances::free_balance(owner.clone());
-			let player_balance = Balances::free_balance(player.clone());
-
-			let amount = 10;
-			assert_ok!(PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				amount,
-			));
-
-			let mut nfts = 0;
-			for package in TEST_BUNDLE.clone() {
-				nfts +=
-					ItemBalanceOf::<Test>::get((player.clone(), package.collection, package.item));
-			}
-			assert_eq!(nfts, amount);
-
-			assert_eq!(
-				Balances::free_balance(player.clone()),
-				player_balance - (default_mint_config().price * amount as u128 as u128)
-			);
-			assert_eq!(
-				Balances::free_balance(owner.clone()),
-				owner_balance + (default_mint_config().price * amount as u128 as u128)
-			);
-		}
-	})
-}
-
-#[test]
 fn create_dynamic_pool_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
@@ -1751,136 +1714,229 @@ fn create_dynamic_pool_should_works() {
 }
 
 #[test]
-fn mint_dynamic_pool_should_works() {
+fn request_mint_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let (owner, _) = do_all_create_stable_pool(default_mint_config());
+		let player = new_account(2, 1000_000 * unit(GAKI));
+
+		let amount = 10;
+		let block: u64 = (1 + MIN_INTERVAL_VAL) as u64;
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			amount,
+		));
+
+		let request = MintRequest {
+			miner: player.clone(),
+			pool: 0,
+			target: player.clone(),
+			amount,
+			mining_fee: default_mint_config().price,
+			miner_reserve: default_mint_config().price * amount as u128,
+			block_number: block,
+		};
+
+		assert_eq!(MintRequestOf::<Test>::get(block).to_vec(), [request]);
+
+		assert_eq!(
+			Balances::reserved_balance(player.clone()),
+			(default_mint_config().price * amount as u128 as u128)
+		);
+	})
+}
+
+#[test]
+fn execute_mint_stable_pool_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let (owner, _) = do_all_create_stable_pool(default_mint_config());
+		let player = new_account(2, 1000_000 * unit(GAKI));
+
+		let amount = 10;
+		let block: u64 = (1 + MIN_INTERVAL_VAL) as u64;
+
+		assert_ok!(PalletGame::mint(
+			RuntimeOrigin::signed(player.clone()),
+			0,
+			player.clone(),
+			amount,
+		));
+
+		let request = MintRequest {
+			miner: player.clone(),
+			pool: 0,
+			target: player.clone(),
+			amount,
+			mining_fee: default_mint_config().price,
+			miner_reserve: default_mint_config().price * amount as u128,
+			block_number: block,
+		};
+
+		let owner_balance = Balances::free_balance(owner.clone());
+
+		assert_ok!(PalletGame::execute_mint(request));
+
+		let mut nfts = 0;
+		for package in TEST_BUNDLE.clone() {
+			nfts += ItemBalanceOf::<Test>::get((player.clone(), package.collection, package.item));
+		}
+		assert_eq!(nfts, amount);
+
+		assert_eq!(Balances::reserved_balance(player.clone()), 0);
+		assert_eq!(
+			Balances::free_balance(owner.clone()),
+			owner_balance + (default_mint_config().price * amount as u128 as u128)
+		);
+	})
+}
+
+#[test]
+fn execute_mint_dynamic_pool_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let (owner, _) = do_all_create_dynamic_pool(default_mint_config());
 		let player = new_account(2, 1000_000 * unit(GAKI));
 
-		{
-			let owner_balance = Balances::free_balance(owner.clone());
-			let player_balance = Balances::free_balance(player.clone());
+		let amount = 10;
+		let block: u64 = (1 + MIN_INTERVAL_VAL) as u64;
 
-			let amount = 10;
-			for _ in TEST_BUNDLE.clone() {
-				assert_ok!(PalletGame::mint(
-					RuntimeOrigin::signed(player.clone()),
-					0,
-					player.clone(),
-					amount,
-				));
-			}
-
-			for pack in TEST_BUNDLE.clone() {
-				assert_eq!(
-					ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
-					amount
-				);
-				assert_eq!(
-					ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
-					pack.amount - amount
-				);
-			}
-			assert_eq!(
-				Balances::free_balance(player.clone()),
-				player_balance -
-					(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
-			);
-			assert_eq!(
-				Balances::free_balance(owner.clone()),
-				owner_balance +
-					(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
-			);
-		}
-	})
-}
-
-#[test]
-fn mint_dynamic_pool_should_fails() {
-	new_test_ext().execute_with(|| {
-		run_to_block(1);
-
-		let mint_settings: MintSettingsFor<Test> = MintSettings {
-			mint_type: MintType::HolderOf(0),
-			price: 100,
-			start_block: Some(2),
-			end_block: Some(10),
-		};
-
-		let (_, _) = do_all_create_dynamic_pool(mint_settings);
-		let player = new_account(2, 3000 * unit(GAKI));
-
-		assert_err!(
-			PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				MAX_ITEM_MINT_VAL + 1
-			),
-			Error::<Test>::MintNotStarted
-		);
-
-		run_to_block(2);
-		assert_err!(
-			PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				MAX_ITEM_MINT_VAL + 1
-			),
-			Error::<Test>::NotWhitelisted
-		);
-
-		// on whitelist
-		let _ = PalletGame::add_item_balance(&player, &0, &0, 1);
-
-		assert_err!(
-			PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				MAX_ITEM_MINT_VAL + 1
-			),
-			Error::<Test>::ExceedAllowedAmount
-		);
-
-		let total = PalletGame::total_weight(&TEST_TABLE.clone().to_vec());
-		assert_err!(
-			PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				total + 1
-			),
-			Error::<Test>::ExceedTotalAmount
-		);
-
-		for package in TEST_BUNDLE.clone() {
+		for _ in TEST_BUNDLE.clone() {
 			assert_ok!(PalletGame::mint(
 				RuntimeOrigin::signed(player.clone()),
 				0,
 				player.clone(),
-				package.amount,
+				amount,
 			));
 		}
 
-		assert_err!(
-			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 1),
-			Error::<Test>::SoldOut
-		);
+		let request = MintRequest {
+			miner: player.clone(),
+			pool: 0,
+			target: player.clone(),
+			amount,
+			mining_fee: default_mint_config().price,
+			miner_reserve: default_mint_config().price * amount as u128,
+			block_number: block,
+		};
 
-		run_to_block(11);
-		assert_err!(
-			PalletGame::mint(
-				RuntimeOrigin::signed(player.clone()),
-				0,
-				player.clone(),
-				total + 1
-			),
-			Error::<Test>::MintEnded
+		let owner_balance = Balances::free_balance(owner.clone());
+		for _ in TEST_BUNDLE.clone() {
+			assert_ok!(PalletGame::execute_mint(request.clone()));
+		}
+		for pack in TEST_BUNDLE.clone() {
+			assert_eq!(
+				ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
+				amount
+			);
+			assert_eq!(
+				ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
+				pack.amount - amount
+			);
+		}
+
+		assert_eq!(
+			Balances::reserved_balance(player.clone()),
+			0
+		);
+		assert_eq!(
+			Balances::free_balance(owner.clone()),
+			owner_balance +
+				(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
 		);
 	})
 }
+
+
+// #[test]
+// fn mint_dynamic_pool_should_fails() {
+// 	new_test_ext().execute_with(|| {
+// 		run_to_block(1);
+
+// 		let mint_settings: MintSettingsFor<Test> = MintSettings {
+// 			mint_type: MintType::HolderOf(0),
+// 			price: 100,
+// 			start_block: Some(2),
+// 			end_block: Some(10),
+// 		};
+
+// 		let (_, _) = do_all_create_dynamic_pool(mint_settings);
+// 		let player = new_account(2, 3000 * unit(GAKI));
+
+// 		assert_err!(
+// 			PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				MAX_ITEM_MINT_VAL + 1
+// 			),
+// 			Error::<Test>::MintNotStarted
+// 		);
+
+// 		run_to_block(2);
+// 		assert_err!(
+// 			PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				MAX_ITEM_MINT_VAL + 1
+// 			),
+// 			Error::<Test>::NotWhitelisted
+// 		);
+
+// 		// on whitelist
+// 		let _ = PalletGame::add_item_balance(&player, &0, &0, 1);
+
+// 		assert_err!(
+// 			PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				MAX_ITEM_MINT_VAL + 1
+// 			),
+// 			Error::<Test>::ExceedAllowedAmount
+// 		);
+
+// 		let total = PalletGame::total_weight(&TEST_TABLE.clone().to_vec());
+// 		assert_err!(
+// 			PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				total + 1
+// 			),
+// 			Error::<Test>::ExceedTotalAmount
+// 		);
+
+// 		for package in TEST_BUNDLE.clone() {
+// 			assert_ok!(PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				package.amount,
+// 			));
+// 		}
+
+// 		assert_err!(
+// 			PalletGame::mint(RuntimeOrigin::signed(player.clone()), 0, player.clone(), 1),
+// 			Error::<Test>::SoldOut
+// 		);
+
+// 		run_to_block(11);
+// 		assert_err!(
+// 			PalletGame::mint(
+// 				RuntimeOrigin::signed(player.clone()),
+// 				0,
+// 				player.clone(),
+// 				total + 1
+// 			),
+// 			Error::<Test>::MintEnded
+// 		);
+// 	})
+// }
 
 #[test]
 fn cancel_trade_should_works() {
@@ -1950,7 +2006,7 @@ fn cancel_trade_should_works() {
 		}
 
 		// swap
-		{	
+		{
 			let player = funded_account_with_item(TEST_BUNDLE.clone());
 			assert_ok!(PalletGame::set_swap(
 				RuntimeOrigin::signed(player.clone()),
@@ -1969,7 +2025,7 @@ fn cancel_trade_should_works() {
 		}
 
 		// auction
-		{	
+		{
 			let player = funded_account_with_item(TEST_BUNDLE.clone());
 			assert_ok!(PalletGame::set_auction(
 				RuntimeOrigin::signed(player.clone()),

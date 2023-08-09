@@ -128,11 +128,35 @@ impl pallet_nfts::Config for Test {
 	type Helper = ();
 }
 
-// type Extrinsic = TestXt<RuntimeCall, ()>;
-// type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
 parameter_types! {
-	pub const UnsignedPriority: u64 = 1 << 20;
+	pub const UnsignedPriority: u64 = 100;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+where
+	RuntimeCall: From<C>,
+{
+	type OverarchingCall = RuntimeCall;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 pub const GAME_DEPOSIT_VAL: u128 = 5_000_000_000;
@@ -144,6 +168,8 @@ pub const MAX_ITEM_MINT_VAL: u32 = 10;
 pub const MAX_GAME_SHARE_VAL: u32 = 10;
 pub const MAX_BUNDLE_VAL: u32 = 5;
 pub const MAX_LOOT: u32 = 10;
+pub const MAX_MIN_REQUEST_VAL: u32 = 10;
+pub const MIN_INTERVAL_VAL: u32 = 5;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
@@ -159,6 +185,8 @@ parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub MaxItem: u32 = 10;
 	pub MaxLoot: u32 = MAX_LOOT;
+	pub MaxMintRequest: u32 = MAX_MIN_REQUEST_VAL;
+	pub MintInterval: u32 = MIN_INTERVAL_VAL;
 }
 
 impl pallet_game::Config for Test {
@@ -181,6 +209,8 @@ impl pallet_game::Config for Test {
 	type MaxBundle = MaxBundle;
 	type MaxLoot = MaxLoot;
 	type GameRandomness = ();
+	type MaxMintRequest = MaxMintRequest;
+	type MintInterval = MintInterval;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
 }

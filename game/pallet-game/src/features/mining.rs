@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
-// use gafi_support::game::{Mining, MintSettings, NFT, MintType};
+use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
 	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
@@ -98,7 +98,7 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_mint(
+	fn do_mint_request(
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
@@ -114,6 +114,10 @@ impl<T: Config<I>, I: 'static>
 			if let Some(end_block) = mint_settings.end_block {
 				ensure!(block_number <= end_block, Error::<T, I>::MintEnded);
 			}
+			ensure!(
+				amount <= T::MaxMintItem::get(),
+				Error::<T, I>::ExceedAllowedAmount
+			);
 			match mint_settings.mint_type {
 				MintType::HolderOf(collection) => {
 					ensure!(
@@ -124,14 +128,26 @@ impl<T: Config<I>, I: 'static>
 				_ => {},
 			};
 
-			match pool_details.pool_type {
-				PoolType::Dynamic => {
-					return Self::do_mint_dynamic_pool(pool, who, target, amount)
-				},
-				PoolType::Stable => {
-					return Self::do_mint_stable_pool(pool, who, target, amount)
-				},
-			}
+			let reserve = pool_details.mint_settings.price.saturating_mul(amount.into());
+			<T as Config<I>>::Currency::reserve(&who, reserve)?;
+			let execute_block = block_number + T::MintInterval::get();
+
+			let mint_request = MintRequest {
+				miner: who.clone(),
+				pool: pool.clone(),
+				target: target.clone(),
+				mining_fee: pool_details.mint_settings.price,
+				miner_reserve: reserve,
+				amount,
+				block_number: execute_block,
+			};
+
+			MintRequestOf::<T, I>::try_mutate(execute_block, |request_vec| -> DispatchResult {
+				request_vec.try_push(mint_request).map_err(|_| Error::<T, I>::OverRequest)?;
+				Ok(())
+			})?;
+
+			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownMiningPool.into())
 	}
@@ -148,21 +164,9 @@ impl<T: Config<I>, I: 'static>
 			let total_weight = Self::total_weight(&table);
 			ensure!(total_weight > 0, Error::<T, I>::SoldOut);
 			ensure!(amount <= total_weight, Error::<T, I>::ExceedTotalAmount);
-			ensure!(
-				amount <= T::MaxMintItem::get(),
-				Error::<T, I>::ExceedAllowedAmount
-			);
 		}
 
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
-			// make a deposit
-			<T as pallet::Config<I>>::Currency::transfer(
-				&who,
-				&pool_details.owner,
-				pool_details.mint_settings.price * amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
 			// random minting
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
@@ -198,6 +202,7 @@ impl<T: Config<I>, I: 'static>
 				let table = LootTableFor::<T, I>::try_from(table)
 					.map_err(|_| Error::<T, I>::ExceedMaxLoot)?;
 				LootTableOf::<T, I>::insert(pool, table);
+
 				Self::deposit_event(Event::<T, I>::Minted {
 					pool: *pool,
 					who: who.clone(),
@@ -216,54 +221,37 @@ impl<T: Config<I>, I: 'static>
 		target: &T::AccountId,
 		amount: u32,
 	) -> DispatchResult {
-		// validating item amount
-		ensure!(
-			amount <= T::MaxMintItem::get(),
-			Error::<T, I>::ExceedAllowedAmount
-		);
-
-		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
-			// make a deposit
-			<T as pallet::Config<I>>::Currency::transfer(
-				&who,
-				&pool_details.owner,
-				pool_details.mint_settings.price * amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			// random minting
-			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
-			{
-				let table = LootTableOf::<T, I>::get(pool).into();
-				let total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
-						// ensure position
-						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
-						match Self::get_loot(&table, random) {
-							Some(maybe_nft) =>
-								if let Some(nft) = maybe_nft {
-									Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
-									nfts.push(nft);
-								},
-							None => return Err(Error::<T, I>::MintFailed.into()),
-						};
-						maybe_random = T::GameRandomness::random_number(total_weight);
-					} else {
-						return Err(Error::<T, I>::SoldOut.into())
-					}
+		// random minting
+		let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
+		{
+			let table = LootTableOf::<T, I>::get(pool).into();
+			let total_weight = Self::total_weight(&table);
+			let mut maybe_random = T::GameRandomness::random_number(total_weight);
+			for _ in 0..amount {
+				if let Some(random) = maybe_random {
+					// ensure position
+					ensure!(random <= total_weight, Error::<T, I>::MintFailed);
+					match Self::get_loot(&table, random) {
+						Some(maybe_nft) =>
+							if let Some(nft) = maybe_nft {
+								Self::add_item_balance(target, &nft.collection, &nft.item, 1)?;
+								nfts.push(nft);
+							},
+						None => return Err(Error::<T, I>::MintFailed.into()),
+					};
+					maybe_random = T::GameRandomness::random_number(total_weight);
+				} else {
+					return Err(Error::<T, I>::SoldOut.into())
 				}
 			}
-
-			Self::deposit_event(Event::<T, I>::Minted {
-				pool: *pool,
-				who: who.clone(),
-				target: target.clone(),
-				nfts,
-			});
-			return Ok(())
 		}
-		Err(Error::<T, I>::UnknownMiningPool.into())
+
+		Self::deposit_event(Event::<T, I>::Minted {
+			pool: *pool,
+			who: who.clone(),
+			target: target.clone(),
+			nfts,
+		});
+		return Ok(())
 	}
 }

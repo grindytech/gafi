@@ -44,19 +44,25 @@ pub use weights::*;
 
 use frame_support::{
 	ensure,
+	pallet_prelude::*,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
-		Currency, ReservableCurrency,
+		BalanceStatus, Currency, ReservableCurrency,
 	},
 };
-use frame_system::{pallet_prelude::BlockNumberFor, Config as SystemConfig};
+use frame_system::{
+	offchain::{CreateSignedTransaction},
+	Config as SystemConfig,
+};
 use gafi_support::game::*;
-
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
+use sp_core::{offchain::KeyTypeId, Get};
 use sp_runtime::{
-	traits::{StaticLookup},
+	traits::StaticLookup,
+	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
+	Saturating,
 };
 use sp_std::vec::Vec;
 use types::*;
@@ -112,7 +118,9 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
+	pub trait Config<I: 'static = ()>:
+		frame_system::Config + pallet_nfts::Config
+	{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -186,6 +194,12 @@ pub mod pallet {
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
 		type GameRandomness: GameRandomness;
+
+		#[pallet::constant]
+		type MaxMintRequest: Get<u32>;
+
+		#[pallet::constant]
+		type MintInterval: Get<Self::BlockNumber>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -310,6 +324,16 @@ pub mod pallet {
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::PoolId, PoolDetailsFor<T, I>, OptionQuery>;
 
+	/// Storing mint request
+	#[pallet::storage]
+	pub(super) type MintRequestOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		BlockNumber<T>,
+		BoundedVec<MintRequestFor<T, I>, T::MaxMintRequest>,
+		ValueQuery,
+	>;
+
 	/// Level of item
 	#[pallet::storage]
 	pub(super) type LevelOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -379,16 +403,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
-
-	/// Defines the block when next unsigned transaction will be accepted.
-	///
-	/// To prevent spam of unsigned (and unpaid!) transactions on the network,
-	/// we only allow one transaction every `T::UnsignedInterval` blocks.
-	/// This storage entry defines when new transaction is going to be accepted.
-	#[pallet::storage]
-	#[pallet::getter(fn next_unsigned_at)]
-	pub(super) type NextUnsignedAt<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -635,6 +649,32 @@ pub mod pallet {
 		MintNotStarted,
 		MintEnded,
 		NotWhitelisted,
+		OverRequest,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
+		// fn offchain_worker(block_number: BlockNumber<T>) {
+		// 	let _ = Self::execute_mint_request(block_number);
+		// }
+
+		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+			for request in MintRequestOf::<T, I>::get(block_number) {
+				{
+					log::info!("execute request: {:?} at block {:?}", request, block_number);
+					let _ = Self::execute_mint(request);
+				}
+			}
+
+			Weight::zero()
+		}
+
+		fn on_finalize(block_number: BlockNumber<T>) {
+			if !MintRequestOf::<T, I>::get(block_number).is_empty() {
+				log::info!("Remove requests at block {:?}", block_number);
+				let res = Self::remove_mint_request(block_number);
+			}
+		}
 	}
 
 	#[pallet::call]
@@ -796,31 +836,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_add_supply(&sender, &collection, &item, amount)?;
-			Ok(())
-		}
-
-		/// Mint an amount of item on a particular mining pool.
-		///
-		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
-		///
-		/// - `pool`: The pool to be minted.
-		/// - `mint_to`: Account into which the item will be minted.
-		/// - `amount`: The amount may be minted.
-		///
-		/// Emits `Minted` event when successful.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint())]
-		pub fn mint(
-			origin: OriginFor<T>,
-			pool: T::PoolId,
-			mint_to: AccountIdLookupOf<T>,
-			amount: u32,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			let target = T::Lookup::lookup(mint_to)?;
-			Self::do_mint(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 
@@ -1674,10 +1689,71 @@ pub mod pallet {
 				.into(),
 			)
 		}
+
+		/// Mint an amount of item on a particular mining pool.
+		///
+		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
+		///
+		/// - `pool`: The pool to be minted.
+		/// - `mint_to`: Account into which the item will be minted.
+		/// - `amount`: The amount may be minted.
+		///
+		/// Emits `Minted` event when successful.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(40)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint())]
+		pub fn mint(
+			origin: OriginFor<T>,
+			pool: T::PoolId,
+			mint_to: AccountIdLookupOf<T>,
+			amount: u32,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let target = T::Lookup::lookup(mint_to)?;
+
+			Self::do_mint_request(&pool, &sender, &target, amount)?;
+			Ok(())
+		}
 	}
+
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	pub fn execute_mint(payload: MintRequestFor<T, I>) -> DispatchResult {
+		if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
+			if let Ok(_) = match pool_details.pool_type {
+				PoolType::Dynamic => Self::do_mint_dynamic_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+				PoolType::Stable => Self::do_mint_stable_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+			} {
+				<T as pallet::Config<I>>::Currency::repatriate_reserved(
+					&payload.miner,
+					&pool_details.owner,
+					payload.miner_reserve,
+					BalanceStatus::Free,
+				)?;
+				return Ok(())
+			}
+		}
+		<T as pallet::Config<I>>::Currency::unreserve(&payload.miner, payload.miner_reserve);
+		Ok(())
+	}
+
+	pub fn remove_mint_request(block_number: BlockNumber<T>) -> DispatchResult {
+		MintRequestOf::<T, I>::remove(block_number);
+		Ok(())
+	}
+
 	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {
