@@ -169,7 +169,7 @@ pub const MAX_GAME_SHARE_VAL: u32 = 10;
 pub const MAX_BUNDLE_VAL: u32 = 5;
 pub const MAX_LOOT: u32 = 10;
 pub const MAX_MIN_REQUEST_VAL: u32 = 10;
-pub const MIN_INTERVAL_VAL: u32 = 5;
+pub const MIN_INTERVAL_VAL: u32 = 1;
 
 parameter_types! {
 	pub GameDeposit: u128 = GAME_DEPOSIT_VAL;
@@ -219,9 +219,11 @@ pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
 			System::on_finalize(System::block_number());
+			PalletGame::on_finalize(System::block_number());
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
+		PalletGame::on_initialize(System::block_number());
 	}
 }
 

@@ -140,8 +140,6 @@ pub mod pallet {
 			if let Err(e) = res {
 				log::error!("Error: {}", e);
 			}
-			let random = RandomSeed::<T>::get();
-			log::info!("random {:?}", random);
 		}
 	}
 

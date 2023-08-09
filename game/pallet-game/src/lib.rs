@@ -50,20 +50,12 @@ use frame_support::{
 		BalanceStatus, Currency, ReservableCurrency,
 	},
 };
-use frame_system::{
-	offchain::{CreateSignedTransaction},
-	Config as SystemConfig,
-};
+use frame_system::Config as SystemConfig;
 use gafi_support::game::*;
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
-use sp_core::{offchain::KeyTypeId, Get};
-use sp_runtime::{
-	traits::StaticLookup,
-	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
-	Saturating,
-};
+use sp_runtime::traits::StaticLookup;
 use sp_std::vec::Vec;
 use types::*;
 
@@ -118,9 +110,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>:
-		frame_system::Config + pallet_nfts::Config
-	{
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_nfts::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -150,14 +140,14 @@ pub mod pallet {
 		/// The type used to identify a unique trade
 		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
-		/// The type used to identify a unique mining pool
+		/// The type used to identify a unique minting pool
 		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// The basic amount of funds that must be reserved for a mining pool.
+		/// The basic amount of funds that must be reserved for a minting pool.
 		#[pallet::constant]
 		type MiningPoolDeposit: Get<BalanceOf<Self, I>>;
 
@@ -193,11 +183,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
+		/// Mechanism for generating randomness to mint NFTs.
 		type GameRandomness: GameRandomness;
 
+		/// Maximum number of minting requests per block.
 		#[pallet::constant]
 		type MaxMintRequest: Get<u32>;
 
+		/// Number of blocks of cooldown required to process minting requests.
 		#[pallet::constant]
 		type MintInterval: Get<Self::BlockNumber>;
 
@@ -234,7 +227,7 @@ pub mod pallet {
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::TradeId, OptionQuery>;
 
-	/// Storing next mining pool id
+	/// Storing next minting pool id
 	#[pallet::storage]
 	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::PoolId, OptionQuery>;
@@ -319,7 +312,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing mining pool configuration
+	/// Storing minting pool configuration
 	#[pallet::storage]
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::PoolId, PoolDetailsFor<T, I>, OptionQuery>;
@@ -437,9 +430,15 @@ pub mod pallet {
 			item: T::ItemId,
 			amount: u32,
 		},
-		Minted {
-			pool: T::PoolId,
+		RequestMint {
 			who: T::AccountId,
+			pool: T::PoolId,
+			target: T::AccountId,
+			block_number: T::BlockNumber, 
+		},
+		Minted {
+			who: T::AccountId,
+			pool: T::PoolId,
 			target: T::AccountId,
 			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
 		},
@@ -642,7 +641,7 @@ pub mod pallet {
 		NotAuction,
 		NotSetBuy,
 
-		//mining pool
+		//minting pool
 		InfiniteSupply,
 		NotInfiniteSupply,
 		MintFailed,
@@ -654,25 +653,25 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
-		// fn offchain_worker(block_number: BlockNumber<T>) {
-		// 	let _ = Self::execute_mint_request(block_number);
-		// }
 
+		/// Process minting requests in `block_number`.
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
 			for request in MintRequestOf::<T, I>::get(block_number) {
-				{
-					log::info!("execute request: {:?} at block {:?}", request, block_number);
-					let _ = Self::execute_mint(request);
+				let res = Self::processing_mint_request(request);
+				if let Err(e) = res {
+					log::error!("Mint Request Failed: {:?}", e);
 				}
 			}
-
 			Weight::zero()
 		}
 
+		/// Remove any existing minting requests on the `block_number`.
 		fn on_finalize(block_number: BlockNumber<T>) {
 			if !MintRequestOf::<T, I>::get(block_number).is_empty() {
-				log::info!("Remove requests at block {:?}", block_number);
 				let res = Self::remove_mint_request(block_number);
+				if let Err(e) = res {
+					log::error!("Remove Mint Request Failed: {:?}", e);
+				}
 			}
 		}
 	}
@@ -1621,15 +1620,15 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
 		}
 
-		/// Create a dynamic mining pool.
+		/// Create a dynamic minting pool.
 		///
 		/// Origin must be Signed and the sender should have sufficient items in the `loot_table`.
 		///
-		/// Note: The mining chance will be changed after each NFT is minted.
+		/// Note: The minting chance will be changed after each NFT is minted.
 		///
-		/// - `loot_table`: A bundle of NFTs for mining.
-		/// - `admin`: The Admin of this mining pool.
-		/// - `mint_settings`: The mining pool settings.
+		/// - `loot_table`: A bundle of NFTs for minting.
+		/// - `admin`: The Admin of this minting pool.
+		/// - `mint_settings`: The minting pool settings.
 		///
 		/// Emits `MiningPoolCreated`.
 		///
@@ -1655,16 +1654,16 @@ pub mod pallet {
 			)
 		}
 
-		/// Create a stable mining pool.
+		/// Create a stable minting pool.
 		///
 		/// Origin must be Signed and the sender should be the owner of all collections in the
 		/// `loot_table`. Collection in `loot_table` must be infinite supply.
 		///
-		/// Note: The mining chance will not be changed after each NFT is minted.
+		/// Note: The minting chance will not be changed after each NFT is minted.
 		///
-		/// - `loot_table`: A bundle of NFTs for mining.
-		/// - `admin`: The Admin of this mining pool.
-		/// - `mint_settings`: The mining pool settings.
+		/// - `loot_table`: A bundle of NFTs for minting.
+		/// - `admin`: The Admin of this minting pool.
+		/// - `mint_settings`: The minting pool settings.
 		///
 		/// Emits `MiningPoolCreated`.
 		///
@@ -1690,7 +1689,7 @@ pub mod pallet {
 			)
 		}
 
-		/// Mint an amount of item on a particular mining pool.
+		/// Mint an amount of item on a particular minting pool.
 		///
 		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
 		///
@@ -1702,8 +1701,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(40)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint())]
-		pub fn mint(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::request_mint())]
+		pub fn request_mint(
 			origin: OriginFor<T>,
 			pool: T::PoolId,
 			mint_to: AccountIdLookupOf<T>,
@@ -1712,15 +1711,14 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;
 
-			Self::do_mint_request(&pool, &sender, &target, amount)?;
+			Self::do_request_mint(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 	}
-
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	pub fn execute_mint(payload: MintRequestFor<T, I>) -> DispatchResult {
+	pub fn processing_mint_request(payload: MintRequestFor<T, I>) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
 			if let Ok(_) = match pool_details.pool_type {
 				PoolType::Dynamic => Self::do_mint_dynamic_pool(
