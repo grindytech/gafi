@@ -98,7 +98,7 @@ pub enum ItemBalanceStatus {
 	Free,
 }
 
-/// Information about a mining pool.
+/// Information about a minting pool.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct PoolDetails<AccountId, Balance, BlockNumber, CollectionId> {
 	/// pool type

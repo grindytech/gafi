@@ -3,7 +3,7 @@
 
 ### Goals
 A pallet designed to make it possible for developers (both blockchain and non-blockchain developers) to integrate Web3 technologies to improve in-game finance in minutes at a cost equal to zero.
-The studio can publish NFTs and get the rewards from mining fees, upgrading fees, and might be from trading fees in Gafi Marketplace.
+The studio can publish NFTs and get the rewards from minting fees, upgrading fees, and might be from trading fees in Gafi Marketplace.
 
 ## Overview
 The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
@@ -27,7 +27,7 @@ Pallet-game is coupled with [pallet-nfts](https://github.com/grindytech/substrat
 
 * **Add item:** Add a certain number of NFTs in a collection.
 
-* **Mint:** Randomly mint a certain amount of NFTs in the collection with a mining fee sent to the collection owner.
+* **Mint:** Randomly mint a certain amount of NFTs in the collection with a minting fee sent to the collection owner.
 The rarity depends on the number of NFTs in reserve.
 
 * **Set upgade:** Define NFT upgrade rules, any upgrade can cost a fee sent to the collection owner.
@@ -81,7 +81,7 @@ The highest bid when the auction expired is the winner.
 * `remove_collection`: Remove a collection from a game.
 * `lock_item_transfer`: Lock NFT to prevent any trade.
 * `unlock_item_transfer`: Revert the effects of a previous `lock_item_transfer`.
-* `create_stable_pool`: Create a mining pool with a constant weight loot table.
+* `create_stable_pool`: Create a minting pool with a constant weight loot table.
 
 ### Trade dispatchables
 * `set_price`: Set price for NFTs.
@@ -99,7 +99,7 @@ The highest bid when the auction expired is the winner.
 * `bid_auction`: Make a bid.
 * `claim_auction`: End the auction when it expires.
 * `cancel_trade`: Cancel a trade with trade id.
-* `create_dynamic_pool`: Create a mining pool with a dynamic weight loot table.
+* `create_dynamic_pool`: Create a minting pool with a dynamic weight loot table.
 
 ### Metadata (permissioned) dispatchables
 * `set_attribute`: Set a metadata attribute of an item or collection.

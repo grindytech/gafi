@@ -1,5 +1,5 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, traits::ExistenceRequirement, StorageNMap};
+use frame_support::{pallet_prelude::*, StorageNMap};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
@@ -98,7 +98,7 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_mint_request(
+	fn do_request_mint(
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
@@ -146,7 +146,12 @@ impl<T: Config<I>, I: 'static>
 				request_vec.try_push(mint_request).map_err(|_| Error::<T, I>::OverRequest)?;
 				Ok(())
 			})?;
-
+			Self::deposit_event(Event::<T, I>::RequestMint {
+				who: who.clone(),
+				pool: *pool,
+				target: target.clone(),
+				block_number: execute_block,
+			});
 			return Ok(())
 		}
 		Err(Error::<T, I>::UnknownMiningPool.into())

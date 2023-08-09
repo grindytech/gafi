@@ -128,16 +128,16 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 	) -> DispatchResult;
 }
 
-///Trait to provide an interface for NFTs mining
+///Trait to provide an interface for NFTs minting
 pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	/// Do create dynamic pool
 	///
 	/// Create a dynamic pool where the weight of the table changes after each loot.
 	///
-	/// - `pool`: mining pool id
+	/// - `pool`: minting pool id
 	/// - `who`: signer and owner
 	/// - `loot_table`: loot table
-	/// - `fee`: mining fee
+	/// - `fee`: minting fee
 	/// - `admin`: admin
 	fn do_create_dynamic_pool(
 		pool: &PoolId,
@@ -151,10 +151,10 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 	///
 	/// Create a stable pool where the weight of the table remains constant.
 	///
-	/// - `pool`: mining pool id
+	/// - `pool`: minting pool id
 	/// - `who`: signer and owner
 	/// - `loot_table`: loot table
-	/// - `fee`: mining fee
+	/// - `fee`: minting fee
 	/// - `admin`: admin
 	fn do_create_stable_pool(
 		pool: &PoolId,
@@ -166,9 +166,9 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 
 	/// Do mint dynamic pool
 	///
-	/// Do an `amount` of mining in a dynamic pool.
+	/// Do an `amount` of minting in a dynamic pool.
 	///
-	/// - `pool`: mining pool id
+	/// - `pool`: minting pool id
 	/// - `who`: signer
 	/// - `target`:  recipient account
 	/// - `amount`: amount of item
@@ -181,9 +181,9 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 
 	/// Do mint dynamic pool
 	///
-	/// Do an `amount` of mining in a stable pool.
+	/// Do an `amount` of minting in a stable pool.
 	///
-	/// - `pool`: mining pool id
+	/// - `pool`: minting pool id
 	/// - `who`: signer
 	/// - `target`:  recipient account
 	/// - `amount`: amount of item
@@ -194,7 +194,7 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 		amount: Amount,
 	) -> DispatchResult;
 
-	fn do_mint_request(
+	fn do_request_mint(
 		pool: &PoolId,
 		who: &AccountId,
 		target: &AccountId,

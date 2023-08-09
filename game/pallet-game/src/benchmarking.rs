@@ -952,20 +952,22 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	mint {
+	request_mint {
 		do_create_stable_pool::<T, I>();
 		let miner = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 		let mint_to =   T::Lookup::unlookup(miner.clone());
 
-		let call = Call::<T, I>::mint {
+		let call = Call::<T, I>::request_mint {
 			pool: <T as pallet::Config<I>>::Helper::pool(0),
 			mint_to: mint_to.clone(), amount: 10 };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(miner.clone()).into())? }
 	verify {
-		assert_last_event::<T, I>(Event::Minted {
-			pool: <T as pallet::Config<I>>::Helper::pool(0),
+		assert_last_event::<T, I>(Event::RequestMint {
 			who: miner.clone(),
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
 			target: T::Lookup::lookup(mint_to.clone()).unwrap(),
-			nfts: vec![ NFT{collection: <T as pallet_nfts::Config>::Helper::collection(0), item: <T as pallet_nfts::Config>::Helper::item(0)}; 10] }.into());
+			block_number: <T as pallet::Config<I>>::Helper::block(3),
+			// nfts: vec![ NFT{collection: <T as pallet_nfts::Config>::Helper::collection(0), item: <T as pallet_nfts::Config>::Helper::item(0)}; 10]
+		}.into());
 	}
 }
