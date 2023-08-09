@@ -1750,7 +1750,7 @@ fn request_mint_should_works() {
 }
 
 #[test]
-fn execute_mint_should_works() {
+fn execute_mint_stable_pool_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
 		let (owner, _) = do_all_create_stable_pool(default_mint_config());
@@ -1794,87 +1794,62 @@ fn execute_mint_should_works() {
 	})
 }
 
-// #[test]
-// fn mint_stable_pool_should_works() {
-// 	new_test_ext().execute_with(|| {
-// 		run_to_block(1);
-// 		let (owner, _) = do_all_create_stable_pool(default_mint_config());
-// 		let player = new_account(2, 1000_000 * unit(GAKI));
-// 		{
-// 			let owner_balance = Balances::free_balance(owner.clone());
-// 			let player_balance = Balances::free_balance(player.clone());
+#[test]
+fn execute_mint_dynamic_pool_should_works() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+		let (owner, _) = do_all_create_dynamic_pool(default_mint_config());
+		let player = new_account(2, 1000_000 * unit(GAKI));
 
-// 			let amount = 10;
-// 			assert_ok!(PalletGame::mint(
-// 				RuntimeOrigin::signed(player.clone()),
-// 				0,
-// 				player.clone(),
-// 				amount,
-// 			));
+		let amount = 10;
+		let block: u64 = (1 + MIN_INTERVAL_VAL) as u64;
 
-// 			let mut nfts = 0;
-// 			for package in TEST_BUNDLE.clone() {
-// 				nfts +=
-// 					ItemBalanceOf::<Test>::get((player.clone(), package.collection, package.item));
-// 			}
-// 			assert_eq!(nfts, amount);
+		for _ in TEST_BUNDLE.clone() {
+			assert_ok!(PalletGame::mint(
+				RuntimeOrigin::signed(player.clone()),
+				0,
+				player.clone(),
+				amount,
+			));
+		}
 
-// 			assert_eq!(
-// 				Balances::free_balance(player.clone()),
-// 				player_balance - (default_mint_config().price * amount as u128 as u128)
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(owner.clone()),
-// 				owner_balance + (default_mint_config().price * amount as u128 as u128)
-// 			);
-// 		}
-// 	})
-// }
+		let request = MintRequest {
+			miner: player.clone(),
+			pool: 0,
+			target: player.clone(),
+			amount,
+			mining_fee: default_mint_config().price,
+			miner_reserve: default_mint_config().price * amount as u128,
+			block_number: block,
+		};
 
-// #[test]
-// fn mint_dynamic_pool_should_works() {
-// 	new_test_ext().execute_with(|| {
-// 		run_to_block(1);
-// 		let (owner, _) = do_all_create_dynamic_pool(default_mint_config());
-// 		let player = new_account(2, 1000_000 * unit(GAKI));
+		let owner_balance = Balances::free_balance(owner.clone());
+		for _ in TEST_BUNDLE.clone() {
+			assert_ok!(PalletGame::execute_mint(request.clone()));
+		}
+		for pack in TEST_BUNDLE.clone() {
+			assert_eq!(
+				ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
+				amount
+			);
+			assert_eq!(
+				ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
+				pack.amount - amount
+			);
+		}
 
-// 		{
-// 			let owner_balance = Balances::free_balance(owner.clone());
-// 			let player_balance = Balances::free_balance(player.clone());
+		assert_eq!(
+			Balances::reserved_balance(player.clone()),
+			0
+		);
+		assert_eq!(
+			Balances::free_balance(owner.clone()),
+			owner_balance +
+				(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
+		);
+	})
+}
 
-// 			let amount = 10;
-// 			for _ in TEST_BUNDLE.clone() {
-// 				assert_ok!(PalletGame::mint(
-// 					RuntimeOrigin::signed(player.clone()),
-// 					0,
-// 					player.clone(),
-// 					amount,
-// 				));
-// 			}
-
-// 			for pack in TEST_BUNDLE.clone() {
-// 				assert_eq!(
-// 					ItemBalanceOf::<Test>::get((player.clone(), pack.collection, pack.item)),
-// 					amount
-// 				);
-// 				assert_eq!(
-// 					ReservedBalanceOf::<Test>::get((owner.clone(), pack.collection, pack.item)),
-// 					pack.amount - amount
-// 				);
-// 			}
-// 			assert_eq!(
-// 				Balances::free_balance(player.clone()),
-// 				player_balance -
-// 					(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(owner.clone()),
-// 				owner_balance +
-// 					(default_mint_config().price * amount as u128 * TEST_BUNDLE.len() as u128)
-// 			);
-// 		}
-// 	})
-// }
 
 // #[test]
 // fn mint_dynamic_pool_should_fails() {
