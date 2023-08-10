@@ -9,7 +9,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		to: &T::AccountId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_item_balance(from, collection, item, amount)?;
 		Self::add_item_balance(to, collection, item, amount)?;
@@ -22,7 +22,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		old_item: &T::ItemId,
 		new_item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_item_balance(who, collection, old_item, amount)?;
 		Self::add_item_balance(who, collection, new_item, amount)?;
@@ -34,7 +34,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
@@ -47,7 +47,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ItemBalanceOf::<T, I>::get((&who, &collection, &item));
@@ -67,7 +67,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ReservedBalanceOf::<T, I>::get((&who, &collection, &item));
@@ -80,7 +80,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 		let balance = ReservedBalanceOf::<T, I>::get((who, collection, item));
@@ -102,7 +102,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_item_balance(who, collection, item, amount)?;
 		Self::add_reserved_balance(who, collection, item, amount)?;
@@ -123,7 +123,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		amount: u32,
+		amount: Amount,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_reserved_balance(who, collection, item, amount)?;
 		Self::add_item_balance(who, collection, item, amount)?;
@@ -137,7 +137,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		beneficiary: &T::AccountId,
-		amount: u32,
+		amount: Amount,
 		status: ItemBalanceStatus,
 	) -> Result<(), Error<T, I>> {
 		Self::sub_reserved_balance(slashed, collection, item, amount)?;
@@ -178,5 +178,32 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		SupplyOf::<T, I>::get(collection, item)
 			.map(|maybe_supply| maybe_supply.is_none())
 			.unwrap_or_default()
+	}
+
+	/// Decrease the supply of a finite-supply item.
+	///
+	/// This internal function decreases the available supply for an item with finite supply.
+	///
+	/// # Parameters
+	///
+	/// - `collection`: ID of the collection.
+	/// - `item`: ID of the item.
+	/// - `amount`: Amount to subtract from the item's supply.
+	///
+	/// # Storage Updates
+	///
+	/// - The supply of the item in the specified collection is decremented by `amount`, with a
+	///   minimum value of zero.
+	pub(crate) fn decrease_finite_item_supply(
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: Amount,
+	) {
+		let maybe_finite = SupplyOf::<T, I>::get(collection, item);
+		if let Some(maybe_supply) = maybe_finite {
+			if let Some(supply) = maybe_supply {
+				SupplyOf::<T, I>::insert(collection, item, Some(supply.saturating_sub(amount)));
+			}
+		}
 	}
 }

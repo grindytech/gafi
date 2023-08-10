@@ -13,7 +13,7 @@ pub type LootTable<CollectionId, ItemId> = Vec<Loot<CollectionId, ItemId>>;
 pub struct Package<CollectionId, ItemId> {
 	pub collection: CollectionId,
 	pub item: ItemId,
-	pub amount: u32,
+	pub amount: Amount,
 }
 
 impl<CollectionId, ItemId> Package<CollectionId, ItemId> {

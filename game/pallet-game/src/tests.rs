@@ -65,18 +65,11 @@ fn do_create_collection(game: u32, admin: &sr25519::Public) {
 	));
 }
 
-fn do_create_item(
-	admin: &sr25519::Public,
-	collection: u32,
-	item: u32,
-	item_config: &ItemConfig,
-	amount: u32,
-) {
+fn do_create_item(admin: &sr25519::Public, collection: u32, item: u32, amount: Amount) {
 	assert_ok!(PalletGame::create_item(
 		RuntimeOrigin::signed(admin.clone()),
 		collection,
 		item,
-		*item_config,
 		Some(amount)
 	));
 }
@@ -148,13 +141,7 @@ fn do_all_create_dynamic_pool(
 	do_create_collection(0, &admin);
 
 	for package in TEST_BUNDLE.clone() {
-		do_create_item(
-			&admin,
-			package.collection,
-			package.item,
-			&default_item_config(),
-			package.amount,
-		);
+		do_create_item(&admin, package.collection, package.item, package.amount);
 	}
 
 	assert_ok!(PalletGame::create_dynamic_pool(
@@ -177,7 +164,6 @@ fn do_all_create_stable_pool(
 			RuntimeOrigin::signed(admin.clone()),
 			package.collection,
 			package.item,
-			default_item_config(),
 			None
 		));
 	}
@@ -201,13 +187,7 @@ fn create_account_with_item(
 	do_create_collection(latest_game, &admin);
 
 	for pack in source.clone() {
-		do_create_item(
-			&admin,
-			pack.collection,
-			pack.item,
-			&default_item_config(),
-			u32::MAX,
-		);
+		do_create_item(&admin, pack.collection, pack.item, 1000);
 	}
 
 	let player = new_account(3, 1000 * unit(GAKI));
@@ -528,7 +508,6 @@ fn create_item_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			0,
-			default_item_config(),
 			Some(1000)
 		));
 
@@ -542,7 +521,7 @@ fn add_supply_should_works() {
 		run_to_block(1);
 		let (_, admin) = do_create_game();
 		do_create_collection(0, &admin);
-		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+		do_create_item(&admin, 0, 0, 1000);
 
 		assert_ok!(PalletGame::add_supply(
 			RuntimeOrigin::signed(admin.clone()),
@@ -563,13 +542,23 @@ pub fn burn_items_should_works() {
 
 		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 10);
 
+		let amount = 5;
+		let before_supply = SupplyOf::<Test>::get(0, 0);
+
 		assert_ok!(PalletGame::burn(
 			RuntimeOrigin::signed(player.clone()),
 			0,
 			0,
-			5
+			amount
 		));
-		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), 5);
+
+		let after_supply = SupplyOf::<Test>::get(0, 0);
+
+		assert_eq!(
+			before_supply.unwrap().unwrap(),
+			after_supply.unwrap().unwrap() + amount
+		);
+		assert_eq!(ItemBalanceOf::<Test>::get((player.clone(), 0, 0)), amount);
 
 		assert_err!(
 			PalletGame::burn(RuntimeOrigin::signed(player.clone()), 0, 0, 6),
@@ -609,7 +598,7 @@ pub fn set_upgrade_item_should_works() {
 		run_to_block(1);
 		let (owner, admin) = do_create_game();
 		do_create_collection(0, &admin);
-		do_create_item(&admin, 0, 0, &default_item_config(), 1000);
+		do_create_item(&admin, 0, 0, 1000);
 
 		let byte = 50;
 
@@ -1686,7 +1675,6 @@ fn create_stable_pool_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			0,
-			default_item_config(),
 			None
 		));
 
@@ -1694,7 +1682,6 @@ fn create_stable_pool_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			1,
-			default_item_config(),
 			None
 		));
 
@@ -1702,7 +1689,6 @@ fn create_stable_pool_should_works() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			2,
-			default_item_config(),
 			None
 		));
 
@@ -1732,7 +1718,6 @@ fn create_stable_pool_should_fails() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			0,
-			default_item_config(),
 			None
 		));
 
@@ -1740,7 +1725,6 @@ fn create_stable_pool_should_fails() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			1,
-			default_item_config(),
 			None
 		));
 
@@ -1758,7 +1742,6 @@ fn create_stable_pool_should_fails() {
 			RuntimeOrigin::signed(admin.clone()),
 			0,
 			2,
-			default_item_config(),
 			Some(1000)
 		));
 
@@ -1782,13 +1765,7 @@ fn create_dynamic_pool_should_works() {
 		do_create_collection(0, &admin);
 
 		for package in TEST_BUNDLE.clone() {
-			do_create_item(
-				&admin,
-				package.collection,
-				package.item,
-				&default_item_config(),
-				package.amount,
-			);
+			do_create_item(&admin, package.collection, package.item, package.amount);
 		}
 
 		let owner_balance = Balances::free_balance(owner.clone());

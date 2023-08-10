@@ -8,7 +8,6 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		config: &ItemConfig,
 		maybe_supply: Option<u32>,
 	) -> DispatchResult {
 		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
@@ -17,7 +16,13 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				Error::<T, I>::NoPermission
 			);
 
-			T::Nfts::mint_into(&collection, &item, &collection_owner, &config, false)?;
+			T::Nfts::mint_into(
+				&collection,
+				&item,
+				&collection_owner,
+				&ItemConfig::default(),
+				false,
+			)?;
 
 			if let Some(supply) = maybe_supply {
 				// issues new amount of item

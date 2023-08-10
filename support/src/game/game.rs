@@ -107,7 +107,6 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
-		config: &ItemConfig,
 		maybe_supply: Option<u32>,
 	) -> DispatchResult;
 

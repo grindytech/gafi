@@ -99,7 +99,6 @@ fn do_create_item<T: Config<I>, I: 'static>(
 		RawOrigin::Signed(admin.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(collection),
 		<T as pallet_nfts::Config>::Helper::item(item),
-		default_item_config(),
 		supply,
 	));
 }
@@ -328,8 +327,8 @@ benchmarks_instance_pallet! {
 	create_item {
 		let (caller, admin) = do_create_collection::<T, I>();
 		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			 item: <T as pallet_nfts::Config>::Helper::item(0),
-			config: default_item_config(), maybe_supply: Some(10) };
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			maybe_supply: Some(10) };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::ItemCreated { who: admin,

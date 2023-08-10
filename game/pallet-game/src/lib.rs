@@ -428,7 +428,7 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		},
 		RequestMint {
 			who: T::AccountId,
@@ -446,14 +446,14 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		},
 		Transferred {
 			from: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			dest: T::AccountId,
-			amount: u32,
+			amount: Amount,
 		},
 		UpgradeSet {
 			who: T::AccountId,
@@ -467,20 +467,20 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			new_item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		},
 		PriceSet {
 			trade: T::TradeId,
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 			unit_price: BalanceOf<T, I>,
 		},
 		ItemBought {
 			trade: T::TradeId,
 			who: T::AccountId,
-			amount: u32,
+			amount: Amount,
 			bid_unit_price: BalanceOf<T, I>,
 		},
 		BundleSet {
@@ -548,13 +548,13 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 			unit_price: BalanceOf<T, I>,
 		},
 		SetBuyClaimed {
 			trade: T::TradeId,
 			who: T::AccountId,
-			amount: u32,
+			amount: Amount,
 			ask_unit_price: BalanceOf<T, I>,
 		},
 		MiningPoolCreated {
@@ -806,11 +806,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			config: ItemConfig,
 			maybe_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, maybe_supply)?;
+			Self::do_create_item(&sender, &collection, &item, maybe_supply)?;
 			Ok(())
 		}
 
@@ -831,7 +830,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_add_supply(&sender, &collection, &item, amount)?;
@@ -856,7 +855,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_burn(&sender, &collection, &item, amount)?;
@@ -883,7 +882,7 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			dest: AccountIdLookupOf<T>,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let destination = T::Lookup::lookup(dest)?;
@@ -950,7 +949,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_upgrade_item(&sender, &collection, &item, amount)?;
@@ -1002,7 +1001,7 @@ pub mod pallet {
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
-			amount: u32,
+			amount: Amount,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -1407,7 +1406,7 @@ pub mod pallet {
 		pub fn claim_set_buy(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
-			amount: u32,
+			amount: Amount,
 			ask_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -1706,7 +1705,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			pool: T::PoolId,
 			mint_to: AccountIdLookupOf<T>,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(mint_to)?;

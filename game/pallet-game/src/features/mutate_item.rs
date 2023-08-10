@@ -1,5 +1,5 @@
 use crate::*;
-use frame_support::{pallet_prelude::*};
+use frame_support::pallet_prelude::*;
 use gafi_support::game::{Amount, MutateItem};
 
 impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
@@ -12,6 +12,8 @@ impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::Collection
 		amount: Amount,
 	) -> DispatchResult {
 		Self::sub_item_balance(who, collection, item, amount)?;
+
+		Self::decrease_finite_item_supply(collection, item, amount);
 
 		Self::deposit_event(Event::<T, I>::Burned {
 			who: who.clone(),
