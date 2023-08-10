@@ -180,30 +180,51 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			.unwrap_or_default()
 	}
 
-	/// Decrease the supply of a finite-supply item.
+	/// Decreases the finite supply of a specific item within a collection by a given amount.
 	///
-	/// This internal function decreases the available supply for an item with finite supply.
+	/// If the collection and item exist, their finite supply is decremented by the specified
+	/// amount, with saturation to prevent underflow.
 	///
 	/// # Parameters
 	///
-	/// - `collection`: ID of the collection.
-	/// - `item`: ID of the item.
-	/// - `amount`: Amount to subtract from the item's supply.
-	///
-	/// # Storage Updates
-	///
-	/// - The supply of the item in the specified collection is decremented by `amount`, with a
-	///   minimum value of zero.
+	/// - `collection`: The identifier of the collection.
+	/// - `item`: The identifier of the item.
+	/// - `amount`: The amount to decrease the item's supply by.
 	pub(crate) fn decrease_finite_item_supply(
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: Amount,
 	) {
-		let maybe_finite = SupplyOf::<T, I>::get(collection, item);
-		if let Some(maybe_supply) = maybe_finite {
-			if let Some(supply) = maybe_supply {
-				SupplyOf::<T, I>::insert(collection, item, Some(supply.saturating_sub(amount)));
-			}
+		if let Some(Some(existing_supply)) = SupplyOf::<T, I>::get(collection, item) {
+			SupplyOf::<T, I>::insert(
+				collection,
+				item,
+				Some(existing_supply.saturating_sub(amount)),
+			);
+		}
+	}
+
+	/// Increases the finite supply of a specific item within a collection by a given amount.
+	///
+	/// If the collection and item exist, their finite supply is incremented by the specified
+	/// amount, with saturation to prevent overflow.
+	///
+	/// # Parameters
+	///
+	/// - `collection`: The identifier of the collection.
+	/// - `item`: The identifier of the item.
+	/// - `amount`: The amount to increase the item's supply by.
+	pub(crate) fn increase_finite_item_supply(
+		collection: &T::CollectionId,
+		item: &T::ItemId,
+		amount: Amount,
+	) {
+		if let Some(Some(existing_supply)) = SupplyOf::<T, I>::get(collection, item) {
+			SupplyOf::<T, I>::insert(
+				collection,
+				item,
+				Some(existing_supply.saturating_add(amount)),
+			);
 		}
 	}
 }

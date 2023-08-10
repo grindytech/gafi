@@ -434,7 +434,7 @@ pub mod pallet {
 			who: T::AccountId,
 			pool: T::PoolId,
 			target: T::AccountId,
-			block_number: T::BlockNumber, 
+			block_number: T::BlockNumber,
 		},
 		Minted {
 			who: T::AccountId,
@@ -653,7 +653,6 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
-
 		/// Process minting requests in `block_number`.
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
 			for request in MintRequestOf::<T, I>::get(block_number) {
@@ -813,13 +812,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Add supplies for the item.
+		//// Adds a specified amount of an item to a collection's finite supply and balance of
+		//// `collection` owner.
 		///
-		/// The origin must be Signed and the sender should be the Admin of `collection`.
+		/// Origin must be signed and have permission. Item's supply must not be infinite.
 		///
-		/// - `collection`: The collection of the item to be minted.
-		/// - `item`: An identifier of the new item.
-		/// - `amount`: Supply amount.
+		/// # Parameters
+		///
+		/// - `origin`: Signed origin of the transaction.
+		/// - `collection`: Identifier of the collection.
+		/// - `item`: Identifier of the item.
+		/// - `amount`: Amount to add to balance and finite supply.
 		///
 		/// Emits `ItemAdded` event when successful.
 		///
@@ -862,15 +865,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Move an item from the sender account to another.
+		/// Transfers a specified amount of an item between accounts within a collection.
 		///
-		/// Origin must be Signed and the signing account must be the owner of the `item`.
+		/// # Parameters
 		///
-		/// Arguments:
-		/// - `collection`: The collection of the item to be transferred.
-		/// - `item`: The item to be transferred.
-		/// - `dest`: The account to receive ownership of the item.
-		/// - `amount`: The amount of item to be transferred.
+		/// - `origin`: Origin must be signed, indicating the sender.
+		/// - `collection`: Collection identifier.
+		/// - `item`: Item identifier.
+		/// - `dest`: Destination account lookup.
+		/// - `amount`: Amount of the item to transfer.
+		///
 		///
 		/// Emits `Transferred`.
 		///

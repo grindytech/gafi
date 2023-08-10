@@ -5,6 +5,10 @@ use gafi_support::game::{Amount, MutateItem};
 impl<T: Config<I>, I: 'static> MutateItem<T::AccountId, T::GameId, T::CollectionId, T::ItemId>
 	for Pallet<T, I>
 {
+	/// Burns a specified amount of an item from an account's balance and decreases the finite
+	/// supply.
+	///
+	/// Emits `Burned` event on success.
 	fn do_burn(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
