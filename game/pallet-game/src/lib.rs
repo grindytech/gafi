@@ -960,7 +960,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set the price for a package.
+		/// Set the price for NFTs within a collection.
 		///
 		/// Origin must be Signed and must be the owner of the `item`.
 		///
@@ -1022,14 +1022,67 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(15)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply())]
-		pub fn add_retail_supply(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_set_price())]
+		pub fn add_set_price(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			supply: Package<T::CollectionId, T::ItemId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_add_retail_supply(&trade, &sender, supply)?;
+			Self::do_add_set_price(&trade, &sender, supply)?;
+			Ok(())
+		}
+
+		/// Set up a purchase for `package`.
+		///
+		/// It is possible to trade for a small part of the `package`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `package`: A number of an item in a collection want to buy.
+		/// - `unit_price`: The price of each item the sender is willing to pay.
+		/// - `start_block`: The block to start set buy.
+		/// - `end_block`: The block to end set buy.
+		///
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(29)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_order())]
+		pub fn set_order(
+			origin: OriginFor<T>,
+			package: Package<T::CollectionId, T::ItemId>,
+			unit_price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade = Self::get_trade_id();
+			Self::do_set_buy(&trade, &sender, package, unit_price, start_block, end_block)?;
+			Ok(())
+		}
+
+		/// Sell ​​`amount` of the item for `set_order`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The set_order trade id.
+		/// - `amount`: The amount of items to sell.
+		/// - `ask_price`: The price that the sender willing to accept.
+		///
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(30)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::sell_item())]
+		pub fn sell_item(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			amount: Amount,
+			ask_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
 
@@ -1119,8 +1172,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(bundle.len() as u32))]
-		pub fn set_wishlist(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::order_bundle(bundle.len() as u32))]
+		pub fn order_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
@@ -1131,25 +1184,25 @@ pub mod pallet {
 			let trade = Self::get_trade_id();
 			let bundle_len = bundle.len() as u32;
 			Self::do_set_wishlist(&trade, &sender, bundle, price, start_block, end_block)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::set_wishlist(
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::order_bundle(
 				bundle_len,
 			))
 			.into())
 		}
 
-		/// Sell the bundle for `set_wishlist`.
+		/// Sell the bundle for `order_bundle`.
 		///
 		/// Origin must be Signed.
 		///
-		/// - `trade`:  The set_wishlist trade id.
+		/// - `trade`:  The order_bundle trade id.
 		/// - `ask_price`: The price the sender is willing to accept.
 		///
 		/// Emits `WishlistFilled`.
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(20)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist())]
-		pub fn claim_wishlist(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::sell_bundle())]
+		pub fn sell_bundle(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			ask_price: BalanceOf<T, I>,
@@ -1237,8 +1290,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(source.len() as u32, required.len() as u32))]
-		pub fn set_swap(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_swap(source.len() as u32, required.len() as u32))]
+		pub fn create_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
@@ -1261,26 +1314,26 @@ pub mod pallet {
 				start_block,
 				end_block,
 			)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::set_swap(
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::create_swap(
 				source_len,
 				required_len,
 			))
 			.into())
 		}
 
-		/// Make an exchange for `set_swap`.
+		/// Make an exchange for `create_swap`.
 		///
 		/// Origin must be Signed.
 		///
-		/// - `trade`: The set_swap trade id.
+		/// - `trade`: The create_swap trade id.
 		/// - `maybe_bid_price`: Maybe a price sender willing to pay.
 		///
 		/// Emits `SwapClaimed`.
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(25)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap())]
-		pub fn claim_swap(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::make_swap())]
+		pub fn make_swap(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			maybe_bid_price: Option<BalanceOf<T, I>>,
@@ -1358,63 +1411,10 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(28)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction())]
-		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::close_auction())]
+		pub fn close_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&trade)?;
-			Ok(())
-		}
-
-		/// Set up a purchase for `package`.
-		///
-		/// It is possible to trade for a small part of the `package`.
-		///
-		/// Origin must be Signed.
-		///
-		/// - `package`: A number of an item in a collection want to buy.
-		/// - `unit_price`: The price of each item the sender is willing to pay.
-		/// - `start_block`: The block to start set buy.
-		/// - `end_block`: The block to end set buy.
-		///
-		/// Emits `BuySet`.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(29)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy())]
-		pub fn set_buy(
-			origin: OriginFor<T>,
-			package: Package<T::CollectionId, T::ItemId>,
-			unit_price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			let trade = Self::get_trade_id();
-			Self::do_set_buy(&trade, &sender, package, unit_price, start_block, end_block)?;
-			Ok(())
-		}
-
-		/// Sell ​​`amount` of the item for `set_buy`.
-		///
-		/// Origin must be Signed.
-		///
-		/// - `trade`: The set_buy trade id.
-		/// - `amount`: The amount of items to sell.
-		/// - `ask_price`: The price that the sender willing to accept.
-		///
-		/// Emits `BuySet`.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(30)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy())]
-		pub fn claim_set_buy(
-			origin: OriginFor<T>,
-			trade: T::TradeId,
-			amount: Amount,
-			ask_price: BalanceOf<T, I>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
 
