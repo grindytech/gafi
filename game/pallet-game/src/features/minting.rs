@@ -102,7 +102,7 @@ impl<T: Config<I>, I: 'static>
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
-		amount: u32,
+		amount: Amount,
 	) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(pool) {
 			// verify mint settings
@@ -161,7 +161,7 @@ impl<T: Config<I>, I: 'static>
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
-		amount: u32,
+		amount: Amount,
 	) -> DispatchResult {
 		// validating item amount
 		let mut table = LootTableOf::<T, I>::get(pool).clone().into();
@@ -224,7 +224,7 @@ impl<T: Config<I>, I: 'static>
 		pool: &T::PoolId,
 		who: &T::AccountId,
 		target: &T::AccountId,
-		amount: u32,
+		amount: Amount,
 	) -> DispatchResult {
 		// random minting
 		let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();

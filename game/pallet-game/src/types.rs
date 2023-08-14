@@ -126,7 +126,7 @@ pub struct MintRequest<AccountId, PoolId, Balance, BlockNumber> {
 	pub(super) target: AccountId,
 
 	/// Number of mint request
-	pub(super) amount: u32,
+	pub(super) amount: Amount,
 
 	/// Mining fee of the pool
 	pub(super) mining_fee: Balance,

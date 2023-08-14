@@ -86,18 +86,18 @@ The highest bid when the auction expired is the winner.
 ### Trade dispatchables
 * `set_price`: Set price for NFTs.
 * `buy_item`: Buy NFTs from `set_price`.
-* `add_retail_supply`: Add NFTs for `set_price`.
+* `add_set_price`: Add NFTs for `set_price`.
 * `set_bundle`: Set a price for a bundle.
 * `buy_bundle`: Buy a bundle from `set_bundle`.
-* `set_buy`: Place a buy trade for NFTs.
-* `claim_set_buy`: Sell NFTs for `set_buy`.
-* `set_wishlist`: Order a buy-all for a bundle.
-* `claim_wishlist`: Sell a bundle for `set_wishlist`.
-* `set_swap`: Set an exchange a bundle for a bundle may have an additional cost.
-* `claim_swap`: Make an exchange from `set_swap`.
+* `set_order`: Place a buy trade for NFTs.
+* `sell_item`: Sell NFTs for `set_order`.
+* `order_bundle`: Order a buy-all for a bundle.
+* `sell_bundle`: Sell a bundle for `order_bundle`.
+* `create_swap`: Set an exchange a bundle for a bundle may have an additional cost.
+* `make_swap`: Make an exchange from `create_swap`.
 * `set_auction`: Bid for a bundle, starting on a specific block with a minimum bid and duration.
 * `bid_auction`: Make a bid.
-* `claim_auction`: End the auction when it expires.
+* `close_auction`: End the auction when it expires.
 * `cancel_trade`: Cancel a trade with trade id.
 * `create_dynamic_pool`: Create a minting pool with a dynamic weight loot table.
 

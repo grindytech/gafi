@@ -107,7 +107,6 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 		who: &AccountId,
 		collection: &CollectionId,
 		item: &ItemId,
-		config: &ItemConfig,
 		maybe_supply: Option<u32>,
 	) -> DispatchResult;
 
@@ -335,7 +334,7 @@ pub trait Retail<AccountId, CollectionId, ItemId, TradeId, Price, BlockNumber> {
 	/// - `who`: seller
 	/// - `collection`: collection id
 	/// - `item`: item id
-	fn do_add_retail_supply(
+	fn do_add_set_price(
 		trade: &TradeId,
 		who: &AccountId,
 		supply: Package<CollectionId, ItemId>,

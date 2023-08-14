@@ -52,20 +52,20 @@ pub trait WeightInfo {
 	fn buy_item() -> Weight;
 	fn set_bundle(s: u32, ) -> Weight;
 	fn buy_bundle() -> Weight;
-	fn set_wishlist(s: u32, ) -> Weight;
-	fn claim_wishlist() -> Weight;
+	fn order_bundle(s: u32, ) -> Weight;
+	fn sell_bundle() -> Weight;
 	fn remove_collection() -> Weight;
-	fn set_swap(s: u32, x: u32, ) -> Weight;
-	fn claim_swap() -> Weight;
+	fn create_swap(s: u32, x: u32, ) -> Weight;
+	fn make_swap() -> Weight;
 	fn set_auction(s: u32, ) -> Weight;
 	fn bid_auction() -> Weight;
-	fn claim_auction() -> Weight;
-	fn set_buy() -> Weight;
-	fn claim_set_buy() -> Weight;
+	fn close_auction() -> Weight;
+	fn set_order() -> Weight;
+	fn sell_item() -> Weight;
 	fn create_collection() -> Weight;
 	fn set_accept_adding() -> Weight;
 	fn add_game_collection() -> Weight;
-	fn add_retail_supply() -> Weight;
+	fn add_set_price() -> Weight;
 	fn cancel_trade() -> Weight;
 	fn create_dynamic_pool(s: u32, ) -> Weight;
 	fn create_stable_pool(s: u32, ) -> Weight;
@@ -344,7 +344,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: Game TradeConfigOf (r:0 w:1)
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn set_wishlist(s: u32, ) -> Weight {
+	fn order_bundle(s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `179`
 		//  Estimated: `3606`
@@ -367,7 +367,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
 	/// Storage: Game ItemBalanceOf (r:4 w:4)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn claim_wishlist() -> Weight {
+	fn sell_bundle() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `986`
 		//  Estimated: `11226`
@@ -407,7 +407,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
 	/// The range of component `x` is `[0, 10]`.
-	fn set_swap(s: u32, x: u32, ) -> Weight {
+	fn create_swap(s: u32, x: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `294`
 		//  Estimated: `3606`
@@ -430,7 +430,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: System Account (r:1 w:1)
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
-	fn claim_swap() -> Weight {
+	fn make_swap() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `726`
 		//  Estimated: `11226`
@@ -490,7 +490,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn claim_auction() -> Weight {
+	fn close_auction() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `712`
 		//  Estimated: `6108`
@@ -507,7 +507,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
 	/// Storage: Game TradeConfigOf (r:0 w:1)
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
-	fn set_buy() -> Weight {
+	fn set_order() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `109`
 		//  Estimated: `3606`
@@ -528,7 +528,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: System Account (r:1 w:1)
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
-	fn claim_set_buy() -> Weight {
+	fn sell_item() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `871`
 		//  Estimated: `3667`
@@ -604,7 +604,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game ReservedBalanceOf (r:1 w:1)
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn add_retail_supply() -> Weight {
+	fn add_set_price() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `874`
 		//  Estimated: `3667`
@@ -968,7 +968,7 @@ impl WeightInfo for () {
 	/// Storage: Game TradeConfigOf (r:0 w:1)
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
-	fn set_wishlist(s: u32, ) -> Weight {
+	fn order_bundle(s: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `179`
 		//  Estimated: `3606`
@@ -991,7 +991,7 @@ impl WeightInfo for () {
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
 	/// Storage: Game ItemBalanceOf (r:4 w:4)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn claim_wishlist() -> Weight {
+	fn sell_bundle() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `986`
 		//  Estimated: `11226`
@@ -1031,7 +1031,7 @@ impl WeightInfo for () {
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
 	/// The range of component `s` is `[0, 10]`.
 	/// The range of component `x` is `[0, 10]`.
-	fn set_swap(s: u32, x: u32, ) -> Weight {
+	fn create_swap(s: u32, x: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `294`
 		//  Estimated: `3606`
@@ -1054,7 +1054,7 @@ impl WeightInfo for () {
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: System Account (r:1 w:1)
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
-	fn claim_swap() -> Weight {
+	fn make_swap() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `726`
 		//  Estimated: `11226`
@@ -1114,7 +1114,7 @@ impl WeightInfo for () {
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game ItemBalanceOf (r:2 w:2)
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn claim_auction() -> Weight {
+	fn close_auction() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `712`
 		//  Estimated: `6108`
@@ -1131,7 +1131,7 @@ impl WeightInfo for () {
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
 	/// Storage: Game TradeConfigOf (r:0 w:1)
 	/// Proof: Game TradeConfigOf (max_values: None, max_size: Some(202), added: 2677, mode: MaxEncodedLen)
-	fn set_buy() -> Weight {
+	fn set_order() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `109`
 		//  Estimated: `3606`
@@ -1152,7 +1152,7 @@ impl WeightInfo for () {
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: System Account (r:1 w:1)
 	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
-	fn claim_set_buy() -> Weight {
+	fn sell_item() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `871`
 		//  Estimated: `3667`
@@ -1228,7 +1228,7 @@ impl WeightInfo for () {
 	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
 	/// Storage: Game ReservedBalanceOf (r:1 w:1)
 	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
-	fn add_retail_supply() -> Weight {
+	fn add_set_price() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `874`
 		//  Estimated: `3667`

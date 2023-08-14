@@ -99,7 +99,6 @@ fn do_create_item<T: Config<I>, I: 'static>(
 		RawOrigin::Signed(admin.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(collection),
 		<T as pallet_nfts::Config>::Helper::item(item),
-		default_item_config(),
 		supply,
 	));
 }
@@ -268,7 +267,7 @@ fn do_set_wishlist<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		},
 	];
 
-	assert_ok!(PalletGame::<T, I>::set_wishlist(
+	assert_ok!(PalletGame::<T, I>::order_bundle(
 		RawOrigin::Signed(who.clone()).into(),
 		bundle,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -328,8 +327,8 @@ benchmarks_instance_pallet! {
 	create_item {
 		let (caller, admin) = do_create_collection::<T, I>();
 		let call = Call::<T, I>::create_item { collection: <T as pallet_nfts::Config>::Helper::collection(0),
-			 item: <T as pallet_nfts::Config>::Helper::item(0),
-			config: default_item_config(), maybe_supply: Some(10) };
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			maybe_supply: Some(10) };
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
 	verify {
 		assert_last_event::<T, I>(Event::ItemCreated { who: admin,
@@ -523,7 +522,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	set_wishlist {
+	order_bundle {
 		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 		let (who, _, _) = new_account_with_item::<T, I>(0);
 		let bundle = vec![
@@ -533,7 +532,7 @@ benchmarks_instance_pallet! {
 			amount: 1,
 		}; s as usize];
 
-		let call = Call::<T, I>::set_wishlist {
+		let call = Call::<T, I>::order_bundle {
 			bundle: bundle.clone(),
 			price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 			start_block: None,
@@ -549,13 +548,13 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	claim_wishlist {
+	sell_bundle {
 		let player = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
 		do_set_wishlist::<T, I>(&player);
 
 		let (who, _, _) = new_account_with_item::<T, I>(0);
 
-		let call = Call::<T, I>::claim_wishlist {
+		let call = Call::<T, I>::sell_bundle {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 		};
@@ -584,7 +583,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	set_swap {
+	create_swap {
 		let s in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 		let x in 0 .. <T as pallet::Config<I>>::MaxBundle::get();
 
@@ -603,7 +602,7 @@ benchmarks_instance_pallet! {
 			amount: 1,
 		}; x as usize];
 
-		let call = Call::<T, I>::set_swap {
+		let call = Call::<T, I>::create_swap {
 			source: bundle.clone(),
 			required: required.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
@@ -621,7 +620,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	claim_swap {
+	make_swap {
 		let (player1, _, _) = new_account_with_item::<T, I>(0);
 		let (player2, _, _) = new_account_with_item::<T, I>(1);
 
@@ -649,7 +648,7 @@ benchmarks_instance_pallet! {
 			amount: 10,
 		}];
 
-		assert_ok!(PalletGame::<T, I>::set_swap(
+		assert_ok!(PalletGame::<T, I>::create_swap(
 			RawOrigin::Signed(player1.clone()).into(),
 			source.clone(),
 			required.clone(),
@@ -658,7 +657,7 @@ benchmarks_instance_pallet! {
 			None,
 		));
 
-		let call = Call::<T, I>::claim_swap {
+		let call = Call::<T, I>::make_swap {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			maybe_bid_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
 		};
@@ -717,7 +716,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	claim_auction {
+	close_auction {
 		let _ = do_set_auction::<T, I>();
 
 		let bidder = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
@@ -731,7 +730,7 @@ benchmarks_instance_pallet! {
 
 		frame_system::Pallet::<T>::set_block_number(<T as pallet::Config<I>>::Helper::block(10));
 
-		let call = Call::<T, I>::claim_auction {
+		let call = Call::<T, I>::close_auction {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 		};
 	}: { call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
@@ -742,7 +741,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	set_buy {
+	set_order {
 		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
 
 		let package = Package {
@@ -751,7 +750,7 @@ benchmarks_instance_pallet! {
 			amount: 10,
 		};
 
-		let call = Call::<T, I>::set_buy {
+		let call = Call::<T, I>::set_order {
 			package: package.clone(),
 			unit_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
 			start_block: None,
@@ -769,7 +768,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	claim_set_buy {
+	sell_item {
 		let (who, _, _) = new_account_with_item::<T, I>(0);
 
 		let player = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
@@ -778,7 +777,7 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
 		};
-		assert_ok!(PalletGame::<T, I>::set_buy(
+		assert_ok!(PalletGame::<T, I>::set_order(
 			RawOrigin::Signed(player.clone()).into(),
 			package.clone(),
 			<T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -786,7 +785,7 @@ benchmarks_instance_pallet! {
 			None,
 		));
 
-		let call = Call::<T, I>::claim_set_buy {
+		let call = Call::<T, I>::sell_item {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			amount: 10,
 			ask_price: <T as pallet::Config<I>>::Currency::minimum_balance(),
@@ -863,7 +862,7 @@ benchmarks_instance_pallet! {
 		}.into() );
 	}
 
-	add_retail_supply {
+	add_set_price {
 		let (who, _, _) = new_account_with_item::<T, I>(0);
 		do_set_price::<T, I>(&who);
 		let package = Package {
@@ -872,7 +871,7 @@ benchmarks_instance_pallet! {
 			amount: 5,
 		};
 
-		let call = Call::<T, I>::add_retail_supply {
+		let call = Call::<T, I>::add_set_price {
 			trade: <T as pallet::Config<I>>::Helper::trade(0),
 			supply: package,
 		};
