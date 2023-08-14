@@ -44,20 +44,18 @@ pub use weights::*;
 
 use frame_support::{
 	ensure,
+	pallet_prelude::*,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
-		Currency, ReservableCurrency,
+		BalanceStatus, Currency, ReservableCurrency,
 	},
 };
-use frame_system::{pallet_prelude::BlockNumberFor, Config as SystemConfig};
+use frame_system::Config as SystemConfig;
 use gafi_support::game::*;
-
 use pallet_nfts::{
 	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
 };
-use sp_runtime::{
-	traits::{StaticLookup},
-};
+use sp_runtime::traits::StaticLookup;
 use sp_std::vec::Vec;
 use types::*;
 
@@ -142,14 +140,14 @@ pub mod pallet {
 		/// The type used to identify a unique trade
 		type TradeId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
-		/// The type used to identify a unique mining pool
+		/// The type used to identify a unique minting pool
 		type PoolId: Member + Parameter + MaxEncodedLen + Copy + Incrementable;
 
 		/// The basic amount of funds that must be reserved for a game.
 		#[pallet::constant]
 		type GameDeposit: Get<BalanceOf<Self, I>>;
 
-		/// The basic amount of funds that must be reserved for a mining pool.
+		/// The basic amount of funds that must be reserved for a minting pool.
 		#[pallet::constant]
 		type MiningPoolDeposit: Get<BalanceOf<Self, I>>;
 
@@ -185,7 +183,16 @@ pub mod pallet {
 		#[pallet::constant]
 		type BundleDeposit: Get<BalanceOf<Self, I>>;
 
+		/// Mechanism for generating randomness to mint NFTs.
 		type GameRandomness: GameRandomness;
+
+		/// Maximum number of minting requests per block.
+		#[pallet::constant]
+		type MaxMintRequest: Get<u32>;
+
+		/// Number of blocks of cooldown required to process minting requests.
+		#[pallet::constant]
+		type MintInterval: Get<Self::BlockNumber>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -220,7 +227,7 @@ pub mod pallet {
 	pub(super) type NextTradeId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::TradeId, OptionQuery>;
 
-	/// Storing next mining pool id
+	/// Storing next minting pool id
 	#[pallet::storage]
 	pub(super) type NextPoolId<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, T::PoolId, OptionQuery>;
@@ -305,10 +312,20 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Storing mining pool configuration
+	/// Storing minting pool configuration
 	#[pallet::storage]
 	pub(super) type PoolOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Twox64Concat, T::PoolId, PoolDetailsFor<T, I>, OptionQuery>;
+
+	/// Storing mint request
+	#[pallet::storage]
+	pub(super) type MintRequestOf<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Twox64Concat,
+		BlockNumber<T>,
+		BoundedVec<MintRequestFor<T, I>, T::MaxMintRequest>,
+		ValueQuery,
+	>;
 
 	/// Level of item
 	#[pallet::storage]
@@ -380,16 +397,6 @@ pub mod pallet {
 	pub(super) type AddingAcceptance<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::CollectionId, T::GameId, OptionQuery>;
 
-	/// Defines the block when next unsigned transaction will be accepted.
-	///
-	/// To prevent spam of unsigned (and unpaid!) transactions on the network,
-	/// we only allow one transaction every `T::UnsignedInterval` blocks.
-	/// This storage entry defines when new transaction is going to be accepted.
-	#[pallet::storage]
-	#[pallet::getter(fn next_unsigned_at)]
-	pub(super) type NextUnsignedAt<T: Config<I>, I: 'static = ()> =
-		StorageValue<_, BlockNumberFor<T>, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
@@ -421,11 +428,17 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
+		},
+		RequestMint {
+			who: T::AccountId,
+			pool: T::PoolId,
+			target: T::AccountId,
+			block_number: T::BlockNumber,
 		},
 		Minted {
-			pool: T::PoolId,
 			who: T::AccountId,
+			pool: T::PoolId,
 			target: T::AccountId,
 			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
 		},
@@ -433,14 +446,14 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		},
 		Transferred {
 			from: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
 			dest: T::AccountId,
-			amount: u32,
+			amount: Amount,
 		},
 		UpgradeSet {
 			who: T::AccountId,
@@ -454,20 +467,20 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			new_item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		},
 		PriceSet {
 			trade: T::TradeId,
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 			unit_price: BalanceOf<T, I>,
 		},
 		ItemBought {
 			trade: T::TradeId,
 			who: T::AccountId,
-			amount: u32,
+			amount: Amount,
 			bid_unit_price: BalanceOf<T, I>,
 		},
 		BundleSet {
@@ -535,13 +548,13 @@ pub mod pallet {
 			who: T::AccountId,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 			unit_price: BalanceOf<T, I>,
 		},
 		SetBuyClaimed {
 			trade: T::TradeId,
 			who: T::AccountId,
-			amount: u32,
+			amount: Amount,
 			ask_unit_price: BalanceOf<T, I>,
 		},
 		MiningPoolCreated {
@@ -628,13 +641,38 @@ pub mod pallet {
 		NotAuction,
 		NotSetBuy,
 
-		//mining pool
+		//minting pool
 		InfiniteSupply,
 		NotInfiniteSupply,
 		MintFailed,
 		MintNotStarted,
 		MintEnded,
 		NotWhitelisted,
+		OverRequest,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
+		/// Process minting requests in `block_number`.
+		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+			for request in MintRequestOf::<T, I>::get(block_number) {
+				let res = Self::processing_mint_request(request);
+				if let Err(e) = res {
+					log::error!("Mint Request Failed: {:?}", e);
+				}
+			}
+			Weight::zero()
+		}
+
+		/// Remove any existing minting requests on the `block_number`.
+		fn on_finalize(block_number: BlockNumber<T>) {
+			if !MintRequestOf::<T, I>::get(block_number).is_empty() {
+				let res = Self::remove_mint_request(block_number);
+				if let Err(e) = res {
+					log::error!("Remove Mint Request Failed: {:?}", e);
+				}
+			}
+		}
 	}
 
 	#[pallet::call]
@@ -767,21 +805,24 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			config: ItemConfig,
 			maybe_supply: Option<u32>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_create_item(&sender, &collection, &item, &config, maybe_supply)?;
+			Self::do_create_item(&sender, &collection, &item, maybe_supply)?;
 			Ok(())
 		}
 
-		/// Add supplies for the item.
+		//// Adds a specified amount of an item to a collection's finite supply and balance of
+		//// `collection` owner.
 		///
-		/// The origin must be Signed and the sender should be the Admin of `collection`.
+		/// Origin must be signed and have permission. Item's supply must not be infinite.
 		///
-		/// - `collection`: The collection of the item to be minted.
-		/// - `item`: An identifier of the new item.
-		/// - `amount`: Supply amount.
+		/// # Parameters
+		///
+		/// - `origin`: Signed origin of the transaction.
+		/// - `collection`: Identifier of the collection.
+		/// - `item`: Identifier of the item.
+		/// - `amount`: Amount to add to balance and finite supply.
 		///
 		/// Emits `ItemAdded` event when successful.
 		///
@@ -792,35 +833,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_add_supply(&sender, &collection, &item, amount)?;
-			Ok(())
-		}
-
-		/// Mint an amount of item on a particular mining pool.
-		///
-		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
-		///
-		/// - `pool`: The pool to be minted.
-		/// - `mint_to`: Account into which the item will be minted.
-		/// - `amount`: The amount may be minted.
-		///
-		/// Emits `Minted` event when successful.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::mint())]
-		pub fn mint(
-			origin: OriginFor<T>,
-			pool: T::PoolId,
-			mint_to: AccountIdLookupOf<T>,
-			amount: u32,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			let target = T::Lookup::lookup(mint_to)?;
-			Self::do_mint(&pool, &sender, &target, amount)?;
 			Ok(())
 		}
 
@@ -842,22 +858,23 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_burn(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
-		/// Move an item from the sender account to another.
+		/// Transfers a specified amount of an item between accounts within a collection.
 		///
-		/// Origin must be Signed and the signing account must be the owner of the `item`.
+		/// # Parameters
 		///
-		/// Arguments:
-		/// - `collection`: The collection of the item to be transferred.
-		/// - `item`: The item to be transferred.
-		/// - `dest`: The account to receive ownership of the item.
-		/// - `amount`: The amount of item to be transferred.
+		/// - `origin`: Origin must be signed, indicating the sender.
+		/// - `collection`: Collection identifier.
+		/// - `item`: Item identifier.
+		/// - `dest`: Destination account lookup.
+		/// - `amount`: Amount of the item to transfer.
+		///
 		///
 		/// Emits `Transferred`.
 		///
@@ -869,7 +886,7 @@ pub mod pallet {
 			collection: T::CollectionId,
 			item: T::ItemId,
 			dest: AccountIdLookupOf<T>,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let destination = T::Lookup::lookup(dest)?;
@@ -936,14 +953,14 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
 			item: T::ItemId,
-			amount: u32,
+			amount: Amount,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_upgrade_item(&sender, &collection, &item, amount)?;
 			Ok(())
 		}
 
-		/// Set the price for a package.
+		/// Set the price for NFTs within a collection.
 		///
 		/// Origin must be Signed and must be the owner of the `item`.
 		///
@@ -988,7 +1005,7 @@ pub mod pallet {
 		pub fn buy_item(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
-			amount: u32,
+			amount: Amount,
 			bid_price: BalanceOf<T, I>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -1005,14 +1022,67 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(15)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_retail_supply())]
-		pub fn add_retail_supply(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::add_set_price())]
+		pub fn add_set_price(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			supply: Package<T::CollectionId, T::ItemId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_add_retail_supply(&trade, &sender, supply)?;
+			Self::do_add_set_price(&trade, &sender, supply)?;
+			Ok(())
+		}
+
+		/// Set up a purchase for `package`.
+		///
+		/// It is possible to trade for a small part of the `package`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `package`: A number of an item in a collection want to buy.
+		/// - `unit_price`: The price of each item the sender is willing to pay.
+		/// - `start_block`: The block to start set buy.
+		/// - `end_block`: The block to end set buy.
+		///
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(29)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_order())]
+		pub fn set_order(
+			origin: OriginFor<T>,
+			package: Package<T::CollectionId, T::ItemId>,
+			unit_price: BalanceOf<T, I>,
+			start_block: Option<T::BlockNumber>,
+			end_block: Option<T::BlockNumber>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let trade = Self::get_trade_id();
+			Self::do_set_buy(&trade, &sender, package, unit_price, start_block, end_block)?;
+			Ok(())
+		}
+
+		/// Sell ​​`amount` of the item for `set_order`.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `trade`: The set_order trade id.
+		/// - `amount`: The amount of items to sell.
+		/// - `ask_price`: The price that the sender willing to accept.
+		///
+		/// Emits `BuySet`.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(30)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::sell_item())]
+		pub fn sell_item(
+			origin: OriginFor<T>,
+			trade: T::TradeId,
+			amount: Amount,
+			ask_price: BalanceOf<T, I>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
 
@@ -1102,8 +1172,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(19)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_wishlist(bundle.len() as u32))]
-		pub fn set_wishlist(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::order_bundle(bundle.len() as u32))]
+		pub fn order_bundle(
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
@@ -1114,25 +1184,25 @@ pub mod pallet {
 			let trade = Self::get_trade_id();
 			let bundle_len = bundle.len() as u32;
 			Self::do_set_wishlist(&trade, &sender, bundle, price, start_block, end_block)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::set_wishlist(
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::order_bundle(
 				bundle_len,
 			))
 			.into())
 		}
 
-		/// Sell the bundle for `set_wishlist`.
+		/// Sell the bundle for `order_bundle`.
 		///
 		/// Origin must be Signed.
 		///
-		/// - `trade`:  The set_wishlist trade id.
+		/// - `trade`:  The order_bundle trade id.
 		/// - `ask_price`: The price the sender is willing to accept.
 		///
 		/// Emits `WishlistFilled`.
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(20)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_wishlist())]
-		pub fn claim_wishlist(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::sell_bundle())]
+		pub fn sell_bundle(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			ask_price: BalanceOf<T, I>,
@@ -1220,8 +1290,8 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_swap(source.len() as u32, required.len() as u32))]
-		pub fn set_swap(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_swap(source.len() as u32, required.len() as u32))]
+		pub fn create_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
@@ -1244,26 +1314,26 @@ pub mod pallet {
 				start_block,
 				end_block,
 			)?;
-			Ok(Some(<T as pallet::Config<I>>::WeightInfo::set_swap(
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::create_swap(
 				source_len,
 				required_len,
 			))
 			.into())
 		}
 
-		/// Make an exchange for `set_swap`.
+		/// Make an exchange for `create_swap`.
 		///
 		/// Origin must be Signed.
 		///
-		/// - `trade`: The set_swap trade id.
+		/// - `trade`: The create_swap trade id.
 		/// - `maybe_bid_price`: Maybe a price sender willing to pay.
 		///
 		/// Emits `SwapClaimed`.
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(25)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_swap())]
-		pub fn claim_swap(
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::make_swap())]
+		pub fn make_swap(
 			origin: OriginFor<T>,
 			trade: T::TradeId,
 			maybe_bid_price: Option<BalanceOf<T, I>>,
@@ -1341,63 +1411,10 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(28)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_auction())]
-		pub fn claim_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::close_auction())]
+		pub fn close_auction(origin: OriginFor<T>, trade: T::TradeId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::do_claim_auction(&trade)?;
-			Ok(())
-		}
-
-		/// Set up a purchase for `package`.
-		///
-		/// It is possible to trade for a small part of the `package`.
-		///
-		/// Origin must be Signed.
-		///
-		/// - `package`: A number of an item in a collection want to buy.
-		/// - `unit_price`: The price of each item the sender is willing to pay.
-		/// - `start_block`: The block to start set buy.
-		/// - `end_block`: The block to end set buy.
-		///
-		/// Emits `BuySet`.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(29)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::set_buy())]
-		pub fn set_buy(
-			origin: OriginFor<T>,
-			package: Package<T::CollectionId, T::ItemId>,
-			unit_price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			let trade = Self::get_trade_id();
-			Self::do_set_buy(&trade, &sender, package, unit_price, start_block, end_block)?;
-			Ok(())
-		}
-
-		/// Sell ​​`amount` of the item for `set_buy`.
-		///
-		/// Origin must be Signed.
-		///
-		/// - `trade`: The set_buy trade id.
-		/// - `amount`: The amount of items to sell.
-		/// - `ask_price`: The price that the sender willing to accept.
-		///
-		/// Emits `BuySet`.
-		///
-		/// Weight: `O(1)`
-		#[pallet::call_index(30)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::claim_set_buy())]
-		pub fn claim_set_buy(
-			origin: OriginFor<T>,
-			trade: T::TradeId,
-			amount: u32,
-			ask_price: BalanceOf<T, I>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			Self::do_claim_set_buy(&trade, &sender, amount, ask_price)?;
 			Ok(())
 		}
 
@@ -1606,15 +1623,15 @@ pub mod pallet {
 			pallet_nfts::pallet::Pallet::<T>::set_team(origin, collection, issuer, admin, freezer)
 		}
 
-		/// Create a dynamic mining pool.
+		/// Create a dynamic minting pool.
 		///
 		/// Origin must be Signed and the sender should have sufficient items in the `loot_table`.
 		///
-		/// Note: The mining chance will be changed after each NFT is minted.
+		/// Note: The minting chance will be changed after each NFT is minted.
 		///
-		/// - `loot_table`: A bundle of NFTs for mining.
-		/// - `admin`: The Admin of this mining pool.
-		/// - `mint_settings`: The mining pool settings.
+		/// - `loot_table`: A bundle of NFTs for minting.
+		/// - `admin`: The Admin of this minting pool.
+		/// - `mint_settings`: The minting pool settings.
 		///
 		/// Emits `MiningPoolCreated`.
 		///
@@ -1640,16 +1657,16 @@ pub mod pallet {
 			)
 		}
 
-		/// Create a stable mining pool.
+		/// Create a stable minting pool.
 		///
 		/// Origin must be Signed and the sender should be the owner of all collections in the
 		/// `loot_table`. Collection in `loot_table` must be infinite supply.
 		///
-		/// Note: The mining chance will not be changed after each NFT is minted.
+		/// Note: The minting chance will not be changed after each NFT is minted.
 		///
-		/// - `loot_table`: A bundle of NFTs for mining.
-		/// - `admin`: The Admin of this mining pool.
-		/// - `mint_settings`: The mining pool settings.
+		/// - `loot_table`: A bundle of NFTs for minting.
+		/// - `admin`: The Admin of this minting pool.
+		/// - `mint_settings`: The minting pool settings.
 		///
 		/// Emits `MiningPoolCreated`.
 		///
@@ -1674,10 +1691,70 @@ pub mod pallet {
 				.into(),
 			)
 		}
+
+		/// Mint an amount of item on a particular minting pool.
+		///
+		/// The origin must be Signed and the sender must comply with the `mint_settings` rules.
+		///
+		/// - `pool`: The pool to be minted.
+		/// - `mint_to`: Account into which the item will be minted.
+		/// - `amount`: The amount may be minted.
+		///
+		/// Emits `Minted` event when successful.
+		///
+		/// Weight: `O(1)`
+		#[pallet::call_index(40)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::request_mint())]
+		pub fn request_mint(
+			origin: OriginFor<T>,
+			pool: T::PoolId,
+			mint_to: AccountIdLookupOf<T>,
+			amount: Amount,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let target = T::Lookup::lookup(mint_to)?;
+
+			Self::do_request_mint(&pool, &sender, &target, amount)?;
+			Ok(())
+		}
 	}
 }
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	pub fn processing_mint_request(payload: MintRequestFor<T, I>) -> DispatchResult {
+		if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
+			if let Ok(_) = match pool_details.pool_type {
+				PoolType::Dynamic => Self::do_mint_dynamic_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+				PoolType::Stable => Self::do_mint_stable_pool(
+					&payload.pool,
+					&payload.miner,
+					&payload.target,
+					payload.amount,
+				),
+			} {
+				<T as pallet::Config<I>>::Currency::repatriate_reserved(
+					&payload.miner,
+					&pool_details.owner,
+					payload.miner_reserve,
+					BalanceStatus::Free,
+				)?;
+				return Ok(())
+			}
+		}
+		<T as pallet::Config<I>>::Currency::unreserve(&payload.miner, payload.miner_reserve);
+		Ok(())
+	}
+
+	pub fn remove_mint_request(block_number: BlockNumber<T>) -> DispatchResult {
+		MintRequestOf::<T, I>::remove(block_number);
+		Ok(())
+	}
+
 	/// Return `Ok(())` if `who` is the owner of `game`.
 	pub fn ensure_game_owner(who: &T::AccountId, game: &T::GameId) -> Result<(), Error<T, I>> {
 		match Game::<T, I>::get(game) {

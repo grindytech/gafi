@@ -13,7 +13,7 @@ pub type LootTable<CollectionId, ItemId> = Vec<Loot<CollectionId, ItemId>>;
 pub struct Package<CollectionId, ItemId> {
 	pub collection: CollectionId,
 	pub item: ItemId,
-	pub amount: u32,
+	pub amount: Amount,
 }
 
 impl<CollectionId, ItemId> Package<CollectionId, ItemId> {
@@ -36,12 +36,12 @@ pub enum TradeType {
 	Swap,
 }
 
-/// Types of the mining pool
+/// Types of the minting pool
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum PoolType {
-	/// Item mining chance will change depending on item supply.
+	/// Item minting chance will change depending on item supply.
 	Dynamic,
-	/// Item mining chance is fixed with an infinite supply.
+	/// Item minting chance is fixed with an infinite supply.
 	Stable,
 }
 

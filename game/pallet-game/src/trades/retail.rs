@@ -173,7 +173,7 @@ impl<T: Config<I>, I: 'static>
 		Err(Error::<T, I>::UnknownTrade.into())
 	}
 
-	fn do_add_retail_supply(
+	fn do_add_set_price(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		supply: Package<T::CollectionId, T::ItemId>,

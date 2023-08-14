@@ -20,6 +20,13 @@ pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, Bala
 pub type TradeConfigFor<T, I> =
 	TradeConfig<<T as SystemConfig>::AccountId, BalanceOf<T, I>, BundleFor<T, I>, BlockNumber<T>>;
 
+pub type MintRequestFor<T, I> = MintRequest<
+	<T as SystemConfig>::AccountId,
+	<T as Config<I>>::PoolId,
+	BalanceOf<T, I>,
+	BlockNumber<T>,
+>;
+
 pub type PoolDetailsFor<T, I> = PoolDetails<
 	<T as SystemConfig>::AccountId,
 	BalanceOf<T, I>,
@@ -91,7 +98,7 @@ pub enum ItemBalanceStatus {
 	Free,
 }
 
-/// Information about a mining pool.
+/// Information about a minting pool.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct PoolDetails<AccountId, Balance, BlockNumber, CollectionId> {
 	/// pool type
@@ -105,4 +112,28 @@ pub struct PoolDetails<AccountId, Balance, BlockNumber, CollectionId> {
 	pub(super) admin: AccountId,
 	/// mint settings
 	pub(super) mint_settings: MintSettings<Balance, BlockNumber, CollectionId>,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct MintRequest<AccountId, PoolId, Balance, BlockNumber> {
+	/// Miner
+	pub(super) miner: AccountId,
+
+	/// Mining pool id
+	pub(super) pool: PoolId,
+
+	/// The receiver
+	pub(super) target: AccountId,
+
+	/// Number of mint request
+	pub(super) amount: Amount,
+
+	/// Mining fee of the pool
+	pub(super) mining_fee: Balance,
+
+	/// Total balance reserve on miner
+	pub(super) miner_reserve: Balance,
+
+	/// block_number request
+	pub(super) block_number: BlockNumber,
 }

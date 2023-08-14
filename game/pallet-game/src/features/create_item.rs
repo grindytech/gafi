@@ -8,7 +8,6 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
-		config: &ItemConfig,
 		maybe_supply: Option<u32>,
 	) -> DispatchResult {
 		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
@@ -17,7 +16,13 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 				Error::<T, I>::NoPermission
 			);
 
-			T::Nfts::mint_into(&collection, &item, &collection_owner, &config, false)?;
+			T::Nfts::mint_into(
+				&collection,
+				&item,
+				&collection_owner,
+				&ItemConfig::default(),
+				false,
+			)?;
 
 			if let Some(supply) = maybe_supply {
 				// issues new amount of item
@@ -37,40 +42,51 @@ impl<T: Config<I>, I: 'static> CreateItem<T::AccountId, T::CollectionId, T::Item
 		return Err(Error::<T, I>::UnknownCollection.into())
 	}
 
+	/// Adds a specified amount of an item to a collection's finite supply and the balance of
+	/// `collection` owner, subject to permissions.
+	///
+	/// # Parameters
+	///
+	/// - `who`: The account identifier of the caller attempting to add supply.
+	/// - `collection`: The identifier of the collection to which the item belongs.
+	/// - `item`: The identifier of the item to add supply for.
+	/// - `amount`: The amount to add to both the balance and the finite supply of the item.
 	fn do_add_supply(
 		who: &T::AccountId,
 		collection: &T::CollectionId,
 		item: &T::ItemId,
 		amount: Amount,
 	) -> DispatchResult {
-		// ensure permission
+		// Ensure the caller has the required permission
 		if let Some(collection_owner) = T::Nfts::collection_owner(collection) {
 			ensure!(
-				T::Nfts::is_admin(collection, who) | T::Nfts::is_issuer(collection, who),
+				T::Nfts::is_admin(collection, who) || T::Nfts::is_issuer(collection, who),
 				Error::<T, I>::NoPermission
 			);
 
-			if let Some(supply) = SupplyOf::<T, I>::get(collection, item) {
-				match supply {
-					Some(val) => {
-						let new_supply = val + amount;
-						Self::add_item_balance(&collection_owner, collection, item, amount)?;
-						SupplyOf::<T, I>::insert(collection, item, Some(new_supply));
-					},
-					None => return Err(Error::<T, I>::InfiniteSupply.into()),
-				};
-			} else {
-				return Err(Error::<T, I>::UnknownItem.into())
-			}
+			// Ensure the item's supply is not infinite
+			ensure!(
+				!Self::is_infinite(collection, item),
+				Error::<T, I>::InfiniteSupply
+			);
 
+			// Add the item to the collection owner's balance
+			Self::add_item_balance(&collection_owner, collection, item, amount)?;
+
+			// Increase the finite supply of the item
+			Self::increase_finite_item_supply(collection, item, amount);
+
+			// Emit an event to indicate the successful addition of supply
 			Self::deposit_event(Event::<T, I>::ItemAdded {
 				who: who.clone(),
 				collection: *collection,
 				item: *item,
 				amount,
 			});
-			return Ok(())
+
+			Ok(())
+		} else {
+			Err(Error::<T, I>::UnknownCollection.into())
 		}
-		return Err(Error::<T, I>::UnknownCollection.into())
 	}
 }

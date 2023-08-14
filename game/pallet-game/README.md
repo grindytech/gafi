@@ -3,7 +3,7 @@
 
 ### Goals
 A pallet designed to make it possible for developers (both blockchain and non-blockchain developers) to integrate Web3 technologies to improve in-game finance in minutes at a cost equal to zero.
-The studio can publish NFTs and get the rewards from mining fees, upgrading fees, and might be from trading fees in Gafi Marketplace.
+The studio can publish NFTs and get the rewards from minting fees, upgrading fees, and might be from trading fees in Gafi Marketplace.
 
 ## Overview
 The pallet-game is where all the assets in the game are handled, where the game owner can set up the game, collection, and NFT rules.
@@ -27,7 +27,7 @@ Pallet-game is coupled with [pallet-nfts](https://github.com/grindytech/substrat
 
 * **Add item:** Add a certain number of NFTs in a collection.
 
-* **Mint:** Randomly mint a certain amount of NFTs in the collection with a mining fee sent to the collection owner.
+* **Mint:** Randomly mint a certain amount of NFTs in the collection with a minting fee sent to the collection owner.
 The rarity depends on the number of NFTs in reserve.
 
 * **Set upgade:** Define NFT upgrade rules, any upgrade can cost a fee sent to the collection owner.
@@ -81,25 +81,25 @@ The highest bid when the auction expired is the winner.
 * `remove_collection`: Remove a collection from a game.
 * `lock_item_transfer`: Lock NFT to prevent any trade.
 * `unlock_item_transfer`: Revert the effects of a previous `lock_item_transfer`.
-* `create_stable_pool`: Create a mining pool with a constant weight loot table.
+* `create_stable_pool`: Create a minting pool with a constant weight loot table.
 
 ### Trade dispatchables
 * `set_price`: Set price for NFTs.
 * `buy_item`: Buy NFTs from `set_price`.
-* `add_retail_supply`: Add NFTs for `set_price`.
+* `add_set_price`: Add NFTs for `set_price`.
 * `set_bundle`: Set a price for a bundle.
 * `buy_bundle`: Buy a bundle from `set_bundle`.
-* `set_buy`: Place a buy trade for NFTs.
-* `claim_set_buy`: Sell NFTs for `set_buy`.
-* `set_wishlist`: Order a buy-all for a bundle.
-* `claim_wishlist`: Sell a bundle for `set_wishlist`.
-* `set_swap`: Set an exchange a bundle for a bundle may have an additional cost.
-* `claim_swap`: Make an exchange from `set_swap`.
+* `set_order`: Place a buy trade for NFTs.
+* `sell_item`: Sell NFTs for `set_order`.
+* `order_bundle`: Order a buy-all for a bundle.
+* `sell_bundle`: Sell a bundle for `order_bundle`.
+* `create_swap`: Set an exchange a bundle for a bundle may have an additional cost.
+* `make_swap`: Make an exchange from `create_swap`.
 * `set_auction`: Bid for a bundle, starting on a specific block with a minimum bid and duration.
 * `bid_auction`: Make a bid.
-* `claim_auction`: End the auction when it expires.
+* `close_auction`: End the auction when it expires.
 * `cancel_trade`: Cancel a trade with trade id.
-* `create_dynamic_pool`: Create a mining pool with a dynamic weight loot table.
+* `create_dynamic_pool`: Create a minting pool with a dynamic weight loot table.
 
 ### Metadata (permissioned) dispatchables
 * `set_attribute`: Set a metadata attribute of an item or collection.

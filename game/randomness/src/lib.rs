@@ -140,8 +140,6 @@ pub mod pallet {
 			if let Err(e) = res {
 				log::error!("Error: {}", e);
 			}
-			let random = RandomSeed::<T>::get();
-			log::info!("random {:?}", random);
 		}
 	}
 
@@ -159,7 +157,7 @@ pub mod pallet {
 		/// - `origin`: Accepted only by the off-chain worker.
 		/// - `block_number`: Current block number.
 		/// - `seed`: New random seed.
-		#[pallet::call_index(12)]
+		#[pallet::call_index(0)]
 		#[pallet::weight({0})]
 		pub fn submit_random_seed_unsigned(
 			origin: OriginFor<T>,
