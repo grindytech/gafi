@@ -3,7 +3,8 @@ use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Bundle, TradeType, Wholesale};
 
 impl<T: Config<I>, I: 'static>
-	Wholesale<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
+	Wholesale<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	for Pallet<T, I>
 {
 	fn do_set_bundle(
 		trade: &T::TradeId,
@@ -50,6 +51,8 @@ impl<T: Config<I>, I: 'static>
 			who: who.clone(),
 			bundle,
 			price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

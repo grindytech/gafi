@@ -3,7 +3,8 @@ use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
 use gafi_support::game::{Bundle, Swap, TradeType};
 
 impl<T: Config<I>, I: 'static>
-	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
+	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	for Pallet<T, I>
 {
 	fn do_set_swap(
 		trade: &T::TradeId,
@@ -55,6 +56,8 @@ impl<T: Config<I>, I: 'static>
 			source,
 			required,
 			maybe_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

@@ -7,7 +7,8 @@ use gafi_support::game::{Amount, Package, Retail, TradeType};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
+	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	for Pallet<T, I>
 {
 	fn do_set_price(
 		trade: &T::TradeId,
@@ -61,6 +62,8 @@ impl<T: Config<I>, I: 'static>
 			item: package.item,
 			amount: package.amount,
 			unit_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())
@@ -267,6 +270,8 @@ impl<T: Config<I>, I: 'static>
 			item: package.item,
 			amount: package.amount,
 			unit_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())
@@ -280,7 +285,7 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
 			ensure!(config.trade == TradeType::SetBuy, Error::<T, I>::NotSetBuy);
-			
+
 			let block_number = <frame_system::Pallet<T>>::block_number();
 			if let Some(start_block) = config.start_block {
 				ensure!(block_number >= start_block, Error::<T, I>::TradeNotStarted);
