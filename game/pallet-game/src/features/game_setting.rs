@@ -1,10 +1,39 @@
 use crate::*;
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, StorageValue};
 use pallet_nfts::{CollectionRole, CollectionRoles};
 
-impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
+impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::StringLimit>
 	for Pallet<T, I>
 {
+	/// Note: if `maybe_depositor` is None, that means the depositor will be a game's owner
+	fn do_set_game_metadata(
+		maybe_check_origin: Option<T::AccountId>,
+		game: T::GameId,
+		data: BoundedVec<u8, T::StringLimit>,
+		maybe_depositor: Option<T::AccountId>,
+	) -> DispatchResult {
+		let game_details = Game::<T, I>::get(game).ok_or(Error::<T, I>::UnknownGame)?;
+
+		if let Some(check_origin) = &maybe_check_origin {
+			ensure!(
+				game_details.admin == *check_origin,
+				Error::<T, I>::NoPermission
+			);
+		}
+
+		let is_root = maybe_check_origin.is_none();
+
+		GameMetadataOf::<T, I>::try_mutate_exists(game, |metadata| {
+			*metadata = Some(GameMetadata { data: data.clone() });
+			Self::deposit_event(Event::GameSetMetadata {
+				who: maybe_check_origin,
+				game,
+				data,
+			});
+			Ok(())
+		})
+	}
+
 	fn do_create_game(
 		game: &T::GameId,
 		who: &T::AccountId,
@@ -27,9 +56,12 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId>
 			),
 		);
 
-		GameAccount::<T, I>::insert( who, game, ());
+		GameAccount::<T, I>::insert(who, game, ());
 		Game::<T, I>::insert(game, details);
-		Self::deposit_event(Event::GameCreated { who: who.clone(), game: *game });
+		Self::deposit_event(Event::GameCreated {
+			who: who.clone(),
+			game: *game,
+		});
 		Ok(())
 	}
 }

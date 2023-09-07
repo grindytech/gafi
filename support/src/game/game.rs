@@ -1,5 +1,6 @@
 use super::{Bundle, LootTable, MintSettings, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
+use sp_runtime::BoundedVec;
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -17,7 +18,14 @@ impl GameRandomness for () {
 	}
 }
 
-pub trait GameSetting<AccountId, GameId> {
+pub trait GameSetting<AccountId, GameId, StringLimit> {
+	fn do_set_game_metadata(
+		maybe_check_origin: Option<AccountId>,
+		game: GameId,
+		data: BoundedVec<u8, StringLimit>,
+		maybe_depositor: Option<AccountId>,
+	) -> DispatchResult;
+
 	/// Do create a new game
 	///
 	/// Implementing the function create game
@@ -49,7 +57,10 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and collection owner
 	/// - `admin`: admin role
 	/// - `config`: collection configuration
-	fn do_create_collection(who: &AccountId, admin: &AccountId) -> DispatchResult;
+	fn do_create_collection(
+		who: &AccountId,
+		admin: &AccountId,
+	) -> Result<CollectionId, sp_runtime::DispatchError>;
 
 	/// Do Set Accept Adding
 	///
@@ -199,7 +210,6 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 		target: &AccountId,
 		amount: Amount,
 	) -> DispatchResult;
-
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
@@ -223,7 +233,7 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, StringLimit> {
 	/// Do Set Upgrade Item
 	///
-	/// Set upgrade item                          
+	/// Set upgrade item
 	///
 	/// Parameters:
 	/// - `who`: item owner

@@ -111,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 117,
+	spec_version: 118,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -297,7 +297,7 @@ impl pallet_nfts::Config for Runtime {
 	type MetadataDepositBase = ConstU128<1>;
 	type AttributeDepositBase = ConstU128<1>;
 	type DepositPerByte = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
+	type StringLimit = ConstU32<300>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;
 	type ApprovalsLimit = ConstU32<10>;
