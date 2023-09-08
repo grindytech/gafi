@@ -70,11 +70,16 @@ pub trait WeightInfo {
 	fn create_dynamic_pool(s: u32, ) -> Weight;
 	fn create_stable_pool(s: u32, ) -> Weight;
 	fn request_mint() -> Weight;
+	fn create_collection_with_data(s: u32 ) -> Weight ;
+	fn create_item_with_data(s: u32 ) -> Weight ;
+	fn create_game_with_data(s: u32) -> Weight;
+
+
 }
 
 /// Weights for pallet_game using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+impl<T: frame_system::Config + pallet_nfts::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: Game NextGameId (r:1 w:1)
 	/// Proof: Game NextGameId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
 	/// Storage: System Account (r:1 w:1)
@@ -694,6 +699,86 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(38_000_000, 4558)
 			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
+	}
+
+	/// Storage: Game NextGameId (r:1 w:1)
+	/// Proof: Game NextGameId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game GameAccount (r:0 w:1)
+	/// Proof: Game GameAccount (max_values: None, max_size: Some(68), added: 2543, mode: MaxEncodedLen)
+	/// Storage: Game Game (r:0 w:1)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameRoleOf (r:0 w:1)
+	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_game_with_data(s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `109`
+		//  Estimated: `3787`
+		// Minimum execution time: 25_000_000 picoseconds.
+		Weight::from_parts(28_765_534, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			// Standard Error: 1_384
+			.saturating_add(Weight::from_parts(10_037, 0).saturating_mul(s.into()))
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(6))
+	}
+	/// Storage: Nfts NextCollectionId (r:1 w:1)
+	/// Proof: Nfts NextCollectionId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Nfts Collection (r:1 w:1)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionMetadataOf (r:1 w:1)
+	/// Proof: Nfts CollectionMetadataOf (max_values: None, max_size: Some(338), added: 2813, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionRoleOf (r:0 w:1)
+	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionConfigOf (r:0 w:1)
+	/// Proof: Nfts CollectionConfigOf (max_values: None, max_size: Some(73), added: 2548, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionAccount (r:0 w:1)
+	/// Proof: Nfts CollectionAccount (max_values: None, max_size: Some(68), added: 2543, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_collection_with_data(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `109`
+		//  Estimated: `3803`
+		// Minimum execution time: 42_000_000 picoseconds.
+		Weight::from_parts(52_820_352, 0)
+			.saturating_add(Weight::from_parts(0, 3803))
+			.saturating_add(T::DbWeight::get().reads(4))
+			.saturating_add(T::DbWeight::get().writes(7))
+	}
+	/// Storage: Nfts Collection (r:1 w:1)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionRoleOf (r:1 w:0)
+	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// Storage: Nfts Item (r:1 w:1)
+	/// Proof: Nfts Item (max_values: None, max_size: Some(491), added: 2966, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionConfigOf (r:1 w:0)
+	/// Proof: Nfts CollectionConfigOf (max_values: None, max_size: Some(73), added: 2548, mode: MaxEncodedLen)
+	/// Storage: Nfts ItemConfigOf (r:1 w:1)
+	/// Proof: Nfts ItemConfigOf (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Nfts ItemMetadataOf (r:1 w:1)
+	/// Proof: Nfts ItemMetadataOf (max_values: None, max_size: Some(391), added: 2866, mode: MaxEncodedLen)
+	/// Storage: Game SupplyOf (r:0 w:1)
+	/// Proof: Game SupplyOf (max_values: None, max_size: Some(45), added: 2520, mode: MaxEncodedLen)
+	/// Storage: Nfts Account (r:0 w:1)
+	/// Proof: Nfts Account (max_values: None, max_size: Some(88), added: 2563, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_item_with_data(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `487`
+		//  Estimated: `3956`
+		// Minimum execution time: 55_000_000 picoseconds.
+		Weight::from_parts(62_357_859, 0)
+			.saturating_add(Weight::from_parts(0, 3956))
+			.saturating_add(T::DbWeight::get().reads(7))
+			.saturating_add(T::DbWeight::get().writes(7))
 	}
 }
 
@@ -1318,5 +1403,85 @@ impl WeightInfo for () {
 		Weight::from_parts(38_000_000, 4558)
 			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
+	}
+
+	/// Storage: Game NextGameId (r:1 w:1)
+	/// Proof: Game NextGameId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game GameAccount (r:0 w:1)
+	/// Proof: Game GameAccount (max_values: None, max_size: Some(68), added: 2543, mode: MaxEncodedLen)
+	/// Storage: Game Game (r:0 w:1)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameRoleOf (r:0 w:1)
+	/// Proof: Game GameRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_game_with_data(s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `109`
+		//  Estimated: `3787`
+		// Minimum execution time: 25_000_000 picoseconds.
+		Weight::from_parts(28_765_534, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			// Standard Error: 1_384
+			.saturating_add(Weight::from_parts(10_037, 0).saturating_mul(s.into()))
+			.saturating_add(RocksDbWeight::get().reads(3))
+			.saturating_add(RocksDbWeight::get().writes(6))
+	}
+	/// Storage: Nfts NextCollectionId (r:1 w:1)
+	/// Proof: Nfts NextCollectionId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Nfts Collection (r:1 w:1)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionMetadataOf (r:1 w:1)
+	/// Proof: Nfts CollectionMetadataOf (max_values: None, max_size: Some(338), added: 2813, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionRoleOf (r:0 w:1)
+	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionConfigOf (r:0 w:1)
+	/// Proof: Nfts CollectionConfigOf (max_values: None, max_size: Some(73), added: 2548, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionAccount (r:0 w:1)
+	/// Proof: Nfts CollectionAccount (max_values: None, max_size: Some(68), added: 2543, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_collection_with_data(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `109`
+		//  Estimated: `3803`
+		// Minimum execution time: 42_000_000 picoseconds.
+		Weight::from_parts(52_820_352, 0)
+			.saturating_add(Weight::from_parts(0, 3803))
+			.saturating_add(RocksDbWeight::get().reads(4))
+			.saturating_add(RocksDbWeight::get().writes(7))
+	}
+	/// Storage: Nfts Collection (r:1 w:1)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionRoleOf (r:1 w:0)
+	/// Proof: Nfts CollectionRoleOf (max_values: None, max_size: Some(69), added: 2544, mode: MaxEncodedLen)
+	/// Storage: Nfts Item (r:1 w:1)
+	/// Proof: Nfts Item (max_values: None, max_size: Some(491), added: 2966, mode: MaxEncodedLen)
+	/// Storage: Nfts CollectionConfigOf (r:1 w:0)
+	/// Proof: Nfts CollectionConfigOf (max_values: None, max_size: Some(73), added: 2548, mode: MaxEncodedLen)
+	/// Storage: Nfts ItemConfigOf (r:1 w:1)
+	/// Proof: Nfts ItemConfigOf (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Nfts ItemMetadataOf (r:1 w:1)
+	/// Proof: Nfts ItemMetadataOf (max_values: None, max_size: Some(391), added: 2866, mode: MaxEncodedLen)
+	/// Storage: Game SupplyOf (r:0 w:1)
+	/// Proof: Game SupplyOf (max_values: None, max_size: Some(45), added: 2520, mode: MaxEncodedLen)
+	/// Storage: Nfts Account (r:0 w:1)
+	/// Proof: Nfts Account (max_values: None, max_size: Some(88), added: 2563, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn create_item_with_data(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `487`
+		//  Estimated: `3956`
+		// Minimum execution time: 55_000_000 picoseconds.
+		Weight::from_parts(62_357_859, 0)
+			.saturating_add(Weight::from_parts(0, 3956))
+			.saturating_add(RocksDbWeight::get().reads(7))
+			.saturating_add(RocksDbWeight::get().writes(7))
 	}
 }

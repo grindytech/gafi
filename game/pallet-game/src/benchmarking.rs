@@ -17,9 +17,9 @@ const UNIT: u128 = 1_000_000_000_000_000_000u128;
 const MAX: u32 = 10_u32;
 
 macro_rules! bvec {
-	($( $x:tt )*) => {
+	($($x:tt)*) => {
 		vec![$( $x )*].try_into().unwrap()
-	}
+	};
 }
 
 fn string_to_static_str(s: String) -> &'static str {
@@ -64,7 +64,7 @@ fn do_create_game<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
 	let admin = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
 	assert_ok!(PalletGame::<T, I>::create_game(
 		RawOrigin::Signed(caller.clone()).into(),
-		T::Lookup::unlookup(admin.clone()),
+		T::Lookup::unlookup(admin.clone())
 	));
 	(caller, admin)
 }
@@ -73,7 +73,7 @@ fn do_create_game_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::Ac
 	let (owner, admin) = do_create_game::<T, I>();
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
 		RawOrigin::Signed(admin.clone()).into(),
-		<T as pallet::Config<I>>::Helper::game(0),
+		<T as pallet::Config<I>>::Helper::game(0)
 	));
 	(owner, admin)
 }
@@ -84,7 +84,7 @@ fn do_create_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::Account
 
 	assert_ok!(PalletGame::<T, I>::create_collection(
 		RawOrigin::Signed(owner.clone()).into(),
-		T::Lookup::unlookup(admin.clone()),
+		T::Lookup::unlookup(admin.clone())
 	));
 	(owner, admin)
 }
@@ -99,7 +99,7 @@ fn do_create_item<T: Config<I>, I: 'static>(
 		RawOrigin::Signed(admin.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(collection),
 		<T as pallet_nfts::Config>::Helper::item(item),
-		supply,
+		supply
 	));
 }
 
@@ -118,7 +118,7 @@ fn new_account_with_item<T: Config<I>, I: 'static>(
 			<T as pallet_nfts::Config>::Helper::collection(collection),
 			<T as pallet_nfts::Config>::Helper::item(i),
 			T::Lookup::unlookup(player.clone()),
-			1000,
+			1000
 		));
 	}
 	(player, owner, admin)
@@ -155,7 +155,7 @@ fn do_create_dynamic_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::Accou
 		RawOrigin::Signed(who.clone()).into(),
 		table.clone(),
 		T::Lookup::unlookup(who.clone()),
-		default_mint_config::<T, I>(),
+		default_mint_config::<T, I>()
 	));
 
 	(who.clone(), who)
@@ -195,7 +195,7 @@ fn do_create_stable_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::Accoun
 		RawOrigin::Signed(owner.clone()).into(),
 		table.clone(),
 		T::Lookup::unlookup(admin.clone()),
-		default_mint_config::<T, I>(),
+		default_mint_config::<T, I>()
 	));
 
 	(owner, admin)
@@ -210,7 +210,7 @@ fn do_set_upgrade_item<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		default_item_config(),
 		bvec![0u8; 50],
 		1,
-		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		<T as pallet::Config<I>>::Currency::minimum_balance()
 	));
 }
 
@@ -226,7 +226,7 @@ fn do_set_price<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		package,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -249,7 +249,7 @@ fn do_set_bundle<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		bundle.clone(),
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -272,7 +272,7 @@ fn do_set_wishlist<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		bundle,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -297,7 +297,7 @@ fn do_set_auction<T: Config<I>, I: 'static>() -> T::AccountId {
 		source,
 		Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
 		Some(<T as pallet::Config<I>>::Helper::block(0)),
-		<T as pallet::Config<I>>::Helper::block(10),
+		<T as pallet::Config<I>>::Helper::block(10)
 	));
 	who
 }
@@ -314,6 +314,48 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::GameCreated { who: caller, game: <T as pallet::Config<I>>::Helper::game(0) }.into());
 	}
 
+	create_game_with_data {
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT));
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_game_with_data {
+			admin,
+			data: bvec![0u8; s as usize],
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::GameSetMetadata { who: Some(caller.clone()),game: <T as pallet::Config<I>>::Helper::game(0) , data: bvec![0u8; s as usize] }.into());
+	}
+
+	create_collection_with_data {
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT));
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_collection_with_data {
+			admin,
+			data: bvec![0u8; s as usize],
+			issuer: None,
+			freezer: None,
+			game: None,
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		true
+	}
+
+	create_item_with_data {
+		let (caller, admin) = do_create_collection::<T, I>();
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_item_with_data {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			maybe_supply: None,
+			data: bvec![0u8; s as usize],
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
+	verify {
+		true
+	}
 
 	create_game_collection {
 		let (caller, admin) = do_create_game::<T, I>();
@@ -456,6 +498,8 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
 			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -502,6 +546,8 @@ benchmarks_instance_pallet! {
 			who,
 			bundle,
 			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -545,6 +591,8 @@ benchmarks_instance_pallet! {
 			who,
 			wishlist: bundle,
 			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -617,6 +665,8 @@ benchmarks_instance_pallet! {
 			source:  bundle,
 			required: required.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -765,6 +815,8 @@ benchmarks_instance_pallet! {
 			item: package.item,
 			amount: package.amount,
 			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 

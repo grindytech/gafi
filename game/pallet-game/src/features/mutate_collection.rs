@@ -70,7 +70,7 @@ impl<T: Config<I>, I: 'static>
 				who: who.clone(),
 				collection,
 			});
-			return Ok(collection.clone())
+			return Ok(collection.clone());
 		}
 		Err(Error::<T, I>::UnknownCollection.into())
 	}

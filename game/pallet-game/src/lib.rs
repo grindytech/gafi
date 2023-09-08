@@ -252,11 +252,10 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-		/// Metadata of a game.
+	/// Metadata of a game.
 	#[pallet::storage]
 	pub type GameMetadataOf<T: Config<I>, I: 'static = ()> =
 		StorageMap<_, Blake2_128Concat, T::GameId, GameMetadata<T::StringLimit>, OptionQuery>;
-
 
 	/// Game roles
 	#[pallet::storage]
@@ -411,10 +410,10 @@ pub mod pallet {
 			game: T::GameId,
 		},
 		GameSetMetadata {
-				who: Option<T::AccountId>,
-				game: T::GameId,
-				data: BoundedVec<u8, T::StringLimit>,
-			},
+			who: Option<T::AccountId>,
+			game: T::GameId,
+			data: BoundedVec<u8, T::StringLimit>,
+		},
 		CollectionCreated {
 			who: T::AccountId,
 			collection: T::CollectionId,
@@ -1313,7 +1312,12 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_swap(source.len() as u32, required.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_swap(
+				source.len() as u32,
+				required.len() as u32
+			)
+		)]
 		pub fn create_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1660,7 +1664,9 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(38)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(loot_table.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(loot_table.len() as u32)
+		)]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1695,7 +1701,9 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(39)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(loot_table.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_stable_pool(loot_table.len() as u32)
+		)]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1741,7 +1749,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-
 		/// Creates a new collection with the provided data and sets the collection metadata and
 		/// team.
 		///
@@ -1754,29 +1761,38 @@ pub mod pallet {
 		/// Returns `Ok(())` if the collection is created and the metadata and team are set
 		/// successfully.
 		#[pallet::call_index(41)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection_with_data(T::StringLimit::get()))]
 		pub fn create_collection_with_data(
 			origin: OriginFor<T>,
 			admin: AccountIdLookupOf<T>,
 			data: BoundedVec<u8, T::StringLimit>,
 			issuer: Option<AccountIdLookupOf<T>>,
 			freezer: Option<AccountIdLookupOf<T>>,
+			game: Option<T::GameId>,
 		) -> DispatchResult {
 			let admin_lookup = T::Lookup::lookup(admin.clone())?;
 			let sender = ensure_signed(origin.clone())?;
-			let collection =
-				Self::do_create_collection(&sender, &admin_lookup)?;
+
+			let collection = Self::do_create_collection(&sender, &admin_lookup)?;
+
+			if let Some(game_id) = game {
+				Self::do_add_collection(&sender, &game_id, &collection)?;
+			}
+
+			if issuer.is_some() || freezer.is_some() {
+				pallet_nfts::pallet::Pallet::<T>::set_team(
+					origin.clone(),
+					collection,
+					issuer,
+					Some(admin),
+					freezer,
+				)?;
+			};
+
 			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(
 				origin.clone(),
 				collection,
 				data,
-			)?;
-			pallet_nfts::pallet::Pallet::<T>::set_team(
-				origin.clone(),
-				collection,
-				issuer,
-				Some(admin),
-				freezer,
 			)?;
 
 			Ok(())
@@ -1792,7 +1808,7 @@ pub mod pallet {
 		///
 		/// Returns Ok(()) if the item is created and the metadata is set successfully.
 		#[pallet::call_index(42)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item())]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item_with_data(T::StringLimit::get()))]
 		pub fn create_item_with_data(
 			origin: OriginFor<T>,
 			collection: T::CollectionId,
@@ -1816,7 +1832,9 @@ pub mod pallet {
 		///
 		/// Return Ok(()) if the game is created and the metadata is set successfully.
 		#[pallet::call_index(43)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game())]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_game_with_data(T::StringLimit::get())
+		)]
 		pub fn create_game_with_data(
 			origin: OriginFor<T>,
 			admin: AccountIdLookupOf<T>,
@@ -1835,7 +1853,7 @@ pub mod pallet {
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	pub fn processing_mint_request(payload: MintRequestFor<T, I>) -> DispatchResult {
 		if let Some(pool_details) = PoolOf::<T, I>::get(payload.pool) {
-			if let Ok(_) = match pool_details.pool_type {
+			if let Ok(_) = (match pool_details.pool_type {
 				PoolType::Dynamic => Self::do_mint_dynamic_pool(
 					&payload.pool,
 					&payload.miner,
@@ -1848,7 +1866,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 					&payload.target,
 					payload.amount,
 				),
-			} {
+			}) {
 				<T as pallet::Config<I>>::Currency::repatriate_reserved(
 					&payload.miner,
 					&pool_details.owner,

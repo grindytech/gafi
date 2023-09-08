@@ -19,8 +19,6 @@ impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::StringLim
 			);
 		}
 
-		let is_root = maybe_check_origin.is_none();
-
 		GameMetadataOf::<T, I>::try_mutate_exists(game, |metadata| {
 			*metadata = Some(GameMetadata { data: data.clone() });
 			Self::deposit_event(Event::GameSetMetadata {
