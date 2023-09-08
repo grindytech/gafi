@@ -252,6 +252,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+		/// Metadata of a game.
+	#[pallet::storage]
+	pub type GameMetadataOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::GameId, GameMetadata<T::StringLimit>, OptionQuery>;
+
+
 	/// Game roles
 	#[pallet::storage]
 	pub(super) type GameRoleOf<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
@@ -404,6 +410,11 @@ pub mod pallet {
 			who: T::AccountId,
 			game: T::GameId,
 		},
+		GameSetMetadata {
+				who: Option<T::AccountId>,
+				game: T::GameId,
+				data: BoundedVec<u8, T::StringLimit>,
+			},
 		CollectionCreated {
 			who: T::AccountId,
 			collection: T::CollectionId,
@@ -1727,6 +1738,95 @@ pub mod pallet {
 			let target = T::Lookup::lookup(mint_to)?;
 
 			Self::do_request_mint(&pool, &sender, &target, amount)?;
+			Ok(())
+		}
+
+
+		/// Creates a new collection with the provided data and sets the collection metadata and
+		/// team.
+		///
+		/// - `origin`: The account origin of the caller.
+		/// - `admin`: The admin account lookup.
+		/// - `data`: The collection metadata.
+		/// - `issuer`: The optional account lookup for the issuer.
+		/// - `freezer`: The optional account lookup for the freezer.
+		///
+		/// Returns `Ok(())` if the collection is created and the metadata and team are set
+		/// successfully.
+		#[pallet::call_index(41)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection())]
+		pub fn create_collection_with_data(
+			origin: OriginFor<T>,
+			admin: AccountIdLookupOf<T>,
+			data: BoundedVec<u8, T::StringLimit>,
+			issuer: Option<AccountIdLookupOf<T>>,
+			freezer: Option<AccountIdLookupOf<T>>,
+		) -> DispatchResult {
+			let admin_lookup = T::Lookup::lookup(admin.clone())?;
+			let sender = ensure_signed(origin.clone())?;
+			let collection =
+				Self::do_create_collection(&sender, &admin_lookup)?;
+			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(
+				origin.clone(),
+				collection,
+				data,
+			)?;
+			pallet_nfts::pallet::Pallet::<T>::set_team(
+				origin.clone(),
+				collection,
+				issuer,
+				Some(admin),
+				freezer,
+			)?;
+
+			Ok(())
+		}
+
+		/// Creates a new item with the provided data and sets the item metadata.
+		///
+		/// - origin: The account origin of the caller.
+		/// - collection: The collection ID of the item's collection.
+		/// - item: The unique ID of the item.
+		/// - maybe_supply: The optional supply of the item.
+		/// - data: The item metadata.
+		///
+		/// Returns Ok(()) if the item is created and the metadata is set successfully.
+		#[pallet::call_index(42)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item())]
+		pub fn create_item_with_data(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			maybe_supply: Option<u32>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			Self::do_create_item(&sender, &collection, &item, maybe_supply)?;
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
+
+			Ok(())
+		}
+
+		/// This function creates a new game with the provided metadata. It requires the account
+		/// origin of the caller, the lookup of the admin account, and the metadata of the game.
+		///
+		/// - origin: The account origin of the caller.
+		/// - admin: The lookup of the admin account.
+		/// - data: The metadata of the game.
+		///
+		/// Return Ok(()) if the game is created and the metadata is set successfully.
+		#[pallet::call_index(43)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_game())]
+		pub fn create_game_with_data(
+			origin: OriginFor<T>,
+			admin: AccountIdLookupOf<T>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let admin = T::Lookup::lookup(admin)?;
+			let game = Self::get_game_id();
+			Self::do_create_game(&game, &sender, &admin)?;
+			Self::do_set_game_metadata(Some(sender.clone()), game.clone(), data)?;
 			Ok(())
 		}
 	}

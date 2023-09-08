@@ -5,12 +5,10 @@ use pallet_nfts::{CollectionRole, CollectionRoles};
 impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::StringLimit>
 	for Pallet<T, I>
 {
-	/// Note: if `maybe_depositor` is None, that means the depositor will be a game's owner
 	fn do_set_game_metadata(
 		maybe_check_origin: Option<T::AccountId>,
 		game: T::GameId,
 		data: BoundedVec<u8, T::StringLimit>,
-		maybe_depositor: Option<T::AccountId>,
 	) -> DispatchResult {
 		let game_details = Game::<T, I>::get(game).ok_or(Error::<T, I>::UnknownGame)?;
 

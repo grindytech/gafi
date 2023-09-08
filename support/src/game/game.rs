@@ -23,7 +23,6 @@ pub trait GameSetting<AccountId, GameId, StringLimit> {
 		maybe_check_origin: Option<AccountId>,
 		game: GameId,
 		data: BoundedVec<u8, StringLimit>,
-		maybe_depositor: Option<AccountId>,
 	) -> DispatchResult;
 
 	/// Do create a new game
