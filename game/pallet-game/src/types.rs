@@ -138,7 +138,6 @@ pub struct MintRequest<AccountId, PoolId, Balance, BlockNumber> {
 	pub(super) block_number: BlockNumber,
 }
 
-
 /// Information about the game's metadata.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(StringLimit))]
@@ -146,7 +145,25 @@ pub struct GameMetadata<StringLimit: Get<u32>> {
 	/// The balance deposited for this metadata.
 	///
 	/// This pays for the data stored in this struct.
+	/// TODO implement deposit
 	// pub(super) deposit: Deposit,
+
+	/// General information concerning this game. Limited in length by `StringLimit`. This
+	/// will generally be either a JSON dump or the hash of some JSON which can be found on a
+	/// hash-addressable global publication system such as IPFS.
+	pub(super) data: BoundedVec<u8, StringLimit>,
+}
+
+/// Information about the game's metadata.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(StringLimit))]
+pub struct PoolMetadata<StringLimit: Get<u32>> {
+	/// The balance deposited for this metadata.
+	///
+	/// This pays for the data stored in this struct.
+	/// TODO implement deposit
+	// pub(super) deposit: Deposit,
+
 	/// General information concerning this game. Limited in length by `StringLimit`. This
 	/// will generally be either a JSON dump or the hash of some JSON which can be found on a
 	/// hash-addressable global publication system such as IPFS.

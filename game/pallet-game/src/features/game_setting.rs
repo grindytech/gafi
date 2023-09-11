@@ -1,33 +1,50 @@
 use crate::*;
-use frame_support::{pallet_prelude::*, StorageValue};
+use frame_support::pallet_prelude::*;
 use pallet_nfts::{CollectionRole, CollectionRoles};
 
 impl<T: Config<I>, I: 'static> GameSetting<T::AccountId, T::GameId, T::StringLimit>
 	for Pallet<T, I>
 {
 	fn do_set_game_metadata(
-		maybe_check_origin: Option<T::AccountId>,
+		origin: T::AccountId,
 		game: T::GameId,
 		data: BoundedVec<u8, T::StringLimit>,
 	) -> DispatchResult {
 		let game_details = Game::<T, I>::get(game).ok_or(Error::<T, I>::UnknownGame)?;
 
-		if let Some(check_origin) = &maybe_check_origin {
-			ensure!(
-				game_details.admin == *check_origin,
-				Error::<T, I>::NoPermission
-			);
-		}
+		ensure!(
+			game_details.admin == origin || game_details.owner == origin,
+			Error::<T, I>::NoPermission
+		);
 
 		GameMetadataOf::<T, I>::try_mutate_exists(game, |metadata| {
 			*metadata = Some(GameMetadata { data: data.clone() });
 			Self::deposit_event(Event::GameSetMetadata {
-				who: maybe_check_origin,
+				who: origin,
 				game,
 				data,
 			});
 			Ok(())
 		})
+	}
+
+	fn do_clear_game_metadata(origin: T::AccountId, game: T::GameId) -> DispatchResult {
+		let game_details = Game::<T, I>::get(game).ok_or(Error::<T, I>::UnknownGame)?;
+
+		ensure!(
+			game_details.admin == origin || game_details.owner == origin,
+			Error::<T, I>::NoPermission
+		);
+
+		let _metadata =
+			GameMetadataOf::<T, I>::take(game).ok_or(Error::<T, I>::MetadataNotFound)?;
+
+		Self::deposit_event(Event::GameMetadataCleared {
+			who: origin.clone(),
+			game,
+		});
+
+		Ok(())
 	}
 
 	fn do_create_game(

@@ -73,8 +73,12 @@ pub trait WeightInfo {
 	fn create_collection_with_data(s: u32 ) -> Weight ;
 	fn create_item_with_data(s: u32 ) -> Weight ;
 	fn create_game_with_data(s: u32) -> Weight;
-
-
+	fn set_game_metadata(s: u32 ) -> Weight;
+	fn clear_game_metadata(s: u32 ) -> Weight;
+	fn create_dynamic_pool_with_data() -> Weight;
+	fn create_stable_pool_with_data() -> Weight;
+	fn set_pool_metadata() -> Weight;
+	fn clear_pool_metadata() -> Weight;
 }
 
 /// Weights for pallet_game using the Substrate node and recommended hardware.
@@ -780,6 +784,112 @@ impl<T: frame_system::Config + pallet_nfts::Config> WeightInfo for SubstrateWeig
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
+	/// Storage: Game Game (r:1 w:0)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn set_game_metadata(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `278`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_061_367, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Game Game (r:1 w:0)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn clear_game_metadata(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `271 + s * (1 ±0)`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_275_902, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Game NextPoolId (r:1 w:1)
+	/// Proof: Game NextPoolId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Game PoolOf (r:1 w:1)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game ItemBalanceOf (r:1 w:1)
+	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game ReservedBalanceOf (r:1 w:1)
+	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game LootTableOf (r:0 w:1)
+	/// Proof: Game LootTableOf (max_values: None, max_size: Some(147), added: 2622, mode: MaxEncodedLen)
+	fn create_dynamic_pool_with_data() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `387`
+		//  Estimated: `3787`
+		// Minimum execution time: 83_000_000 picoseconds.
+		Weight::from_parts(85_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(6))
+			.saturating_add(T::DbWeight::get().writes(7))
+	}
+	/// Storage: Game NextPoolId (r:1 w:1)
+	/// Proof: Game NextPoolId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Nfts Collection (r:1 w:0)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game SupplyOf (r:1 w:0)
+	/// Proof: Game SupplyOf (max_values: None, max_size: Some(45), added: 2520, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game LootTableOf (r:0 w:1)
+	/// Proof: Game LootTableOf (max_values: None, max_size: Some(147), added: 2622, mode: MaxEncodedLen)
+	/// Storage: Game PoolOf (r:0 w:1)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	fn create_stable_pool_with_data() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `500`
+		//  Estimated: `3787`
+		// Minimum execution time: 40_000_000 picoseconds.
+		Weight::from_parts(42_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().writes(5))
+	}
+	/// Storage: Game PoolOf (r:1 w:0)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	fn set_pool_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `394`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Game PoolOf (r:1 w:0)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	fn clear_pool_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `650`
+		//  Estimated: `3787`
+		// Minimum execution time: 12_000_000 picoseconds.
+		Weight::from_parts(12_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
 
 // For backwards compatibility and tests
@@ -1483,5 +1593,111 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(0, 3956))
 			.saturating_add(RocksDbWeight::get().reads(7))
 			.saturating_add(RocksDbWeight::get().writes(7))
+	}
+	/// Storage: Game Game (r:1 w:0)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn set_game_metadata(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `278`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_061_367, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: Game Game (r:1 w:0)
+	/// Proof: Game Game (max_values: None, max_size: Some(96), added: 2571, mode: MaxEncodedLen)
+	/// Storage: Game GameMetadataOf (r:1 w:1)
+	/// Proof: Game GameMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// The range of component `s` is `[0, 300]`.
+	fn clear_game_metadata(_s: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `271 + s * (1 ±0)`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_275_902, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: Game NextPoolId (r:1 w:1)
+	/// Proof: Game NextPoolId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Game PoolOf (r:1 w:1)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game ItemBalanceOf (r:1 w:1)
+	/// Proof: Game ItemBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game ReservedBalanceOf (r:1 w:1)
+	/// Proof: Game ReservedBalanceOf (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game LootTableOf (r:0 w:1)
+	/// Proof: Game LootTableOf (max_values: None, max_size: Some(147), added: 2622, mode: MaxEncodedLen)
+	fn create_dynamic_pool_with_data() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `387`
+		//  Estimated: `3787`
+		// Minimum execution time: 83_000_000 picoseconds.
+		Weight::from_parts(85_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(6))
+			.saturating_add(RocksDbWeight::get().writes(7))
+	}
+	/// Storage: Game NextPoolId (r:1 w:1)
+	/// Proof: Game NextPoolId (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Nfts Collection (r:1 w:0)
+	/// Proof: Nfts Collection (max_values: None, max_size: Some(84), added: 2559, mode: MaxEncodedLen)
+	/// Storage: Game SupplyOf (r:1 w:0)
+	/// Proof: Game SupplyOf (max_values: None, max_size: Some(45), added: 2520, mode: MaxEncodedLen)
+	/// Storage: System Account (r:1 w:1)
+	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	/// Storage: Game LootTableOf (r:0 w:1)
+	/// Proof: Game LootTableOf (max_values: None, max_size: Some(147), added: 2622, mode: MaxEncodedLen)
+	/// Storage: Game PoolOf (r:0 w:1)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	fn create_stable_pool_with_data() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `500`
+		//  Estimated: `3787`
+		// Minimum execution time: 40_000_000 picoseconds.
+		Weight::from_parts(42_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().writes(5))
+	}
+	/// Storage: Game PoolOf (r:1 w:0)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	fn set_pool_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `394`
+		//  Estimated: `3787`
+		// Minimum execution time: 11_000_000 picoseconds.
+		Weight::from_parts(12_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: Game PoolOf (r:1 w:0)
+	/// Proof: Game PoolOf (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
+	/// Storage: Game PoolMetadataOf (r:1 w:1)
+	/// Proof: Game PoolMetadataOf (max_values: None, max_size: Some(322), added: 2797, mode: MaxEncodedLen)
+	fn clear_pool_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `650`
+		//  Estimated: `3787`
+		// Minimum execution time: 12_000_000 picoseconds.
+		Weight::from_parts(12_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 3787))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }
