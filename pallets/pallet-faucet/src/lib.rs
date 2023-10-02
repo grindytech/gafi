@@ -89,7 +89,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		SelfTransfer,
+		NoGenesisAccountAvailable,
 		NotEnoughBalance,
 		DontBeGreedy,
 		PleaseWait,
@@ -161,22 +161,20 @@ pub mod pallet {
 				T::Currency::free_balance(&from) > amount,
 				<Error<T>>::NotEnoughBalance
 			);
+
 			let genesis_accounts = GenesisAccounts::<T>::get();
-			ensure!(genesis_accounts[0] != from, <Error<T>>::SelfTransfer);
+			if let Some(genesis_account) = genesis_accounts.first() {
+				T::Currency::transfer(
+					&from,
+					genesis_account,
+					amount,
+					ExistenceRequirement::KeepAlive,
+				)?;
 
-			T::Currency::transfer(
-				&from,
-				&genesis_accounts[0],
-				amount,
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			Self::deposit_event(Event::Transferred(
-				from,
-				genesis_accounts[0].clone(),
-				amount,
-			));
-
+				Self::deposit_event(Event::Transferred(from, genesis_account.clone(), amount));
+			} else {
+				return Err(<Error<T>>::NoGenesisAccountAvailable.into())
+			}
 			Ok(())
 		}
 	}
