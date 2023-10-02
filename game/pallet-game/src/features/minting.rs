@@ -130,7 +130,7 @@ impl<T: Config<I>, I: 'static>
 
 			let reserve = pool_details.mint_settings.price.saturating_mul(amount.into());
 			<T as Config<I>>::Currency::reserve(&who, reserve)?;
-			let execute_block = block_number + T::MintInterval::get();
+			let execute_block = block_number.saturating_add(T::MintInterval::get());
 
 			let mint_request = MintRequest {
 				miner: who.clone(),

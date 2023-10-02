@@ -1,6 +1,7 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::BalanceStatus};
 use gafi_support::game::{Auction, Bundle};
+use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
 	Auction<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, T::BlockNumber>
@@ -70,7 +71,7 @@ impl<T: Config<I>, I: 'static>
 				Error::<T, I>::AuctionNotStarted
 			);
 			ensure!(
-				block_number < config.start_block + config.duration,
+				block_number < config.start_block.saturating_add(config.duration),
 				Error::<T, I>::AuctionEnded
 			);
 
@@ -101,7 +102,7 @@ impl<T: Config<I>, I: 'static>
 			let block_number = <frame_system::Pallet<T>>::block_number();
 
 			ensure!(
-				block_number >= (config.start_block + config.duration),
+				block_number >= (config.start_block.saturating_add(config.duration)),
 				Error::<T, I>::AuctionInProgress
 			);
 			let maybe_bid = HighestBidOf::<T, I>::get(trade);
