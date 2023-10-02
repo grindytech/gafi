@@ -23,6 +23,7 @@ sp-std = {workspace = true}
 
 # Local
 gafi-support = {version = "4.0.0-dev", default-features = false, path = "../../support"}
+gu-convertor = { default-features = false, version = "4.0.0-dev", path = "../../utils/convertor" }
 
 [dev-dependencies]
 pallet-balances = {workspace = true}
@@ -38,6 +39,7 @@ std = [
   "codec/std",
   "scale-info/std",
   "frame-support/std",
+  "gu-convertor/std",
   "frame-system/std",
   "sp-runtime/std",
   "pallet-balances/std",

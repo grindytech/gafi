@@ -40,12 +40,12 @@ impl<T: Config> GameRandomness for Pallet<T> {
 			}
 			let mut random_number = Self::generate_random_number(seed);
 			for _ in 1..T::RandomAttemps::get() {
-				if random_number < u32::MAX.saturating_sub(u32::MAX % total) {
+				if random_number < u32::MAX.saturating_sub(u32::MAX.wrapping_rem(total)) {
 					break
 				}
 				random_number = Self::generate_random_number(seed);
 			}
-			return Some((random_number % total).saturating_add(1))
+			return Some((random_number.wrapping_rem(total)).saturating_add(1))
 		}
 		None
 	}

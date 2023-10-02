@@ -1,10 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::{Currency, ExistenceRequirement};
-pub use pallet::*;
 pub use crate::weights::WeightInfo;
-use sp_std::vec;
+use frame_support::traits::{Currency, ExistenceRequirement};
 use gafi_support::pallet::cache::Cache;
+use gu_convertor::{balance_try_to_u128, u128_to_balance};
+pub use pallet::*;
+use sp_std::vec;
 
 #[cfg(test)]
 mod mock;
@@ -41,7 +42,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Add Cache
-		type Cache: Cache<Self::AccountId,AccountOf<Self> ,u128> ;
+		type Cache: Cache<Self::AccountId, AccountOf<Self>, u128>;
 
 		/// Faucet Amount
 		type FaucetAmount: Get<BalanceOf<Self>>;
@@ -64,7 +65,9 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { genesis_accounts: vec![]}
+			Self {
+				genesis_accounts: vec![],
+			}
 		}
 	}
 
@@ -110,10 +113,17 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
 			let faucet_amount = T::FaucetAmount::get();
+			let faucet_u128 = balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(
+				faucet_amount,
+			)?;
+
+			let amount = faucet_u128.saturating_div(10u128);
+			let faucet = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(amount);
+
 			ensure!(Self::get_cache(&sender) == None, <Error<T>>::PleaseWait);
 
 			ensure!(
-				T::Currency::free_balance(&sender) < (faucet_amount / 10u128.try_into().ok().unwrap()),
+				T::Currency::free_balance(&sender) < faucet,
 				<Error<T>>::DontBeGreedy
 			);
 
@@ -144,13 +154,13 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::donate(50u32))]
-		pub fn donate(
-			origin: OriginFor<T>,
-			amount: BalanceOf<T>,
-		) -> DispatchResult {
+		pub fn donate(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 
-			ensure!(T::Currency::free_balance(&from) > amount, <Error<T>>::NotEnoughBalance);
+			ensure!(
+				T::Currency::free_balance(&from) > amount,
+				<Error<T>>::NotEnoughBalance
+			);
 			let genesis_accounts = GenesisAccounts::<T>::get();
 			ensure!(genesis_accounts[0] != from, <Error<T>>::SelfTransfer);
 
@@ -161,24 +171,27 @@ pub mod pallet {
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			Self::deposit_event(Event::Transferred(from, genesis_accounts[0].clone(), amount));
+			Self::deposit_event(Event::Transferred(
+				from,
+				genesis_accounts[0].clone(),
+				amount,
+			));
 
 			Ok(())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn insert_cache(sender: T::AccountId, faucet_amount: BalanceOf<T>)-> Option<()> {
-			match faucet_amount.try_into(){
+		fn insert_cache(sender: T::AccountId, faucet_amount: BalanceOf<T>) -> Option<()> {
+			match faucet_amount.try_into() {
 				Ok(value) => Some(T::Cache::insert(&sender, sender.clone(), value)),
 				Err(_) => None,
 			}
-
 		}
 
 		fn get_cache(sender: &T::AccountId) -> Option<u128> {
 			if let Some(faucet_cache) = T::Cache::get(sender, sender.clone()) {
-				return Some(faucet_cache);
+				return Some(faucet_cache)
 			}
 			None
 		}

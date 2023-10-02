@@ -28,7 +28,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		while i < table.len() && positon > table[i].weight {
 			positon -= table[i].weight;
-			i += 1;
+			i.saturating_inc();
 		}
 
 		if i < table.len() {
@@ -66,7 +66,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		while i < table.len() && positon > table[i].weight {
 			positon -= table[i].weight;
-			i += 1;
+			i.saturating_inc();
 		}
 
 		if i < table.len() {
