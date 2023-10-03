@@ -1,19 +1,26 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::BalanceStatus};
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Auction, Bundle};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Auction<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, T::BlockNumber>
-	for Pallet<T, I>
+	Auction<
+		T::AccountId,
+		T::CollectionId,
+		T::ItemId,
+		T::TradeId,
+		BalanceOf<T, I>,
+		BlockNumberFor<T>,
+	> for Pallet<T, I>
 {
 	fn do_set_auction(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		source: Bundle<T::CollectionId, T::ItemId>,
 		maybe_price: Option<BalanceOf<T, I>>,
-		start_block: Option<T::BlockNumber>,
-		duration: T::BlockNumber,
+		start_block: Option<BlockNumberFor<T>>,
+		duration: BlockNumberFor<T>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -62,7 +69,11 @@ impl<T: Config<I>, I: 'static>
 		Ok(())
 	}
 
-	fn do_bid_auction(trade: &T::TradeId, who: &T::AccountId, bid: BalanceOf<T, I>) -> DispatchResult {
+	fn do_bid_auction(
+		trade: &T::TradeId,
+		who: &T::AccountId,
+		bid: BalanceOf<T, I>,
+	) -> DispatchResult {
 		if let Some(config) = AuctionConfigOf::<T, I>::get(trade) {
 			// make sure the auction is not over
 			let block_number = <frame_system::Pallet<T>>::block_number();

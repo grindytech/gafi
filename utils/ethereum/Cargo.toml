@@ -9,13 +9,13 @@ edition = {workspace = true}
 sha3 = { version = "0.10", default-features = false }
 parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
 
-sp-runtime = {version = "7.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-runtime = {workspace = true, default-features = false}
 sp-io = {workspace = true, default-features = false}
-sp-core = {version = "7.0.0", default-features = false, git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-core = {workspace = true, default-features = false}
 scale-info = {version = "2.5.0", default-features = false, features = ["derive"]}
 serde = {workspace = true, features = ["derive"]}
 rustc-hex = { version = "2.1.0", default-features = false }
-sp-std = {version = "5.0.0", default-features = false,  git = "https://github.com/grindytech/substrate", branch = "gafi-polkadot-v0.9.42"}
+sp-std = {version = "5.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0"}
 
 
 [dev-dependencies]

@@ -3,11 +3,12 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{BalanceStatus, ExistenceRequirement},
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Amount, Package, Retail, TradeType};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumberFor<T>>
 	for Pallet<T, I>
 {
 	fn do_set_price(
@@ -15,8 +16,8 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -232,8 +233,8 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
