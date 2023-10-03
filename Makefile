@@ -1,14 +1,14 @@
 .PHONY: build
 build:
-	cargo build --release --features with-game3
+	cargo build -r
 
 .PHONY: test
 test:
-	cargo test -r --features with-game3
+	cargo test -r
 
 .PHONY: check
 check:
-	cargo check --release --features with-game3
+	cargo check -r
 
 .PHONY: run
 run:
@@ -16,13 +16,12 @@ run:
     --tmp \
     --dev \
     --rpc-port 9933 \
-    --ws-external \
     --rpc-methods=Unsafe \
     --rpc-external
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks,with-game3
+	cargo check --release --features runtime-benchmarks
 
 .PHONY: check-benchmark-game
 check-benchmark-game:
@@ -30,11 +29,11 @@ check-benchmark-game:
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks,with-game3
+	cargo build --release --features runtime-benchmarks
 
 .PHONY: clippy
 clippy:
-	cargo clippy --release --features with-game3  -- -D warnings
+	cargo clippy --release  -- -D warnings
 
 .PHONY: benchmark-game
 benchmark-game:

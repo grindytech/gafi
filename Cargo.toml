@@ -13,7 +13,7 @@ members = [
   'game/randomness',
   'gafi-node/runtime',
   'gafi-node/node',
-  'gafi-node/pallets/template',
+  'pallets/template',
   'support',
 ]
 [profile.release]
