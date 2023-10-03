@@ -2557,6 +2557,7 @@ dependencies = [
  "frame-try-runtime",
  "gafi-support",
  "game-randomness",
+ "log",
  "pallet-aura",
  "pallet-balances",
  "pallet-cache",

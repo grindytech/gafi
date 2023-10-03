@@ -281,7 +281,7 @@ fn create_game_should_works() {
 fn create_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let (owner, admin) = do_create_game();
+		let (_, admin) = do_create_game();
 
 		assert_ok!(PalletGame::create_game_collection(
 			RuntimeOrigin::signed(admin.clone()),
@@ -305,7 +305,7 @@ fn create_game_collection_should_fails() {
 		// no permission
 		{
 			run_to_block(1);
-			let (owner, admin) = do_create_game();
+			let (owner, _) = do_create_game();
 
 			let acc = new_account(3, 3 * unit(GAKI));
 			// random acc should has no permission
@@ -413,7 +413,7 @@ fn set_accept_adding_should_works() {
 fn add_game_collection_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let (owner, admin) = do_create_game();
+		let (_, admin) = do_create_game();
 
 		let who = new_account(1, 1000 * unit(GAKI));
 
@@ -1001,7 +1001,7 @@ pub fn buy_bundle_should_fails() {
 		run_to_block(1);
 
 		let price = 100 * unit(GAKI);
-		let seller = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
+		let _ = do_all_set_bundle(TEST_BUNDLE.clone().to_vec(), price);
 
 		let buyer = new_account(1, 1 * unit(GAKI));
 
@@ -1801,7 +1801,7 @@ fn create_dynamic_pool_should_works() {
 fn request_mint_should_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(1);
-		let (owner, _) = do_all_create_stable_pool(default_mint_config());
+		let (_, _) = do_all_create_stable_pool(default_mint_config());
 		let player = new_account(2, 1000_000 * unit(GAKI));
 
 		let amount = 10;

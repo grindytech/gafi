@@ -18,7 +18,7 @@ fn faucet_works() {
 fn faucet_works_with_low_balance() {
 	ExtBuilder::default().build_and_execute(|| {
 		let sender = AccountId32::new([11; 32]);
-		let legit_balance = FAUCET_BALANCE / 10 - 1u64;
+		let legit_balance = FAUCET_BALANCE / 10 - 1u128;
 		let _ = pallet_balances::Pallet::<Test>::deposit_creating(&sender, legit_balance);
 		assert_eq!(Balances::free_balance(&sender), legit_balance);
 		assert_ok!(Faucet::faucet(RuntimeOrigin::signed(sender.clone())));
