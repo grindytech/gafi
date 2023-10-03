@@ -1,31 +1,22 @@
 use crate as game_randomness;
 use crate::*;
 
-use frame_support::{
-	dispatch::Vec,
-	parameter_types,
-	traits::{ConstU16, ConstU64},
-	PalletId,
-};
+use frame_support::{parameter_types, traits::ConstU64, PalletId};
 use frame_system as system;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-	testing::{Header, TestXt},
+	testing::TestXt,
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	BuildStorage,
 };
 use system::mocking;
-
-pub type Extrinsic = TestXt<RuntimeCall, ()>;
-type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
-type Block = mocking::MockBlock<Test>;
+type Extrinsic = TestXt<RuntimeCall, ()>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Block = mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
 		System: frame_system,
 		GameRandomness: game_randomness,
@@ -40,13 +31,12 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
+	type AccountId = sp_core::sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
@@ -55,9 +45,9 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<42>;
+	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Test {}
@@ -84,9 +74,9 @@ impl frame_system::offchain::SigningTypes for Test {
 	type Signature = Signature;
 }
 
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
 where
-	RuntimeCall: From<C>,
+	RuntimeCall: From<LocalCall>,
 {
 	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
@@ -106,17 +96,7 @@ where
 	}
 }
 
-pub fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		if System::block_number() > 1 {
-			System::on_finalize(System::block_number());
-		}
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-	}
-}
-
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	frame_system::GenesisConfig::<Test>::default().build_storage().unwrap().into()
 }
