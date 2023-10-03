@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use crate::weights::WeightInfo;
-use frame_support::traits::{Currency, ExistenceRequirement};
+use frame_support::traits::{Currency, ExistenceRequirement, BuildGenesisConfig};
 use gafi_support::pallet::cache::Cache;
 use gu_convertor::{balance_try_to_u128, u128_to_balance};
 pub use pallet::*;
-use sp_std::vec;
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -56,26 +56,17 @@ pub mod pallet {
 	pub(super) type GenesisAccounts<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, MaxFundingAccount>, ValueQuery>;
 
-	//** Genesis Conguration **//
 	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
 		pub genesis_accounts: Vec<T::AccountId>,
 	}
 
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self {
-				genesis_accounts: vec![],
-			}
-		}
-	}
-
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for i in 0..self.genesis_accounts.len() {
-				<GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
+				let _ = <GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
 					.map_or((), |_| {});
 			}
 		}
@@ -196,13 +187,13 @@ pub mod pallet {
 	}
 }
 
-#[cfg(feature = "std")]
-impl<T: Config> GenesisConfig<T> {
-	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
-	}
+// #[cfg(feature = "std")]
+// impl<T: Config> GenesisConfig<T> {
+// 	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
+// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
+// 	}
 
-	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
-	}
-}
+// 	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
+// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
+// 	}
+// }

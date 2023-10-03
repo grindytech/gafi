@@ -83,7 +83,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Generates low-influence random values.
-		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+		type Randomness: Randomness<Self::Hash, BlockNumberFor<Self>>;
 
 		/// A configuration for base priority of unsigned transactions.
 		///
@@ -97,7 +97,7 @@ pub mod pallet {
 		/// This ensures that we only accept unsigned transactions once, every `UnsignedInterval`
 		/// blocks.
 		#[pallet::constant]
-		type UnsignedInterval: Get<Self::BlockNumber>;
+		type UnsignedInterval: Get<BlockNumberFor<Self>>;
 
 		/// Number of attempts to re-randomize in order to reduce modulus bias.
 		#[pallet::constant]
@@ -184,7 +184,7 @@ pub mod pallet {
 		///
 		/// - `block_number`: The block number to associate with the submitted random seed.
 		fn submit_random_seed_raw_unsigned(
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 		) -> Result<(), &'static str> {
 			let seed = sp_io::offchain::random_seed();
 			let call = Call::submit_random_seed_unsigned { block_number, seed };

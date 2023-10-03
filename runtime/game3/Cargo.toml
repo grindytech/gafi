@@ -14,13 +14,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 log = { version = "0.4.19", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
-  "derive",
-] }
-scale-info = { version = "2.8.0", default-features = false, features = [
-  "derive",
-] }
-
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 frame-executive = { default-features = false, workspace = true }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
@@ -55,12 +50,12 @@ frame-benchmarking = { workspace = true, default-features = false, optional = tr
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 # Local Dependencies
-gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
-pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache" }
-pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
-pallet-template = { version = "4.0.0-dev", default-features = false, path = "../../pallets/template" }
-game-randomness = { version = "4.0.0-dev", default-features = false, path = "../../game/randomness" }
-pallet-game = { version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game" }
+# gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
+# pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache" }
+# pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
+# pallet-template = { version = "4.0.0-dev", default-features = false, path = "../../pallets/template" }
+# game-randomness = { version = "4.0.0-dev", default-features = false, path = "../../game/randomness" }
+# pallet-game = { version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game" }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true, optional = true }
@@ -76,10 +71,11 @@ runtime-benchmarks = [
   "pallet-grandpa/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
-  "pallet-faucet/runtime-benchmarks",
   "pallet-nfts/runtime-benchmarks",
-  "pallet-game/runtime-benchmarks",
-  "game-randomness/runtime-benchmarks",
+
+  # "pallet-faucet/runtime-benchmarks",
+  # "pallet-game/runtime-benchmarks",
+  # "game-randomness/runtime-benchmarks",
 ]
 std = [
   "frame-try-runtime?/std",
@@ -113,13 +109,14 @@ std = [
   "sp-transaction-pool/std",
   "sp-version/std",
   "substrate-wasm-builder",
-  "pallet-faucet/std",
-  "pallet-cache/std",
-  "gafi-support/std",
-  "pallet-template/std",
   "pallet-nfts/std",
-  "game-randomness/std",
-  "pallet-game/std",
+
+  # "pallet-faucet/std",
+  # "pallet-cache/std",
+  # "gafi-support/std",
+  # "pallet-template/std",
+  # "game-randomness/std",
+  # "pallet-game/std",
 ]
 try-runtime = [
   "frame-try-runtime/try-runtime",
@@ -132,12 +129,13 @@ try-runtime = [
   "pallet-sudo/try-runtime",
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
-  "gafi-support/try-runtime",
-  "pallet-template/try-runtime",
-  "pallet-cache/try-runtime",
-  "pallet-faucet/try-runtime",
   "pallet-nfts/try-runtime",
-  "pallet-game/try-runtime",
+
+  # "gafi-support/try-runtime",
+  # "pallet-template/try-runtime",
+  # "pallet-cache/try-runtime",
+  # "pallet-faucet/try-runtime",
+  # "pallet-game/try-runtime",
 ]
 
 with-game3 = []

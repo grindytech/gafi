@@ -1,9 +1,10 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, StorageNMap};
+use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, T::BlockNumber>
+	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, BlockNumberFor<T>>
 	for Pallet<T, I>
 {
 	fn do_create_dynamic_pool(
@@ -11,7 +12,7 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		admin: &T::AccountId,
-		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
+		mint_settings: MintSettings<BalanceOf<T, I>, BlockNumberFor<T>, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure pool is available
 		ensure!(
@@ -59,7 +60,7 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		admin: &T::AccountId,
-		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
+		mint_settings: MintSettings<BalanceOf<T, I>, BlockNumberFor<T>, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure collection owner & infinite supply
 		for fraction in &loot_table {

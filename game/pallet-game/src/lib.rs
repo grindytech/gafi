@@ -47,14 +47,12 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::nonfungibles_v2::{Create, Inspect, InspectRole, Mutate, Transfer},
-		BalanceStatus, Currency, ReservableCurrency,
+		BalanceStatus, Currency, Incrementable, ReservableCurrency,
 	},
 };
-use frame_system::Config as SystemConfig;
+use frame_system::{pallet_prelude::BlockNumberFor, Config as SystemConfig};
 use gafi_support::game::*;
-use pallet_nfts::{
-	AttributeNamespace, CollectionConfig, Incrementable, ItemConfig, WeightInfo as NftsWeightInfo,
-};
+use pallet_nfts::{AttributeNamespace, CollectionConfig, ItemConfig, WeightInfo as NftsWeightInfo};
 use sp_runtime::traits::StaticLookup;
 use sp_std::vec::Vec;
 use types::*;
@@ -129,7 +127,7 @@ pub mod pallet {
 			+ Transfer<Self::AccountId>
 			+ Create<
 				Self::AccountId,
-				CollectionConfig<BalanceOf<Self, I>, Self::BlockNumber, Self::CollectionId>,
+				CollectionConfig<BalanceOf<Self, I>, BlockNumberFor<Self>, Self::CollectionId>,
 			> + Inspect<Self::AccountId>
 			+ Inspect<Self::AccountId, ItemId = Self::ItemId, CollectionId = Self::CollectionId>
 			+ InspectRole<Self::AccountId>;
@@ -192,7 +190,7 @@ pub mod pallet {
 
 		/// Number of blocks of cooldown required to process minting requests.
 		#[pallet::constant]
-		type MintInterval: Get<Self::BlockNumber>;
+		type MintInterval: Get<BlockNumberFor<Self>>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
@@ -322,7 +320,7 @@ pub mod pallet {
 	pub(super) type MintRequestOf<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Twox64Concat,
-		BlockNumber<T>,
+		BlockNumberFor<T>,
 		BoundedVec<MintRequestFor<T, I>, T::MaxMintRequest>,
 		ValueQuery,
 	>;
@@ -383,7 +381,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::TradeId,
-		AuctionConfig<T::AccountId, BalanceOf<T, I>, T::BlockNumber>,
+		AuctionConfig<T::AccountId, BalanceOf<T, I>, BlockNumberFor<T>>,
 		OptionQuery,
 	>;
 
@@ -434,7 +432,7 @@ pub mod pallet {
 			who: T::AccountId,
 			pool: T::PoolId,
 			target: T::AccountId,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 		},
 		Minted {
 			who: T::AccountId,
@@ -531,8 +529,8 @@ pub mod pallet {
 			who: T::AccountId,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
-			start_block: Option<T::BlockNumber>,
-			duration: T::BlockNumber,
+			start_block: Option<BlockNumberFor<T>>,
+			duration: BlockNumberFor<T>,
 		},
 		Bid {
 			trade: T::TradeId,
@@ -652,9 +650,9 @@ pub mod pallet {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config<I>, I: 'static> Hooks<BlockNumber<T>> for Pallet<T, I> {
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		/// Process minting requests in `block_number`.
-		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+		fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
 			for request in MintRequestOf::<T, I>::get(block_number) {
 				let res = Self::processing_mint_request(request);
 				if let Err(e) = res {
@@ -665,7 +663,7 @@ pub mod pallet {
 		}
 
 		/// Remove any existing minting requests on the `block_number`.
-		fn on_finalize(block_number: BlockNumber<T>) {
+		fn on_finalize(block_number: BlockNumberFor<T>) {
 			if !MintRequestOf::<T, I>::get(block_number).is_empty() {
 				let res = Self::remove_mint_request(block_number);
 				if let Err(e) = res {
@@ -979,8 +977,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
 			unit_price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1053,8 +1051,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			package: Package<T::CollectionId, T::ItemId>,
 			unit_price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1105,8 +1103,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1177,8 +1175,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1296,8 +1294,8 @@ pub mod pallet {
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
-			start_block: Option<T::BlockNumber>,
-			end_block: Option<T::BlockNumber>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1362,8 +1360,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
-			start_block: Option<T::BlockNumber>,
-			duration: T::BlockNumber,
+			start_block: Option<BlockNumberFor<T>>,
+			duration: BlockNumberFor<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let trade = Self::get_trade_id();
@@ -1750,7 +1748,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(())
 	}
 
-	pub fn remove_mint_request(block_number: BlockNumber<T>) -> DispatchResult {
+	pub fn remove_mint_request(block_number: BlockNumberFor<T>) -> DispatchResult {
 		MintRequestOf::<T, I>::remove(block_number);
 		Ok(())
 	}

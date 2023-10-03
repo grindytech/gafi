@@ -1,0 +1,80 @@
+[package]
+name = "node-template"
+version = "4.0.0-dev"
+description = "A fresh FRAME-based Substrate node, ready for hacking."
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+homepage = "https://substrate.io/"
+edition = "2021"
+license = "MIT-0"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+build = "build.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "node-template"
+
+[dependencies]
+clap = { version = "4.2.5", features = ["derive"] }
+futures = { version = "0.3.21", features = ["thread-pool"] }
+
+sc-cli = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sc-executor = { workspace = true, default-features = false }
+sc-network = { workspace = true, default-features = false }
+sc-service = { workspace = true, default-features = false }
+sc-telemetry = { workspace = true, default-features = false }
+sc-transaction-pool = { workspace = true, default-features = false }
+sc-transaction-pool-api = { workspace = true, default-features = false }
+sc-offchain = { workspace = true, default-features = false }
+sc-statement-store = { workspace = true, default-features = false }
+sc-consensus-aura = { workspace = true, default-features = false }
+sp-consensus-aura = { workspace = true, default-features = false }
+sc-consensus = { workspace = true, default-features = false }
+sc-consensus-grandpa = { workspace = true, default-features = false }
+sp-consensus-grandpa = { workspace = true, default-features = false }
+sc-client-api = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-timestamp = { workspace = true, default-features = false }
+sp-inherents = { workspace = true, default-features = false }
+sp-keyring = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+pallet-transaction-payment = { workspace = true, default-features = false }
+
+# These dependencies are used for the node template's RPCs
+jsonrpsee = { version = "0.16.2", features = ["server"] }
+sp-api = { workspace = true, default-features = false }
+sc-rpc-api = { workspace = true, default-features = false }
+sp-blockchain = { workspace = true, default-features = false }
+sp-block-builder = { workspace = true, default-features = false }
+sc-basic-authorship = { workspace = true, default-features = false }
+substrate-frame-rpc-system = { workspace = true, default-features = false }
+pallet-transaction-payment-rpc = { workspace = true, default-features = false }
+
+# These dependencies are used for runtime benchmarking
+frame-benchmarking = { workspace = true, default-features = false }
+frame-benchmarking-cli = { workspace = true, default-features = false }
+
+# Local Dependencies
+gafi-runtime = { version = "4.0.0-dev", path = "../runtime" }
+
+# CLI-specific dependencies
+try-runtime-cli = { workspace = true, default-features = false, optional = true }
+
+[build-dependencies]
+substrate-build-script-utils = { workspace = true, default-features = false }
+
+[features]
+default = []
+# Dependencies that are only required if runtime benchmarking should be build.
+runtime-benchmarks = [
+	"gafi-runtime/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-benchmarking-cli/runtime-benchmarks",
+]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = ["gafi-runtime/try-runtime", "try-runtime-cli/try-runtime"]
