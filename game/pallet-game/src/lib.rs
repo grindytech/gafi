@@ -194,7 +194,7 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, Self::BlockNumber, Self::PoolId>;
+		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, BlockNumberFor<Self>, Self::PoolId>;
 	}
 
 	/// Storing basic game info

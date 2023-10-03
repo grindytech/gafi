@@ -7,9 +7,6 @@ license = "Apache-2.0"
 
 [workspace]
 members = [
-  'node',
-  'node/game3',
-  'runtime/game3',
   'pallets/pallet-faucet',
   'pallets/pallet-cache',
   'game/pallet-game',

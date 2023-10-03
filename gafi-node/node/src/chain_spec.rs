@@ -1,7 +1,8 @@
 use gafi_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, RuntimeGenesisConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
+use gafi_support::common::{unit, NativeToken::GAFI};
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
@@ -54,10 +55,22 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
 				],
 				true,
 			)
@@ -89,23 +102,62 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
+				vec![
+					authority_keys_from_seed("Alice"),
+					authority_keys_from_seed("Bob"),
+				],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Dave"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
 				],
 				true,
 			)
@@ -129,7 +181,7 @@ fn testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,
-	endowed_accounts: Vec<AccountId>,
+	endowed_accounts: Vec<(AccountId, u128)>,
 	_enable_println: bool,
 ) -> RuntimeGenesisConfig {
 	RuntimeGenesisConfig {
@@ -140,7 +192,7 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|(k, balance)| (k, balance)).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -154,5 +206,8 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		transaction_payment: Default::default(),
+		faucet: FaucetConfig {
+			genesis_accounts: endowed_accounts.iter().map(|x| (x.0.clone())).collect(),
+		},
 	}
 }

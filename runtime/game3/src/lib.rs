@@ -705,6 +705,7 @@ impl_runtime_apis! {
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
+			
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use game_randomness::Pallet as GameRandomnessBench;
