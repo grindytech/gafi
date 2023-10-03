@@ -15,9 +15,10 @@ run:
 	./target/release/gafi-node \
     --tmp \
     --dev \
-    --rpc-port 9933 \
+    --rpc-port 9944 \
+    --rpc-cors all \
     --rpc-methods=Unsafe \
-    --rpc-external
+    --rpc-external 
 
 .PHONY: check-benchmark
 check-benchmark:

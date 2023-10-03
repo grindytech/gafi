@@ -1,13 +1,12 @@
 [package]
 name = "gafi-runtime"
-version = "4.0.0-dev"
 description = "A fresh FRAME-based Substrate node, ready for hacking."
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-homepage = "https://substrate.io/"
-edition = "2021"
-license = "MIT-0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
 publish = false
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -52,6 +51,9 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-feature
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
+# Polkadot
+polkadot-runtime-common = { workspace = true, default-features = false }
+
 # Support Dependencies
 pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
 pallet-nfts = { default-features = false, workspace = true }
@@ -70,6 +72,7 @@ substrate-wasm-builder = { workspace = true, optional = true }
 [features]
 default = ["std"]
 std = [
+	# Substrate
 	"frame-try-runtime?/std",
 	"frame-system-benchmarking?/std",
 	"frame-benchmarking?/std",
@@ -102,9 +105,14 @@ std = [
 	"substrate-wasm-builder",
 	"log/std",
 
+	# Polkadot
+	"polkadot-runtime-common/std",
+
+	# Support runtime
 	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-nfts/std",
 
+	# Local
 	"pallet-template/std",
 	"gafi-support/std",
 	"pallet-cache/std",

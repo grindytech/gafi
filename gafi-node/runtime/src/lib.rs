@@ -24,6 +24,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use polkadot_runtime_common::SlowAdjustingFeeUpdate;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 pub use frame_support::{
@@ -45,7 +46,7 @@ use gafi_support::common::{unit, NativeToken::GAFI};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_game::SubstrateWeight as PalletGameWeight;
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
+use pallet_transaction_payment::{CurrencyAdapter, Multiplier};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{generic::Era, MultiAddress, SaturatedConversion};
@@ -332,7 +333,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 }
 
 impl pallet_sudo::Config for Runtime {
