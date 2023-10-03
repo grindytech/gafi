@@ -39,7 +39,7 @@ mod types;
 mod benchmarking;
 
 mod weights;
-use crate::weights::WeightInfo;
+// use crate::weights::WeightInfo;
 pub use weights::*;
 
 use frame_support::{
