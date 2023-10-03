@@ -15,6 +15,7 @@ use sp_core::{offchain::KeyTypeId, Get};
 use sp_runtime::{
 	traits::TrailingZeroInput,
 	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
+	Saturating,
 };
 
 mod features;
@@ -54,7 +55,9 @@ pub mod crypto {
 }
 
 /// Payload used to hold seed data required to submit a transaction.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
+)]
 pub struct SeedPayload<BlockNumber, Seed> {
 	block_number: BlockNumber,
 	seed: Seed,
@@ -167,7 +170,7 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			RandomSeed::<T>::put(SeedPayload { block_number, seed });
-			<NextUnsignedAt<T>>::put(block_number + T::UnsignedInterval::get());
+			<NextUnsignedAt<T>>::put(block_number.saturating_add(T::UnsignedInterval::get()));
 			Self::deposit_event(Event::<T>::NewSeed { block_number, seed });
 			Ok(())
 		}

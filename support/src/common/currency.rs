@@ -60,29 +60,69 @@ impl TokenInfo for GafiCurrency {
 /// assert_eq!(balance, 10_000_000_000_000_000_000);
 /// ```
 pub fn unit(token: NativeToken) -> u128 {
-	10u128.saturating_pow(GafiCurrency::token_info(token).decimals.into())
+    10u128.saturating_pow(GafiCurrency::token_info(token).decimals.into())
 }
 
 /// 1 centi = 0.01 unit
 pub fn centi(token: NativeToken) -> u128 {
-	unit(token) / 100
+    unit(token).saturating_div(100)
 }
 
 /// 1 milli = 0.001 unit
 pub fn milli(token: NativeToken) -> u128 {
-	unit(token) / 1000
+    unit(token).saturating_div(1000)
 }
 
 /// 1 millicent = 0.00001 unit
 pub fn millicent(token: NativeToken) -> u128 {
-	centi(token) / 1000
+    centi(token).saturating_div(1000)
 }
 
 /// 1 microcent = 0.000001 unit
 pub fn microcent(token: NativeToken) -> u128 {
-	milli(token) / 1000
+    milli(token).saturating_div(1000)
 }
 
 pub fn deposit(items: u32, bytes: u32, token: NativeToken) -> Balance {
-	items as Balance * 20 * unit(token.clone()) + (bytes as Balance) * 100 * millicent(token)
+    let mut balance = items as Balance;
+    balance = balance
+        .saturating_mul(20)
+        .saturating_mul(unit(token.clone()))
+        .saturating_add((bytes as Balance).saturating_mul(100).saturating_mul(millicent(token)));
+    balance
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unit() {
+        assert_eq!(unit(NativeToken::GAKI), 1_000_000_000_000_000_000);
+    }
+
+    #[test]
+    fn test_centi() {
+        assert_eq!(centi(NativeToken::GAKI), 10_000_000_000_000_000);
+    }
+
+    #[test]
+    fn test_milli() {
+        assert_eq!(milli(NativeToken::GAKI), 1_000_000_000_000_000);
+    }
+
+    #[test]
+    fn test_millicent() {
+        assert_eq!(millicent(NativeToken::GAKI), 10_000_000_000_000);
+    }
+
+    #[test]
+    fn test_microcent() {
+        assert_eq!(microcent(NativeToken::GAKI), 1_000_000_000_000);
+    }
+
+    #[test]
+    fn test_deposit() {
+        assert_eq!(deposit(5, 100, NativeToken::GAKI), 100_100_000_000_000_000_000);
+    }
 }

@@ -121,8 +121,11 @@ impl<T: Config<I>, I: 'static>
 					ItemBalanceStatus::Free,
 				)?;
 
-				let new_package =
-					Package::new(package.collection, package.item, package.amount - amount);
+				let new_package = Package::new(
+					package.collection,
+					package.item,
+					package.amount.saturating_sub(amount),
+				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
@@ -209,7 +212,7 @@ impl<T: Config<I>, I: 'static>
 				let new_package = Package::new(
 					package.collection,
 					package.item,
-					package.amount + supply.amount,
+					package.amount.saturating_add(supply.amount),
 				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -241,7 +244,7 @@ impl<T: Config<I>, I: 'static>
 		// ensure reserve deposit
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 
-		let deposit = unit_price * package.amount.into();
+		let deposit = unit_price.saturating_mul(package.amount.into());
 		<T as Config<I>>::Currency::reserve(&who, deposit)?;
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -320,12 +323,15 @@ impl<T: Config<I>, I: 'static>
 				<T as pallet::Config<I>>::Currency::repatriate_reserved(
 					&config.owner,
 					&who,
-					price * amount.into(),
+					price.saturating_mul(amount.into()),
 					BalanceStatus::Free,
 				)?;
 
-				let new_package =
-					Package::new(package.collection, package.item, package.amount - amount);
+				let new_package = Package::new(
+					package.collection,
+					package.item,
+					package.amount.saturating_sub(amount),
+				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
