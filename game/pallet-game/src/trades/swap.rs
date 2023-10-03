@@ -57,6 +57,8 @@ impl<T: Config<I>, I: 'static>
 			source,
 			required,
 			maybe_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

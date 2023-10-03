@@ -58,6 +58,8 @@ impl<T: Config<I>, I: 'static>
 			who: who.clone(),
 			bundle,
 			price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

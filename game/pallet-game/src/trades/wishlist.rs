@@ -54,6 +54,8 @@ impl<T: Config<I>, I: 'static>
 			who: who.clone(),
 			wishlist,
 			price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

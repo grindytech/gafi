@@ -439,6 +439,8 @@ pub mod pallet {
 			pool: T::PoolId,
 			target: T::AccountId,
 			nfts: Vec<NFT<T::CollectionId, T::ItemId>>,
+			price: BalanceOf<T, I>,
+			amount: Amount,
 		},
 		Burned {
 			who: T::AccountId,
@@ -474,6 +476,8 @@ pub mod pallet {
 			item: T::ItemId,
 			amount: Amount,
 			unit_price: BalanceOf<T, I>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		},
 		ItemBought {
 			trade: T::TradeId,
@@ -486,6 +490,8 @@ pub mod pallet {
 			who: T::AccountId,
 			bundle: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		},
 		BundleBought {
 			trade: T::TradeId,
@@ -501,6 +507,8 @@ pub mod pallet {
 			who: T::AccountId,
 			wishlist: Bundle<T::CollectionId, T::ItemId>,
 			price: BalanceOf<T, I>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		},
 		WishlistFilled {
 			trade: T::TradeId,
@@ -518,6 +526,8 @@ pub mod pallet {
 			source: Bundle<T::CollectionId, T::ItemId>,
 			required: Bundle<T::CollectionId, T::ItemId>,
 			maybe_price: Option<BalanceOf<T, I>>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		},
 		SwapClaimed {
 			trade: T::TradeId,
@@ -548,6 +558,8 @@ pub mod pallet {
 			item: T::ItemId,
 			amount: Amount,
 			unit_price: BalanceOf<T, I>,
+			start_block: Option<BlockNumberFor<T>>,
+			end_block: Option<BlockNumberFor<T>>,
 		},
 		SetBuyClaimed {
 			trade: T::TradeId,

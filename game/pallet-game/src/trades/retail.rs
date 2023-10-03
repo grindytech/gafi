@@ -63,6 +63,8 @@ impl<T: Config<I>, I: 'static>
 			item: package.item,
 			amount: package.amount,
 			unit_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())
@@ -272,6 +274,8 @@ impl<T: Config<I>, I: 'static>
 			item: package.item,
 			amount: package.amount,
 			unit_price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())
