@@ -4,8 +4,9 @@ use gafi_support::game::GameRandomness;
 pub use pallet::*;
 use sp_runtime::{
 	offchain::{http, Duration},
-	traits::TrailingZeroInput,
+	traits::{Get, TrailingZeroInput},
 };
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -21,7 +22,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{ensure, pallet_prelude::*};
+	use frame_support::{pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 
 	/// Payload used to hold seed data required to submit a transaction.
@@ -44,6 +45,7 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
+		#[pallet::constant]
 		type RandomAttemps: Get<u32>;
 
 		#[pallet::constant]
@@ -98,7 +100,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			ensure!(
-				urls.len() < T::MaxRandomURL::get() as usize,
+				urls.len() as u32 <= T::MaxRandomURL::get(),
 				Error::<T>::ExceedMaxRandomURL
 			);
 
@@ -107,7 +109,6 @@ pub mod pallet {
 				let new_url = BoundedVec::<u8, T::RandomURLLength>::try_from(url);
 
 				if let Ok(url_value) = new_url {
-					print!("url: {:?}", url_value);
 					new_urls.push(url_value);
 				} else {
 					return Err(Error::<T>::ExceedRandomURLLength.into())

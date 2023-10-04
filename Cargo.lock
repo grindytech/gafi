@@ -2648,6 +2648,7 @@ dependencies = [
  "gafi-support",
  "log",
  "offchain-worker-randomness",
+ "oracle-randomness",
  "pallet-aura",
  "pallet-balances",
  "pallet-cache",

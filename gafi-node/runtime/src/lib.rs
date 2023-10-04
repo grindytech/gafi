@@ -468,6 +468,22 @@ impl pallet_game::Config for Runtime {
 	type Helper = ();
 }
 
+parameter_types! {
+	pub OracleRandomAttemps: u32 = 5;
+	pub SeedLength: u32 = 64;
+	pub MaxRandomURL: u32 = 5;
+	pub RandomURLLength: u32 = 60;
+}
+
+impl oracle_randomness::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type RandomAttemps = OracleRandomAttemps;
+	type SeedLength = SeedLength;
+	type MaxRandomURL = MaxRandomURL;
+	type RandomURLLength = RandomURLLength;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -487,6 +503,7 @@ construct_runtime!(
 		PalletCache: pallet_cache,
 		Game: pallet_game,
 		GameRandomness: offchain_worker_randomness,
+		OracleRandomness: oracle_randomness,
 	}
 );
 
