@@ -43,11 +43,16 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+pub const MAX_RANDOM_URL: u32 = 5;
+pub const URL_LENGTH: u32 = 10;
+
 impl oracle_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type RandomAttemps = ConstU32<5>;
 	type SeedLength = ConstU32<64>;
+	type MaxRandomURL = ConstU32<MAX_RANDOM_URL>;
+	type RandomURLLength = ConstU32<URL_LENGTH>;
 }
 
 // Build genesis storage according to the mock runtime.

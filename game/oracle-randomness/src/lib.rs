@@ -2,7 +2,10 @@
 
 use gafi_support::game::GameRandomness;
 pub use pallet::*;
-use sp_runtime::traits::TrailingZeroInput;
+use sp_runtime::{
+	offchain::{http, Duration},
+	traits::TrailingZeroInput,
+};
 
 #[cfg(test)]
 mod mock;
@@ -18,7 +21,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{ensure, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 
 	/// Payload used to hold seed data required to submit a transaction.
@@ -45,12 +48,26 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type SeedLength: Get<u32>;
+
+		#[pallet::constant]
+		type MaxRandomURL: Get<u32>;
+
+		#[pallet::constant]
+		type RandomURLLength: Get<u32>;
 	}
 
 	/// Storing random seed generated.
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config> =
 		StorageValue<_, SeedPayload<BlockNumberFor<T>, BoundedVec<u8, T::SeedLength>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn urls)]
+	pub type RandomURL<T: Config> = StorageValue<
+		_,
+		BoundedVec<BoundedVec<u8, T::RandomURLLength>, T::MaxRandomURL>,
+		ValueQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -59,11 +76,100 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidSeed,
+		ExceedRandomURLLength,
+		ExceedMaxRandomURL,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn offchain_worker(block_number: BlockNumberFor<T>) {
+			let res = Self::fetch_random_and_send_raw_unsign(block_number);
+			if let Err(e) = res {
+				log::error!("Error: {}", e);
+			}
+		}
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(0)]
+		pub fn set_new_random_urls(origin: OriginFor<T>, urls: Vec<Vec<u8>>) -> DispatchResult {
+			ensure_root(origin)?;
 
+			ensure!(
+				urls.len() < T::MaxRandomURL::get() as usize,
+				Error::<T>::ExceedMaxRandomURL
+			);
+
+			let mut new_urls: Vec<BoundedVec<u8, T::RandomURLLength>> = vec![];
+			for url in urls {
+				let new_url = BoundedVec::<u8, T::RandomURLLength>::try_from(url);
+
+				if let Ok(url_value) = new_url {
+					print!("url: {:?}", url_value);
+					new_urls.push(url_value);
+				} else {
+					return Err(Error::<T>::ExceedRandomURLLength.into())
+				}
+			}
+
+			let new_random_url =
+				BoundedVec::<BoundedVec<u8, T::RandomURLLength>, T::MaxRandomURL>::try_from(
+					new_urls,
+				);
+
+			if let Ok(url_values) = new_random_url {
+				RandomURL::<T>::put(url_values)
+			} else {
+				return Err(Error::<T>::ExceedMaxRandomURL.into())
+			}
+
+			Ok(())
+		}
+	}
+
+	// Offchain implementation
+	impl<T: Config> Pallet<T> {
+		pub fn fetch_random_and_send_raw_unsign(
+			_block_number: BlockNumberFor<T>,
+		) -> Result<(), &'static str> {
+			for url in RandomURL::<T>::get() {
+				log::info!("URL: {:?}", url);
+			}
+
+			Ok(())
+		}
+
+		pub fn fetch_random(url: &str) -> Result<bool, http::Error> {
+			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+
+			let request = http::Request::get(url);
+
+			let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
+
+			let response =
+				pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
+
+			if response.code != 200 {
+				log::warn!("Unexpected status code: {}", response.code);
+				return Err(http::Error::Unknown)
+			}
+
+			let body = response.body().collect::<Vec<u8>>();
+
+			let body_str = sp_std::str::from_utf8(&body).map_err(|_| {
+				log::warn!("No UTF8 body");
+				http::Error::Unknown
+			})?;
+
+			log::info!("{:?}", body_str);
+
+			Ok(true)
+		}
+	}
+
+	// Random implementation
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn gen_random(seed: &[u8]) -> Result<u32, Error<T>> {
 			match <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref())) {
