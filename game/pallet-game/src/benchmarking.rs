@@ -456,6 +456,8 @@ benchmarks_instance_pallet! {
 			item: <T as pallet_nfts::Config>::Helper::item(0),
 			amount: 10,
 			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -502,6 +504,8 @@ benchmarks_instance_pallet! {
 			who,
 			bundle,
 			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -545,6 +549,8 @@ benchmarks_instance_pallet! {
 			who,
 			wishlist: bundle,
 			price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -617,6 +623,8 @@ benchmarks_instance_pallet! {
 			source:  bundle,
 			required: required.clone(),
 			maybe_price: Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 
@@ -765,6 +773,8 @@ benchmarks_instance_pallet! {
 			item: package.item,
 			amount: package.amount,
 			unit_price:  <T as pallet::Config<I>>::Currency::minimum_balance(),
+			start_block: None,
+			end_block: None,
 		}.into() );
 	}
 

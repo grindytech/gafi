@@ -1,17 +1,25 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Bundle, TradeType, Wholesale};
 
 impl<T: Config<I>, I: 'static>
-	Wholesale<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
+	Wholesale<
+		T::AccountId,
+		T::CollectionId,
+		T::ItemId,
+		T::TradeId,
+		BalanceOf<T, I>,
+		BlockNumberFor<T>,
+	> for Pallet<T, I>
 {
 	fn do_set_bundle(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		bundle: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -50,6 +58,8 @@ impl<T: Config<I>, I: 'static>
 			who: who.clone(),
 			bundle,
 			price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())

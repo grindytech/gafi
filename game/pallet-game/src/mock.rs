@@ -1,40 +1,33 @@
 use crate::{self as pallet_game};
 use frame_support::{
-	dispatch::Vec,
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, OnFinalize, OnInitialize},
+	traits::{AsEnsureOriginWithArg, ConstU64, OnFinalize, OnInitialize},
 	PalletId,
 };
 use frame_system as system;
+use pallet_balances::AccountData;
 use pallet_nfts::PalletFeatures;
-use sp_core::{
-	sr25519::{self, Signature},
-	ConstU128, ConstU32, H256,
-};
+use sp_core::{sr25519::Signature, ConstU128, ConstU32, H256};
 use sp_runtime::{
-	testing::{Header, TestXt},
+	testing::TestXt,
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 };
-use system::{mocking};
+use system::mocking;
 
 pub type Extrinsic = TestXt<RuntimeCall, ()>;
-type UncheckedExtrinsic = mocking::MockUncheckedExtrinsic<Test>;
 type Block = mocking::MockBlock<Test>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 type AccountPublic = <Signature as Verify>::Signer;
+use sp_runtime::BuildStorage;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
 		System: frame_system,
 		PalletGame: pallet_game,
 		Balances: pallet_balances,
 		Nfts: pallet_nfts,
-
 	}
 );
 
@@ -45,43 +38,44 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
+	type AccountId = sp_core::sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u128>;
+	type AccountData = AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<42>;
+	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 pub const EXISTENTIAL_DEPOSIT: u128 = 1000;
 
+parameter_types! {
+	pub ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
+}
+
 impl pallet_balances::Config for Test {
-	type MaxLocks = ConstU32<50>;
+	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
 	type Balance = u128;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+	type WeightInfo = ();
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type MaxHolds = ();
 }
 
@@ -229,5 +223,5 @@ pub fn run_to_block(n: u64) {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	frame_system::GenesisConfig::<Test>::default().build_storage().unwrap().into()
 }

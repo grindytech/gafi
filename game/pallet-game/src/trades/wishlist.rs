@@ -1,17 +1,25 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::BalanceStatus};
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Bundle, Wishlist};
 
 impl<T: Config<I>, I: 'static>
-	Wishlist<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>> for Pallet<T, I>
+	Wishlist<
+		T::AccountId,
+		T::CollectionId,
+		T::ItemId,
+		T::TradeId,
+		BalanceOf<T, I>,
+		BlockNumberFor<T>,
+	> for Pallet<T, I>
 {
 	fn do_set_wishlist(
 		trade: &T::TradeId,
 		who: &T::AccountId,
 		wishlist: Bundle<T::CollectionId, T::ItemId>,
 		price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -46,6 +54,8 @@ impl<T: Config<I>, I: 'static>
 			who: who.clone(),
 			wishlist,
 			price,
+			start_block,
+			end_block,
 		});
 
 		Ok(())
@@ -57,7 +67,6 @@ impl<T: Config<I>, I: 'static>
 		ask_price: BalanceOf<T, I>,
 	) -> DispatchResult {
 		if let Some(config) = TradeConfigOf::<T, I>::get(trade) {
-
 			let block_number = <frame_system::Pallet<T>>::block_number();
 			if let Some(start_block) = config.start_block {
 				ensure!(block_number >= start_block, Error::<T, I>::TradeNotStarted);
