@@ -1,4 +1,4 @@
-use crate as game_randomness;
+use crate as offchain_worker_randomness;
 use crate::*;
 
 use frame_support::{parameter_types, traits::ConstU64, PalletId};
@@ -19,7 +19,7 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system,
-		GameRandomness: game_randomness,
+		GameRandomness: offchain_worker_randomness,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 	}
 );

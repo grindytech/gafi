@@ -57,7 +57,7 @@ randomness-weights:
     --steps 50 \
     --repeat 20 \
     --execution wasm \
-    --output ./benchmarking/randomness/weights.rs \
+    --output ./benchmarking/offchain-worker-randomness/weights.rs \
     --template .maintain/frame-weight-template.hbs
 
 .PHONY: pallet-game-weights

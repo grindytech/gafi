@@ -2646,8 +2646,8 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "gafi-support",
- "game-randomness",
  "log",
+ "offchain-worker-randomness",
  "pallet-aura",
  "pallet-balances",
  "pallet-cache",
@@ -2692,23 +2692,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "game-randomness"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-support",
- "log",
- "pallet-insecure-randomness-collective-flip",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -4769,6 +4752,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "offchain-worker-randomness"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-support",
+ "log",
+ "pallet-insecure-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "oid-registry"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4809,6 +4809,20 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
+
+[[package]]
+name = "oracle-randomness"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
 
 [[package]]
 name = "p256"
@@ -5029,8 +5043,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-support",
- "game-randomness",
  "log",
+ "offchain-worker-randomness",
  "pallet-balances",
  "pallet-nfts",
  "parity-scale-codec",

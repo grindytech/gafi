@@ -415,7 +415,7 @@ parameter_types! {
 	pub UnsignedInterval: u32 = 1;
 }
 
-impl game_randomness::Config for Runtime {
+impl offchain_worker_randomness::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type PalletId = PalletGameId;
 	type WeightInfo = ();
@@ -486,7 +486,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
 		Game: pallet_game,
-		GameRandomness: game_randomness,
+		GameRandomness: offchain_worker_randomness,
 	}
 );
 
@@ -718,14 +718,14 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use game_randomness::Pallet as GameRandomnessBench;
+			use offchain_worker_randomness::Pallet as GameRandomnessBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
-			list_benchmark!(list, extra, game_randomness, GameRandomnessBench::<Runtime>);
+			list_benchmark!(list, extra, offchain_worker_randomness, GameRandomnessBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -748,7 +748,7 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use game_randomness::Pallet as GameRandomnessBench;
+			use offchain_worker_randomness::Pallet as GameRandomnessBench;
 
 
 
@@ -757,7 +757,7 @@ impl_runtime_apis! {
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
-			add_benchmark!(params, batches, game_randomness, GameRandomnessBench::<Runtime>);
+			add_benchmark!(params, batches, offchain_worker_randomness, GameRandomnessBench::<Runtime>);
 
 			Ok(batches)
 		}
