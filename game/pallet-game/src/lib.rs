@@ -193,7 +193,12 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		/// A set of helper functions for benchmarking.
-		type Helper: BenchmarkHelper<Self::GameId, Self::TradeId, BlockNumberFor<Self>, Self::PoolId>;
+		type Helper: BenchmarkHelper<
+			Self::GameId,
+			Self::TradeId,
+			BlockNumberFor<Self>,
+			Self::PoolId,
+		>;
 	}
 
 	/// Storing basic game info
@@ -248,6 +253,16 @@ pub mod pallet {
 		BoundedVec<T::GameId, T::MaxGameShare>,
 		ValueQuery,
 	>;
+
+	/// Metadata of a game.
+	#[pallet::storage]
+	pub type GameMetadataOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::GameId, GameMetadata<T::StringLimit>, OptionQuery>;
+
+	/// Metadata of a pool.
+	#[pallet::storage]
+	pub type PoolMetadataOf<T: Config<I>, I: 'static = ()> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, PoolMetadata<T::StringLimit>, OptionQuery>;
 
 	/// Game roles
 	#[pallet::storage]
@@ -398,6 +413,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		GameCreated {
+			who: T::AccountId,
+			game: T::GameId,
+		},
+		GameSetMetadata {
+			who: T::AccountId,
+			game: T::GameId,
+			data: BoundedVec<u8, T::StringLimit>,
+		},
+		GameMetadataCleared {
 			who: T::AccountId,
 			game: T::GameId,
 		},
@@ -572,6 +596,15 @@ pub mod pallet {
 			pool_type: PoolType,
 			table: LootTable<T::CollectionId, T::ItemId>,
 		},
+		PoolSetMetadata {
+			who: T::AccountId,
+			pool: T::PoolId,
+			data: BoundedVec<u8, T::StringLimit>,
+		},
+		PoolSetMetadataCleared {
+			who: T::AccountId,
+			pool: T::PoolId,
+		},
 	}
 
 	#[pallet::error]
@@ -587,6 +620,8 @@ pub mod pallet {
 		UnknownBid,
 		UnknownAcceptance,
 		UnknownMiningPool,
+
+		MetadataNotFound,
 
 		/// Exceed the maximum allowed item in a collection
 		ExceedMaxItem,
@@ -1299,7 +1334,12 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(24)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_swap(source.len() as u32, required.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_swap(
+				source.len() as u32,
+				required.len() as u32
+			)
+		)]
 		pub fn create_swap(
 			origin: OriginFor<T>,
 			source: Bundle<T::CollectionId, T::ItemId>,
@@ -1646,7 +1686,9 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(38)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(loot_table.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(loot_table.len() as u32)
+		)]
 		pub fn create_dynamic_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1681,7 +1723,9 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		#[pallet::call_index(39)]
-		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_stable_pool(loot_table.len() as u32))]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_stable_pool(loot_table.len() as u32)
+		)]
 		pub fn create_stable_pool(
 			origin: OriginFor<T>,
 			loot_table: LootTable<T::CollectionId, T::ItemId>,
@@ -1724,6 +1768,272 @@ pub mod pallet {
 			let target = T::Lookup::lookup(mint_to)?;
 
 			Self::do_request_mint(&pool, &sender, &target, amount)?;
+			Ok(())
+		}
+
+		/// Creates a new collection with the provided data and sets the collection metadata and
+		/// team.
+		///
+		/// - `origin`: The account origin of the caller.
+		/// - `admin`: The admin account lookup.
+		/// - `data`: The collection metadata.
+		/// - `issuer`: The optional account lookup for the issuer.
+		/// - `freezer`: The optional account lookup for the freezer.
+		///
+		/// Returns `Ok(())` if the collection is created and the metadata and team are set
+		/// successfully.
+		#[pallet::call_index(41)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_collection_with_data(T::StringLimit::get()))]
+		pub fn create_collection_with_data(
+			origin: OriginFor<T>,
+			data: BoundedVec<u8, T::StringLimit>,
+			admin: Option<AccountIdLookupOf<T>>,
+			issuer: Option<AccountIdLookupOf<T>>,
+			freezer: Option<AccountIdLookupOf<T>>,
+			game: Option<T::GameId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			let collection = Self::do_create_collection(&sender, &sender)?;
+
+			if let Some(game_id) = game {
+				Self::do_add_collection(&sender, &game_id, &collection)?;
+			}
+
+			if issuer.is_some() || freezer.is_some() || admin.is_some() {
+				pallet_nfts::pallet::Pallet::<T>::set_team(
+					origin.clone(),
+					collection,
+					issuer,
+					admin,
+					freezer,
+				)?;
+			};
+
+			pallet_nfts::pallet::Pallet::<T>::set_collection_metadata(
+				origin.clone(),
+				collection,
+				data,
+			)?;
+
+			Ok(())
+		}
+
+		/// Creates a new item with the provided data and sets the item metadata.
+		///
+		/// - origin: The account origin of the caller.
+		/// - collection: The collection ID of the item's collection.
+		/// - item: The unique ID of the item.
+		/// - maybe_supply: The optional supply of the item.
+		/// - data: The item metadata.
+		///
+		/// Returns Ok(()) if the item is created and the metadata is set successfully.
+		#[pallet::call_index(42)]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::create_item_with_data(T::StringLimit::get()))]
+		pub fn create_item_with_data(
+			origin: OriginFor<T>,
+			collection: T::CollectionId,
+			item: T::ItemId,
+			maybe_supply: Option<u32>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			Self::do_create_item(&sender, &collection, &item, maybe_supply)?;
+			pallet_nfts::pallet::Pallet::<T>::set_metadata(origin, collection, item, data)?;
+
+			Ok(())
+		}
+
+		/// This function creates a new game with the provided metadata. It requires the account
+		/// origin of the caller, the lookup of the admin account, and the metadata of the game.
+		///
+		/// - origin: The account origin of the caller.
+		/// - admin: The lookup of the admin account.
+		/// - data: The metadata of the game.
+		///
+		/// Return Ok(()) if the game is created and the metadata is set successfully.
+		#[pallet::call_index(43)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_game_with_data(T::StringLimit::get())
+		)]
+		pub fn create_game_with_data(
+			origin: OriginFor<T>,
+			admin: AccountIdLookupOf<T>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let admin = T::Lookup::lookup(admin)?;
+			let game = Self::get_game_id();
+			Self::do_create_game(&game, &sender, &admin)?;
+			Self::do_set_game_metadata(sender.clone(), game.clone(), data)?;
+			Ok(())
+		}
+
+		/// Sets the metadata for a game.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		/// * `data` - The metadata to set for the game, bounded by the `StringLimit` associated
+		///   type.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(())` if the operation was successful. Otherwise, an error is returned.
+		#[pallet::call_index(44)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::set_game_metadata(T::StringLimit::get())
+		)]
+		pub fn set_game_metadata(
+			origin: OriginFor<T>,
+			data: BoundedVec<u8, T::StringLimit>,
+			game: T::GameId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_set_game_metadata(sender.clone(), game.clone(), data)?;
+			Ok(())
+		}
+
+		/// Clears the metadata for a game.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(())` if the operation was successful. Otherwise, an error is returned.
+		#[pallet::call_index(45)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::clear_game_metadata(T::StringLimit::get())
+		)]
+		pub fn clear_game_metadata(origin: OriginFor<T>, game: T::GameId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_clear_game_metadata(sender.clone(), game)?;
+			Ok(())
+		}
+
+		/// Creates a dynamic pool with the specified data.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		/// * `loot_table` - The loot table associated with the pool.
+		/// * `admin` - The admin account for the pool.
+		/// * `mint_settings` - The mint settings for the pool.
+		/// * `data` - The data to set as the pool metadata.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(DispatchResultWithPostInfo)` if the operation was successful. Otherwise, an
+		/// error is returned.
+		#[pallet::call_index(46)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool_with_data()
+		)]
+		pub fn create_dynamic_pool_with_data(
+			origin: OriginFor<T>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
+			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			let id = Self::get_pool_id();
+			let admin = T::Lookup::lookup(admin)?;
+			let table_len = loot_table.len() as u32;
+			Self::do_create_dynamic_pool(&id, &sender, loot_table, &admin, mint_settings)?;
+			Self::do_set_pool_metadata(sender.clone(), id, data)?;
+			Ok(
+				Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
+					table_len,
+				))
+				.into(),
+			)
+		}
+
+		/// Creates a stable pool with the specified data.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		/// * `loot_table` - The loot table associated with the pool.
+		/// * `admin` - The admin account for the pool.
+		/// * `mint_settings` - The mint settings for the pool.
+		/// * `data` - The data to set as the pool metadata.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(DispatchResultWithPostInfo)` if the operation was successful. Otherwise, an
+		/// error is returned.
+		#[pallet::call_index(47)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::create_stable_pool_with_data()
+		)]
+		pub fn create_stable_pool_with_data(
+			origin: OriginFor<T>,
+			loot_table: LootTable<T::CollectionId, T::ItemId>,
+			admin: AccountIdLookupOf<T>,
+			mint_settings: MintSettingsFor<T, I>,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			let id = Self::get_pool_id();
+			let admin = T::Lookup::lookup(admin)?;
+			let table_len = loot_table.len() as u32;
+			Self::do_create_stable_pool(&id, &sender, loot_table, &admin, mint_settings)?;
+			Self::do_set_pool_metadata(sender.clone(), id, data)?;
+			Ok(
+				Some(<T as pallet::Config<I>>::WeightInfo::create_dynamic_pool(
+					table_len,
+				))
+				.into(),
+			)
+		}
+
+		/// Sets the metadata for a pool.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		/// * `pool` - The ID of the pool.
+		/// * `data` - The data to set as the pool metadata.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(())` if the operation was successful. Otherwise, an error is returned.
+		#[pallet::call_index(48)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::set_pool_metadata()
+		)]
+		pub fn set_pool_metadata(
+			origin: OriginFor<T>,
+			pool: T::PoolId,
+			data: BoundedVec<u8, T::StringLimit>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_set_pool_metadata(sender.clone(), pool, data)?;
+			Ok(())
+		}
+
+		/// Sets the metadata for a pool.
+		///
+		/// # Arguments
+		///
+		/// * `origin` - The origin of the transaction.
+		/// * `pool` - The ID of the pool.
+		/// * `data` - The data to set as the pool metadata.
+		///
+		/// # Returns
+		///
+		/// Returns `Ok(())` if the operation was successful. Otherwise, an error is returned.
+		#[pallet::call_index(49)]
+		#[pallet::weight(
+			<T as pallet::Config<I>>::WeightInfo::clear_pool_metadata()
+		)]
+		pub fn clear_pool_metadata(origin: OriginFor<T>, pool: T::PoolId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_clear_pool_metadata(sender.clone(), pool)?;
 			Ok(())
 		}
 	}

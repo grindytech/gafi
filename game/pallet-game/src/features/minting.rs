@@ -4,9 +4,54 @@ use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, BlockNumberFor<T>>
-	for Pallet<T, I>
+	Mining<
+		T::AccountId,
+		BalanceOf<T, I>,
+		T::CollectionId,
+		T::ItemId,
+		T::PoolId,
+		BlockNumberFor<T>,
+		T::StringLimit,
+	> for Pallet<T, I>
 {
+	fn do_set_pool_metadata(
+		origin: T::AccountId,
+		pool: T::PoolId,
+		data: BoundedVec<u8, T::StringLimit>,
+	) -> DispatchResult {
+		let pool_details = PoolOf::<T, I>::get(pool).ok_or(Error::<T, I>::UnknownMiningPool)?;
+		ensure!(
+			pool_details.admin == origin || pool_details.owner == origin,
+			Error::<T, I>::NoPermission
+		);
+
+		PoolMetadataOf::<T, I>::try_mutate_exists(pool, |metadata| {
+			*metadata = Some(PoolMetadata { data: data.clone() });
+			Self::deposit_event(Event::PoolSetMetadata {
+				who: origin,
+				pool,
+				data,
+			});
+			Ok(())
+		})
+	}
+
+	fn do_clear_pool_metadata(origin: T::AccountId, pool: T::PoolId) -> DispatchResult {
+		let pool_details = PoolOf::<T, I>::get(pool).ok_or(Error::<T, I>::UnknownMiningPool)?;
+
+		ensure!(pool_details.admin == origin, Error::<T, I>::NoPermission);
+
+		let _metadata =
+			PoolMetadataOf::<T, I>::take(pool).ok_or(Error::<T, I>::MetadataNotFound)?;
+
+		Self::deposit_event(Event::PoolSetMetadataCleared {
+			who: origin.clone(),
+			pool,
+		});
+
+		Ok(())
+	}
+
 	fn do_create_dynamic_pool(
 		pool: &T::PoolId,
 		who: &T::AccountId,

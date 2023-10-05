@@ -55,7 +55,10 @@ impl<T: Config<I>, I: 'static>
 		Err(Error::<T, I>::UnknownGame.into())
 	}
 
-	fn do_create_collection(who: &T::AccountId, admin: &T::AccountId) -> DispatchResult {
+	fn do_create_collection(
+		who: &T::AccountId,
+		admin: &T::AccountId,
+	) -> Result<T::CollectionId, sp_runtime::DispatchError> {
 		let config: CollectionConfigFor<T, I> = CollectionConfig {
 			settings: CollectionSettings::default(),
 			max_supply: None,
@@ -67,7 +70,7 @@ impl<T: Config<I>, I: 'static>
 				who: who.clone(),
 				collection,
 			});
-			return Ok(())
+			return Ok(collection.clone());
 		}
 		Err(Error::<T, I>::UnknownCollection.into())
 	}

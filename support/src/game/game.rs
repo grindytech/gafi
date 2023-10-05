@@ -1,5 +1,6 @@
 use super::{Bundle, LootTable, MintSettings, Package, TradeType};
 use frame_support::pallet_prelude::DispatchResult;
+use sp_runtime::BoundedVec;
 
 pub type Amount = u32;
 pub type Level = u32;
@@ -17,7 +18,15 @@ impl GameRandomness for () {
 	}
 }
 
-pub trait GameSetting<AccountId, GameId> {
+pub trait GameSetting<AccountId, GameId, StringLimit> {
+	fn do_set_game_metadata(
+		origin: AccountId,
+		game: GameId,
+		data: BoundedVec<u8, StringLimit>,
+	) -> DispatchResult;
+
+	fn do_clear_game_metadata(origin: AccountId, game: GameId) -> DispatchResult;
+
 	/// Do create a new game
 	///
 	/// Implementing the function create game
@@ -49,7 +58,10 @@ pub trait MutateCollection<AccountId, GameId, CollectionId, CollectionConfig, Fe
 	/// - `who`: signer and collection owner
 	/// - `admin`: admin role
 	/// - `config`: collection configuration
-	fn do_create_collection(who: &AccountId, admin: &AccountId) -> DispatchResult;
+	fn do_create_collection(
+		who: &AccountId,
+		admin: &AccountId,
+	) -> Result<CollectionId, sp_runtime::DispatchError>;
 
 	/// Do Set Accept Adding
 	///
@@ -128,7 +140,40 @@ pub trait CreateItem<AccountId, CollectionId, ItemId, ItemConfig> {
 }
 
 ///Trait to provide an interface for NFTs minting
-pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
+pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber, StringLimit> {
+	/// Sets the metadata for a specific pool.
+	///
+	/// # Arguments
+	///
+	/// * `origin` - The account ID of the caller.
+	/// * `pool` - The ID of the pool for which the metadata is being set.
+	/// * `data` - The metadata to be set for the pool.
+	///
+	/// # Returns
+	///
+	/// Returns a `DispatchResult` indicating the success or failure of the operation.
+	fn do_set_pool_metadata(
+		origin: AccountId,
+		pool: PoolId,
+		data: BoundedVec<u8, StringLimit>,
+	) -> DispatchResult;
+
+	/// This function takes in an `origin` account ID and a `pool` ID as parameters.
+	/// It aims to clear the metadata associated with a specific pool and returns a
+	/// `DispatchResult`. It is expected that the caller has the necessary permissions to perform
+	/// this operation. This function does not return any values, but it may result in an error if
+	/// the operation fails.
+	///
+	/// # Arguments
+	///
+	/// * `origin` - The account ID of the caller.
+	/// * `pool` - The pool ID for which the metadata needs to be cleared.
+	///
+	/// # Returns
+	///
+	/// * `DispatchResult` - Indicates the success or failure of the operation.
+	fn do_clear_pool_metadata(origin: AccountId, pool: PoolId) -> DispatchResult;
+
 	/// Do create dynamic pool
 	///
 	/// Create a dynamic pool where the weight of the table changes after each loot.
@@ -199,7 +244,6 @@ pub trait Mining<AccountId, Price, CollectionId, ItemId, PoolId, BlockNumber> {
 		target: &AccountId,
 		amount: Amount,
 	) -> DispatchResult;
-
 }
 
 pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
@@ -223,7 +267,7 @@ pub trait MutateItem<AccountId, GameId, CollectionId, ItemId> {
 pub trait UpgradeItem<AccountId, Balance, CollectionId, ItemId, ItemConfig, StringLimit> {
 	/// Do Set Upgrade Item
 	///
-	/// Set upgrade item                          
+	/// Set upgrade item
 	///
 	/// Parameters:
 	/// - `who`: item owner

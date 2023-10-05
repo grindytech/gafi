@@ -390,7 +390,7 @@ impl pallet_nfts::Config for Runtime {
 	type MetadataDepositBase = ConstU128<1>;
 	type AttributeDepositBase = ConstU128<1>;
 	type DepositPerByte = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
+	type StringLimit = ConstU32<300>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;
 	type ApprovalsLimit = ConstU32<10>;
