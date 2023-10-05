@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::*;
 #[cfg(feature = "std")]
 use frame_support::serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
-use sp_runtime::{Permill, RuntimeDebug};
+use sp_runtime::{traits::Saturating, Permill, RuntimeDebug};
 use sp_std::vec::Vec;
 
 use crate::common::ID;
@@ -33,7 +33,7 @@ pub trait MasterPool<AccountId> {
 impl<AccountId> MasterPool<AccountId> for () {
 	fn remove_player(_player: &AccountId, _pool_id: ID) {}
 	fn get_timeservice() -> u128 {
-		30 * 60_000u128 // 30 minutes
+		30.saturating_mul(60_000u128) // 30 minutes
 	}
 	fn get_marktime() -> u128 {
 		u128::default()

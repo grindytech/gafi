@@ -1,9 +1,10 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Bundle, Swap, TradeType};
 
 impl<T: Config<I>, I: 'static>
-	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	Swap<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumberFor<T>>
 	for Pallet<T, I>
 {
 	fn do_set_swap(
@@ -12,8 +13,8 @@ impl<T: Config<I>, I: 'static>
 		source: Bundle<T::CollectionId, T::ItemId>,
 		required: Bundle<T::CollectionId, T::ItemId>,
 		maybe_price: Option<BalanceOf<T, I>>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(

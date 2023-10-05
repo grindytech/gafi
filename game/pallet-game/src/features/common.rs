@@ -1,6 +1,7 @@
 /// Item module provides utility functions for pallet-game
 use crate::*;
 use frame_support::pallet_prelude::*;
+use sp_runtime::traits::Saturating;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Transfer an `amount` of `item` in `collection` from `from` to `to`.
@@ -113,7 +114,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	pub fn total_weight(table: &LootTable<T::CollectionId, T::ItemId>) -> u32 {
 		let mut counter = 0;
 		for package in table {
-			counter += package.weight;
+			counter = counter.saturating_add(package.weight);
 		}
 		counter
 	}

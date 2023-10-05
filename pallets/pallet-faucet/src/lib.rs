@@ -1,10 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::{Currency, ExistenceRequirement};
-pub use pallet::*;
 pub use crate::weights::WeightInfo;
-use sp_std::vec;
+use frame_support::traits::{Currency, ExistenceRequirement, BuildGenesisConfig};
 use gafi_support::pallet::cache::Cache;
+use gu_convertor::{balance_try_to_u128, u128_to_balance};
+pub use pallet::*;
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -41,7 +42,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Add Cache
-		type Cache: Cache<Self::AccountId,AccountOf<Self> ,u128> ;
+		type Cache: Cache<Self::AccountId, AccountOf<Self>, u128>;
 
 		/// Faucet Amount
 		type FaucetAmount: Get<BalanceOf<Self>>;
@@ -55,24 +56,17 @@ pub mod pallet {
 	pub(super) type GenesisAccounts<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, MaxFundingAccount>, ValueQuery>;
 
-	//** Genesis Conguration **//
 	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
 		pub genesis_accounts: Vec<T::AccountId>,
 	}
 
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { genesis_accounts: vec![]}
-		}
-	}
-
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for i in 0..self.genesis_accounts.len() {
-				<GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
+				let _ = <GenesisAccounts<T>>::try_append(self.genesis_accounts[i].clone())
 					.map_or((), |_| {});
 			}
 		}
@@ -86,7 +80,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		SelfTransfer,
+		NoGenesisAccountAvailable,
 		NotEnoughBalance,
 		DontBeGreedy,
 		PleaseWait,
@@ -110,10 +104,17 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let genesis_accounts = GenesisAccounts::<T>::get();
 			let faucet_amount = T::FaucetAmount::get();
+			let faucet_u128 = balance_try_to_u128::<<T as pallet::Config>::Currency, T::AccountId>(
+				faucet_amount,
+			)?;
+
+			let amount = faucet_u128.saturating_div(10u128);
+			let faucet = u128_to_balance::<<T as pallet::Config>::Currency, T::AccountId>(amount);
+
 			ensure!(Self::get_cache(&sender) == None, <Error<T>>::PleaseWait);
 
 			ensure!(
-				T::Currency::free_balance(&sender) < (faucet_amount / 10u128.try_into().ok().unwrap()),
+				T::Currency::free_balance(&sender) < faucet,
 				<Error<T>>::DontBeGreedy
 			);
 
@@ -144,54 +145,55 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::donate(50u32))]
-		pub fn donate(
-			origin: OriginFor<T>,
-			amount: BalanceOf<T>,
-		) -> DispatchResult {
+		pub fn donate(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 
-			ensure!(T::Currency::free_balance(&from) > amount, <Error<T>>::NotEnoughBalance);
+			ensure!(
+				T::Currency::free_balance(&from) > amount,
+				<Error<T>>::NotEnoughBalance
+			);
+
 			let genesis_accounts = GenesisAccounts::<T>::get();
-			ensure!(genesis_accounts[0] != from, <Error<T>>::SelfTransfer);
+			if let Some(genesis_account) = genesis_accounts.first() {
+				T::Currency::transfer(
+					&from,
+					genesis_account,
+					amount,
+					ExistenceRequirement::KeepAlive,
+				)?;
 
-			T::Currency::transfer(
-				&from,
-				&genesis_accounts[0],
-				amount,
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			Self::deposit_event(Event::Transferred(from, genesis_accounts[0].clone(), amount));
-
+				Self::deposit_event(Event::Transferred(from, genesis_account.clone(), amount));
+			} else {
+				return Err(<Error<T>>::NoGenesisAccountAvailable.into())
+			}
 			Ok(())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn insert_cache(sender: T::AccountId, faucet_amount: BalanceOf<T>)-> Option<()> {
-			match faucet_amount.try_into(){
+		fn insert_cache(sender: T::AccountId, faucet_amount: BalanceOf<T>) -> Option<()> {
+			match faucet_amount.try_into() {
 				Ok(value) => Some(T::Cache::insert(&sender, sender.clone(), value)),
 				Err(_) => None,
 			}
-
 		}
 
 		fn get_cache(sender: &T::AccountId) -> Option<u128> {
 			if let Some(faucet_cache) = T::Cache::get(sender, sender.clone()) {
-				return Some(faucet_cache);
+				return Some(faucet_cache)
 			}
 			None
 		}
 	}
 }
 
-#[cfg(feature = "std")]
-impl<T: Config> GenesisConfig<T> {
-	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
-	}
+// #[cfg(feature = "std")]
+// impl<T: Config> GenesisConfig<T> {
+// 	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
+// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
+// 	}
 
-	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
-	}
-}
+// 	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
+// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
+// 	}
+// }

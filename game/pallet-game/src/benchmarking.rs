@@ -4,17 +4,16 @@ use super::*;
 #[allow(unused)]
 use crate::Pallet as PalletGame;
 use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
-use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
+use frame_benchmarking::{account, benchmarks_instance_pallet, Box};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::{Bundle, Loot, MintSettings, MintType, NFT};
+use gafi_support::game::{Loot, MintSettings, MintType, NFT};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_core::Get;
 use sp_std::vec;
 
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
-const MAX: u32 = 10_u32;
 
 macro_rules! bvec {
 	($($x:tt)*) => {

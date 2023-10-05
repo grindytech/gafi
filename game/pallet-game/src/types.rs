@@ -1,5 +1,6 @@
 use crate::*;
 use codec::{Decode, Encode};
+use frame_system::pallet_prelude::BlockNumberFor;
 use core::primitive::u32;
 use frame_support::{
 	pallet_prelude::{BoundedVec, MaxEncodedLen},
@@ -11,37 +12,35 @@ use scale_info::TypeInfo;
 pub type BalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
-pub type BlockNumber<T> = <T as SystemConfig>::BlockNumber;
-
 pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 
 pub type GameDetailsFor<T, I> = GameDetails<<T as SystemConfig>::AccountId, BalanceOf<T, I>>;
 
 pub type TradeConfigFor<T, I> =
-	TradeConfig<<T as SystemConfig>::AccountId, BalanceOf<T, I>, BundleFor<T, I>, BlockNumber<T>>;
+	TradeConfig<<T as SystemConfig>::AccountId, BalanceOf<T, I>, BundleFor<T, I>, BlockNumberFor<T>>;
 
 pub type MintRequestFor<T, I> = MintRequest<
 	<T as SystemConfig>::AccountId,
 	<T as Config<I>>::PoolId,
 	BalanceOf<T, I>,
-	BlockNumber<T>,
+	BlockNumberFor<T>,
 >;
 
 pub type PoolDetailsFor<T, I> = PoolDetails<
 	<T as SystemConfig>::AccountId,
 	BalanceOf<T, I>,
-	BlockNumber<T>,
+	BlockNumberFor<T>,
 	<T as pallet_nfts::Config>::CollectionId,
 >;
 
 pub type CollectionConfigFor<T, I = ()> =
-	CollectionConfig<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+	CollectionConfig<BalanceOf<T, I>, BlockNumberFor<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub type ItemUpgradeConfigFor<T, I = ()> =
 	UpgradeItemConfig<<T as pallet_nfts::Config>::ItemId, BalanceOf<T, I>>;
 
 pub type MintSettingsFor<T, I = ()> =
-	MintSettings<BalanceOf<T, I>, BlockNumber<T>, <T as pallet_nfts::Config>::CollectionId>;
+	MintSettings<BalanceOf<T, I>, BlockNumberFor<T>, <T as pallet_nfts::Config>::CollectionId>;
 
 pub(crate) type BundleFor<T, I = ()> = BoundedVec<
 	Package<<T as pallet_nfts::Config>::CollectionId, <T as pallet_nfts::Config>::ItemId>,

@@ -1,6 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, traits::ExistenceRequirement};
-use gafi_support::game::{Amount, UpgradeItem, Level};
+use gafi_support::game::{Amount, Level, UpgradeItem};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
@@ -72,7 +72,8 @@ impl<T: Config<I>, I: 'static>
 	) -> DispatchResult {
 		ensure!(amount > 0, Error::<T, I>::InvalidAmount);
 
-		let next_level = LevelOf::<T, I>::get(collection, item) + 1;
+		let mut next_level = LevelOf::<T, I>::get(collection, item);
+		next_level.saturating_inc();
 
 		// get origin item
 		let origin_item = match OriginItemOf::<T, I>::get((collection, item)) {

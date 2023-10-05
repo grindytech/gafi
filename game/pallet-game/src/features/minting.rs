@@ -1,5 +1,6 @@
 use crate::*;
 use frame_support::{pallet_prelude::*, StorageNMap};
+use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
@@ -9,7 +10,7 @@ impl<T: Config<I>, I: 'static>
 		T::CollectionId,
 		T::ItemId,
 		T::PoolId,
-		T::BlockNumber,
+		BlockNumberFor<T>,
 		T::StringLimit,
 	> for Pallet<T, I>
 {
@@ -56,7 +57,7 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		admin: &T::AccountId,
-		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
+		mint_settings: MintSettings<BalanceOf<T, I>, BlockNumberFor<T>, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure pool is available
 		ensure!(
@@ -104,7 +105,7 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		loot_table: LootTable<T::CollectionId, T::ItemId>,
 		admin: &T::AccountId,
-		mint_settings: MintSettings<BalanceOf<T, I>, T::BlockNumber, T::CollectionId>,
+		mint_settings: MintSettings<BalanceOf<T, I>, BlockNumberFor<T>, T::CollectionId>,
 	) -> DispatchResult {
 		// ensure collection owner & infinite supply
 		for fraction in &loot_table {
@@ -175,7 +176,7 @@ impl<T: Config<I>, I: 'static>
 
 			let reserve = pool_details.mint_settings.price.saturating_mul(amount.into());
 			<T as Config<I>>::Currency::reserve(&who, reserve)?;
-			let execute_block = block_number + T::MintInterval::get();
+			let execute_block = block_number.saturating_add(T::MintInterval::get());
 
 			let mint_request = MintRequest {
 				miner: who.clone(),

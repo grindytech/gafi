@@ -3,11 +3,12 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{BalanceStatus, ExistenceRequirement},
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use gafi_support::game::{Amount, Package, Retail, TradeType};
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumber<T>>
+	Retail<T::AccountId, T::CollectionId, T::ItemId, T::TradeId, BalanceOf<T, I>, BlockNumberFor<T>>
 	for Pallet<T, I>
 {
 	fn do_set_price(
@@ -15,8 +16,8 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -121,8 +122,11 @@ impl<T: Config<I>, I: 'static>
 					ItemBalanceStatus::Free,
 				)?;
 
-				let new_package =
-					Package::new(package.collection, package.item, package.amount - amount);
+				let new_package = Package::new(
+					package.collection,
+					package.item,
+					package.amount.saturating_sub(amount),
+				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
@@ -209,7 +213,7 @@ impl<T: Config<I>, I: 'static>
 				let new_package = Package::new(
 					package.collection,
 					package.item,
-					package.amount + supply.amount,
+					package.amount.saturating_add(supply.amount),
 				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -229,8 +233,8 @@ impl<T: Config<I>, I: 'static>
 		who: &T::AccountId,
 		package: Package<T::CollectionId, T::ItemId>,
 		unit_price: BalanceOf<T, I>,
-		start_block: Option<T::BlockNumber>,
-		end_block: Option<T::BlockNumber>,
+		start_block: Option<BlockNumberFor<T>>,
+		end_block: Option<BlockNumberFor<T>>,
 	) -> DispatchResult {
 		// ensure available trade
 		ensure!(
@@ -241,7 +245,7 @@ impl<T: Config<I>, I: 'static>
 		// ensure reserve deposit
 		<T as Config<I>>::Currency::reserve(&who, T::BundleDeposit::get())?;
 
-		let deposit = unit_price * package.amount.into();
+		let deposit = unit_price.saturating_mul(package.amount.into());
 		<T as Config<I>>::Currency::reserve(&who, deposit)?;
 
 		<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
@@ -320,12 +324,15 @@ impl<T: Config<I>, I: 'static>
 				<T as pallet::Config<I>>::Currency::repatriate_reserved(
 					&config.owner,
 					&who,
-					price * amount.into(),
+					price.saturating_mul(amount.into()),
 					BalanceStatus::Free,
 				)?;
 
-				let new_package =
-					Package::new(package.collection, package.item, package.amount - amount);
+				let new_package = Package::new(
+					package.collection,
+					package.item,
+					package.amount.saturating_sub(amount),
+				);
 
 				<BundleOf<T, I>>::try_mutate(trade, |package_vec| -> DispatchResult {
 					*package_vec = BundleFor::<T, I>::try_from([new_package].to_vec())
