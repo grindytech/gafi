@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::{traits::AsEnsureOriginWithArg, PalletId};
+use frame_support::{traits::AsEnsureOriginWithArg};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_nfts::{weights::SubstrateWeight as NftsWeight, PalletFeatures};
 use polkadot_runtime_common::SlowAdjustingFeeUpdate;
