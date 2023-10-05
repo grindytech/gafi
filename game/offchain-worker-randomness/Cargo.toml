@@ -1,5 +1,5 @@
 [package]
-name = "game-randomness"
+name = "offchain-worker-randomness"
 description = "A pallet for dealing with randomness"
 authors = { workspace = true }
 license = { workspace = true }

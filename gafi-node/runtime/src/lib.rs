@@ -6,9 +6,10 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::{traits::AsEnsureOriginWithArg, PalletId};
+use frame_support::{traits::AsEnsureOriginWithArg};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_nfts::{weights::SubstrateWeight as NftsWeight, PalletFeatures};
+use polkadot_runtime_common::SlowAdjustingFeeUpdate;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -24,7 +25,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use polkadot_runtime_common::SlowAdjustingFeeUpdate;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 pub use frame_support::{
@@ -43,6 +43,7 @@ pub use frame_support::{
 };
 pub use frame_system::Call as SystemCall;
 use gafi_support::common::{unit, NativeToken::GAFI};
+use oracle_randomness::SubstrateWeight as OracleRandomnessWeight;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_game::SubstrateWeight as PalletGameWeight;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -389,7 +390,7 @@ impl pallet_nfts::Config for Runtime {
 	type MetadataDepositBase = ConstU128<1>;
 	type AttributeDepositBase = ConstU128<1>;
 	type DepositPerByte = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
+	type StringLimit = ConstU32<300>;
 	type KeyLimit = ConstU32<50>;
 	type ValueLimit = ConstU32<50>;
 	type ApprovalsLimit = ConstU32<10>;
@@ -406,23 +407,6 @@ impl pallet_nfts::Config for Runtime {
 	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
-}
-
-parameter_types! {
-	pub PalletGameId: PalletId =  PalletId(*b"gamernds");
-	pub RandomnessUnsignedPriority: u32 = 50;
-	pub RandomAttemps: u32 = 10;
-	pub UnsignedInterval: u32 = 1;
-}
-
-impl game_randomness::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PalletId = PalletGameId;
-	type WeightInfo = ();
-	type Randomness = RandomnessCollectiveFlip;
-	type UnsignedPriority = RandomnessUnsignedPriority;
-	type RandomAttemps = RandomAttemps;
-	type UnsignedInterval = UnsignedInterval;
 }
 
 parameter_types! {
@@ -463,9 +447,29 @@ impl pallet_game::Config for Runtime {
 	type MaxLoot = MaxLoot;
 	type MaxMintRequest = MaxMintRequest;
 	type MintInterval = MintInterval;
-	type GameRandomness = GameRandomness;
+	type GameRandomness = OracleRandomness;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
+}
+
+parameter_types! {
+	pub OracleRandomAttemps: u32 = 5;
+	pub SeedLength: u32 = 64;
+	pub MaxRandomURL: u32 = 5;
+	pub RandomURLLength: u32 = 60;
+	pub OracleRandomnessUnsignedPriority: u32 = 50;
+	pub OracleRandomnessUnsignedInterval: u32 = 1;
+}
+
+impl oracle_randomness::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = OracleRandomnessWeight<Runtime>;
+	type RandomAttemps = OracleRandomAttemps;
+	type SeedLength = SeedLength;
+	type MaxRandomURL = MaxRandomURL;
+	type RandomURLLength = RandomURLLength;
+	type UnsignedPriority = OracleRandomnessUnsignedPriority;
+	type UnsignedInterval = OracleRandomnessUnsignedInterval;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -486,7 +490,7 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
 		Game: pallet_game,
-		GameRandomness: game_randomness,
+		OracleRandomness: oracle_randomness,
 	}
 );
 
@@ -718,14 +722,15 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use game_randomness::Pallet as GameRandomnessBench;
+			use oracle_randomness::Pallet as OracleRandomnessBench;
+
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
-			list_benchmark!(list, extra, game_randomness, GameRandomnessBench::<Runtime>);
+			list_benchmark!(list, extra, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -748,7 +753,7 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use game_randomness::Pallet as GameRandomnessBench;
+			use oracle_randomness::Pallet as OracleRandomnessBench;
 
 
 
@@ -757,7 +762,7 @@ impl_runtime_apis! {
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
-			add_benchmark!(params, batches, game_randomness, GameRandomnessBench::<Runtime>);
+			add_benchmark!(params, batches, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			Ok(batches)
 		}

@@ -4,9 +4,54 @@ use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::Saturating;
 
 impl<T: Config<I>, I: 'static>
-	Mining<T::AccountId, BalanceOf<T, I>, T::CollectionId, T::ItemId, T::PoolId, BlockNumberFor<T>>
-	for Pallet<T, I>
+	Mining<
+		T::AccountId,
+		BalanceOf<T, I>,
+		T::CollectionId,
+		T::ItemId,
+		T::PoolId,
+		BlockNumberFor<T>,
+		T::StringLimit,
+	> for Pallet<T, I>
 {
+	fn do_set_pool_metadata(
+		origin: T::AccountId,
+		pool: T::PoolId,
+		data: BoundedVec<u8, T::StringLimit>,
+	) -> DispatchResult {
+		let pool_details = PoolOf::<T, I>::get(pool).ok_or(Error::<T, I>::UnknownMiningPool)?;
+		ensure!(
+			pool_details.admin == origin || pool_details.owner == origin,
+			Error::<T, I>::NoPermission
+		);
+
+		PoolMetadataOf::<T, I>::try_mutate_exists(pool, |metadata| {
+			*metadata = Some(PoolMetadata { data: data.clone() });
+			Self::deposit_event(Event::PoolSetMetadata {
+				who: origin,
+				pool,
+				data,
+			});
+			Ok(())
+		})
+	}
+
+	fn do_clear_pool_metadata(origin: T::AccountId, pool: T::PoolId) -> DispatchResult {
+		let pool_details = PoolOf::<T, I>::get(pool).ok_or(Error::<T, I>::UnknownMiningPool)?;
+
+		ensure!(pool_details.admin == origin, Error::<T, I>::NoPermission);
+
+		let _metadata =
+			PoolMetadataOf::<T, I>::take(pool).ok_or(Error::<T, I>::MetadataNotFound)?;
+
+		Self::deposit_event(Event::PoolSetMetadataCleared {
+			who: origin.clone(),
+			pool,
+		});
+
+		Ok(())
+	}
+
 	fn do_create_dynamic_pool(
 		pool: &T::PoolId,
 		who: &T::AccountId,
@@ -177,9 +222,8 @@ impl<T: Config<I>, I: 'static>
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let mut total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
+				for index in 0..amount {
+					if let Some(random) = T::GameRandomness::random_number(total_weight, index) {
 						// ensure position
 						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
 						match Self::take_loot(&mut table, random) {
@@ -199,7 +243,6 @@ impl<T: Config<I>, I: 'static>
 						};
 
 						total_weight = total_weight.saturating_sub(1);
-						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
@@ -235,9 +278,8 @@ impl<T: Config<I>, I: 'static>
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
+				for index in 0..amount {
+					if let Some(random) = T::GameRandomness::random_number(total_weight, index) {
 						// ensure position
 						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
 						match Self::get_loot(&table, random) {
@@ -248,7 +290,6 @@ impl<T: Config<I>, I: 'static>
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
-						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}

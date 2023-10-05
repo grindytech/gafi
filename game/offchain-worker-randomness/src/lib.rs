@@ -11,14 +11,13 @@ use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
 	pallet_prelude::BlockNumberFor,
 };
+use gafi_support::game::GameRandomness;
 use sp_core::{offchain::KeyTypeId, Get};
 use sp_runtime::{
 	traits::TrailingZeroInput,
 	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
 	Saturating,
 };
-
-mod features;
 
 #[cfg(test)]
 mod mock;
@@ -176,7 +175,56 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> GameRandomness for Pallet<T> {
+		/// Generates a random number between 1 and `total` (inclusive).
+		/// This function repeats the process up to `RandomAttemps` times if
+		/// the number falls within the overflow range of the modulo operation to mitigate modulo
+		/// bias.
+		///
+		/// Returns `None` if `total` is 0.
+		fn random_number(total: u32, adjust: u32) -> Option<u32> {
+			if let Some(payload) = RandomSeed::<T>::get() {
+				if let Ok(random) = Self::gen_random(&payload.seed, adjust) {
+					if total == 0 {
+						return None
+					}
+					let mut random_number = Self::generate_random_number(random);
+					for _ in 1..T::RandomAttemps::get() {
+						if random_number < u32::MAX.saturating_sub(u32::MAX.wrapping_rem(total)) {
+							break
+						}
+						random_number = Self::generate_random_number(random);
+					}
+					return Some((random_number.wrapping_rem(total)).saturating_add(1))
+				}
+			}
+			None
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
+		/// Generate a random number from a given seed.
+		/// Note that there is potential bias introduced by using modulus operator.
+		/// You should call this function with different seed values until the random
+		/// number lies within `u32::MAX - u32::MAX % n`.
+		fn generate_random_number(seed: u32) -> u32 {
+			let (random_seed, _) = T::Randomness::random(&(T::PalletId::get(), seed).encode());
+			let random_number = <u32>::decode(&mut random_seed.as_ref())
+				.expect("secure hashes should always be bigger than u32; qed");
+			random_number
+		}
+
+		/// Generate a random number from the off-chain worker's random seed
+		pub(crate) fn gen_random(seed: &[u8], adjust: u32) -> Result<u32, Error<T>> {
+			let mut extended_seed = seed.to_vec();
+			extended_seed.extend_from_slice(&adjust.to_le_bytes());
+
+			match <u32>::decode(&mut TrailingZeroInput::new(extended_seed.as_ref())) {
+				Ok(random) => Ok(random),
+				Err(_) => Err(Error::<T>::InvalidSeed),
+			}
+		}
+
 		/// Submits a random seed obtained from offchain source along with the provided block number
 		/// for unsigned transaction.
 		///
@@ -210,7 +258,7 @@ pub mod pallet {
 				return InvalidTransaction::Future.into()
 			}
 
-			ValidTransaction::with_tag_prefix("game-randomness")
+			ValidTransaction::with_tag_prefix("offchain-worker-randomness")
 				// We set base priority to 2**20 and hope it's included before any other
 				.priority(T::UnsignedPriority::get())
 				// This transaction does not require anything else to go before into the pool.

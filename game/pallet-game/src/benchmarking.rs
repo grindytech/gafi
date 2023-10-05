@@ -4,22 +4,21 @@ use super::*;
 #[allow(unused)]
 use crate::Pallet as PalletGame;
 use crate::{pallet::BenchmarkHelper as GameBenchmarkHelper, Call, Config};
-use frame_benchmarking::{account, benchmarks_instance_pallet, Box, Zero};
+use frame_benchmarking::{account, benchmarks_instance_pallet, Box};
 use frame_support::{assert_ok, dispatch::UnfilteredDispatchable, traits::Currency};
 use frame_system::RawOrigin;
-use gafi_support::game::{Bundle, Loot, MintSettings, MintType, NFT};
+use gafi_support::game::{Loot, MintSettings, MintType, NFT};
 use pallet_nfts::BenchmarkHelper;
 use scale_info::prelude::{format, string::String};
 use sp_core::Get;
 use sp_std::vec;
 
 const UNIT: u128 = 1_000_000_000_000_000_000u128;
-const MAX: u32 = 10_u32;
 
 macro_rules! bvec {
-	($( $x:tt )*) => {
+	($($x:tt)*) => {
 		vec![$( $x )*].try_into().unwrap()
-	}
+	};
 }
 
 fn string_to_static_str(s: String) -> &'static str {
@@ -64,7 +63,19 @@ fn do_create_game<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
 	let admin = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
 	assert_ok!(PalletGame::<T, I>::create_game(
 		RawOrigin::Signed(caller.clone()).into(),
+		T::Lookup::unlookup(admin.clone())
+	));
+	(caller, admin)
+}
+fn do_create_game_with_metadata<T: Config<I>, I: 'static>(
+	data: BoundedVec<u8, <T as pallet_nfts::Config>::StringLimit>,
+) -> (T::AccountId, T::AccountId) {
+	let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+	let admin = new_funded_account::<T, I>(1, 1, 1000_000_000u128 * UNIT);
+	assert_ok!(PalletGame::<T, I>::create_game_with_data(
+		RawOrigin::Signed(caller.clone()).into(),
 		T::Lookup::unlookup(admin.clone()),
+		data
 	));
 	(caller, admin)
 }
@@ -73,7 +84,7 @@ fn do_create_game_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::Ac
 	let (owner, admin) = do_create_game::<T, I>();
 	assert_ok!(PalletGame::<T, I>::create_game_collection(
 		RawOrigin::Signed(admin.clone()).into(),
-		<T as pallet::Config<I>>::Helper::game(0),
+		<T as pallet::Config<I>>::Helper::game(0)
 	));
 	(owner, admin)
 }
@@ -84,7 +95,7 @@ fn do_create_collection<T: Config<I>, I: 'static>() -> (T::AccountId, T::Account
 
 	assert_ok!(PalletGame::<T, I>::create_collection(
 		RawOrigin::Signed(owner.clone()).into(),
-		T::Lookup::unlookup(admin.clone()),
+		T::Lookup::unlookup(admin.clone())
 	));
 	(owner, admin)
 }
@@ -99,7 +110,7 @@ fn do_create_item<T: Config<I>, I: 'static>(
 		RawOrigin::Signed(admin.clone()).into(),
 		<T as pallet_nfts::Config>::Helper::collection(collection),
 		<T as pallet_nfts::Config>::Helper::item(item),
-		supply,
+		supply
 	));
 }
 
@@ -118,7 +129,7 @@ fn new_account_with_item<T: Config<I>, I: 'static>(
 			<T as pallet_nfts::Config>::Helper::collection(collection),
 			<T as pallet_nfts::Config>::Helper::item(i),
 			T::Lookup::unlookup(player.clone()),
-			1000,
+			1000
 		));
 	}
 	(player, owner, admin)
@@ -155,10 +166,22 @@ fn do_create_dynamic_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::Accou
 		RawOrigin::Signed(who.clone()).into(),
 		table.clone(),
 		T::Lookup::unlookup(who.clone()),
-		default_mint_config::<T, I>(),
+		default_mint_config::<T, I>()
 	));
 
 	(who.clone(), who)
+}
+
+fn do_create_dynamic_pool_with_metadata<T: Config<I>, I: 'static>(
+	data: BoundedVec<u8, <T as pallet_nfts::Config>::StringLimit>,
+) -> (T::AccountId, T::AccountId) {
+	let (caller, admin) = do_create_dynamic_pool::<T, I>();
+	assert_ok!(PalletGame::<T, I>::set_pool_metadata(
+		RawOrigin::Signed(caller.clone()).into(),
+		<T as pallet::Config<I>>::Helper::pool(0),
+		data
+	));
+	(caller, admin)
 }
 
 fn do_create_stable_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::AccountId) {
@@ -195,7 +218,7 @@ fn do_create_stable_pool<T: Config<I>, I: 'static>() -> (T::AccountId, T::Accoun
 		RawOrigin::Signed(owner.clone()).into(),
 		table.clone(),
 		T::Lookup::unlookup(admin.clone()),
-		default_mint_config::<T, I>(),
+		default_mint_config::<T, I>()
 	));
 
 	(owner, admin)
@@ -210,7 +233,7 @@ fn do_set_upgrade_item<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		default_item_config(),
 		bvec![0u8; 50],
 		1,
-		<T as pallet::Config<I>>::Currency::minimum_balance(),
+		<T as pallet::Config<I>>::Currency::minimum_balance()
 	));
 }
 
@@ -226,7 +249,7 @@ fn do_set_price<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		package,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -249,7 +272,7 @@ fn do_set_bundle<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		bundle.clone(),
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -272,7 +295,7 @@ fn do_set_wishlist<T: Config<I>, I: 'static>(who: &T::AccountId) {
 		bundle,
 		<T as pallet::Config<I>>::Currency::minimum_balance(),
 		None,
-		None,
+		None
 	));
 }
 
@@ -297,7 +320,7 @@ fn do_set_auction<T: Config<I>, I: 'static>() -> T::AccountId {
 		source,
 		Some(<T as pallet::Config<I>>::Currency::minimum_balance()),
 		Some(<T as pallet::Config<I>>::Helper::block(0)),
-		<T as pallet::Config<I>>::Helper::block(10),
+		<T as pallet::Config<I>>::Helper::block(10)
 	));
 	who
 }
@@ -314,6 +337,159 @@ benchmarks_instance_pallet! {
 		assert_last_event::<T, I>(Event::GameCreated { who: caller, game: <T as pallet::Config<I>>::Helper::game(0) }.into());
 	}
 
+	create_game_with_data {
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+		let admin =  T::Lookup::unlookup(new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT));
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_game_with_data {
+			admin,
+			data: bvec![0u8; s as usize],
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::GameSetMetadata { who: caller.clone(),game: <T as pallet::Config<I>>::Helper::game(0) , data: bvec![0u8; s as usize] }.into());
+	}
+
+	set_game_metadata {
+		let (owner, admin) = do_create_game::<T, I>();
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::set_game_metadata {
+			data: bvec![0u8; s as usize],
+			game: <T as pallet::Config<I>>::Helper::game(0)
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::GameSetMetadata { who: admin.clone(),game: <T as pallet::Config<I>>::Helper::game(0) , data: bvec![0u8; s as usize] }.into());
+	}
+
+	clear_game_metadata {
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let (owner, admin) = do_create_game_with_metadata::<T, I>(bvec![0u8; s as usize]);
+		let  game_id = <T as pallet::Config<I>>::Helper::game(0);
+		let call = Call::<T, I>::clear_game_metadata {
+			game: game_id.clone(),
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(owner.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::GameMetadataCleared { who: owner.clone(),game: game_id.clone() }.into());
+	}
+
+	create_dynamic_pool_with_data {
+		let length = <T as pallet::Config<I>>::MaxLoot::get();
+		let (who, _, _) = new_account_with_item::<T, I>(0);
+		let table = vec![
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(0),
+				}),
+				weight: 10,
+		}; length as usize];
+
+		let s = <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_dynamic_pool_with_data {
+			loot_table: table.clone(),
+			mint_settings: default_mint_config::<T, I>(),
+			admin: T::Lookup::unlookup(who.clone()),
+			data: bvec![0u8; s as usize]
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::PoolSetMetadata {
+			who,
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			data: bvec![0u8; s as usize]
+		}.into() );
+	}
+
+	create_stable_pool_with_data {
+		let length = <T as pallet::Config<I>>::MaxLoot::get();
+		let (who, admin) = do_create_collection::<T, I>();
+		do_create_item::<T, I>(&admin, 0, 0, None);
+		do_create_item::<T, I>(&admin, 0, 1, None);
+		do_create_item::<T, I>(&admin, 0, 2, None);
+
+		let table = vec![
+			Loot {
+				maybe_nft: Some(NFT {
+					collection: <T as pallet_nfts::Config>::Helper::collection(0),
+					item: <T as pallet_nfts::Config>::Helper::item(0),
+				}),
+				weight: 10,
+		}; length as usize];
+
+		let s = <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_stable_pool_with_data {
+			loot_table: table.clone(),
+			mint_settings: default_mint_config::<T, I>(),
+			admin: T::Lookup::unlookup(admin.clone()),
+			data: bvec![0u8; s as usize]
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::PoolSetMetadata {
+			who,
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			data: bvec![0u8; s as usize]
+		}.into() );
+	}
+
+	set_pool_metadata {
+		let (who, admin) = do_create_dynamic_pool::<T, I>();
+
+		let s = <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::set_pool_metadata {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			data: bvec![0u8; s as usize]
+		};
+	}:  { call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::PoolSetMetadata {
+			who,
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+			data: bvec![0u8; s as usize]
+		}.into() );
+	}
+
+	clear_pool_metadata {
+		let s = <T as pallet_nfts::Config>::StringLimit::get();
+		let (who, admin) = do_create_dynamic_pool_with_metadata::<T, I>(bvec![0u8; s as usize]);
+		let call = Call::<T, I>::clear_pool_metadata {
+			pool: <T as pallet::Config<I>>::Helper::pool(0),
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(who.clone()).into())? }
+	verify {
+		assert_last_event::<T, I>(Event::PoolSetMetadataCleared { who: who.clone(), pool: <T as pallet::Config<I>>::Helper::pool(0) }.into());
+	}
+
+	create_collection_with_data {
+		let caller = new_funded_account::<T, I>(0, 0, 1000_000_000u128 * UNIT);
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_collection_with_data {
+			data: bvec![0u8; s as usize],
+			issuer: None,
+			freezer: None,
+			game: None,
+			admin: None,
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())? }
+	verify {
+		true
+	}
+
+	create_item_with_data {
+		let (caller, admin) = do_create_collection::<T, I>();
+		let s in 0 .. <T as pallet_nfts::Config>::StringLimit::get();
+		let call = Call::<T, I>::create_item_with_data {
+			collection: <T as pallet_nfts::Config>::Helper::collection(0),
+			item: <T as pallet_nfts::Config>::Helper::item(0),
+			maybe_supply: None,
+			data: bvec![0u8; s as usize],
+		};
+	}:{ call.dispatch_bypass_filter(RawOrigin::Signed(admin.clone()).into())? }
+	verify {
+		true
+	}
 
 	create_game_collection {
 		let (caller, admin) = do_create_game::<T, I>();
