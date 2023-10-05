@@ -1,5 +1,5 @@
-use crate::{mock::*, Error, Event, RandomSeed, SeedPayload};
-use frame_support::{assert_err, assert_noop, assert_ok, BoundedVec};
+use crate::{mock::*, Error, RandomSeed, SeedPayload};
+use frame_support::{assert_err, assert_ok, BoundedVec};
 use gafi_support::game::GameRandomness;
 use rand::Rng;
 
@@ -126,4 +126,44 @@ fn test_parse_randomness() {
 	// Test case 3: Invalid JSON input
 	let result3 = r#"{"round":3366165,"randomness":"c25de9ba2cdf3ac9be2aa74dbf038aa6e84969151d51318946beafaf20f9c30b""signature":"9514585af8f888f54f6f6e784be0ccd973a354f1cee2f5c30077714a4c05392c6c051d53ebe76dcd10012cb011bec92100cab52101e46ad7fc8bd1ebdc8279ff1cac85a490aaf783ba6d3cf4658ae6d93a731b487bb046ab191abeb0c977478c","previous_signature":"939e6bd3fb386a847289ca00d10941915a05da184af69cc466c45f13a619126d5c941e5fe4d25dec0ed758dda8dbb41e06345a9f7e12191854daa5a9036b09685bd2c3fd69ea255eb38d66c7076966aab65a0954f13ad1f968da9bbe9bca689a"}"#;
 	assert_eq!(OracleRandomness::parse_randomness(result3), None);
+}
+
+#[test]
+fn test_get_next_url() {
+	let urls: Vec<Vec<u8>> = vec![
+		b"url1".to_vec(),
+		b"url2".to_vec(),
+		b"url3".to_vec(),
+		b"url4".to_vec(),
+	];
+
+	assert_eq!(
+		OracleRandomness::get_next_url(urls.clone(), Some(b"url1".to_vec())),
+		Some(b"url2".to_vec())
+	);
+	assert_eq!(
+		OracleRandomness::get_next_url(urls.clone(), Some(b"url2".to_vec())),
+		Some(b"url3".to_vec())
+	);
+	assert_eq!(
+		OracleRandomness::get_next_url(urls.clone(), Some(b"url4".to_vec())),
+		Some(b"url1".to_vec())
+	);
+
+	assert_eq!(
+		OracleRandomness::get_next_url(urls.clone(), None),
+		Some(b"url1".to_vec())
+	);
+
+	assert_eq!(
+		OracleRandomness::get_next_url(urls.clone(), Some(b"url5".to_vec())),
+		Some(b"url1".to_vec())
+	);
+
+	assert_eq!(
+		OracleRandomness::get_next_url([].to_vec(), Some(b"url5".to_vec())),
+		None
+	);
+
+	assert_eq!(OracleRandomness::get_next_url([].to_vec(), None), None);
 }

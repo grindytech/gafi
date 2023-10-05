@@ -1,6 +1,6 @@
 use gafi_runtime::{
-	AccountId, AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, RuntimeGenesisConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, OracleRandomnessConfig,
+	RuntimeGenesisConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use gafi_support::common::{unit, NativeToken::GAFI};
 use sc_service::ChainType;
@@ -208,6 +208,19 @@ fn testnet_genesis(
 		transaction_payment: Default::default(),
 		faucet: FaucetConfig {
 			genesis_accounts: endowed_accounts.iter().map(|x| (x.0.clone())).collect(),
+		},
+		oracle_randomness: OracleRandomnessConfig {
+			default_urls: [
+				"https://api.drand.sh/public/latest",
+				"https://api2.drand.sh/public/latest",
+				"https://api3.drand.sh/public/latest",
+				"https://drand.cloudflare.com/public/latest",
+			]
+			.iter()
+			.map(|s| s.as_bytes().to_vec())
+			.collect(),
+			
+			..Default::default()
 		},
 	}
 }

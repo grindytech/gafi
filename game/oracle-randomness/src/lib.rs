@@ -5,7 +5,7 @@ use frame_system::{
 	offchain::{CreateSignedTransaction, SubmitTransaction},
 	pallet_prelude::*,
 };
-use gafi_support::game::GameRandomness;
+use gafi_support::game::{GameRandomness, SeedPayload};
 use lite_json::json::JsonValue;
 pub use pallet::*;
 use sp_io::hashing::blake2_256;
@@ -14,7 +14,7 @@ use sp_runtime::{
 	traits::{Get, TrailingZeroInput},
 	Saturating,
 };
-use sp_std::{vec, vec::Vec};
+use sp_std::{marker::PhantomData, vec, vec::Vec};
 
 #[cfg(test)]
 mod mock;
@@ -26,15 +26,6 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 pub use weights::*;
-
-/// Payload used to hold seed data required to submit a transaction.
-#[derive(
-	Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
-)]
-pub struct SeedPayload<BlockNumber, Seed> {
-	block_number: BlockNumber,
-	seed: Seed,
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -85,20 +76,52 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn urls)]
-	pub type RandomURL<T: Config> = StorageValue<
+	pub type RandomnessURLs<T: Config> = StorageValue<
 		_,
 		BoundedVec<BoundedVec<u8, T::RandomURLLength>, T::MaxRandomURL>,
 		ValueQuery,
 	>;
 
-	/// Defines the block when next unsigned transaction will be accepted.
-	///
-	/// To prevent spam of unsigned (and unpaid!) transactions on the network,
-	/// we only allow one transaction every `T::UnsignedInterval` blocks.
-	/// This storage entry defines when new transaction is going to be accepted.
+	// #[pallet::type_value]
+	// pub fn DefaultURLIndexing<T: Config>() -> u32 {
+	// 	0u32
+	// }
+
+	// #[pallet::storage]
+	// #[pallet::getter(fn url_indexing)]
+	// pub type URLIndexing<T: Config> = StorageValue<
+	// 	_,
+	// 	u32,
+	// 	ValueQuery,
+	// 	DefaultURLIndexing<T>,
+	// >;
+
 	#[pallet::storage]
 	#[pallet::getter(fn next_unsigned_at)]
 	pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn next_randomness_url)]
+	pub(super) type SelectedRandomnessURL<T: Config> =
+		StorageValue<_, BoundedVec<u8, T::RandomURLLength>, OptionQuery>;
+
+	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T> {
+		pub default_urls: Vec<Vec<u8>>,
+		pub _phantom: PhantomData<T>,
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			for url in &self.default_urls {
+				if let Ok(source) = BoundedVec::<u8, T::RandomURLLength>::try_from(url.clone()) {
+					let _ = <RandomnessURLs<T>>::try_append(source).map_or((), |_| {});
+				}
+			}
+		}
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -122,7 +145,11 @@ pub mod pallet {
 			if let Err(e) = res {
 				log::error!("Error: {}", e);
 			} else {
-				log::info!("Current random seed: {:?}", RandomSeed::<T>::get());
+				if let Some(seed_payload) = RandomSeed::<T>::get() {
+					log::info!("Oracle Randomness: \n{:?}", seed_payload);
+				} else {
+					log::info!("Oracle Randomness: None");
+				}
 			}
 		}
 	}
@@ -156,7 +183,7 @@ pub mod pallet {
 				);
 
 			if let Ok(url_values) = new_random_url {
-				RandomURL::<T>::put(url_values)
+				RandomnessURLs::<T>::put(url_values)
 			} else {
 				return Err(Error::<T>::ExceedMaxRandomURL.into())
 			}
@@ -184,11 +211,38 @@ pub mod pallet {
 				let new_payload = SeedPayload { block_number, seed };
 				RandomSeed::<T>::put(new_payload);
 				<NextUnsignedAt<T>>::put(block_number.saturating_add(T::UnsignedInterval::get()));
+
+				if let Some(next_url) = Self::get_next_url(
+					RandomnessURLs::<T>::get()
+						.into_iter()
+						.map(|inner_vec| inner_vec.into_inner())
+						.collect(),
+					SelectedRandomnessURL::<T>::get().map(|bounded_vec| bounded_vec.into_inner()),
+				) {
+					if let Ok(url) = BoundedVec::<u8, T::RandomURLLength>::try_from(next_url) {
+						SelectedRandomnessURL::<T>::put(url);
+					}
+				}
 			} else {
 				return Err(Error::<T>::InvalidPayload.into())
 			}
 			Self::deposit_event(Event::<T>::NewOracleRandomnessSeed { seed });
 			return Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_next_url(
+			urls: Vec<Vec<u8>>,
+			maybe_current_url: Option<Vec<u8>>,
+		) -> Option<Vec<u8>> {
+			if let Some(current_url) = maybe_current_url {
+				if let Some(index) = urls.iter().position(|url| url == &current_url) {
+					let next_index = (index + 1) % urls.len();
+					return Some(urls[next_index].clone())
+				}
+			}
+			return urls.first().map(|v| v.clone())
 		}
 	}
 
@@ -259,7 +313,8 @@ pub mod pallet {
 		pub fn fetch_random_and_send_raw_unsign(
 			block_number: BlockNumberFor<T>,
 		) -> Result<(), &'static str> {
-			for url in RandomURL::<T>::get() {
+			// try to fetch from currently selected url
+			if let Some(url) = SelectedRandomnessURL::<T>::get() {
 				if let Ok(url_str) = sp_std::str::from_utf8(&url) {
 					let response = Self::fetch_random(url_str);
 					if let Ok(randomness) = response {
@@ -268,7 +323,17 @@ pub mod pallet {
 				}
 			}
 
-			Ok(())
+			// switch url
+			for url in RandomnessURLs::<T>::get() {
+				if let Ok(url_str) = sp_std::str::from_utf8(&url) {
+					let response = Self::fetch_random(url_str);
+					if let Ok(randomness) = response {
+						return Self::submit_random_seed_raw_unsigned(block_number, randomness)
+					}
+				}
+			}
+
+			Err("Randomness URL not available")
 		}
 
 		pub(crate) fn parse_randomness(result: &str) -> Option<Vec<u8>> {

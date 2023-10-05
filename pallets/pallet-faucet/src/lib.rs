@@ -186,14 +186,3 @@ pub mod pallet {
 		}
 	}
 }
-
-// #[cfg(feature = "std")]
-// impl<T: Config> GenesisConfig<T> {
-// 	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
-// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::build_storage(self)
-// 	}
-
-// 	pub fn assimilate_storage(&self, storage: &mut sp_runtime::Storage) -> Result<(), String> {
-// 		<Self as frame_support::pallet_prelude::GenesisBuild<T>>::assimilate_storage(self, storage)
-// 	}
-// }

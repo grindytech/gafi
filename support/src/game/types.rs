@@ -4,6 +4,9 @@ use frame_support::{pallet_prelude::MaxEncodedLen, RuntimeDebug};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 
+use sp_runtime::traits::Printable;
+use sp_std::fmt::{Debug, Formatter};
+
 use super::Amount;
 
 pub type Bundle<CollectionId, ItemId> = Vec<Package<CollectionId, ItemId>>;
@@ -77,4 +80,43 @@ pub struct MintSettings<Price, BlockNumber, CollectionId> {
 	pub start_block: Option<BlockNumber>,
 	/// When the mint ends.
 	pub end_block: Option<BlockNumber>,
+}
+
+/// Payload used to hold seed data required to submit a transaction.
+#[derive(Encode, Decode, Clone, PartialEq, Eq, scale_info::TypeInfo, MaxEncodedLen)]
+pub struct SeedPayload<BlockNumber, Seed> {
+	pub block_number: BlockNumber,
+	pub seed: Seed,
+}
+
+impl<BlockNumber, Seed> Printable for SeedPayload<BlockNumber, Seed>
+where
+	BlockNumber: Debug,
+	Seed: Debug,
+{
+	fn print(&self) {
+		let block_number = &self.block_number;
+		let seed = &self.seed;
+		log::info!(
+			"Current random seed: block_number = {:?}, seed = {:?}",
+			block_number,
+			seed
+		);
+	}
+}
+
+impl<BlockNumber, Seed> Debug for SeedPayload<BlockNumber, Seed>
+where
+	BlockNumber: Debug,
+	Seed: Debug + AsRef<[u8]>,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> sp_std::fmt::Result {
+		write!(f, "    block_number: {:?},\n", self.block_number)?;
+		if let Ok(seed) = sp_std::str::from_utf8(self.seed.as_ref()) {
+			write!(f, "    seed: {:?}\n", seed)?;
+		} else {
+			write!(f, "    seed: {:?}\n", self.seed)?;
+		}
+		Ok(())
+	}
 }

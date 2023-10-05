@@ -45,20 +45,25 @@ pub trait WeightInfo {
 /// Weights for oracle_randomness using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	/// Storage: `OracleRandomness::RandomnessURLs` (r:1 w:0)
+	/// Proof: `OracleRandomness::RandomnessURLs` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
+	/// Storage: `OracleRandomness::SelectedRandomnessURL` (r:1 w:1)
+	/// Proof: `OracleRandomness::SelectedRandomnessURL` (`max_values`: Some(1), `max_size`: Some(61), added: 556, mode: `MaxEncodedLen`)
 	/// Storage: `OracleRandomness::NextUnsignedAt` (r:0 w:1)
 	/// Proof: `OracleRandomness::NextUnsignedAt` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
 	/// Storage: `OracleRandomness::RandomSeed` (r:0 w:1)
 	/// Proof: `OracleRandomness::RandomSeed` (`max_values`: Some(1), `max_size`: Some(70), added: 565, mode: `MaxEncodedLen`)
 	fn submit_random_seed_unsigned() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 11_000_000 picoseconds.
-		Weight::from_parts(18_000_000, 0)
-			.saturating_add(T::DbWeight::get().writes(2_u64))
+		//  Measured:  `183`
+		//  Estimated: `1791`
+		// Minimum execution time: 18_000_000 picoseconds.
+		Weight::from_parts(23_000_000, 1791)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
-	/// Storage: `OracleRandomness::RandomURL` (r:0 w:1)
-	/// Proof: `OracleRandomness::RandomURL` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
+	/// Storage: `OracleRandomness::RandomnessURLs` (r:0 w:1)
+	/// Proof: `OracleRandomness::RandomnessURLs` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
 	fn set_new_random_urls() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
@@ -71,20 +76,25 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
+	/// Storage: `OracleRandomness::RandomnessURLs` (r:1 w:0)
+	/// Proof: `OracleRandomness::RandomnessURLs` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
+	/// Storage: `OracleRandomness::SelectedRandomnessURL` (r:1 w:1)
+	/// Proof: `OracleRandomness::SelectedRandomnessURL` (`max_values`: Some(1), `max_size`: Some(61), added: 556, mode: `MaxEncodedLen`)
 	/// Storage: `OracleRandomness::NextUnsignedAt` (r:0 w:1)
 	/// Proof: `OracleRandomness::NextUnsignedAt` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
 	/// Storage: `OracleRandomness::RandomSeed` (r:0 w:1)
 	/// Proof: `OracleRandomness::RandomSeed` (`max_values`: Some(1), `max_size`: Some(70), added: 565, mode: `MaxEncodedLen`)
 	fn submit_random_seed_unsigned() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 11_000_000 picoseconds.
-		Weight::from_parts(18_000_000, 0)
-			.saturating_add(RocksDbWeight::get().writes(2_u64))
+		//  Measured:  `183`
+		//  Estimated: `1791`
+		// Minimum execution time: 18_000_000 picoseconds.
+		Weight::from_parts(23_000_000, 1791)
+			.saturating_add(RocksDbWeight::get().reads(2_u64))
+			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
-	/// Storage: `OracleRandomness::RandomURL` (r:0 w:1)
-	/// Proof: `OracleRandomness::RandomURL` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
+	/// Storage: `OracleRandomness::RandomnessURLs` (r:0 w:1)
+	/// Proof: `OracleRandomness::RandomnessURLs` (`max_values`: Some(1), `max_size`: Some(306), added: 801, mode: `MaxEncodedLen`)
 	fn set_new_random_urls() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`

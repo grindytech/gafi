@@ -57,6 +57,5 @@ pallet-game-weights:
     --extrinsic '*' \
     --steps 50 \
     --repeat 20 \
-    --execution wasm \
     --output ./benchmarking/pallet-game/weights.rs \
     --template .maintain/frame-weight-template.hbs
