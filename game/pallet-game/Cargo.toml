@@ -36,7 +36,7 @@ gafi-support = { version = "4.0.0-dev", path = "../../support", default-features
 
 [dev-dependencies]
 sp-keystore = { workspace = true }
-game-randomness = { version = "4.0.0-dev", path = "../randomness", default-features = false }
+offchain-worker-randomness = { version = "4.0.0-dev", path = "../offchain-worker-randomness", default-features = false }
 
 [features]
 default = ["std"]
@@ -47,7 +47,7 @@ runtime-benchmarks = [
 
 std = [
   "codec/std",
-  "game-randomness/std",
+  "offchain-worker-randomness/std",
   "frame-benchmarking?/std",
   "frame-support/std",
   "frame-system/std",

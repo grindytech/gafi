@@ -1,15 +1,12 @@
-use crate as game_randomness;
-use crate::*;
-
-use frame_support::{parameter_types, traits::ConstU64, PalletId};
-use frame_system as system;
+use crate as oracle_randomness;
+use frame_support::{traits::{ConstU16, ConstU32, ConstU64}, parameter_types};
+use frame_system::mocking;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
 	testing::TestXt,
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage,
 };
-use system::mocking;
 type Extrinsic = TestXt<RuntimeCall, ()>;
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 type Block = mocking::MockBlock<Test>;
@@ -19,12 +16,11 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system,
-		GameRandomness: game_randomness,
-		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
+		OracleRandomness: oracle_randomness,
 	}
 );
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -45,28 +41,28 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type SS58Prefix = ConstU16<42>;
 	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_insecure_randomness_collective_flip::Config for Test {}
+pub const MAX_RANDOM_URL: u32 = 5;
+pub const URL_LENGTH: u32 = 10;
+
 
 parameter_types! {
-	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
-	pub const UnsignedPriority: u64 = 100;
-	pub const RandomAttemps: u32 = 10;
-	pub const UnsignedInterval: u32 = 1;
+	pub const UnsignedPriority: u64 = 1 << 20;
 }
 
-impl game_randomness::Config for Test {
-	type PalletId = PalletGameId;
+impl oracle_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	type Randomness = RandomnessCollectiveFlip;
-	type RandomAttemps = RandomAttemps;
+	type RandomAttemps = ConstU32<5>;
+	type SeedLength = ConstU32<64>;
+	type MaxRandomURL = ConstU32<MAX_RANDOM_URL>;
+	type RandomURLLength = ConstU32<URL_LENGTH>;
 	type UnsignedPriority = UnsignedPriority;
-	type UnsignedInterval = UnsignedInterval;
+	type UnsignedInterval = ConstU64<1>;
 }
 
 impl frame_system::offchain::SigningTypes for Test {

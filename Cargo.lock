@@ -2646,8 +2646,9 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "gafi-support",
- "game-randomness",
  "log",
+ "offchain-worker-randomness",
+ "oracle-randomness",
  "pallet-aura",
  "pallet-balances",
  "pallet-cache",
@@ -2692,23 +2693,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "game-randomness"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "gafi-support",
- "log",
- "pallet-insecure-randomness-collective-flip",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -4181,6 +4165,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ece97ea872ece730aed82664c424eb4c8291e1ff2480247ccf7409044bc6479f"
 
 [[package]]
+name = "lite-json"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd0e787ffe1153141a0f6f6d759fdf1cc34b1226e088444523812fd412a5cca2"
+dependencies = [
+ "lite-parser",
+]
+
+[[package]]
+name = "lite-parser"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d5f9dc37c52d889a21fd701983d02bb6a84f852c5140a6c80ef4557f7dc29e"
+dependencies = [
+ "paste",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4769,6 +4771,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "offchain-worker-randomness"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-support",
+ "log",
+ "pallet-insecure-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "oid-registry"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4809,6 +4828,25 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
+
+[[package]]
+name = "oracle-randomness"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "gafi-support",
+ "lite-json",
+ "log",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "p256"
@@ -5029,8 +5067,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "gafi-support",
- "game-randomness",
  "log",
+ "offchain-worker-randomness",
  "pallet-balances",
  "pallet-nfts",
  "parity-scale-codec",
@@ -9570,7 +9608,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.6",
  "rand 0.8.5",
  "static_assertions",

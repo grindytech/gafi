@@ -18,7 +18,8 @@ run:
     --rpc-port 9944 \
     --rpc-cors all \
     --rpc-methods=Unsafe \
-    --rpc-external 
+    --rpc-external \
+    --execution Native
 
 .PHONY: check-benchmark
 check-benchmark:
@@ -46,19 +47,6 @@ benchmark-game:
     --steps 20 \
     --repeat 10 \
     --output ./benchmarking/pallet-game/weights.rs
-
-.PHONY: randomness-weights
-randomness-weights:
-	./target/release/gafi-node benchmark pallet \
-    --chain dev \
-    --wasm-execution compiled \
-    --pallet game_randomness \
-    --extrinsic '*' \
-    --steps 50 \
-    --repeat 20 \
-    --execution wasm \
-    --output ./benchmarking/randomness/weights.rs \
-    --template .maintain/frame-weight-template.hbs
 
 .PHONY: pallet-game-weights
 pallet-game-weights:
