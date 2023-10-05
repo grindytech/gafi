@@ -3,7 +3,7 @@
 use super::*;
 
 #[allow(unused)]
-use crate::Pallet as Template;
+use crate::Pallet as OracleRandomness;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
@@ -12,24 +12,30 @@ mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn do_something() {
-		let value = 100u32.into();
-		let caller: T::AccountId = whitelisted_caller();
-		#[extrinsic_call]
-		do_something(RawOrigin::Signed(caller), value);
+	fn submit_random_seed_unsigned() {
+		let block_number = 1u32.into();
+		let seed = [0u8; 64].to_vec();
 
-		assert_eq!(Something::<T>::get(), Some(value));
+		#[extrinsic_call]
+		submit_random_seed_unsigned(RawOrigin::None, block_number, seed);
 	}
 
 	#[benchmark]
-	fn cause_error() {
-		Something::<T>::put(100u32);
-		let caller: T::AccountId = whitelisted_caller();
-		#[extrinsic_call]
-		cause_error(RawOrigin::Signed(caller));
+	fn set_new_random_urls() {
+		let urls = vec![
+			"https://api2.drand.sh/public/latest".as_bytes().to_vec(),
+			"https://api.drand.sh/public/latest".as_bytes().to_vec(),
+			"https://api.drand.sh/public/latest".as_bytes().to_vec(),
+			"https://api.drand.sh/public/latest".as_bytes().to_vec(),
+		];
 
-		assert_eq!(Something::<T>::get(), Some(101u32));
+		#[extrinsic_call]
+		set_new_random_urls(RawOrigin::Root, urls);
 	}
 
-	impl_benchmark_test_suite!(Template, crate::mock::new_test_ext(), crate::mock::Test);
+	impl_benchmark_test_suite!(
+		OracleRandomness,
+		crate::mock::new_test_ext(),
+		crate::mock::Test
+	);
 }

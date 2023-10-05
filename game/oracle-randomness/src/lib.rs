@@ -99,7 +99,10 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		NewOracleRandomnessURL { urls: Vec<Vec<u8>> },
+		NewOracleRandomnessSeed { seed: Vec<u8> },
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -124,7 +127,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::set_new_random_urls())]
 		pub fn set_new_random_urls(origin: OriginFor<T>, urls: Vec<Vec<u8>>) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -134,7 +137,7 @@ pub mod pallet {
 			);
 
 			let mut new_urls: Vec<BoundedVec<u8, T::RandomURLLength>> = vec![];
-			for url in urls {
+			for url in urls.clone() {
 				let new_url = BoundedVec::<u8, T::RandomURLLength>::try_from(url);
 
 				if let Ok(url_value) = new_url {
@@ -155,11 +158,12 @@ pub mod pallet {
 				return Err(Error::<T>::ExceedMaxRandomURL.into())
 			}
 
+			Self::deposit_event(Event::NewOracleRandomnessURL { urls });
 			Ok(())
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::submit_random_seed_unsigned())]
 		pub fn submit_random_seed_unsigned(
 			origin: OriginFor<T>,
 			block_number: BlockNumberFor<T>,
@@ -171,15 +175,17 @@ pub mod pallet {
 				Error::<T>::InvalidSeed
 			);
 
-			let bounded_seed = BoundedVec::<u8, T::SeedLength>::try_from(seed);
+			let bounded_seed = BoundedVec::<u8, T::SeedLength>::try_from(seed.clone());
 
 			if let Ok(seed) = bounded_seed {
 				let new_payload = SeedPayload { block_number, seed };
 				RandomSeed::<T>::put(new_payload);
-				return Ok(())
+				<NextUnsignedAt<T>>::put(block_number.saturating_add(T::UnsignedInterval::get()));
+			} else {
+				return Err(Error::<T>::InvalidPayload.into())
 			}
-			<NextUnsignedAt<T>>::put(block_number.saturating_add(T::UnsignedInterval::get()));
-			Err(Error::<T>::InvalidPayload.into())
+			Self::deposit_event(Event::<T>::NewOracleRandomnessSeed { seed });
+			return Ok(())
 		}
 	}
 

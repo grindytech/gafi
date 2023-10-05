@@ -43,6 +43,7 @@ pub use frame_support::{
 };
 pub use frame_system::Call as SystemCall;
 use gafi_support::common::{unit, NativeToken::GAFI};
+use oracle_randomness::SubstrateWeight as OracleRandomnessWeight;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_game::SubstrateWeight as PalletGameWeight;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -479,7 +480,7 @@ parameter_types! {
 
 impl oracle_randomness::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = OracleRandomnessWeight<Runtime>;
 	type RandomAttemps = OracleRandomAttemps;
 	type SeedLength = SeedLength;
 	type MaxRandomURL = MaxRandomURL;
@@ -740,6 +741,8 @@ impl_runtime_apis! {
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use offchain_worker_randomness::Pallet as OffchainWorkerRandomnessBench;
+			use oracle_randomness::Pallet as OracleRandomnessBench;
+
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
@@ -747,6 +750,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
 			list_benchmark!(list, extra, offchain_worker_randomness, OffchainWorkerRandomnessBench::<Runtime>);
+			list_benchmark!(list, extra, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -770,6 +774,7 @@ impl_runtime_apis! {
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
 			use offchain_worker_randomness::Pallet as OffchainWorkerRandomnessBench;
+			use oracle_randomness::Pallet as OracleRandomnessBench;
 
 
 
@@ -779,6 +784,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
 			add_benchmark!(params, batches, offchain_worker_randomness, OffchainWorkerRandomnessBench::<Runtime>);
+			add_benchmark!(params, batches, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			Ok(batches)
 		}
