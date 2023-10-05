@@ -1,12 +1,15 @@
 use crate as oracle_randomness;
-use frame_support::traits::{ConstU16, ConstU32, ConstU64};
-use sp_core::H256;
+use frame_support::{traits::{ConstU16, ConstU32, ConstU64}, parameter_types};
+use frame_system::mocking;
+use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
+	testing::TestXt,
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage,
 };
-
-type Block = frame_system::mocking::MockBlock<Test>;
+type Extrinsic = TestXt<RuntimeCall, ()>;
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Block = mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -27,7 +30,7 @@ impl frame_system::Config for Test {
 	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = sp_core::sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
@@ -46,6 +49,11 @@ impl frame_system::Config for Test {
 pub const MAX_RANDOM_URL: u32 = 5;
 pub const URL_LENGTH: u32 = 10;
 
+
+parameter_types! {
+	pub const UnsignedPriority: u64 = 1 << 20;
+}
+
 impl oracle_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
@@ -53,6 +61,35 @@ impl oracle_randomness::Config for Test {
 	type SeedLength = ConstU32<64>;
 	type MaxRandomURL = ConstU32<MAX_RANDOM_URL>;
 	type RandomURLLength = ConstU32<URL_LENGTH>;
+	type UnsignedPriority = UnsignedPriority;
+	type UnsignedInterval = ConstU64<1>;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	RuntimeCall: From<LocalCall>,
+{
+	type OverarchingCall = RuntimeCall;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 // Build genesis storage according to the mock runtime.

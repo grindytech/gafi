@@ -59,7 +59,7 @@ parameter_types! {
 	pub const UnsignedInterval: u32 = 1;
 }
 
-impl game_randomness::Config for Test {
+impl offchain_worker_randomness::Config for Test {
 	type PalletId = PalletGameId;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();

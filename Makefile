@@ -18,7 +18,8 @@ run:
     --rpc-port 9944 \
     --rpc-cors all \
     --rpc-methods=Unsafe \
-    --rpc-external 
+    --rpc-external \
+    --execution Native
 
 .PHONY: check-benchmark
 check-benchmark:

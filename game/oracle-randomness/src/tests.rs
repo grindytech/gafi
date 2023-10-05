@@ -2,6 +2,10 @@ use crate::{mock::*, Error, Event};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use rand::Rng;
 
+fn test_pub(seed: u8) -> sp_core::sr25519::Public {
+	sp_core::sr25519::Public::from_raw([seed; 32])
+}
+
 #[test]
 fn gen_random_should_works() {
 	new_test_ext().execute_with(|| {
@@ -49,7 +53,7 @@ fn set_new_random_urls_works() {
 
 		// Ensure non-root origin fails
 		assert_err!(
-			OracleRandomness::set_new_random_urls(RuntimeOrigin::signed(1), urls),
+			OracleRandomness::set_new_random_urls(RuntimeOrigin::signed(test_pub(1)), urls),
 			frame_support::error::BadOrigin
 		);
 
@@ -70,4 +74,26 @@ fn set_new_random_urls_works() {
 			Error::<Test>::ExceedMaxRandomURL
 		);
 	});
+}
+
+#[test]
+fn test_parse_randomness() {
+	// Test case 1: Valid input with randomness value
+	let result1 = r#"{"round":3366165,"randomness":"c25de9ba2cdf3ac9be2aa74dbf038aa6e84969151d51318946beafaf20f9c30b","signature":"9514585af8f888f54f6f6e784be0ccd973a354f1cee2f5c30077714a4c05392c6c051d53ebe76dcd10012cb011bec92100cab52101e46ad7fc8bd1ebdc8279ff1cac85a490aaf783ba6d3cf4658ae6d93a731b487bb046ab191abeb0c977478c","previous_signature":"939e6bd3fb386a847289ca00d10941915a05da184af69cc466c45f13a619126d5c941e5fe4d25dec0ed758dda8dbb41e06345a9f7e12191854daa5a9036b09685bd2c3fd69ea255eb38d66c7076966aab65a0954f13ad1f968da9bbe9bca689a"}"#;
+	let expected1 = "c25de9ba2cdf3ac9be2aa74dbf038aa6e84969151d51318946beafaf20f9c30b"
+		.as_bytes()
+		.to_vec();
+
+	assert_eq!(
+		OracleRandomness::parse_randomness(result1).unwrap(),
+		expected1
+	);
+
+	// Test case 2: Valid input without randomness value
+	let result2 = r#"{"round":3366165,"signature":"9514585af8f888f54f6f6e784be0ccd973a354f1cee2f5c30077714a4c05392c6c051d53ebe76dcd10012cb011bec92100cab52101e46ad7fc8bd1ebdc8279ff1cac85a490aaf783ba6d3cf4658ae6d93a731b487bb046ab191abeb0c977478c","previous_signature":"939e6bd3fb386a847289ca00d10941915a05da184af69cc466c45f13a619126d5c941e5fe4d25dec0ed758dda8dbb41e06345a9f7e12191854daa5a9036b09685bd2c3fd69ea255eb38d66c7076966aab65a0954f13ad1f968da9bbe9bca689a"}"#;
+	assert_eq!(OracleRandomness::parse_randomness(result2), None);
+
+	// Test case 3: Invalid JSON input
+	let result3 = r#"{"round":3366165,"randomness":"c25de9ba2cdf3ac9be2aa74dbf038aa6e84969151d51318946beafaf20f9c30b""signature":"9514585af8f888f54f6f6e784be0ccd973a354f1cee2f5c30077714a4c05392c6c051d53ebe76dcd10012cb011bec92100cab52101e46ad7fc8bd1ebdc8279ff1cac85a490aaf783ba6d3cf4658ae6d93a731b487bb046ab191abeb0c977478c","previous_signature":"939e6bd3fb386a847289ca00d10941915a05da184af69cc466c45f13a619126d5c941e5fe4d25dec0ed758dda8dbb41e06345a9f7e12191854daa5a9036b09685bd2c3fd69ea255eb38d66c7076966aab65a0954f13ad1f968da9bbe9bca689a"}"#;
+	assert_eq!(OracleRandomness::parse_randomness(result3), None);
 }
