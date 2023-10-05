@@ -1,5 +1,5 @@
 [package]
-name = "gafi-node"
+name = "devnet-node"
 version = "4.0.0-dev"
 description = "A fresh FRAME-based Substrate node, ready for hacking."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
@@ -14,7 +14,7 @@ build = "build.rs"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [[bin]]
-name = "gafi-node"
+name = "devnet-node"
 
 [dependencies]
 clap = { version = "4.2.5", features = ["derive"] }
@@ -59,8 +59,8 @@ frame-benchmarking = { workspace = true, default-features = false }
 frame-benchmarking-cli = { workspace = true }
 
 # Local Dependencies
-gafi-runtime = { version = "4.0.0-dev", path = "../runtime" }
-gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
+devnet-runtime = { version = "4.0.0-dev", path = "../runtime" }
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../../support" }
 
 # CLI-specific dependencies
 try-runtime-cli = { workspace = true, optional = true }
@@ -72,10 +72,10 @@ substrate-build-script-utils = { workspace = true }
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-	"gafi-runtime/runtime-benchmarks",
+	"devnet-runtime/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
-try-runtime = ["gafi-runtime/try-runtime", "try-runtime-cli/try-runtime"]
+try-runtime = ["devnet-runtime/try-runtime", "try-runtime-cli/try-runtime"]

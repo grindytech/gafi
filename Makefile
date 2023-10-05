@@ -12,7 +12,7 @@ check:
 
 .PHONY: run
 run:
-	./target/release/gafi-node \
+	./target/release/devnet-node \
     --tmp \
     --dev \
     --rpc-port 9944 \
@@ -39,7 +39,7 @@ clippy:
 
 .PHONY: benchmark-game
 benchmark-game:
-	./target/release/gafi-node benchmark pallet \
+	./target/release/devnet-node benchmark pallet \
     --chain dev \
     --wasm-execution compiled \
     --pallet pallet_game \
@@ -50,7 +50,7 @@ benchmark-game:
 
 .PHONY: pallet-game-weights
 pallet-game-weights:
-	./target/release/gafi-node benchmark pallet \
+	./target/release/devnet-node benchmark pallet \
     --chain dev \
     --wasm-execution compiled \
     --pallet pallet_game \

@@ -1,4 +1,4 @@
-use gafi_runtime::{
+use devnet_runtime::{
 	AccountId, AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, OracleRandomnessConfig,
 	RuntimeGenesisConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };

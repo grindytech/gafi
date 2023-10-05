@@ -8,15 +8,18 @@ version = "4.0.0-dev"
 
 [workspace]
 members = [
+  # pallets
   'pallets/pallet-faucet',
   'pallets/pallet-cache',
   'game/pallet-game',
-  'game/offchain-worker-randomness',
   'game/oracle-randomness',
-  'gafi-node/runtime',
-  'gafi-node/node',
-  'pallets/template',
   'support',
+  # runtimes
+  'gafi-node/devnet/runtime',
+  'gafi-node/devnet/node',
+
+  'gafi-node/testnet/runtime',
+  'gafi-node/testnet/node',
 ]
 [profile.release]
 panic = 'unwind'
