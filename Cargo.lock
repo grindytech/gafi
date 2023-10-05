@@ -2647,7 +2647,6 @@ dependencies = [
  "frame-try-runtime",
  "gafi-support",
  "log",
- "offchain-worker-randomness",
  "oracle-randomness",
  "pallet-aura",
  "pallet-balances",

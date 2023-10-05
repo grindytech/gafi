@@ -182,19 +182,21 @@ pub mod pallet {
 		/// bias.
 		///
 		/// Returns `None` if `total` is 0.
-		fn random_number(total: u32) -> Option<u32> {
-			if let Ok(seed) = Self::gen_random() {
-				if total == 0 {
-					return None
-				}
-				let mut random_number = Self::generate_random_number(seed);
-				for _ in 1..T::RandomAttemps::get() {
-					if random_number < u32::MAX.saturating_sub(u32::MAX.wrapping_rem(total)) {
-						break
+		fn random_number(total: u32, adjust: u32) -> Option<u32> {
+			if let Some(payload) = RandomSeed::<T>::get() {
+				if let Ok(random) = Self::gen_random(&payload.seed, adjust) {
+					if total == 0 {
+						return None
 					}
-					random_number = Self::generate_random_number(seed);
+					let mut random_number = Self::generate_random_number(random);
+					for _ in 1..T::RandomAttemps::get() {
+						if random_number < u32::MAX.saturating_sub(u32::MAX.wrapping_rem(total)) {
+							break
+						}
+						random_number = Self::generate_random_number(random);
+					}
+					return Some((random_number.wrapping_rem(total)).saturating_add(1))
 				}
-				return Some((random_number.wrapping_rem(total)).saturating_add(1))
 			}
 			None
 		}
@@ -213,14 +215,13 @@ pub mod pallet {
 		}
 
 		/// Generate a random number from the off-chain worker's random seed
-		pub(crate) fn gen_random() -> Result<u32, Error<T>> {
-			if let Some(seed_data) = RandomSeed::<T>::get() {
-				match <u32>::decode(&mut TrailingZeroInput::new(seed_data.seed.as_ref())) {
-					Ok(random) => Ok(random),
-					Err(_) => Err(Error::<T>::InvalidSeed),
-				}
-			} else {
-				Err(Error::<T>::InvalidSeed)
+		pub(crate) fn gen_random(seed: &[u8], adjust: u32) -> Result<u32, Error<T>> {
+			let mut extended_seed = seed.to_vec();
+			extended_seed.extend_from_slice(&adjust.to_le_bytes());
+
+			match <u32>::decode(&mut TrailingZeroInput::new(extended_seed.as_ref())) {
+				Ok(random) => Ok(random),
+				Err(_) => Err(Error::<T>::InvalidSeed),
 			}
 		}
 

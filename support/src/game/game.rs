@@ -9,11 +9,11 @@ pub trait GameRandomness {
 	/// Generates a random number from 1 to `total` (inclusive).
 	///
 	/// Returns `None` if `total` is 0.
-	fn random_number(total: u32) -> Option<u32>;
+	fn random_number(total: u32, adjust: u32) -> Option<u32>;
 }
 
 impl GameRandomness for () {
-	fn random_number(_total: u32) -> Option<u32> {
+	fn random_number(_total: u32, _adjust: u32) -> Option<u32> {
 		Some(1)
 	}
 }

@@ -222,9 +222,8 @@ impl<T: Config<I>, I: 'static>
 			let mut nfts: Vec<NFT<T::CollectionId, T::ItemId>> = Vec::new();
 			{
 				let mut total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
+				for index in 0..amount {
+					if let Some(random) = T::GameRandomness::random_number(total_weight, index) {
 						// ensure position
 						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
 						match Self::take_loot(&mut table, random) {
@@ -244,7 +243,6 @@ impl<T: Config<I>, I: 'static>
 						};
 
 						total_weight = total_weight.saturating_sub(1);
-						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}
@@ -280,9 +278,8 @@ impl<T: Config<I>, I: 'static>
 			{
 				let table = LootTableOf::<T, I>::get(pool).into();
 				let total_weight = Self::total_weight(&table);
-				let mut maybe_random = T::GameRandomness::random_number(total_weight);
-				for _ in 0..amount {
-					if let Some(random) = maybe_random {
+				for index in 0..amount {
+					if let Some(random) = T::GameRandomness::random_number(total_weight, index) {
 						// ensure position
 						ensure!(random <= total_weight, Error::<T, I>::MintFailed);
 						match Self::get_loot(&table, random) {
@@ -293,7 +290,6 @@ impl<T: Config<I>, I: 'static>
 								},
 							None => return Err(Error::<T, I>::MintFailed.into()),
 						};
-						maybe_random = T::GameRandomness::random_number(total_weight);
 					} else {
 						return Err(Error::<T, I>::SoldOut.into())
 					}

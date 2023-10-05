@@ -410,23 +410,6 @@ impl pallet_nfts::Config for Runtime {
 }
 
 parameter_types! {
-	pub PalletGameId: PalletId =  PalletId(*b"gamernds");
-	pub RandomnessUnsignedPriority: u32 = 50;
-	pub RandomAttemps: u32 = 10;
-	pub UnsignedInterval: u32 = 1;
-}
-
-impl offchain_worker_randomness::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PalletId = PalletGameId;
-	type WeightInfo = ();
-	type Randomness = RandomnessCollectiveFlip;
-	type UnsignedPriority = RandomnessUnsignedPriority;
-	type RandomAttemps = RandomAttemps;
-	type UnsignedInterval = UnsignedInterval;
-}
-
-parameter_types! {
 	pub GameDeposit: u128 = 3 * unit(GAFI);
 	pub UpgradeDeposit: u128 = 1 * unit(GAFI);
 	pub BundleDeposit: u128 = 2 * unit(GAFI);
@@ -507,7 +490,6 @@ construct_runtime!(
 		Faucet: pallet_faucet,
 		PalletCache: pallet_cache,
 		Game: pallet_game,
-		OffchainWorkerRandomness: offchain_worker_randomness,
 		OracleRandomness: oracle_randomness,
 	}
 );
@@ -740,7 +722,6 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use offchain_worker_randomness::Pallet as OffchainWorkerRandomnessBench;
 			use oracle_randomness::Pallet as OracleRandomnessBench;
 
 
@@ -749,7 +730,6 @@ impl_runtime_apis! {
 
 			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
-			list_benchmark!(list, extra, offchain_worker_randomness, OffchainWorkerRandomnessBench::<Runtime>);
 			list_benchmark!(list, extra, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -773,7 +753,6 @@ impl_runtime_apis! {
 
 			use pallet_game::Pallet as GameBench;
 			use pallet_faucet::Pallet as FaucetBench;
-			use offchain_worker_randomness::Pallet as OffchainWorkerRandomnessBench;
 			use oracle_randomness::Pallet as OracleRandomnessBench;
 
 
@@ -783,7 +762,6 @@ impl_runtime_apis! {
 			add_benchmarks!(params, batches);
 			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
-			add_benchmark!(params, batches, offchain_worker_randomness, OffchainWorkerRandomnessBench::<Runtime>);
 			add_benchmark!(params, batches, oracle_randomness, OracleRandomnessBench::<Runtime>);
 
 			Ok(batches)

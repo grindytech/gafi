@@ -52,13 +52,14 @@ pub const URL_LENGTH: u32 = 10;
 
 parameter_types! {
 	pub const UnsignedPriority: u64 = 1 << 20;
+	pub const SeedLength: u32 = 64;
 }
 
 impl oracle_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type RandomAttemps = ConstU32<5>;
-	type SeedLength = ConstU32<64>;
+	type SeedLength = SeedLength;
 	type MaxRandomURL = ConstU32<MAX_RANDOM_URL>;
 	type RandomURLLength = ConstU32<URL_LENGTH>;
 	type UnsignedPriority = UnsignedPriority;
