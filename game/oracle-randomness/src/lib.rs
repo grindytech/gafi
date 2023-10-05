@@ -1,9 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_system::offchain::{CreateSignedTransaction, SubmitTransaction};
+use frame_support::pallet_prelude::*;
+use frame_system::{
+	offchain::{CreateSignedTransaction, SubmitTransaction},
+	pallet_prelude::*,
+};
 use gafi_support::game::GameRandomness;
 use lite_json::json::JsonValue;
 pub use pallet::*;
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	offchain::{http, Duration},
 	traits::{Get, TrailingZeroInput},
@@ -22,20 +27,18 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
+/// Payload used to hold seed data required to submit a transaction.
+#[derive(
+	Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
+)]
+pub struct SeedPayload<BlockNumber, Seed> {
+	block_number: BlockNumber,
+	seed: Seed,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
-
-	/// Payload used to hold seed data required to submit a transaction.
-	#[derive(
-		Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
-	)]
-	pub struct SeedPayload<BlockNumber, Seed> {
-		block_number: BlockNumber,
-		seed: Seed,
-	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -224,15 +227,16 @@ pub mod pallet {
 		/// bias.
 		///
 		/// Returns `None` if `total` is 0.
-		fn random_number(total: u32) -> Option<u32> {
+		fn random_number(total: u32, adjust: u32) -> Option<u32> {
 			if total == 0 {
 				return None
 			}
 
-			let seed_payload = RandomSeed::<T>::get();
-
-			if let Some(payload) = seed_payload {
-				return Self::random_bias(&payload.seed, total, T::RandomAttemps::get())
+			if let Some(payload) = RandomSeed::<T>::get() {
+				let mut extended_seed = payload.seed.to_vec();
+				extended_seed.extend_from_slice(&adjust.to_le_bytes());
+				let seed_hash = blake2_256(&extended_seed);
+				return Self::random_bias(&seed_hash, total, T::RandomAttemps::get())
 			}
 			None
 		}

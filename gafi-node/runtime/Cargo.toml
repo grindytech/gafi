@@ -63,7 +63,6 @@ pallet-template = { version = "4.0.0-dev", default-features = false, path = "../
 gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 pallet-cache = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-cache" }
 pallet-faucet = { version = "4.0.0-dev", default-features = false, path = "../../pallets/pallet-faucet" }
-offchain-worker-randomness = { version = "4.0.0-dev", default-features = false, path = "../../game/offchain-worker-randomness" }
 oracle-randomness = { version = "4.0.0-dev", default-features = false, path = "../../game/oracle-randomness" }
 pallet-game = { version = "4.0.0-dev", default-features = false, path = "../../game/pallet-game" }
 
@@ -118,7 +117,6 @@ std = [
 	"gafi-support/std",
 	"pallet-cache/std",
 	"pallet-faucet/std",
-	"offchain-worker-randomness/std",
 	"oracle-randomness/std",
 	"pallet-game/std",
 ]
@@ -139,7 +137,6 @@ runtime-benchmarks = [
 	"pallet-faucet/runtime-benchmarks",
 	"pallet-game/runtime-benchmarks",
 	"pallet-faucet/runtime-benchmarks",
-	"offchain-worker-randomness/runtime-benchmarks",
 	"oracle-randomness/runtime-benchmarks",
 ]
 try-runtime = [
