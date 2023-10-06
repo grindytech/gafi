@@ -15,12 +15,13 @@ members = [
   'game/oracle-randomness',
   'support',
   # runtimes
-  'gafi-node/devnet/runtime',
-  'gafi-node/devnet/node',
+  'runtime/devnet',
+  'runtime/testnet',
 
-  'gafi-node/testnet/runtime',
-  'gafi-node/testnet/node',
+  'node',
 ]
+
+
 [profile.release]
 panic = 'unwind'
 resolver = "2"

@@ -1,5 +1,5 @@
 [package]
-name = "devnet-node"
+name = "gafi-node"
 version = "4.0.0-dev"
 description = "A fresh FRAME-based Substrate node, ready for hacking."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
@@ -14,7 +14,7 @@ build = "build.rs"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [[bin]]
-name = "devnet-node"
+name = "gafi-node"
 
 [dependencies]
 clap = { version = "4.2.5", features = ["derive"] }
@@ -59,8 +59,9 @@ frame-benchmarking = { workspace = true, default-features = false }
 frame-benchmarking-cli = { workspace = true }
 
 # Local Dependencies
-devnet-runtime = { version = "4.0.0-dev", path = "../runtime" }
-gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../../support" }
+devnet-runtime = { version = "4.0.0-dev", path = "../runtime/devnet" }
+testnet-runtime = { version = "4.0.0-dev", path = "../runtime/testnet" }
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../support" }
 
 # CLI-specific dependencies
 try-runtime-cli = { workspace = true, optional = true }
@@ -70,6 +71,9 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = []
+
+
+
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
 	"devnet-runtime/runtime-benchmarks",
