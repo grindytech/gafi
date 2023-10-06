@@ -8,13 +8,6 @@ edition = "2021"
 license = "MIT-0"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
-build = "build.rs"
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-
-[[bin]]
-name = "gafi-node"
 
 [dependencies]
 clap = { version = "4.2.5", features = ["derive"] }
@@ -29,7 +22,6 @@ sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sc-offchain = { workspace = true }
-sc-statement-store = { workspace = true }
 sc-consensus-aura = { workspace = true }
 sp-consensus-aura = { workspace = true, default-features = false }
 sc-consensus = { workspace = true }
@@ -59,9 +51,9 @@ frame-benchmarking = { workspace = true, default-features = false }
 frame-benchmarking-cli = { workspace = true }
 
 # Local Dependencies
-devnet-runtime = { version = "4.0.0-dev", path = "../runtime/devnet" }
-testnet-runtime = { version = "4.0.0-dev", path = "../runtime/testnet" }
-gafi-support = { version = "4.0.0-dev", default-features = false, path = "../support" }
+devnet-runtime = { version = "4.0.0-dev", path = "../../runtime/devnet" }
+testnet-runtime = { version = "4.0.0-dev", path = "../../runtime/testnet" }
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 # CLI-specific dependencies
 try-runtime-cli = { workspace = true, optional = true }

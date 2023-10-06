@@ -219,7 +219,7 @@ fn testnet_genesis(
 			.iter()
 			.map(|s| s.as_bytes().to_vec())
 			.collect(),
-			
+
 			..Default::default()
 		},
 	}

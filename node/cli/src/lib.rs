@@ -1,11 +1,8 @@
 #![warn(missing_docs)]
 
+// mod benchmarking;
 mod cli;
 mod command;
-mod benchmarking;
-mod chain_spec;
-mod service;
-mod rpc;
 
 pub use cli::*;
 

@@ -2706,6 +2706,25 @@ dependencies = [
  "devnet-runtime",
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "gafi-service",
+ "gafi-support",
+ "sc-cli",
+ "sc-consensus-grandpa",
+ "sc-service",
+ "sp-keyring",
+ "substrate-build-script-utils",
+ "testnet-runtime",
+ "try-runtime-cli",
+]
+
+[[package]]
+name = "gafi-service"
+version = "4.0.0-dev"
+dependencies = [
+ "clap",
+ "devnet-runtime",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
  "frame-system",
  "futures",
  "gafi-support",
@@ -2723,7 +2742,6 @@ dependencies = [
  "sc-offchain",
  "sc-rpc-api",
  "sc-service",
- "sc-statement-store",
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
@@ -7522,24 +7540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-statement-store"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
-dependencies = [
- "log",
- "parity-db",
- "parking_lot 0.12.1",
- "sc-client-api",
- "sp-api",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
- "sp-statement-store",
- "substrate-prometheus-endpoint",
- "tokio",
-]
-
-[[package]]
 name = "sc-sysinfo"
 version = "6.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
@@ -9743,7 +9743,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
  "rand 0.8.5",
  "static_assertions",

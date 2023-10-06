@@ -38,6 +38,7 @@ members = [
   'runtime/testnet',
 
   'node/cli',
+  'node/service',
 ]
 
 [profile.release]

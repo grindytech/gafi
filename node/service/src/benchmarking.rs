@@ -2,8 +2,6 @@
 //!
 //! Should only be used for benchmarking as it may break in other contexts.
 
-use crate::service::FullClient;
-
 use devnet_runtime as runtime;
 use runtime::{AccountId, Balance, BalancesCall, SystemCall};
 use sc_cli::Result;
@@ -12,8 +10,8 @@ use sp_core::{Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::{OpaqueExtrinsic, SaturatedConversion};
-
 use std::{sync::Arc, time::Duration};
+use crate::FullClient;
 
 /// Generates extrinsics for the `benchmark overhead` command.
 ///
@@ -64,7 +62,11 @@ pub struct TransferKeepAliveBuilder {
 impl TransferKeepAliveBuilder {
 	/// Creates a new [`Self`] from the given client.
 	pub fn new(client: Arc<FullClient>, dest: AccountId, value: Balance) -> Self {
-		Self { client, dest, value }
+		Self {
+			client,
+			dest,
+			value,
+		}
 	}
 }
 
@@ -82,8 +84,11 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			self.client.as_ref(),
 			acc,
-			BalancesCall::transfer_keep_alive { dest: self.dest.clone().into(), value: self.value }
-				.into(),
+			BalancesCall::transfer_keep_alive {
+				dest: self.dest.clone().into(),
+				value: self.value,
+			}
+			.into(),
 			nonce,
 		)
 		.into();
