@@ -1,3 +1,18 @@
+[[bin]]
+name = "gafi"
+path = "src/main.rs"
+
+[package]
+name = "gafi"
+description = "Implementation of a `https://gafi.network` node in Rust based on the Substrate framework."
+license = "Apache-2.0"
+rust-version = "1.64.0"                                                                                   # workspace properties
+readme = "README.md"
+authors.workspace = true
+edition.workspace = true
+version.workspace = true
+
+
 [workspace.package]
 authors = ["Grindy Technologies <hello@grindy.io>"]
 edition = "2021"
@@ -5,6 +20,10 @@ repository = "https://github.com/grindytech/gafi/"
 homepage = "https://grindy.io/"
 license = "Apache-2.0"
 version = "4.0.0-dev"
+
+[dependencies]
+color-eyre = { version = "0.6.1", default-features = false }
+gafi-cli = { version = "4.0.0-dev", path = "node/cli", default-features = false }
 
 [workspace]
 members = [
@@ -18,9 +37,8 @@ members = [
   'runtime/devnet',
   'runtime/testnet',
 
-  'node',
+  'node/cli',
 ]
-
 
 [profile.release]
 panic = 'unwind'
@@ -48,7 +66,6 @@ serde = { version = "1.0.163", default-features = false, features = [
   "derive",
   "alloc",
 ] }
-
 
 # Substrate Client
 sc-basic-authorship = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }

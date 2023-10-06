@@ -12,7 +12,7 @@ check:
 
 .PHONY: run
 run:
-	./target/release/devnet-node \
+	./target/release/gafi \
     --tmp \
     --dev \
     --rpc-port 9944 \
