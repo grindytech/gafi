@@ -1,13 +1,25 @@
-use devnet_runtime::{
-	AccountId, AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, OracleRandomnessConfig,
-	RuntimeGenesisConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-};
+#![allow(unused_imports)]
+
 use gafi_support::common::{unit, NativeToken::GAFI};
+use polkadot_core_primitives::AccountId;
+
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+
+#[cfg(feature = "devnet-native")]
+use devnet_runtime::{
+	AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, OracleRandomnessConfig,
+	RuntimeGenesisConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+};
+
+#[cfg(feature = "testnet-native")]
+use testnet_runtime::{
+	AuraConfig, BalancesConfig, FaucetConfig, GrandpaConfig, OracleRandomnessConfig,
+	RuntimeGenesisConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";

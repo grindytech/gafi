@@ -6,7 +6,7 @@ path = "src/main.rs"
 name = "gafi"
 description = "Implementation of a `https://gafi.network` node in Rust based on the Substrate framework."
 license = "Apache-2.0"
-rust-version = "1.64.0"                                                                                   # workspace properties
+rust-version = "1.64.0"
 readme = "README.md"
 authors.workspace = true
 edition.workspace = true
@@ -23,7 +23,8 @@ version = "4.0.0-dev"
 
 [dependencies]
 color-eyre = { version = "0.6.1", default-features = false }
-gafi-cli = { version = "4.0.0-dev", path = "node/cli", default-features = false }
+
+gafi-cli = { path = "node/cli" }
 
 [workspace]
 members = [
@@ -178,3 +179,11 @@ cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/c
 cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v1.0.0" }
 cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v1.0.0" }
 cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v1.0.0" }
+
+
+[features] 
+default = ["devnet-native"]
+devnet-native = ["gafi-cli/devnet-native"]
+tesmet-native = ["gafi-cli/testnet-native"]
+runtime-benchmarks= [ "gafi-cli/runtime-benchmarks" ]
+try-runtime = [ "gafi-cli/try-runtime" ]

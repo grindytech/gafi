@@ -1,6 +1,5 @@
 #![warn(missing_docs)]
 
-// mod benchmarking;
 mod cli;
 mod command;
 

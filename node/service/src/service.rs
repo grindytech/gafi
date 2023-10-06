@@ -1,7 +1,8 @@
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+#![allow(unused_imports)]
 
+use crate::rpc;
 use futures::FutureExt;
-use devnet_runtime::{self, opaque::Block, RuntimeApi};
+use polkadot_core_primitives::Block;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
@@ -11,7 +12,12 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
-use crate::rpc;
+
+#[cfg(feature = "devnet-native")]
+use devnet_runtime::{self, RuntimeApi, api::dispatch, native_version};
+
+#[cfg(feature = "testnet-native")]
+use testnet_runtime::{self, RuntimeApi, api::dispatch, native_version};
 
 // Our native executor instance.
 pub struct ExecutorDispatch;
@@ -25,11 +31,11 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		devnet_runtime::api::dispatch(method, data)
+		dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		devnet_runtime::native_version()
+		native_version()
 	}
 }
 
@@ -214,8 +220,11 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 		let pool = transaction_pool.clone();
 
 		Box::new(move |deny_unsafe, _| {
-			let deps =
-				rpc::FullDeps { client: client.clone(), pool: pool.clone(), deny_unsafe };
+			let deps = rpc::FullDeps {
+				client: client.clone(),
+				pool: pool.clone(),
+				deny_unsafe,
+			};
 			rpc::create_full(deps).map_err(Into::into)
 		})
 	};
@@ -286,7 +295,11 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 	if enable_grandpa {
 		// if the node isn't actively participating in consensus then it doesn't
 		// need a keystore, regardless of which protocol we use below.
-		let keystore = if role.is_authority() { Some(keystore_container.keystore()) } else { None };
+		let keystore = if role.is_authority() {
+			Some(keystore_container.keystore())
+		} else {
+			None
+		};
 
 		let grandpa_config = sc_consensus_grandpa::Config {
 			// FIXME #1578 make this available through chainspec

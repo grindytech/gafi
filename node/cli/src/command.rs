@@ -1,10 +1,10 @@
 use crate::cli::{Cli, Subcommand};
-use devnet_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use gafi_service::{
 	development_config, inherent_benchmark_data, local_testnet_config, new_full, new_partial,
 	ChainSpec, RemarkBuilder, TransferKeepAliveBuilder,
 };
+use polkadot_core_primitives::Block;
 use sc_cli::SubstrateCli;
 use sc_service::PartialComponents;
 use sp_keyring::Sr25519Keyring;
@@ -179,7 +179,7 @@ pub fn run() -> sc_cli::Result<()> {
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
 								Sr25519Keyring::Alice.to_account_id(),
-								EXISTENTIAL_DEPOSIT,
+								1000_u128,
 							)),
 						]);
 

@@ -50,9 +50,13 @@ pallet-transaction-payment-rpc = { workspace = true }
 frame-benchmarking = { workspace = true, default-features = false }
 frame-benchmarking-cli = { workspace = true }
 
+# Polkadot Primitives
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v1.0.0" }
+
+
 # Local Dependencies
-devnet-runtime = { version = "4.0.0-dev", path = "../../runtime/devnet" }
-testnet-runtime = { version = "4.0.0-dev", path = "../../runtime/testnet" }
+devnet-runtime = { version = "4.0.0-dev", path = "../../runtime/devnet", optional = true }
+testnet-runtime = { version = "4.0.0-dev", path = "../../runtime/testnet", optional = true }
 gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 # CLI-specific dependencies
@@ -64,14 +68,20 @@ substrate-build-script-utils = { workspace = true }
 [features]
 default = []
 
+devnet-native = ["devnet-runtime"]
+testnet-native = ["testnet-runtime"]
 
 
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-	"devnet-runtime/runtime-benchmarks",
+	"devnet-runtime?/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
-try-runtime = ["devnet-runtime/try-runtime", "try-runtime-cli/try-runtime"]
+try-runtime = [
+	"devnet-runtime?/try-runtime",
+	"testnet-runtime?/try-runtime",
+	"try-runtime-cli/try-runtime",
+]

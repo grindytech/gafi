@@ -2703,17 +2703,16 @@ name = "gafi-cli"
 version = "4.0.0-dev"
 dependencies = [
  "clap",
- "devnet-runtime",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "gafi-service",
  "gafi-support",
+ "polkadot-core-primitives",
  "sc-cli",
  "sc-consensus-grandpa",
  "sc-service",
  "sp-keyring",
  "substrate-build-script-utils",
- "testnet-runtime",
  "try-runtime-cli",
 ]
 
@@ -2731,6 +2730,7 @@ dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
+ "polkadot-core-primitives",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
