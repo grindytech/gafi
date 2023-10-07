@@ -1,5 +1,5 @@
 [package]
-name = "gafi-node"
+name = "gafi-service"
 version = "4.0.0-dev"
 description = "A fresh FRAME-based Substrate node, ready for hacking."
 authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
@@ -8,17 +8,11 @@ edition = "2021"
 license = "MIT-0"
 publish = false
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
-build = "build.rs"
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-
-[[bin]]
-name = "gafi-node"
 
 [dependencies]
 clap = { version = "4.2.5", features = ["derive"] }
 futures = { version = "0.3.21", features = ["thread-pool"] }
+hex-literal = "0.4.1"
 
 sc-cli = { workspace = true }
 sp-core = { workspace = true, default-features = false }
@@ -29,7 +23,6 @@ sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sc-offchain = { workspace = true }
-sc-statement-store = { workspace = true }
 sc-consensus-aura = { workspace = true }
 sp-consensus-aura = { workspace = true, default-features = false }
 sc-consensus = { workspace = true }
@@ -58,8 +51,13 @@ pallet-transaction-payment-rpc = { workspace = true }
 frame-benchmarking = { workspace = true, default-features = false }
 frame-benchmarking-cli = { workspace = true }
 
+# Polkadot Primitives
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v1.0.0" }
+
+
 # Local Dependencies
-gafi-runtime = { version = "4.0.0-dev", path = "../runtime" }
+devnet-runtime = { version = "4.0.0-dev", path = "../../runtime/devnet", optional = true }
+testnet-runtime = { version = "4.0.0-dev", path = "../../runtime/testnet", optional = true }
 gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
 
 # CLI-specific dependencies
@@ -70,12 +68,21 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = []
+
+devnet-native = ["devnet-runtime"]
+testnet-native = ["testnet-runtime"]
+
+
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-	"gafi-runtime/runtime-benchmarks",
+	"devnet-runtime?/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
-try-runtime = ["gafi-runtime/try-runtime", "try-runtime-cli/try-runtime"]
+try-runtime = [
+	"devnet-runtime?/try-runtime",
+	"testnet-runtime?/try-runtime",
+	"try-runtime-cli/try-runtime",
+]

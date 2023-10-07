@@ -33,13 +33,13 @@ impl TokenInfo for GafiCurrency {
 			id: 1,
 			name: b"GAKI Token".to_vec(),
 			symbol: "GAKI".as_bytes().to_vec(),
-			decimals: 18,
+			decimals: 12,
 		};
 		let gafi: Token = Token {
 			id: 2,
 			name: b"GAFI Token".to_vec(),
 			symbol: "GAFI".as_bytes().to_vec(),
-			decimals: 18,
+			decimals: 10,
 		};
 
 		match token {
