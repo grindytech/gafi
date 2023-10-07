@@ -108,8 +108,8 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("gafi-node"),
-	impl_name: create_runtime_str!("gafi-node"),
+	spec_name: create_runtime_str!("testnet"),
+	impl_name: create_runtime_str!("testnet"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -405,8 +405,6 @@ impl pallet_nfts::Config for Runtime {
 	/// Using `AccountPublic` here makes it trivial to convert to `AccountId` via `into_account()`.
 	type OffchainPublic = AccountPublic;
 	type WeightInfo = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
 }
 
 parameter_types! {
@@ -448,8 +446,6 @@ impl pallet_game::Config for Runtime {
 	type MaxMintRequest = MaxMintRequest;
 	type MintInterval = MintInterval;
 	type GameRandomness = OracleRandomness;
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
 }
 
 parameter_types! {
@@ -525,21 +521,6 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
-
-#[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
-extern crate frame_benchmarking;
-
-#[cfg(feature = "runtime-benchmarks")]
-mod benches {
-	define_benchmarks!(
-		[frame_benchmarking, BaselineBench::<Runtime>]
-		[frame_system, SystemBench::<Runtime>]
-		[pallet_balances, Balances]
-		[pallet_timestamp, Timestamp]
-		[pallet_sudo, Sudo]
-	);
-}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -706,65 +687,6 @@ impl_runtime_apis! {
 		}
 		fn query_length_to_fee(length: u32) -> Balance {
 			TransactionPayment::length_to_fee(length)
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<frame_benchmarking::BenchmarkList>,
-			Vec<frame_support::traits::StorageInfo>,
-		) {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
-			use frame_support::traits::StorageInfoTrait;
-			use frame_system_benchmarking::Pallet as SystemBench;
-			use baseline::Pallet as BaselineBench;
-
-			use pallet_game::Pallet as GameBench;
-			use pallet_faucet::Pallet as FaucetBench;
-			use oracle_randomness::Pallet as OracleRandomnessBench;
-
-
-			let mut list = Vec::<BenchmarkList>::new();
-			list_benchmarks!(list, extra);
-
-			list_benchmark!(list, extra, pallet_game, GameBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_faucet, FaucetBench::<Runtime>);
-			list_benchmark!(list, extra, oracle_randomness, OracleRandomnessBench::<Runtime>);
-
-			let storage_info = AllPalletsWithSystem::storage_info();
-
-			(list, storage_info)
-		}
-
-		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
-
-			use frame_system_benchmarking::Pallet as SystemBench;
-			use baseline::Pallet as BaselineBench;
-
-			impl frame_system_benchmarking::Config for Runtime {}
-			impl baseline::Config for Runtime {}
-
-			use frame_support::traits::WhitelistedStorageKeys;
-			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
-
-			use pallet_game::Pallet as GameBench;
-			use pallet_faucet::Pallet as FaucetBench;
-			use oracle_randomness::Pallet as OracleRandomnessBench;
-
-
-
-			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
-			add_benchmarks!(params, batches);
-			add_benchmark!(params, batches, pallet_game, GameBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_faucet, FaucetBench::<Runtime>);
-			add_benchmark!(params, batches, oracle_randomness, OracleRandomnessBench::<Runtime>);
-
-			Ok(batches)
 		}
 	}
 

@@ -2,9 +2,13 @@
 build:
 	cargo build -r
 
+.PHONY: build-tesnet
+build-testnet:
+	cargo build -r --features testnet-native
+
 .PHONY: test
 test:
-	cargo test -r
+	cargo test --workspace --release
 
 .PHONY: check
 check:
@@ -12,7 +16,7 @@ check:
 
 .PHONY: run
 run:
-	./target/release/gafi-node \
+	./target/release/gafi \
     --tmp \
     --dev \
     --rpc-port 9944 \
@@ -39,7 +43,7 @@ clippy:
 
 .PHONY: benchmark-game
 benchmark-game:
-	./target/release/gafi-node benchmark pallet \
+	./target/release/devnet-node benchmark pallet \
     --chain dev \
     --wasm-execution compiled \
     --pallet pallet_game \
@@ -50,7 +54,7 @@ benchmark-game:
 
 .PHONY: pallet-game-weights
 pallet-game-weights:
-	./target/release/gafi-node benchmark pallet \
+	./target/release/devnet-node benchmark pallet \
     --chain dev \
     --wasm-execution compiled \
     --pallet pallet_game \

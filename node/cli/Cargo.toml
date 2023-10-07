@@ -1,0 +1,59 @@
+[package]
+name = "gafi-cli"
+version = "4.0.0-dev"
+description = "A fresh FRAME-based Substrate node, ready for hacking."
+authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+homepage = "https://substrate.io/"
+edition = "2021"
+license = "MIT-0"
+publish = false
+repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+build = "build.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+clap = { version = "4.2.5", features = ["derive"] }
+
+sc-cli = { workspace = true }
+sc-service = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
+sp-keyring = { workspace = true }
+
+# These dependencies are used for runtime benchmarking
+frame-benchmarking = { workspace = true, default-features = false }
+frame-benchmarking-cli = { workspace = true }
+
+
+# Polkadot Primitives
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v1.0.0" }
+
+# Local Dependencies
+gafi-support = { version = "4.0.0-dev", default-features = false, path = "../../support" }
+gafi-service = { version = "4.0.0-dev", path = "../service", default-features = false, optional = true }
+
+# CLI-specific dependencies
+try-runtime-cli = { workspace = true, optional = true }
+
+[build-dependencies]
+substrate-build-script-utils = { workspace = true }
+
+[features]
+default = []
+
+devnet-native = ["gafi-service/devnet-native"]
+testnet-native = ["gafi-service/testnet-native"]
+
+# Dependencies that are only required if runtime benchmarking should be build.
+runtime-benchmarks = [
+	"gafi-service/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-benchmarking-cli/runtime-benchmarks",
+]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = ["gafi-service/try-runtime", "try-runtime-cli/try-runtime"]
