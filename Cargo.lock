@@ -2727,6 +2727,7 @@ dependencies = [
  "frame-system",
  "futures",
  "gafi-support",
+ "hex-literal 0.4.1",
  "jsonrpsee",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",

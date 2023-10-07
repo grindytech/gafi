@@ -2,9 +2,13 @@
 build:
 	cargo build -r
 
+.PHONY: build-tesnet
+build-testnet:
+	cargo build -r --features testnet-native
+
 .PHONY: test
 test:
-	cargo test -r
+	cargo test --workspace --release
 
 .PHONY: check
 check:
