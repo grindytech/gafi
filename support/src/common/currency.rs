@@ -50,15 +50,6 @@ impl TokenInfo for GafiCurrency {
 }
 
 /// Express the native token as u128
-///
-/// # Examples
-///
-/// ```
-/// use gafi_support::common::{NativeToken::GAKI, unit};
-///
-/// let balance = 10 * unit(GAKI);
-/// assert_eq!(balance, 10_000_000_000_000_000_000);
-/// ```
 pub fn unit(token: NativeToken) -> u128 {
     10u128.saturating_pow(GafiCurrency::token_info(token).decimals.into())
 }
@@ -98,31 +89,37 @@ mod tests {
 
     #[test]
     fn test_unit() {
-        assert_eq!(unit(NativeToken::GAKI), 1_000_000_000_000_000_000);
+        assert_eq!(unit(NativeToken::GAKI), 1_000_000_000_000);
+        assert_eq!(unit(NativeToken::GAFI), 10_000_000_000);
     }
 
     #[test]
     fn test_centi() {
-        assert_eq!(centi(NativeToken::GAKI), 10_000_000_000_000_000);
+        assert_eq!(centi(NativeToken::GAKI), 10_000_000_000);
+        assert_eq!(centi(NativeToken::GAFI), 100_000_000);
     }
 
     #[test]
     fn test_milli() {
-        assert_eq!(milli(NativeToken::GAKI), 1_000_000_000_000_000);
+        assert_eq!(milli(NativeToken::GAKI), 1_000_000_000);
+        assert_eq!(milli(NativeToken::GAFI), 10_000_000);
     }
 
     #[test]
     fn test_millicent() {
-        assert_eq!(millicent(NativeToken::GAKI), 10_000_000_000_000);
+        assert_eq!(millicent(NativeToken::GAKI), 10_000_000);
+        assert_eq!(millicent(NativeToken::GAFI), 100_000);
     }
 
     #[test]
     fn test_microcent() {
-        assert_eq!(microcent(NativeToken::GAKI), 1_000_000_000_000);
+        assert_eq!(microcent(NativeToken::GAKI), 1_000_000);
+        assert_eq!(microcent(NativeToken::GAFI), 10_000);
     }
 
     #[test]
     fn test_deposit() {
-        assert_eq!(deposit(5, 100, NativeToken::GAKI), 100_100_000_000_000_000_000);
+        assert_eq!(deposit(5, 100, NativeToken::GAKI),100_100_000_000_000);
+        assert_eq!(deposit(5, 100, NativeToken::GAFI),1_001_000_000_000);
     }
 }
