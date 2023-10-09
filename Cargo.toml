@@ -182,7 +182,7 @@ cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumul
 
 
 [features] 
-default = []
+# default = []
 devnet-native = ["gafi-cli/devnet-native"]
 testnet-native = ["gafi-cli/testnet-native"]
 runtime-benchmarks= [ "gafi-cli/runtime-benchmarks" ]

@@ -111,11 +111,11 @@ where
 	Seed: Debug + AsRef<[u8]>,
 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> sp_std::fmt::Result {
-		write!(f, "    block_number: {:?},\n", self.block_number)?;
+		writeln!(f, "    block_number: {:?}", self.block_number)?;
 		if let Ok(seed) = sp_std::str::from_utf8(self.seed.as_ref()) {
-			write!(f, "    seed: {:?}\n", seed)?;
+			writeln!(f, "    seed: {:?}", seed)?;
 		} else {
-			write!(f, "    seed: {:?}\n", self.seed)?;
+			writeln!(f, "    seed: {:?}", self.seed)?;
 		}
 		Ok(())
 	}
