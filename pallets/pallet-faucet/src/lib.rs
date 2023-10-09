@@ -25,7 +25,6 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, BoundedVec};
 	use frame_system::pallet_prelude::*;
 
-	type MaxFundingAccount = ConstU32<3>;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -46,6 +45,10 @@ pub mod pallet {
 
 		/// Faucet Amount
 		type FaucetAmount: Get<BalanceOf<Self>>;
+
+		/// Maximum number of fundung accounts
+		#[pallet::constant]
+		type MaxFundingAccount: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -54,7 +57,7 @@ pub mod pallet {
 	/// Holding all the accounts
 	#[pallet::storage]
 	pub(super) type GenesisAccounts<T: Config> =
-		StorageValue<_, BoundedVec<T::AccountId, MaxFundingAccount>, ValueQuery>;
+		StorageValue<_, BoundedVec<T::AccountId, T::MaxFundingAccount>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	#[derive(frame_support::DefaultNoBound)]
@@ -85,6 +88,7 @@ pub mod pallet {
 		DontBeGreedy,
 		PleaseWait,
 		OutOfFaucet,
+		ExceedFundingAccounts,
 	}
 
 	#[pallet::call]
@@ -168,6 +172,21 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight({0})]
+		pub fn new_funding_accounts(origin: OriginFor<T>, accounts: Vec<T::AccountId>) -> DispatchResult {
+			ensure_root(origin)?;
+
+			let funding_account = BoundedVec::<T::AccountId, T::MaxFundingAccount>::try_from(accounts);
+
+			if let Ok(accs) = funding_account {
+				GenesisAccounts::<T>::put(accs);
+			} else {
+				return Err(Error::<T>::ExceedFundingAccounts.into())
+			}
+			Ok(())
+		} 
 	}
 
 	impl<T: Config> Pallet<T> {
