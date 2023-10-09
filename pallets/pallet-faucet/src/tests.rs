@@ -1,8 +1,8 @@
 use std::ops::Add;
 
-use crate::{mock::*, Error};
-use frame_support::{assert_err, assert_ok, traits::Currency};
-use sp_runtime::AccountId32;
+use crate::{mock::*, Error, GenesisAccounts};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
+use sp_runtime::{traits::BadOrigin, AccountId32};
 
 #[test]
 fn faucet_works() {
@@ -84,4 +84,32 @@ fn donate_fail() {
 			<Error<Test>>::NotEnoughBalance
 		);
 	})
+}
+
+#[test]
+fn test_new_funding_accounts() {
+	ExtBuilder::default().build_and_execute(|| {
+		// Set up test environment
+		let root = AccountId32::new([0; 32]);
+		let accounts: Vec<AccountId32> = vec![
+			AccountId32::new([0; 32]),
+			AccountId32::new([1; 32]),
+			AccountId32::new([2; 32]),
+		];
+
+		// Ensure the function fails when called by a non-root account
+		assert_noop!(
+			Faucet::new_funding_accounts(RuntimeOrigin::signed(root.clone()), accounts.clone()),
+			BadOrigin
+		);
+
+		// Ensure the function succeeds when called by a root account
+		assert_ok!(Faucet::new_funding_accounts(
+			RuntimeOrigin::root(),
+			accounts.clone()
+		));
+
+		// Verify that the funding accounts were stored correctly
+		assert_eq!(GenesisAccounts::<Test>::get(), accounts);
+	});
 }

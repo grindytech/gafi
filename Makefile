@@ -1,6 +1,8 @@
+network = devnet-native
+
 .PHONY: build
 build:
-	cargo build -r
+	cargo build -r --features $(network)
 
 .PHONY: build-tesnet
 build-testnet:
@@ -8,11 +10,11 @@ build-testnet:
 
 .PHONY: test
 test:
-	cargo test --workspace --release
+	cargo test --workspace --release --features $(network)
 
 .PHONY: check
 check:
-	cargo check -r
+	cargo check -r --features $(network)
 
 .PHONY: run
 run:
@@ -27,15 +29,15 @@ run:
 
 .PHONY: check-benchmark
 check-benchmark:
-	cargo check --release --features runtime-benchmarks
+	cargo check --release --features runtime-benchmarks,$(network)
 
 .PHONY: check-benchmark-game
 check-benchmark-game:
-	cargo check --release -p pallet-game --features runtime-benchmarks
+	cargo check --release -p pallet-game --features runtime-benchmarks,$(network)
 
 .PHONY: benchmark
 benchmark:
-	cargo build --release --features runtime-benchmarks
+	cargo build --release --features runtime-benchmarks,$(network)
 
 .PHONY: clippy
 clippy:

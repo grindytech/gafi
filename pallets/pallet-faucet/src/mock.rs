@@ -5,7 +5,7 @@ use frame_system as system;
 use frame_support::dispatch::Vec;
 use pallet_balances::AccountData;
 pub use pallet_balances::Call as BalancesCall;
-use sp_core::{ConstU128, ConstU64, H256, ConstU16};
+use sp_core::{ConstU128, ConstU64, H256, ConstU16, ConstU32};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
@@ -78,6 +78,7 @@ impl pallet_faucet::Config for Test {
 	type WeightInfo = ();
 	type Cache = PalletCache;
 	type FaucetAmount = FaucetAmount;
+	type MaxFundingAccount = ConstU32<5>;
 }
 
 parameter_types! {

@@ -371,6 +371,7 @@ impl pallet_faucet::Config for Runtime {
 	type WeightInfo = pallet_faucet::weights::FaucetWeight<Runtime>;
 	type Cache = PalletCache;
 	type FaucetAmount = FaucetAmount;
+	type MaxFundingAccount = ConstU32<3>;
 }
 
 parameter_types! {
