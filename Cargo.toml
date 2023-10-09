@@ -23,7 +23,7 @@ version = "4.0.0-dev"
 
 [dependencies]
 color-eyre = { version = "0.6.1", default-features = false }
-
+tikv-jemallocator = "0.5.0"
 gafi-cli = { path = "node/cli" }
 
 [workspace]
