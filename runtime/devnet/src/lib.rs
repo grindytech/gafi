@@ -465,7 +465,7 @@ parameter_types! {
 impl oracle_randomness::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = OracleRandomnessWeight<Runtime>;
-	type RandomAttemps = OracleRandomAttemps;
+	type RandomAttempts = OracleRandomAttemps;
 	type SeedLength = SeedLength;
 	type MaxRandomURL = MaxRandomURL;
 	type RandomURLLength = RandomURLLength;

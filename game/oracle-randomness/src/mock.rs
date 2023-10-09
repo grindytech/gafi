@@ -58,7 +58,7 @@ parameter_types! {
 impl oracle_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	type RandomAttemps = ConstU32<5>;
+	type RandomAttempts = ConstU32<5>;
 	type SeedLength = SeedLength;
 	type MaxRandomURL = ConstU32<MAX_RANDOM_URL>;
 	type RandomURLLength = ConstU32<URL_LENGTH>;

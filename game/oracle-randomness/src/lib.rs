@@ -42,15 +42,19 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
+		/// Maximum number of attempts.
 		#[pallet::constant]
-		type RandomAttemps: Get<u32>;
+		type RandomAttempts: Get<u32>;
 
+		/// Seed's Length
 		#[pallet::constant]
 		type SeedLength: Get<u32>;
 
+		/// Maximum number of URLs
 		#[pallet::constant]
 		type MaxRandomURL: Get<u32>;
 
+		/// Maximum URL length
 		#[pallet::constant]
 		type RandomURLLength: Get<u32>;
 
@@ -69,11 +73,12 @@ pub mod pallet {
 		type UnsignedInterval: Get<BlockNumberFor<Self>>;
 	}
 
-	/// Storing random seed generated.
+	/// Storing randomly generated seed.
 	#[pallet::storage]
 	pub(crate) type RandomSeed<T: Config> =
 		StorageValue<_, SeedPayload<BlockNumberFor<T>, BoundedVec<u8, T::SeedLength>>, OptionQuery>;
 
+	/// Storing URLs to get randomness.
 	#[pallet::storage]
 	#[pallet::getter(fn urls)]
 	pub type RandomnessURLs<T: Config> = StorageValue<
@@ -82,29 +87,17 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	// #[pallet::type_value]
-	// pub fn DefaultURLIndexing<T: Config>() -> u32 {
-	// 	0u32
-	// }
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn url_indexing)]
-	// pub type URLIndexing<T: Config> = StorageValue<
-	// 	_,
-	// 	u32,
-	// 	ValueQuery,
-	// 	DefaultURLIndexing<T>,
-	// >;
-
+	/// Storing the next unsigned block.
 	#[pallet::storage]
 	#[pallet::getter(fn next_unsigned_at)]
 	pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
+	/// Currently selected URL for URL switching.
 	#[pallet::storage]
 	#[pallet::getter(fn next_randomness_url)]
 	pub(super) type SelectedRandomnessURL<T: Config> =
 		StorageValue<_, BoundedVec<u8, T::RandomURLLength>, OptionQuery>;
-
+		
 	#[pallet::genesis_config]
 	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T> {
@@ -156,6 +149,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Set new random URLs for the oracle.
+		///
+		/// This function allows the privileged origin to set new random URLs for the oracle. The
+		/// origin must be signed by a privileged account.
+		///
+		/// Parameters:
+		/// - `origin`: The origin of the call, which must be a privileged account.
+		/// - `urls`: A vector of vectors of bytes representing the new random URLs to be set.
+		///
+		/// Events:
+		/// - Emits a `NewOracleRandomnessURL` event when the new random URLs are successfully set.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set_new_random_urls())]
 		pub fn set_new_random_urls(origin: OriginFor<T>, urls: Vec<Vec<u8>>) -> DispatchResult {
@@ -192,6 +198,21 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Submit a random seed from an unsigned source.
+		///
+		/// This function allows an unsigned source to submit a random seed for the oracle. The
+		/// origin must be none (unsigned).
+		///
+		/// Parameters:
+		/// - `origin`: The origin of the call, which must be none (unsigned).
+		/// - `block_number`: The block number associated with the random seed.
+		/// - `seed`: A vector of bytes representing the random seed to be submitted.
+		///
+		/// Events:
+		/// - Emits a `NewOracleRandomnessSeed` event when the random seed is successfully
+		///   submitted.
+		///
+		/// Weight: `O(1)`
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::submit_random_seed_unsigned())]
 		pub fn submit_random_seed_unsigned(
@@ -232,6 +253,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Get the next URL from a list of URLs.
+		///
+		/// Parameters:
+		/// - `urls`: A vector of vectors of bytes representing the list of URLs.
+		/// - `maybe_current_url`: An optional vector of bytes representing the current URL.
+		///
+		/// Returns:
+		/// - An optional vector of bytes representing the next URL.
 		pub fn get_next_url(
 			urls: Vec<Vec<u8>>,
 			maybe_current_url: Option<Vec<u8>>,
@@ -275,12 +304,18 @@ pub mod pallet {
 	}
 
 	impl<T: Config> GameRandomness for Pallet<T> {
-		/// Generates a random number between 1 and `total` (inclusive).
-		/// This function repeats the process up to `RandomAttemps` times if
-		/// the number falls within the overflow range of the modulo operation to mitigate modulo
-		/// bias.
+		/// Generate a random number.
 		///
-		/// Returns `None` if `total` is 0.
+		/// This function generates a random number from 1 to `total` based on the provided
+		/// parameters. It uses the current random seed stored in the storage to generate the random
+		/// number.
+		///
+		/// Parameters:
+		/// - `total`: The total number of possible outcomes.
+		/// - `adjust`: An adjustment value to add to the seed before generating the random number.
+		///
+		/// Returns:
+		/// - An optional random number.
 		fn random_number(total: u32, adjust: u32) -> Option<u32> {
 			if total == 0 {
 				return None
@@ -290,7 +325,7 @@ pub mod pallet {
 				let mut extended_seed = payload.seed.to_vec();
 				extended_seed.extend_from_slice(&adjust.to_le_bytes());
 				let seed_hash = blake2_256(&extended_seed);
-				return Self::random_bias(&seed_hash, total, T::RandomAttemps::get())
+				return Self::random_bias(&seed_hash, total, T::RandomAttempts::get())
 			}
 			None
 		}

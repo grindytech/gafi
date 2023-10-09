@@ -55,7 +55,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Test {}
 parameter_types! {
 	pub PalletGameId: PalletId =  PalletId(*b"gamegame");
 	pub const UnsignedPriority: u64 = 100;
-	pub const RandomAttemps: u32 = 10;
+	pub const RandomAttempts: u32 = 10;
 	pub const UnsignedInterval: u32 = 1;
 }
 
@@ -64,7 +64,7 @@ impl offchain_worker_randomness::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type Randomness = RandomnessCollectiveFlip;
-	type RandomAttemps = RandomAttemps;
+	type RandomAttempts = RandomAttempts;
 	type UnsignedPriority = UnsignedPriority;
 	type UnsignedInterval = UnsignedInterval;
 }
