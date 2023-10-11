@@ -353,7 +353,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub FaucetCleanTime: u128 = 24 * (HOURS as u128);
-	pub FaucetAmount: u128 = 1500 * unit(GAFI);
+	pub FaucetAmount: u128 = 100 * unit(GAFI);
 }
 
 // cache for pallet faucet only for testnet
