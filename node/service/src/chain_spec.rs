@@ -51,8 +51,78 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
+pub fn development_config() -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+
+	let mut props: Properties = Properties::new();
+	let token = GafiCurrency::token_info(GAFI);
+	let symbol = json!(String::from_utf8(token.symbol).unwrap_or("GAFI".to_string()));
+	let name = json!(String::from_utf8(token.name).unwrap_or("GAFI Token".to_string()));
+	let decimals = json!(token.decimals);
+	props.insert("tokenSymbol".to_string(), symbol);
+	props.insert("tokenName".to_string(), name);
+	props.insert("tokenDecimals".to_string(), decimals);
+
+	Ok(ChainSpec::from_genesis(
+		// Name
+		"Development",
+		// ID
+		"dev",
+		ChainType::Development,
+		move || {
+			test_genesis(
+				wasm_binary,
+				// Initial PoA authorities
+				vec![authority_keys_from_seed("Alice")],
+				// Sudo account
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// Pre-funded accounts
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						1_000_000_u128 * unit(GAFI),
+					),
+				],
+				true,
+			)
+		},
+		// Bootnodes
+		vec![],
+		// Telemetry
+		None,
+		// Protocol ID
+		None,
+		None,
+		// Properties
+		Some(props),
+		// Extensions
+		None,
+	))
+}
+
 pub fn local_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+
+	let mut props: Properties = Properties::new();
+	let token = GafiCurrency::token_info(GAFI);
+	let symbol = json!(String::from_utf8(token.symbol).unwrap_or("GAFI".to_string()));
+	let name = json!(String::from_utf8(token.name).unwrap_or("GAFI Token".to_string()));
+	let decimals = json!(token.decimals);
+	props.insert("tokenSymbol".to_string(), symbol);
+	props.insert("tokenName".to_string(), name);
+	props.insert("tokenDecimals".to_string(), decimals);
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -132,7 +202,7 @@ pub fn local_config() -> Result<ChainSpec, String> {
 		None,
 		// Properties
 		None,
-		None,
+		Some(props),
 		// Extensions
 		None,
 	))

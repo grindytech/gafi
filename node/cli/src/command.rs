@@ -1,8 +1,8 @@
 use crate::cli::{Cli, Subcommand};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use gafi_service::{
-	local_config, inherent_benchmark_data, testnet_config , new_full, new_partial,
-	ChainSpec, RemarkBuilder, TransferKeepAliveBuilder,
+	development_config, inherent_benchmark_data, local_config, new_full, new_partial,
+	testnet_config, ChainSpec, RemarkBuilder, TransferKeepAliveBuilder,
 };
 use polkadot_core_primitives::Block;
 use sc_cli::SubstrateCli;
@@ -39,6 +39,7 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
+			"dev" => Box::new(development_config()?),
 			"" | "local" => Box::new(local_config()?),
 			"testnet" => Box::new(testnet_config()?),
 			path => Box::new(ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
