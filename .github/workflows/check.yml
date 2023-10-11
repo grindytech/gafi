@@ -34,10 +34,4 @@ jobs:
         run: make check
 
       - name: Check Build for Benchmarking
-        run: |
-          if [ ! -d "node" ]; then
-            mkdir node  # Create the "node" directory
-          fi
-          pushd node &&
-          make check-benchmark
-        shell: bash
+        run: make check-benchmark
