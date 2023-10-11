@@ -100,7 +100,7 @@ pub mod pallet {
 
 		/// Number of attempts to re-randomize in order to reduce modulus bias.
 		#[pallet::constant]
-		type RandomAttemps: Get<u32>;
+		type RandomAttempts: Get<u32>;
 	}
 
 	/// Defines the block when next unsigned transaction will be accepted.
@@ -177,7 +177,7 @@ pub mod pallet {
 
 	impl<T: Config> GameRandomness for Pallet<T> {
 		/// Generates a random number between 1 and `total` (inclusive).
-		/// This function repeats the process up to `RandomAttemps` times if
+		/// This function repeats the process up to `RandomAttempts` times if
 		/// the number falls within the overflow range of the modulo operation to mitigate modulo
 		/// bias.
 		///
@@ -189,7 +189,7 @@ pub mod pallet {
 						return None
 					}
 					let mut random_number = Self::generate_random_number(random);
-					for _ in 1..T::RandomAttemps::get() {
+					for _ in 1..T::RandomAttempts::get() {
 						if random_number < u32::MAX.saturating_sub(u32::MAX.wrapping_rem(total)) {
 							break
 						}
