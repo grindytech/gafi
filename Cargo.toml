@@ -54,7 +54,7 @@ evm = { version = "0.37.0", default-features = false }
 jsonrpsee = "0.16.2"
 kvdb-rocksdb = "0.17.0"
 libsecp256k1 = "0.7.1"
-parity-db = "0.4.10"
+parity-db = "0.4.12"
 rlp = { version = "0.5", default-features = false }
 parity-scale-codec = "3.6.1"
 scale-info = { version = "2.8.0", default-features = false, features = [
